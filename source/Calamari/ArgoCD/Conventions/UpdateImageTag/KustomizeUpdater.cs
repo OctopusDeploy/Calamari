@@ -30,8 +30,8 @@ public class KustomizeUpdater : BaseUpdater
 
     public override ImageReplacementResult ReplaceImages(string input)
     {
-        var thing = new Blah(input, defaultRegistry, log);
-        return thing.UpdateImages(imagesToUpdate);
+        var imageReplacer = new KustomizeContainerImageReplacer(input, defaultRegistry, log);
+        return imageReplacer.UpdateImages(imagesToUpdate);
     }
 
     public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)

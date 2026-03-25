@@ -9,14 +9,13 @@ using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-//TODO(tmm): This really needs renaming
-public class Blah : IContainerImageReplacer
+public class KustomizeContainerImageReplacer : IContainerImageReplacer
 {
     readonly string input;
     readonly string defaultRegistry;
     readonly ILog log;
 
-    public Blah(string input, string defaultRegistry, ILog log)
+    public KustomizeContainerImageReplacer(string input, string defaultRegistry, ILog log)
     {
         this.input = input;
         this.defaultRegistry = defaultRegistry;
@@ -26,7 +25,6 @@ public class Blah : IContainerImageReplacer
     public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
 
-        // ALL OF THIS function can move "out" to another class - and all dependencies
         var updatedContent = input;
         var allUpdatedImages = new HashSet<string>();
 
@@ -103,15 +101,12 @@ public class Blah : IContainerImageReplacer
 
     internal static PatchType? DeterminePatchTypeFromFile(string content)
     {
-        // Kustomization files are not patch files
         if (IsKustomizationResource(content))
             return null;
 
-        // Check for JSON 6902 patch pattern first (more specific)
         if (IsJson6902PatchContent(content))
             return PatchType.Json6902;
 
-        // Check for strategic merge patch pattern
         if (IsStrategicMergePatchContent(content))
             return PatchType.StrategicMerge;
         
@@ -168,14 +163,37 @@ public class Blah : IContainerImageReplacer
 
     internal static bool IsKustomizationResource(string input)
     {
-        return false;
-        //parse filecontent into yaml node
-        // check if  GVK is a kustomize object & return
-        
-        //
-        //
-        // var fileName = Path.GetFileName(filePath).ToLowerInvariant();
-        // return fileName == "kustomization.yaml" || fileName == "kustomization.yml";
+        try
+        {
+            var yamlStream = new YamlStream();
+            yamlStream.Load(new StringReader(input));
+
+            if (yamlStream.Documents.Count == 0)
+                return false;
+
+            var rootNode = yamlStream.Documents[0].RootNode;
+            if (rootNode is not YamlMappingNode mappingNode)
+                return false;
+
+            if (!mappingNode.Children.TryGetValue(new YamlScalarNode("apiVersion"), out var apiVersionNode) ||
+                apiVersionNode is not YamlScalarNode apiVersionScalar)
+                return false;
+
+            if (!mappingNode.Children.TryGetValue(new YamlScalarNode("kind"), out var kindNode) ||
+                kindNode is not YamlScalarNode kindScalar)
+                return false;
+
+            var apiVersion = apiVersionScalar.Value ?? "";
+            var kind = kindScalar.Value ?? "";
+
+            return apiVersion.StartsWith("kustomize.config.k8s.io", StringComparison.OrdinalIgnoreCase) &&
+                   (kind.Equals("Kustomization", StringComparison.OrdinalIgnoreCase) ||
+                    kind.Equals("Component", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     internal static bool HasInlinePatches(string content)
@@ -282,7 +300,6 @@ public class Blah : IContainerImageReplacer
             var allUpdatedImages = new HashSet<string>();
             var hasChanges = false;
 
-            // Process each inline patch in the sequence
             foreach (var patchNode in patchSequence.Children)
             {
                 if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)

@@ -81,7 +81,7 @@ namespace Calamari.ArgoCD
             var replacementsMade = new HashSet<string>();
             foreach (var imageNode in imagesSequenceNode.OfType<YamlMappingNode>())
             {
-                var matchedUpdate = GetMatchedContainerToUpdate(imagesToUpdate.Select(i => i.ContainerReference).ToList(), imageNode);
+                var matchedUpdate = GetMatchedContainerToUpdate(imagesToUpdate, imageNode);
                 //no match, nothing to do
                 if (matchedUpdate is null)
                 {
@@ -128,7 +128,7 @@ namespace Calamari.ArgoCD
             return new ImageReplacementResult(modifiedYaml, replacementsMade);
         }
 
-        ImageReferenceMatch? GetMatchedContainerToUpdate(List<ContainerImageReference> imagesToUpdate, YamlMappingNode imageNode)
+        ImageReferenceMatch? GetMatchedContainerToUpdate(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, YamlMappingNode imageNode)
         {
             var nameNode = imageNode.GetChildNode<YamlScalarNode>(NameNodeKey);
             var name = nameNode.Value;
@@ -143,8 +143,8 @@ namespace Calamari.ArgoCD
             var testName = newNameNode?.Value ?? name;
 
             var currentReference = ContainerImageReference.FromReferenceString(testName, defaultRegistry);
-            
-            return imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference)))
+
+            return imagesToUpdate.Select(i => new ImageReferenceMatch(i.ContainerReference, i.ContainerReference.CompareWith(currentReference)))
                                               .FirstOrDefault(i => i.Comparison.MatchesImage());
         }
 

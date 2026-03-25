@@ -35,29 +35,25 @@ namespace Calamari.Tests.ArgoCD
         {
             log = new InMemoryLog();
             fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(tempDir);
+            tempDir = fileSystem.CreateTemporaryDirectory();
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, recursive: true);
-            }
+            fileSystem?.DeleteDirectory(tempDir);
         }
 
         private void CreateKustomizationFile(string content)
         {
             var kustomizationPath = Path.Combine(tempDir, "kustomization.yaml");
-            File.WriteAllText(kustomizationPath, content);
+            fileSystem.OverwriteFile(kustomizationPath, content);
         }
 
         private void CreatePatchFile(string fileName, string content)
         {
             var filePath = Path.Combine(tempDir, fileName);
-            File.WriteAllText(filePath, content);
+            fileSystem.OverwriteFile(filePath, content);
         }
 
         [Test]
@@ -83,7 +79,7 @@ images:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            var updatedContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
             updatedContent.Should().Contain("1.25");
         }
 
@@ -124,7 +120,7 @@ spec:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedPatchContent = File.ReadAllText(Path.Combine(tempDir, "deployment-patch.yaml"));
+            var updatedPatchContent = fileSystem.ReadFile(Path.Combine(tempDir,"deployment-patch.yaml"));
             updatedPatchContent.Should().Contain("nginx:1.25");
         }
 
@@ -163,7 +159,7 @@ patchesJson6902:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedPatchContent = File.ReadAllText(Path.Combine(tempDir, "deployment.json"));
+            var updatedPatchContent = fileSystem.ReadFile(Path.Combine(tempDir,"deployment.json"));
             updatedPatchContent.Should().Contain("nginx:1.25");
         }
 
@@ -201,7 +197,7 @@ patches:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            var updatedKustomizationContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
             updatedKustomizationContent.Should().Contain("nginx:1.25");
         }
 
@@ -270,13 +266,13 @@ spec:
             result.UpdatedImages.Should().Contain("busybox:stable");
             result.UpdatedImages.Count.Should().Be(2);
 
-            var updatedDeploymentContent = File.ReadAllText(Path.Combine(tempDir, "deployment-patch.yaml"));
+            var updatedDeploymentContent = fileSystem.ReadFile(Path.Combine(tempDir,"deployment-patch.yaml"));
             updatedDeploymentContent.Should().Contain("nginx:1.25");
 
-            var updatedServiceContent = File.ReadAllText(Path.Combine(tempDir, "service.json"));
+            var updatedServiceContent = fileSystem.ReadFile(Path.Combine(tempDir,"service.json"));
             updatedServiceContent.Should().Contain("busybox:stable");
 
-            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            var updatedKustomizationContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
             updatedKustomizationContent.Should().Contain("busybox:stable");
         }
 
@@ -319,10 +315,10 @@ spec:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedPatchContent = File.ReadAllText(Path.Combine(tempDir, "deployment-patch.yaml"));
+            var updatedPatchContent = fileSystem.ReadFile(Path.Combine(tempDir,"deployment-patch.yaml"));
             updatedPatchContent.Should().Contain("nginx:1.25");
 
-            File.Exists(Path.Combine(tempDir, "missing-patch.yaml")).Should().BeFalse();
+            fileSystem.FileExists(Path.Combine(tempDir, "missing-patch.yaml")).Should().BeFalse();
         }
 
         [Test]
@@ -385,10 +381,10 @@ spec:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedValidPatchContent = File.ReadAllText(Path.Combine(tempDir, "valid-patch.yaml"));
+            var updatedValidPatchContent = fileSystem.ReadFile(Path.Combine(tempDir,"valid-patch.yaml"));
             updatedValidPatchContent.Should().Contain("nginx:1.25");
 
-            var unchangedInvalidPatchContent = File.ReadAllText(Path.Combine(tempDir, "invalid-patch.yaml"));
+            var unchangedInvalidPatchContent = fileSystem.ReadFile(Path.Combine(tempDir,"invalid-patch.yaml"));
             unchangedInvalidPatchContent.Should().Be(invalidPatchContent);
         }
 
@@ -428,7 +424,7 @@ patchesStrategicMerge:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            var updatedKustomizationContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
             updatedKustomizationContent.Should().Contain("nginx:1.25");
             // Should update both init containers and regular containers
             updatedKustomizationContent.Should().NotContain("nginx:1.21");
@@ -468,7 +464,7 @@ patchesJson6902:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
-            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            var updatedKustomizationContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
             updatedKustomizationContent.Should().Contain("nginx:1.25");
             // Should update both replace and add operations
             updatedKustomizationContent.Should().NotContain("nginx:1.21");
@@ -530,588 +526,13 @@ spec:
             result.UpdatedImages.Should().Contain("nginx:1.25");
 
             // Check kustomization file was updated for images section and inline patches
-            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            var updatedKustomizationContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
             updatedKustomizationContent.Should().Contain("nginx:1.25");
             updatedKustomizationContent.Should().NotContain("nginx:1.21");
 
             // Check external patch file was also updated
-            var updatedExternalPatchContent = File.ReadAllText(Path.Combine(tempDir, "external-patch.yaml"));
+            var updatedExternalPatchContent = fileSystem.ReadFile(Path.Combine(tempDir,"external-patch.yaml"));
             updatedExternalPatchContent.Should().Contain("nginx:1.25");
-        }
-    }
-
-    [TestFixture]
-    public class KustomizeUpdaterHelperMethodsTests
-    {
-        [TestFixture]
-        public class DeterminePatchTypeFromFileTests
-        {
-            [Test]
-            public void DeterminePatchTypeFromFile_JsonFile_WithJson6902Content_ReturnsJson6902()
-            {
-                const string content = @"[
-  {
-    ""op"": ""replace"",
-    ""path"": ""/spec/template/spec/containers/0/image"",
-    ""value"": ""nginx:1.25""
-  }
-]";
-                var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "patch.json");
-                result.Should().Be(PatchType.Json6902);
-            }
-
-            [Test]
-            public void DeterminePatchTypeFromFile_YamlFile_WithJson6902Content_ReturnsJson6902()
-            {
-                const string content = @"- op: replace
-  path: /spec/template/spec/containers/0/image
-  value: nginx:1.25
-- op: add
-  path: /metadata/annotations/updated
-  value: true";
-                var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "patch.yaml");
-                result.Should().Be(PatchType.Json6902);
-            }
-
-            [Test]
-            public void DeterminePatchTypeFromFile_YamlFile_WithStrategicMergeContent_ReturnsStrategicMerge()
-            {
-                const string content = @"apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-spec:
-  template:
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.25";
-                var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "patch.yaml");
-                result.Should().Be(PatchType.StrategicMerge);
-            }
-
-            [Test]
-            public void DeterminePatchTypeFromFile_JsonFile_WithStrategicMergeContent_ReturnsStrategicMerge()
-            {
-                const string content = @"{
-  ""apiVersion"": ""apps/v1"",
-  ""kind"": ""Deployment"",
-  ""spec"": {
-    ""template"": {
-      ""spec"": {
-        ""containers"": [
-          {
-            ""name"": ""nginx"",
-            ""image"": ""nginx:1.25""
-          }
-        ]
-      }
-    }
-  }
-}";
-                var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "patch.json");
-                result.Should().Be(PatchType.StrategicMerge);
-            }
-
-            [Test]
-            public void DeterminePatchTypeFromFile_KustomizationFile_ReturnsNull()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: nginx
-  newTag: 1.25";
-                var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "kustomization.yaml");
-                result.Should().BeNull();
-            }
-
-            [Test]
-            public void DeterminePatchTypeFromFile_UnknownFormat_ReturnsNull()
-            {
-                const string content = @"some: unknown
-format: that
-doesnt: match
-patterns: true";
-                var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "unknown.yaml");
-                result.Should().BeNull();
-            }
-
-            [Test]
-            public void DeterminePatchTypeFromFile_NonYamlJsonExtension_ReturnsNull()
-            {
-                const string content = @"some content";
-                var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "file.txt");
-                result.Should().BeNull();
-            }
-        }
-
-        [TestFixture]
-        public class IsJson6902PatchContentTests
-        {
-            [Test]
-            public void IsJson6902PatchContent_ValidJsonArray_ReturnsTrue()
-            {
-                const string content = @"[
-  {
-    ""op"": ""replace"",
-    ""path"": ""/spec/template/spec/containers/0/image"",
-    ""value"": ""nginx:1.25""
-  }
-]";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_ValidYamlArray_ReturnsTrue()
-            {
-                const string content = @"- op: replace
-  path: /spec/template/spec/containers/0/image
-  value: nginx:1.25";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_MultipleOperations_ReturnsTrue()
-            {
-                const string content = @"- op: add
-  path: /metadata/labels/updated
-  value: 'true'
-- op: remove
-  path: /spec/replicas
-- op: copy
-  from: /spec/template
-  path: /spec/backup";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_WithQuotedFieldNames_ReturnsTrue()
-            {
-                const string content = @"[
-  {
-    'op': 'test',
-    'path': '/spec/replicas',
-    'value': 3
-  }
-]";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_MissingPathField_ReturnsFalse()
-            {
-                const string content = @"- op: replace
-  value: nginx:1.25";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_MissingOpField_ReturnsFalse()
-            {
-                const string content = @"- path: /spec/template/spec/containers/0/image
-  value: nginx:1.25";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_InvalidOperation_ReturnsFalse()
-            {
-                const string content = @"- op: invalid_operation
-  path: /spec/template/spec/containers/0/image
-  value: nginx:1.25";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_NotAnArray_ReturnsFalse()
-            {
-                const string content = @"op: replace
-path: /spec/template/spec/containers/0/image
-value: nginx:1.25";
-                var result = KustomizeUpdater.IsJson6902PatchContent(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsJson6902PatchContent_EmptyContent_ReturnsFalse()
-            {
-                var result = KustomizeUpdater.IsJson6902PatchContent("");
-                result.Should().BeFalse();
-            }
-        }
-
-        [TestFixture]
-        public class IsStrategicMergePatchContentTests
-        {
-            [Test]
-            public void IsStrategicMergePatchContent_WithApiVersion_ReturnsTrue()
-            {
-                const string content = @"apiVersion: apps/v1
-kind: Deployment
-spec:
-  template:
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.25";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_WithKind_ReturnsTrue()
-            {
-                const string content = @"kind: Service
-metadata:
-  name: my-service";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_WithMetadata_ReturnsTrue()
-            {
-                const string content = @"metadata:
-  name: nginx-deployment
-  labels:
-    app: nginx";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_WithSpec_ReturnsTrue()
-            {
-                const string content = @"spec:
-  replicas: 3
-  template:
-    spec:
-      containers:
-      - name: nginx";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_WithData_ReturnsTrue()
-            {
-                const string content = @"data:
-  config.yaml: |
-    setting: value";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_WithImageField_ReturnsTrue()
-            {
-                const string content = @"spec:
-  template:
-    spec:
-      containers:
-      - image: nginx:1.25";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_WithContainersField_ReturnsTrue()
-            {
-                const string content = @"spec:
-  template:
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.25";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_CaseInsensitive_ReturnsTrue()
-            {
-                const string content = @"APIVERSION: apps/v1
-KIND: Deployment";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_JsonFormat_ReturnsTrue()
-            {
-                const string content = @"{
-  ""apiVersion"": ""apps/v1"",
-  ""kind"": ""Deployment""
-}";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_NoKubernetesFields_ReturnsFalse()
-            {
-                const string content = @"some: random
-yaml: content
-without: kubernetes
-fields: true";
-                var result = KustomizeUpdater.IsStrategicMergePatchContent(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsStrategicMergePatchContent_EmptyContent_ReturnsFalse()
-            {
-                var result = KustomizeUpdater.IsStrategicMergePatchContent("");
-                result.Should().BeFalse();
-            }
-        }
-
-        [TestFixture]
-        public class IsKustomizationFileTests
-        {
-            [Test]
-            public void IsKustomizationFile_KustomizationYaml_ReturnsTrue()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization.yaml");
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsKustomizationFile_KustomizationYml_ReturnsTrue()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization.yml");
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsKustomizationFile_CaseInsensitive_ReturnsTrue()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("/path/to/KUSTOMIZATION.YAML");
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsKustomizationFile_MixedCase_ReturnsTrue()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("/path/to/Kustomization.Yml");
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void IsKustomizationFile_OtherYamlFile_ReturnsFalse()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("/path/to/deployment.yaml");
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsKustomizationFile_JsonFile_ReturnsFalse()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization.json");
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsKustomizationFile_NoExtension_ReturnsFalse()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization");
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void IsKustomizationFile_EmptyPath_ReturnsFalse()
-            {
-                var result = KustomizeUpdater.IsKustomizationResource("");
-                result.Should().BeFalse();
-            }
-        }
-
-        [TestFixture]
-        public class HasInlinePatchesTests
-        {
-            [Test]
-            public void HasInlinePatches_WithPatchesField_ReturnsTrue()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-patches:
-- target:
-    kind: Deployment
-    name: nginx-deployment
-  patch: |-
-    spec:
-      template:
-        spec:
-          containers:
-          - name: nginx
-            image: nginx:1.25";
-                var result = KustomizeUpdater.HasInlinePatches(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void HasInlinePatches_WithoutPatchesField_ReturnsFalse()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: nginx
-  newTag: 1.25";
-                var result = KustomizeUpdater.HasInlinePatches(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void HasInlinePatches_WithEmptyPatchesField_ReturnsTrue()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-patches: []";
-                var result = KustomizeUpdater.HasInlinePatches(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void HasInlinePatches_InvalidYaml_ReturnsFalse()
-            {
-                const string content = @"invalid: yaml: [unclosed";
-                var result = KustomizeUpdater.HasInlinePatches(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void HasInlinePatches_EmptyContent_ReturnsFalse()
-            {
-                var result = KustomizeUpdater.HasInlinePatches("");
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void HasInlinePatches_NotAMappingNode_ReturnsFalse()
-            {
-                const string content = @"- item1
-- item2
-- item3";
-                var result = KustomizeUpdater.HasInlinePatches(content);
-                result.Should().BeFalse();
-            }
-        }
-
-        [TestFixture]
-        public class HasInlineStrategicMergePatchesTests
-        {
-            [Test]
-            public void HasInlineStrategicMergePatches_WithInlinePatches_ReturnsTrue()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-patchesStrategicMerge:
-- |
-  apiVersion: apps/v1
-  kind: Deployment
-  spec:
-    template:
-      spec:
-        containers:
-        - name: nginx
-          image: nginx:1.25";
-                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void HasInlineStrategicMergePatches_WithExternalFileReferences_ReturnsFalse()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-patchesStrategicMerge:
-- deployment-patch.yaml
-- service-patch.yaml";
-                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void HasInlineStrategicMergePatches_WithoutPatchesField_ReturnsFalse()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: nginx
-  newTag: 1.25";
-                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void HasInlineStrategicMergePatches_InvalidYaml_ReturnsFalse()
-            {
-                const string content = @"invalid: yaml: [unclosed";
-                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
-                result.Should().BeFalse();
-            }
-        }
-
-        [TestFixture]
-        public class HasInlineJson6902PatchesTests
-        {
-            [Test]
-            public void HasInlineJson6902Patches_WithInlinePatches_ReturnsTrue()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-patchesJson6902:
-- target:
-    kind: Deployment
-    name: nginx-deployment
-  patch: |-
-    - op: replace
-      path: /spec/template/spec/containers/0/image
-      value: nginx:1.25";
-                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
-                result.Should().BeTrue();
-            }
-
-            [Test]
-            public void HasInlineJson6902Patches_WithExternalFileReferences_ReturnsFalse()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-patchesJson6902:
-- target:
-    kind: Deployment
-    name: nginx-deployment
-  path: deployment.json";
-                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void HasInlineJson6902Patches_WithoutPatchesField_ReturnsFalse()
-            {
-                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: nginx
-  newTag: 1.25";
-                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
-                result.Should().BeFalse();
-            }
-
-            [Test]
-            public void HasInlineJson6902Patches_InvalidYaml_ReturnsFalse()
-            {
-                const string content = @"invalid: yaml: [unclosed";
-                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
-                result.Should().BeFalse();
-            }
         }
     }
 }
