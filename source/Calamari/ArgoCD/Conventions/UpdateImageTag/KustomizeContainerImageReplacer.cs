@@ -93,13 +93,17 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
                     allUpdatedImages.UnionWith(result.UpdatedImageReferences);
                 }
             }
+            else
+            {
+                log.Verbose($"Unable to determine patch type for content, no image updates will be performed");
+            }
         }
 
         return new ImageReplacementResult(updatedContent, allUpdatedImages);
     }
     
 
-    internal static PatchType? DeterminePatchTypeFromFile(string content)
+    private PatchType? DeterminePatchTypeFromFile(string content)
     {
         if (IsKustomizationResource(content))
             return null;
@@ -113,7 +117,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         return null;
     }
 
-    internal static bool IsJson6902PatchContent(string content)
+    private bool IsJson6902PatchContent(string content)
     {
         try
         {
@@ -134,13 +138,14 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
             return false;
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Error determining if content is JSON 6902 patch: {ex.Message}");
             return false;
         }
     }
 
-    internal static bool IsStrategicMergePatchContent(string content)
+    private bool IsStrategicMergePatchContent(string content)
     {
         try
         {
@@ -155,13 +160,14 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
             return hasKubernetesFields || hasImageReferences;
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Error determining if content is strategic merge patch: {ex.Message}");
             return false;
         }
     }
 
-    internal static bool IsKustomizationResource(string input)
+    private bool IsKustomizationResource(string input)
     {
         try
         {
@@ -169,11 +175,15 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             yamlStream.Load(new StringReader(input));
 
             if (yamlStream.Documents.Count == 0)
+            {
                 return false;
+            }
 
             var rootNode = yamlStream.Documents[0].RootNode;
             if (rootNode is not YamlMappingNode mappingNode)
+            {
                 return false;
+            }
 
             if (!mappingNode.Children.TryGetValue(new YamlScalarNode("apiVersion"), out var apiVersionNode) ||
                 apiVersionNode is not YamlScalarNode apiVersionScalar)
@@ -190,13 +200,14 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
                    (kind.Equals("Kustomization", StringComparison.OrdinalIgnoreCase) ||
                     kind.Equals("Component", StringComparison.OrdinalIgnoreCase));
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Error determining if content is kustomization resource: {ex.Message}");
             return false;
         }
     }
 
-    internal static bool HasInlinePatches(string content)
+    private bool HasInlinePatches(string content)
     {
         try
         {
@@ -204,21 +215,26 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             yamlStream.Load(new StringReader(content));
 
             if (yamlStream.Documents.Count == 0)
+            {
                 return false;
+            }
 
             var rootNode = yamlStream.Documents[0].RootNode;
             if (rootNode is not YamlMappingNode mappingNode)
+            {
                 return false;
+            }
 
             return mappingNode.Children.ContainsKey(new YamlScalarNode("patches"));
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Error checking for inline patches: {ex.Message}");
             return false;
         }
     }
 
-    internal static bool HasInlineStrategicMergePatches(string content)
+    private bool HasInlineStrategicMergePatches(string content)
     {
         try
         {
@@ -226,11 +242,15 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             yamlStream.Load(new StringReader(content));
 
             if (yamlStream.Documents.Count == 0)
+            {
                 return false;
+            }
 
             var rootNode = yamlStream.Documents[0].RootNode;
             if (rootNode is not YamlMappingNode mappingNode)
+            {
                 return false;
+            }
 
             if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode))
             {
@@ -244,13 +264,14 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
             return false;
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Error checking for inline strategic merge patches: {ex.Message}");
             return false;
         }
     }
 
-    internal static bool HasInlineJson6902Patches(string content)
+    private bool HasInlineJson6902Patches(string content)
     {
         try
         {
@@ -258,11 +279,15 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             yamlStream.Load(new StringReader(content));
 
             if (yamlStream.Documents.Count == 0)
+            {
                 return false;
+            }
 
             var rootNode = yamlStream.Documents[0].RootNode;
             if (rootNode is not YamlMappingNode mappingNode)
+            {
                 return false;
+            }
 
             if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode))
             {
@@ -277,13 +302,14 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
             return false;
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Error checking for inline JSON 6902 patches: {ex.Message}");
             return false;
         }
     }
 
-    internal ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    private ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         try
         {
@@ -333,7 +359,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
     }
 
-    internal ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    private ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         try
         {

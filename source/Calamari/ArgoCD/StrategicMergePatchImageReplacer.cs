@@ -28,9 +28,9 @@ namespace Calamari.ArgoCD
 
         public StrategicMergePatchImageReplacer(string yamlContent, string defaultRegistry, ILog log)
         {
-            this.yamlContent = yamlContent ?? throw new ArgumentNullException(nameof(yamlContent));
-            this.defaultRegistry = defaultRegistry ?? throw new ArgumentNullException(nameof(defaultRegistry));
-            this.log = log ?? throw new ArgumentNullException(nameof(log));
+            this.yamlContent = yamlContent;
+            this.defaultRegistry = defaultRegistry;
+            this.log = log;
         }
 
         ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>());
