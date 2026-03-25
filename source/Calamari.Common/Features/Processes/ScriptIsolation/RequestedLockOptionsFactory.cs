@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 
@@ -30,12 +31,12 @@ public sealed class RequestedLockOptionsFactory(
 
         if (string.IsNullOrWhiteSpace(options.Timeout))
         {
-            timeout = System.Threading.Timeout.InfiniteTimeSpan;
+            timeout = Timeout.InfiniteTimeSpan;
         }
         else if (!TimeSpan.TryParse(options.Timeout, out timeout))
         {
             Log.Verbose($"Failed to parse mutex timeout value '{options.Timeout}' as TimeSpan. Defaulting to Infinite.");
-            timeout = System.Threading.Timeout.InfiniteTimeSpan;
+            timeout = Timeout.InfiniteTimeSpan;
         }
 
         var preferredLockDirectory = new DirectoryInfo(options.TentacleHome);
