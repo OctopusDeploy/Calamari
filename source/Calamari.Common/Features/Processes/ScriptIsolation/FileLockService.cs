@@ -13,7 +13,7 @@ sealed class FileLockService : IFileLockService
 
     public static readonly IFileLockService Instance = new FileLockService();
 
-    public void CreateDirectory(string path) => Directory.CreateDirectory(path);
+    public void CreateDirectory(DirectoryInfo directory) => directory.Create();
 
     public ILockHandle AcquireLock(LockOptions options) => FileLock.Acquire(options);
 }

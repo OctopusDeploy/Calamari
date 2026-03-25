@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 /// <summary>
@@ -8,7 +10,8 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 interface IFileLockService
 {
     /// <summary>Ensures the given directory path exists.</summary>
-    void CreateDirectory(string path);
+    /// <remarks>This allows a test implementation to not actually create the directory.</remarks>
+    void CreateDirectory(DirectoryInfo directory);
 
     /// <summary>Attempts to acquire a lock described by <paramref name="options"/>.</summary>
     /// <exception cref="LockRejectedException">

@@ -170,7 +170,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             // Directory creation is a no-op in the fake: the FakeLockService does not
             // touch the real filesystem, so there is nothing to create.
-            public void CreateDirectory(string path) { }
+            public void CreateDirectory(DirectoryInfo directory) { }
 
             public ILockHandle AcquireLock(LockOptions opts)
             {

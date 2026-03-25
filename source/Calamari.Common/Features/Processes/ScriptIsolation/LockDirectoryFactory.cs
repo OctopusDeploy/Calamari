@@ -55,7 +55,6 @@ sealed class LockDirectoryFactory(
         }
 
         // We don't appear to support locking
-        // TODO: Investigate returning null instead
         return new LockDirectory(preferredLockDirectory, LockCapability.Unsupported);
 
         CachedDriveInfo? GetDriveOrNull(DirectoryInfo path)
@@ -82,7 +81,7 @@ sealed class LockDirectoryFactory(
                                           );
         try
         {
-            fileLockService.CreateDirectory(path.FullName); // TODO: Update for DirectoryInfo
+            fileLockService.CreateDirectory(path);
             var supportsExclusiveLock = TestExclusiveLock(testFile);
             if (!supportsExclusiveLock)
             {
