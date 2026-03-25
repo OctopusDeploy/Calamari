@@ -756,44 +756,46 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void GetAssociatedDrive_SelectsLongestMatchingMount()
         {
-            // Both "/" and "/home" are mounts.  "/home/octopus/foo" should match "/home",
-            // not "/", because longest prefix wins.
-            if (OperatingSystem.IsWindows())
-            {
-                Assert.Ignore("POSIX-only test: Windows uses drive letters, not nested mounts.");
-                return;
-            }
+            // Both a root mount and a nested mount point exist.  A path under the nested
+            // mount should match it, not the shorter root, because longest prefix wins.
+            //
+            // On POSIX: "/" and "/home" are the two mounts; "/home/octopus/foo" must match "/home".
+            // On Windows: "C:\" and "C:\Windows\Temp" simulate a volume mounted to a directory;
+            //             "C:\Windows\Temp\foo" must match "C:\Windows\Temp".
+            var rootMount = OperatingSystem.IsWindows() ? @"C:\" : "/";
+            var nestedMount = OperatingSystem.IsWindows() ? @"C:\Windows\Temp" : "/home";
+            var inputPath = OperatingSystem.IsWindows() ? @"C:\Windows\Temp\foo" : "/home/octopus/foo";
 
-            var inputPath = "/home/octopus/foo";
-            var resolver = new FakePathResolutionService(StringComparison.Ordinal);
-            var drives = DrivesWithResolver(resolver, DriveAt("/"), DriveAt("/home"));
+            var resolver = new FakePathResolutionService(StringComparison.OrdinalIgnoreCase);
+            var drives = DrivesWithResolver(resolver, DriveAt(rootMount), DriveAt(nestedMount));
 
             var result = drives.GetAssociatedDrive(inputPath);
 
-            result.RootDirectory.FullName.Should().Be("/home",
+            result.RootDirectory.FullName.Should().Be(nestedMount,
                                                       because: "longest matching mount point should win");
         }
 
         [Test]
         public void GetAssociatedDrive_MatchesMountPoint_WhenPathIsExactlyTheMountPoint()
         {
-            // Both "/" and "/home" are mounts.  When the input path is exactly "/home"
-            // (i.e. the directory that is itself the mount point), it should still match
-            // "/home" — not fall through to "/" due to the trailing-separator logic in
-            // IsAncestor rejecting an exact-equality match.
-            if (OperatingSystem.IsWindows())
-            {
-                Assert.Ignore("POSIX-only test: Windows uses drive letters, not nested mounts.");
-                return;
-            }
+            // Both a root mount and a nested mount point exist.  When the input path is
+            // exactly the nested mount point itself, it should still match that mount —
+            // not fall through to the shorter root due to trailing-separator logic in
+            // IsEqualOrAncestor rejecting an exact-equality match.
+            //
+            // On POSIX: "/" and "/home" are the two mounts; input "/home" must match "/home".
+            // On Windows: "C:\" and "C:\Windows\Temp" simulate a volume mounted to a directory;
+            //             input "C:\Windows\Temp" must match "C:\Windows\Temp".
+            var rootMount = OperatingSystem.IsWindows() ? @"C:\" : "/";
+            var nestedMount = OperatingSystem.IsWindows() ? @"C:\Windows\Temp" : "/home";
+            var inputPath = nestedMount;
 
-            var inputPath = "/home";
-            var resolver = new FakePathResolutionService(StringComparison.Ordinal);
-            var drives = DrivesWithResolver(resolver, DriveAt("/"), DriveAt("/home"));
+            var resolver = new FakePathResolutionService(StringComparison.OrdinalIgnoreCase);
+            var drives = DrivesWithResolver(resolver, DriveAt(rootMount), DriveAt(nestedMount));
 
             var result = drives.GetAssociatedDrive(inputPath);
 
-            result.RootDirectory.FullName.Should().Be("/home",
+            result.RootDirectory.FullName.Should().Be(nestedMount,
                                                       because: "a path that is exactly the mount point should match that mount, not a shorter ancestor");
         }
 
