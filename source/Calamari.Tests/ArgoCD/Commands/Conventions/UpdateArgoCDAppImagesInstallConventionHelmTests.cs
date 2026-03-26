@@ -1576,6 +1576,43 @@ service:
             AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
         }
 
+        [Test]
+        public void MixedHelmReferences_OneWithPathOneWithout_LogsVerboseWarningForImageWithoutPath()
+        {
+            // Arrange
+            const string valuesFile = @"
+image:
+  nginx: index.docker.io/nginx:1.0
+  alpine: alpine:3.21
+";
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", valuesFile));
+
+            var updater = CreateConvention();
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx",
+                [PackageVariables.IndexedImage("alpine")] = "alpine:3.21",
+                [PackageVariables.IndexedPackagePurpose("alpine")] = "DockerImageReference",
+                // NOTE: no HelmReplacementPath for alpine
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
+            };
+
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            log.MessagesVerboseFormatted.Should().Contain(
+                "alpine:3.21 will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
+        }
+
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
         {
             var absolutePath = Path.Combine(clonedRepoPath, relativeFilePath);
