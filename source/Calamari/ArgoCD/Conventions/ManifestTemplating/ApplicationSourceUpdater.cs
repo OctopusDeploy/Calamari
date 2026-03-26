@@ -63,7 +63,7 @@ public class ApplicationSourceUpdater
                                                         sourceWithMetadata.Index,
                                                         sourceUpdateResult.PushResult);
             
-            return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.PatchedFiles);
+            return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.ReplacedFiles);
         }
         
         log.Info("No changes were commited");

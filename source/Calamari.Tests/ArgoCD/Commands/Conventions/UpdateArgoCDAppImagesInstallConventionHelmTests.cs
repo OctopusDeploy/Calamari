@@ -1228,7 +1228,7 @@ service:
             ]);
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
-                             new FilePathContent("./otherRepoPath/values.yaml", JsonSerializer.Serialize(expectedPatch)),
+                             new FileJsonPatch("./otherRepoPath/values.yaml", JsonSerializer.Serialize(expectedPatch)),
                          ]);
         }
 
@@ -1407,7 +1407,7 @@ service:
             sourceDetails.ReplacedFiles.Should().BeEmpty();
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
-                             new FilePathContent(valuesFilename, JsonSerializer.Serialize(expectedPatch)),
+                             new FileJsonPatch(valuesFilename, JsonSerializer.Serialize(expectedPatch)),
                          ]);
         }
 

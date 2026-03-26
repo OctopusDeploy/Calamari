@@ -44,11 +44,11 @@ public class RepositoryAdapter
 
             if (pushResult is not null)
             {
-                return new SourceUpdateResult(result.UpdatedImages, pushResult, result.PatchedFileContent);
+                return new SourceUpdateResult(result.UpdatedImages, pushResult, result.ReplacedFiles, result.PatchedFiles);
             }
         }
 
-        return new SourceUpdateResult([], null, []);
+        return new SourceUpdateResult([], null, [], []);
     }
     
     
@@ -58,7 +58,7 @@ public class RepositoryAdapter
         FileUpdateResult result)
     {
         log.Info("Staging files in repository");
-        repository.AddFiles(result.PatchedFileContent.Select(pf => pf.FilePath).Distinct().ToArray());
+        repository.AddFiles(result.ReplacedFiles.Select(f => f.FilePath).Concat(result.PatchedFiles.Select(f => f.FilePath)).Distinct().ToArray());
         repository.RemoveFiles(result.FilesRemoved ?? []);
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);

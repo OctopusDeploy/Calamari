@@ -661,7 +661,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
-                             new FilePathContent(yamlFilename, JsonSerializer.Serialize(expectedPatch)),
+                             new FileJsonPatch(yamlFilename, JsonSerializer.Serialize(expectedPatch)),
                          ]);
         }
 

@@ -5,4 +5,4 @@ using Calamari.ArgoCD.Git;
 
 namespace Calamari.ArgoCD.Conventions;
     
-public record SourceUpdateResult(HashSet<string> ImagesUpdated, PushResult? PushResult, List<FilePathContent> PatchedFiles);
+public record SourceUpdateResult(HashSet<string> ImagesUpdated, PushResult? PushResult, List<FileHash> ReplacedFiles, List<FileJsonPatch> PatchedFiles);
