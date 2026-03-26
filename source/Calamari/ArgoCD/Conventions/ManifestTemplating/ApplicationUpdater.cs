@@ -64,7 +64,7 @@ public class ApplicationUpdater
                                                          outputVariablesWriter,
                                                          repositoryAdapter);
         
-        var updatedSourcesResults = applicationFromYaml
+        var trackedSourceUpdateResults = applicationFromYaml
                                     .GetSourcesWithMetadata()
                                     .Where(sourceUpdater.IsAppInScope)
                                     .Select(applicationSource => new
@@ -80,7 +80,7 @@ public class ApplicationUpdater
             ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, applicationFromYaml.Metadata.Namespace), applicationName)
             : applicationName;
 
-        var message = updatedSourcesResults.Any(u => u.UpdateResult.Updated)
+        var message = trackedSourceUpdateResults.Any(u => u.UpdateResult.Updated)
             ? "Updated Application {0}"
             : "Nothing to update for Application {0}";
 
@@ -91,9 +91,9 @@ public class ApplicationUpdater
                                             applicationName.ToApplicationName(),
                                             applicationFromYaml.Spec.Sources.Count,
                                             applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                            updatedSourcesResults.Select(r => new TrackedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
+                                            trackedSourceUpdateResults.Select(r => new TrackedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
                                             [],
-                                            updatedSourcesResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+                                            trackedSourceUpdateResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
     }
     
     void LogWarningIfUpdatingMultipleSources(
