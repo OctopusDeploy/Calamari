@@ -269,7 +269,7 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
-        public void ReportDeployments_WithNoOpSource_EmitsServiceMessageWithEmptyCommitSha()
+        public void ReportDeployments_WithNoOpSource_EmitsServiceMessageWithNullCommitSha()
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
@@ -277,7 +277,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 1, 1,
-                    [new TrackedSourceDetail("", 0, [],
+                    [new TrackedSourceDetail(null, 0, [],
                         [new FileJsonPatch("values.yaml", "[{\"op\":\"replace\",\"path\":\"/image\",\"value\":\"nginx:1.27\"}]")])],
                     [], [])
             };
@@ -291,7 +291,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = "[{\"CommitSha\":\"\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[{\"FilePath\":\"values.yaml\",\"JsonPatch\":\"[{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/image\\u0022,\\u0022value\\u0022:\\u0022nginx:1.27\\u0022}]\"}]}]"
+                    ["sources"] = "[{\"CommitSha\":null,\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[{\"FilePath\":\"values.yaml\",\"JsonPatch\":\"[{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/image\\u0022,\\u0022value\\u0022:\\u0022nginx:1.27\\u0022}]\"}]}]"
                 }
             });
         }
