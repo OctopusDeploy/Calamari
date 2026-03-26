@@ -52,7 +52,7 @@ public class ApplicationSourceUpdater
         log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
         if (!deploymentScope.Matches(annotatedScope))
         {
-            return new SourceUpdateResult(new HashSet<string>(), null, []);
+            return new SourceUpdateResult(new HashSet<string>(), null, [], []);
         }
         
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
