@@ -50,6 +50,9 @@ public abstract class BaseUpdater : ISourceUpdater
 
             var imageReplacementResult = ReplaceImages(content);
 
+            var allTargetedImages = new HashSet<string>(imageReplacementResult.UpdatedImageReferences);
+            allTargetedImages.UnionWith(imageReplacementResult.AlreadyUpToDateImages);
+
             if (imageReplacementResult.UpdatedImageReferences.Count > 0)
             {
                 fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
@@ -59,46 +62,27 @@ public abstract class BaseUpdater : ISourceUpdater
                 {
                     log.Verbose($"Updated image reference: {change}");
                 }
-
-                if (imageReplacementResult.AlreadyUpToDateImages.Count > 0)
+                foreach (var alreadyUpToDate in imageReplacementResult.AlreadyUpToDateImages)
                 {
-                    // Mixed case: some images were updated, others were already at the target tag.
-                    // Build the patch from the updated content treating ALL targeted images
-                    // (both just-updated and already-correct) as needing a patch, so that the
-                    // server can verify the desired tag for every container that references them.
-                    var allTargetedImages = new HashSet<string>(imageReplacementResult.AlreadyUpToDateImages);
-                    allTargetedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
-                    var patch = CreateNoOpJsonPatch(imageReplacementResult.UpdatedContents, allTargetedImages, ReplaceImages);
-                    if (patch != null)
-                    {
-                        jsonPatches.Add(new(relativePath, Serialize(patch)));
-                    }
-                    foreach (var alreadyUpToDate in imageReplacementResult.AlreadyUpToDateImages)
-                    {
-                        log.Verbose($"Image reference already up-to-date: {alreadyUpToDate}");
-                    }
-                }
-                else
-                {
-                    jsonPatches.Add(new(relativePath, Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
+                    log.Verbose($"Image reference already up-to-date: {alreadyUpToDate}");
                 }
             }
-            else if (imageReplacementResult.AlreadyUpToDateImages.Count > 0)
+            else if (allTargetedImages.Count > 0)
             {
-                // Image reference was found but the tag is already at the target value:
-                // generate a temporary patch representing the change we would have made.
-                // This allows the server to verify the specific image tag without being
-                // sensitive to unrelated file changes.
-                var patch = CreateNoOpJsonPatch(content, imageReplacementResult.AlreadyUpToDateImages, ReplaceImages);
-                if (patch != null)
-                {
-                    jsonPatches.Add(new(relativePath, Serialize(patch)));
-                }
                 log.Verbose($"No changes made to file {relativePath} — image references are already up-to-date.");
             }
             else
             {
                 log.Verbose($"No changes made to file {relativePath} as no image references were updated.");
+            }
+
+            if (allTargetedImages.Count > 0)
+            {
+                var patch = CreateJsonPatch(content, allTargetedImages, ReplaceImages);
+                if (patch != null)
+                {
+                    jsonPatches.Add(new(relativePath, Serialize(patch)));
+                }
             }
         }
 
@@ -125,19 +109,19 @@ public abstract class BaseUpdater : ISourceUpdater
     }
 
     /// <summary>
-    /// Generates a JSON patch representing what the image update *would* have done, for cases where
-    /// the image tag is already at the target value. Returns null if no patch could be produced.
+    /// Generates a JSON patch targeting all specified images, representing the desired state for
+    /// each image tag whether or not it was actually updated. Returns null if no patch could be produced.
     /// </summary>
-    protected JsonPatchDocument? CreateNoOpJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
+    protected JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
     {
         var temporaryBefore = CreateTemporaryBeforeContent(content, targetedImages);
         var temporaryResult = replacer(temporaryBefore);
         return temporaryResult.UpdatedImageReferences.Count > 0
-            ? CreateJsonPatch(temporaryBefore, temporaryResult.UpdatedContents)
+            ? CreateJsonPatchFromDiff(temporaryBefore, temporaryResult.UpdatedContents)
             : null;
     }
 
-    protected static JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)
+    protected static JsonPatchDocument CreateJsonPatchFromDiff(string originalContent, string updatedContent)
     {
         var originalStream = new YamlStream();
         originalStream.Load(new StringReader(originalContent));
