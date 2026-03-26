@@ -59,7 +59,7 @@ public class ApplicationUpdater
                                                            .Where(sourceUpdater.IsAppInScope)
                                                            .Select(applicationSource => new
                                                            {
-                                                               Updated = sourceUpdater.ProcessSource(applicationSource),
+                                                               UpdateResult = sourceUpdater.ProcessSource(applicationSource),
                                                                applicationSource,
                                                            })
                                                            .ToList();
@@ -70,7 +70,7 @@ public class ApplicationUpdater
                 ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, application.KubernetesNamespace), applicationName)
                 : applicationName;
 
-            var message = appliedSourcesResults.Any(r => r.Updated.PushResult != null)
+            var message = appliedSourcesResults.Any(r => r.UpdateResult.Updated)
                 ? "Updated Application {0}"
                 : "Nothing to update for Application {0}";
 
@@ -81,9 +81,9 @@ public class ApplicationUpdater
                                                 applicationName.ToApplicationName(),
                                                 applicationFromYaml.Spec.Sources.Count,
                                                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                                appliedSourcesResults.Select(r => new TrackedSourceDetail(r.Updated.PushResult?.CommitSha ?? string.Empty, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
-                                                appliedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
-                                                appliedSourcesResults.Where(r => r.Updated.PushResult != null).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+                                                appliedSourcesResults.Select(r => new TrackedSourceDetail(r.UpdateResult.PushResult?.CommitSha ?? string.Empty, r.applicationSource.Index, [], r.UpdateResult.PatchedFiles)).ToList(),
+                                                appliedSourcesResults.SelectMany(r => r.UpdateResult.ImagesUpdated).ToHashSet(),
+                                                appliedSourcesResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
 
         void LogHelmAnnotationWarning(Application applicationFromYaml)
