@@ -110,10 +110,10 @@ public abstract class BaseUpdater : ISourceUpdater
     /// Running the image replacer on this temporary content produces the correct content, and the diff
     /// between the two gives a meaningful patch that only targets the specific image tag fields.
     /// </summary>
-    protected static string CreateTemporaryBeforeContent(string content, HashSet<string> alreadyUpToDateImages)
+    protected static string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
     {
         var temporaryBefore = content;
-        foreach (var imageRef in alreadyUpToDateImages)
+        foreach (var imageRef in targetedImages)
         {
             var colonIdx = imageRef.LastIndexOf(':');
             if (colonIdx >= 0)
@@ -128,9 +128,9 @@ public abstract class BaseUpdater : ISourceUpdater
     /// Generates a JSON patch representing what the image update *would* have done, for cases where
     /// the image tag is already at the target value. Returns null if no patch could be produced.
     /// </summary>
-    protected JsonPatchDocument? CreateNoOpJsonPatch(string content, HashSet<string> alreadyUpToDateImages, Func<string, ImageReplacementResult> replacer)
+    protected JsonPatchDocument? CreateNoOpJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
     {
-        var temporaryBefore = CreateTemporaryBeforeContent(content, alreadyUpToDateImages);
+        var temporaryBefore = CreateTemporaryBeforeContent(content, targetedImages);
         var temporaryResult = replacer(temporaryBefore);
         return temporaryResult.UpdatedImageReferences.Count > 0
             ? CreateJsonPatch(temporaryBefore, temporaryResult.UpdatedContents)
