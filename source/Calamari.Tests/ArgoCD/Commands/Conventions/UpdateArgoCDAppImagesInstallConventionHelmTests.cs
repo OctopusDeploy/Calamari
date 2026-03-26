@@ -1222,7 +1222,7 @@ service:
             // Only values.yaml should be in PatchedFiles — values-extra.yaml had no image match and must not produce a patch entry
             using var scope = new AssertionScope();
             capturedResults.Should().NotBeNull();
-            var sourceDetails = capturedResults.Single().UpdatedSourceDetails.First();
+            var sourceDetails = capturedResults.Single().TrackedSourceDetails.First();
             var expectedPatch = new JsonPatchDocument([
                 JsonPatchOperation.Replace(new JsonPointer("/0/image/tag"), "1.27.1"),
             ]);
@@ -1395,14 +1395,14 @@ service:
             var actual = capturedResults.Single();
             actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1", "alpine:2.2"]);
             actual.GitReposUpdated.Should().HaveCount(1);
-            actual.UpdatedSourceDetails.Should().HaveCount(1);
+            actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var expectedPatch = new JsonPatchDocument([
                 JsonPatchOperation.Replace(new JsonPointer("/0/image1/name"), "nginx:1.27.1"),
                 JsonPatchOperation.Replace(new JsonPointer("/0/image2/tag"), 2.2),
             ]);
 
-            var sourceDetails = actual.UpdatedSourceDetails.First();
+            var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
             sourceDetails.PatchedFiles.Should()

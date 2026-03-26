@@ -34,6 +34,7 @@ namespace Calamari.ArgoCD
 
             var updatedDocuments = new List<string>();
             var imageReplacements = new HashSet<string>();
+            var alreadyUpToDateImages = new HashSet<string>();
 
             foreach (var document in documents)
             {
@@ -73,8 +74,9 @@ namespace Calamari.ArgoCD
                     }
 
                     var resource = resources[0];
-                    var (updatedDocument, changes) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate.Select(i => i.ContainerReference).ToList());
+                    var (updatedDocument, changes, alreadyUpToDate) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate.Select(i => i.ContainerReference).ToList());
                     imageReplacements.UnionWith(changes);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDate);
                     // NOTE: We don't need to check if a change has been made or not, if it hasn't, the final document will remain unchanged.
                     updatedDocuments.Add(updatedDocument);
                 }
@@ -86,94 +88,115 @@ namespace Calamari.ArgoCD
             }
 
             // Stitch documents back together, trailing --- will remain in places for valid yaml
-            return new ImageReplacementResult(string.Concat(updatedDocuments), imageReplacements);
+            return new ImageReplacementResult(string.Concat(updatedDocuments), imageReplacements, alreadyUpToDateImages);
         }
 
-        (string, HashSet<string>) UpdateImagesInKubernetesResource(string initialDocument, object? resourceObject, List<ContainerImageReference> imagesToUpdate)
+        (string, HashSet<string>, HashSet<string>) UpdateImagesInKubernetesResource(string initialDocument, object? resourceObject, List<ContainerImageReference> imagesToUpdate)
         {
             var updatedDocument = initialDocument;
             var imageReplacements = new HashSet<string>();
+            var alreadyUpToDateImages = new HashSet<string>();
 
             List<string> replacementResult;
+            List<string> alreadyUpToDateResult;
 
             switch (resourceObject)
             {
                 case V1Pod pod:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, pod.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, pod.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, pod.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, pod.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1Deployment deployment:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, deployment.Spec?.Template?.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, deployment.Spec?.Template?.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, deployment.Spec?.Template?.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, deployment.Spec?.Template?.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1StatefulSet statefulSet:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, statefulSet.Spec?.Template?.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, statefulSet.Spec?.Template?.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, statefulSet.Spec?.Template?.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, statefulSet.Spec?.Template?.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1DaemonSet daemonSet:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, daemonSet.Spec?.Template?.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, daemonSet.Spec?.Template?.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, daemonSet.Spec?.Template?.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, daemonSet.Spec?.Template?.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1Job job:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, job.Spec?.Template?.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, job.Spec?.Template?.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, job.Spec?.Template?.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, job.Spec?.Template?.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1CronJob cronJob:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, cronJob.Spec?.JobTemplate?.Spec?.Template?.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, cronJob.Spec?.JobTemplate?.Spec?.Template?.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, cronJob.Spec?.JobTemplate?.Spec?.Template?.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, cronJob.Spec?.JobTemplate?.Spec?.Template?.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1ReplicationController rc:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rc.Spec?.Template?.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rc.Spec?.Template?.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rc.Spec?.Template?.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rc.Spec?.Template?.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1ReplicaSet rs:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rs.Spec?.Template?.Spec?.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rs.Spec?.Template?.Spec?.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rs.Spec?.Template?.Spec?.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rs.Spec?.Template?.Spec?.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
                 case V1PodTemplate podTemplate:
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, podTemplate.Template.Spec.Containers);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, podTemplate.Template.Spec.Containers);
                     imageReplacements.UnionWith(replacementResult);
-                    (updatedDocument, replacementResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, podTemplate.Template.Spec.InitContainers);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, podTemplate.Template.Spec.InitContainers);
                     imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
             }
 
 
-            return (updatedDocument, imageReplacements);
+            return (updatedDocument, imageReplacements, alreadyUpToDateImages);
         }
 
-        (string, List<string>) ReplaceImageReferences(string document, List<ContainerImageReference> imagesToUpdate, IList<V1Container>? containers)
+        (string, List<string>, List<string>) ReplaceImageReferences(string document, List<ContainerImageReference> imagesToUpdate, IList<V1Container>? containers)
         {
             if (containers == null || containers.Count == 0)
             {
-                return (document, new List<string>());
+                return (document, new List<string>(), new List<string>());
             }
 
             var replacementsMade = new List<string>();
+            var alreadyUpToDate = new List<string>();
 
             foreach (var container in containers)
             {
@@ -182,8 +205,8 @@ namespace Calamari.ArgoCD
                 var matchedUpdate = imagesToUpdate.Select(i => new
                                                   {
                                                       Reference = i,
-                                                      Comparison = i.CompareWith(currentReference) 
-                                                      
+                                                      Comparison = i.CompareWith(currentReference)
+
                                                   })
                                                   .FirstOrDefault(i => i.Comparison.MatchesImage());
                 if (matchedUpdate != null)
@@ -194,7 +217,7 @@ namespace Calamari.ArgoCD
                         var newReference = currentReference.WithTag(matchedUpdate.Reference.Tag);
 
                         // Pattern ensures we only update lines with  `image: <IMAGENAME>` OR  `- image: <IMAGENANME>`.
-                        // Ignores comments and white space, while preserving any quotes around the image name 
+                        // Ignores comments and white space, while preserving any quotes around the image name
                         var pattern = $@"(?<=^\s*-?\s*image:\s*)([""']?){Regex.Escape(container.Image)}\1(?=\s*(#.*)?$)";
                         document = Regex.Replace(document,
                                                  pattern,
@@ -208,10 +231,14 @@ namespace Calamari.ArgoCD
 
                         replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                     }
+                    else
+                    {
+                        alreadyUpToDate.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+                    }
                 }
             }
 
-            return (document, replacementsMade);
+            return (document, replacementsMade, alreadyUpToDate);
         }
 
         static bool IsPotentialKubernetesResource(YamlMappingNode rootNode)

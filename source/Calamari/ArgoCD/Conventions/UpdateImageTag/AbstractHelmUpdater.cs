@@ -44,20 +44,19 @@ public abstract class AbstractHelmUpdater : BaseUpdater
     /// <returns>Images that were updated</returns>
     protected FileUpdateResult ProcessHelmUpdateTargets(
         string workingDirectory,
-        ApplicationSourceWithMetadata sourceWithMetadata,
         IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets)
     {
-        var results = targets.Select(t => UpdateHelmImageValues(workingDirectory,
-                                                                t,
-                                                                deploymentConfig.ImageReferences
-                                                               ))
-                             .Where(r => r.ImagesUpdated.Any())
-                             .ToList();
+        var results =
+            targets.Select(t => UpdateHelmImageValues(workingDirectory, t, deploymentConfig.ImageReferences))
+                   .Where(r => r.ImagesUpdated.Any() || r.JsonPatch != null)
+                   .ToList();
 
         if (results.Any())
         {
-            var patchedFiles = results.Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
-                                      .ToList();
+            var patchedFiles = results
+                .Where(r => r.JsonPatch != null)
+                .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
+                .ToList();
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 
             return new FileUpdateResult(updatedImages, [], patchedFiles, []);
@@ -84,6 +83,21 @@ public abstract class AbstractHelmUpdater : BaseUpdater
             return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
         }
 
-        return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), null);
+        if (imageUpdateResult.AlreadyUpToDateImages.Count > 0)
+        {
+            // Image was found but tag is already correct:
+            // generate a temporary patch representing the intended change,
+            // so the server can verify the specific image tag without being
+            // sensitive to unrelated file changes.
+            var jsonPatch = CreateNoOpJsonPatch(fileContent,
+                                               imageUpdateResult.AlreadyUpToDateImages,
+                                               tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
+            if (jsonPatch != null)
+            {
+                return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), jsonPatch);
+            }
+        }
+        
+        return new HelmRefUpdatedResult([], Path.Combine(target.Path, target.FileName), null);
     }
 }

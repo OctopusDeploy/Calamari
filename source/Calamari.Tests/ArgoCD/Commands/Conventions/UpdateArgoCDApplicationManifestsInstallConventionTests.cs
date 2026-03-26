@@ -437,12 +437,57 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var actual = capturedResults.Single();
             actual.UpdatedImages.Should().BeEmpty();
             actual.GitReposUpdated.Should().HaveCount(1);
-            actual.UpdatedSourceDetails.Should().HaveCount(1);
+            actual.TrackedSourceDetails.Should().HaveCount(1);
 
-            var sourceDetails = actual.UpdatedSourceDetails.First();
+            var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEquivalentTo([new FileHash("first.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")]);
             sourceDetails.PatchedFiles.Should().BeEmpty();
+        }
+
+        [Test]
+        public void NoOp_WhenFilesAlreadyMatchDesiredState_StillTracksSourceWithEmptyCommitSha()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+
+            // Install once to commit the files
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
+            convention.Install(runningDeployment);
+
+            // Install again with the same files — this is the no-op case
+            IReadOnlyList<ProcessApplicationResult> capturedResults = null;
+            deploymentReporter = Substitute.For<IArgoCDFilesUpdatedReporter>();
+            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+
+            var noOpConvention = CreateConvention(nonSensitiveCalamariVariables);
+            noOpConvention.Install(runningDeployment);
+
+            using var scope = new AssertionScope();
+            capturedResults.Should().NotBeNull();
+            var actual = capturedResults.Single();
+            actual.Updated.Should().BeFalse("no commit was made so the application should not be considered updated");
+            actual.TrackedSourceDetails.Should().HaveCount(1, "desired state should still be reported for the no-op case");
+
+            var sourceDetails = actual.TrackedSourceDetails.First();
+            sourceDetails.CommitSha.Should().BeEmpty("no commit was made so the SHA should be empty");
+            sourceDetails.ReplacedFiles.Should().BeEquivalentTo([new FileHash("first.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")]);
         }
 
         [Test]

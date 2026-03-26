@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD
@@ -7,7 +8,7 @@ namespace Calamari.ArgoCD
 
     public record FileJsonPatch(string FilePath, string JsonPatch);
 
-    public record UpdatedSourceDetail(
+    public record TrackedSourceDetail(
         string CommitSha,
         int SourceIndex,
         List<FileHash> ReplacedFiles,
@@ -20,7 +21,7 @@ namespace Calamari.ArgoCD
             ApplicationName applicationName,
             int totalSourceCount,
             int matchingSourceCount,
-            List<UpdatedSourceDetail> updatedSourceDetails,
+            List<TrackedSourceDetail> trackedSourceDetails,
             HashSet<string> updatedImages,
             HashSet<string> gitReposUpdated)
         {
@@ -28,7 +29,7 @@ namespace Calamari.ArgoCD
             ApplicationName = applicationName;
             TotalSourceCount = totalSourceCount;
             MatchingSourceCount = matchingSourceCount;
-            UpdatedSourceDetails = updatedSourceDetails;
+            TrackedSourceDetails = trackedSourceDetails;
             UpdatedImages = updatedImages;
             GitReposUpdated = gitReposUpdated;
         }
@@ -37,10 +38,11 @@ namespace Calamari.ArgoCD
         public ApplicationName ApplicationName { get; }
         public int TotalSourceCount { get; }
         public int MatchingSourceCount { get; }
-        public List<UpdatedSourceDetail> UpdatedSourceDetails { get; }
+        public List<TrackedSourceDetail> TrackedSourceDetails { get; }
         public HashSet<string> UpdatedImages { get; }
         public HashSet<string> GitReposUpdated { get; }
-        public int UpdatedSourceCount => UpdatedSourceDetails.Count;
-        public bool Updated => UpdatedSourceDetails.Count != 0;
+        public int UpdatedSourceCount => TrackedSourceDetails.Count(s => !string.IsNullOrEmpty(s.CommitSha));
+        public bool Tracked => TrackedSourceDetails.Any();
+        public bool Updated => UpdatedSourceCount > 0;
     }
 }

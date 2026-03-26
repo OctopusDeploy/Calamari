@@ -36,7 +36,7 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", 0, [], [])], [], [])
+                new("gateway1", new ApplicationName("app1"), 2, 2, [new TrackedSourceDetail("abc123", 0, [], [])], [], [])
             };
 
             reporter.ReportFilesUpdated(applicationResults);
@@ -61,8 +61,8 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", 0, [], [])], [], []),
-                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("def456", 0, [], [])], [], [])
+                new("gateway1", new ApplicationName("app1"), 2, 2, [new TrackedSourceDetail("abc123", 0, [], [])], [], []),
+                new("gateway2", new ApplicationName("app2"), 1, 1, [new TrackedSourceDetail("def456", 0, [], [])], [], [])
             };
 
             reporter.ReportFilesUpdated(applicationResults);
@@ -100,7 +100,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
-                    [new UpdatedSourceDetail("abc123", 0, [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")], [])],
+                    [new TrackedSourceDetail("abc123", 0, [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")], [])],
                     [], [])
             };
 
@@ -154,7 +154,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
-                    [new UpdatedSourceDetail("abc123", 0,
+                    [new TrackedSourceDetail("abc123", 0,
                         [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")],
                         [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]""")])],
                     [], [])
@@ -183,7 +183,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
-                    [new UpdatedSourceDetail("abc123", 0,
+                    [new TrackedSourceDetail("abc123", 0,
                         [
                             new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360"),
                             new FileHash("values-prod.yaml", "a3b4c5d6e7f8a3b4c5d6e7f8a3b4c5d6e7f8a3b4")
@@ -248,7 +248,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 1, 1,
-                    [new UpdatedSourceDetail("abc123", 0,
+                    [new TrackedSourceDetail("abc123", 0,
                         [new FileHash(Path.Combine("some", "nested", "values.yaml"), "22c0df2cceca5273e4dc569dda52805d27df3360")],
                         [])],
                     [], [])
@@ -269,6 +269,34 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
+        public void ReportDeployments_WithNoOpSource_EmitsServiceMessageWithEmptyCommitSha()
+        {
+            var log = new InMemoryLog();
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
+
+            var applicationResults = new List<ProcessApplicationResult>
+            {
+                new("gateway1", new ApplicationName("app1"), 1, 1,
+                    [new TrackedSourceDetail("", 0, [],
+                        [new FileJsonPatch("values.yaml", "[{\"op\":\"replace\",\"path\":\"/image\",\"value\":\"nginx:1.27\"}]")])],
+                    [], [])
+            };
+
+            reporter.ReportFilesUpdated(applicationResults);
+
+            log.ServiceMessages.Should().ContainSingle().Which.Should().BeEquivalentTo(new
+            {
+                Name = "argocd-files-updated",
+                Properties = new Dictionary<string, string>
+                {
+                    ["gatewayId"] = "gateway1",
+                    ["applicationName"] = "app1",
+                    ["sources"] = "[{\"CommitSha\":\"\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[{\"FilePath\":\"values.yaml\",\"JsonPatch\":\"[{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/image\\u0022,\\u0022value\\u0022:\\u0022nginx:1.27\\u0022}]\"}]}]"
+                }
+            });
+        }
+
+        [Test]
         public void ReportDeployments_WithMixedUpdatedAndNonUpdatedApplications_WritesOnlyUpdatedMessages()
         {
             var log = new InMemoryLog();
@@ -277,7 +305,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2, [], [], []),
-                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("abc123", 0, [], [])], [], []),
+                new("gateway2", new ApplicationName("app2"), 1, 1, [new TrackedSourceDetail("abc123", 0, [], [])], [], []),
                 new("gateway3", new ApplicationName("app3"), 1, 1, [], [], [])
             };
 

@@ -48,7 +48,7 @@ public class RepositoryAdapter
             }
         }
 
-        return new SourceUpdateResult([], null, [], []);
+        return new SourceUpdateResult([], null, result.ReplacedFiles, []);
     }
     
     
@@ -63,7 +63,7 @@ public class RepositoryAdapter
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);
 
-        log.Info("Commiting changes");
+        log.Info("Committing changes");
         if (!repository.CommitChanges(commitParameters.Summary, commitDescription))
             return null;
 
