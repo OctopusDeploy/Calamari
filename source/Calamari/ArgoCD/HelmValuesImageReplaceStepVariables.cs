@@ -33,7 +33,7 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
             var valueToUpdate = flattenedYamlPathDictionary.GetRaw(helmReference);
             if (valueToUpdate == null)
             {
-                log.Verbose($"{helmReference} for image {newImageTag.ContainerReference.ToString()} was not found in your values file.");
+                log.Verbose($"{helmReference} for image {newImageTag.ContainerReference.FriendlyName()} was not found in your values file.");
                 continue;
             }
                 
