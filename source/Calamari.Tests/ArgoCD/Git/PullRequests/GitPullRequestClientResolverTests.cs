@@ -104,7 +104,7 @@ public class GitPullRequestClientResolverTests
             new NeverMatchesFactory()
         });
 
-        var client = await resolver.TryResolve(connection, log, CancellationToken.None);’”
+        var client = await resolver.TryResolve(connection, log, CancellationToken.None);
 
         client.Should().BeNull();
     }
