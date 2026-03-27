@@ -54,7 +54,6 @@ public class RefUpdater : AbstractHelmUpdater
         HelmHelpers.LogHelmSourceConfigurationProblems(log, helmTargetsForRefSource.Problems);
 
         return ProcessHelmUpdateTargets(workingDirectory,
-                                        sourceWithMetadata,
                                         helmTargetsForRefSource.Targets);
     }
 

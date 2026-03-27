@@ -54,14 +54,14 @@ public class ApplicationUpdater
 
             var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, commitMessageGenerator);
             var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryAdapter, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, outputVariablesWriter, fileSystem);
-
-            var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
+            
+            var appliedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
+                                                           .Where(sourceUpdater.IsAppInScope)
                                                            .Select(applicationSource => new
                                                            {
-                                                               Updated = sourceUpdater.ProcessSource(applicationSource),
+                                                               UpdateResult = sourceUpdater.ProcessSource(applicationSource),
                                                                applicationSource,
                                                            })
-                                                           .Where(r => r.Updated.ImagesUpdated.Any())
                                                            .ToList();
 
             //if we have links, use that to generate a link, otherwise just put the name there
@@ -70,7 +70,7 @@ public class ApplicationUpdater
                 ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, application.KubernetesNamespace), applicationName)
                 : applicationName;
 
-            var message = updatedSourcesResults.Any()
+            var message = appliedSourcesResults.Any(r => r.UpdateResult.Updated)
                 ? "Updated Application {0}"
                 : "Nothing to update for Application {0}";
 
@@ -81,9 +81,9 @@ public class ApplicationUpdater
                                                 applicationName.ToApplicationName(),
                                                 applicationFromYaml.Spec.Sources.Count,
                                                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.PushResult!.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
-                                                updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
-                                                updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+                                                appliedSourcesResults.Select(r => new TrackedSourceDetail(r.UpdateResult.PushResult?.CommitSha, r.applicationSource.Index, [], r.UpdateResult.PatchedFiles)).ToList(),
+                                                appliedSourcesResults.SelectMany(r => r.UpdateResult.ImagesUpdated).ToHashSet(),
+                                                appliedSourcesResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
 
         void LogHelmAnnotationWarning(Application applicationFromYaml)

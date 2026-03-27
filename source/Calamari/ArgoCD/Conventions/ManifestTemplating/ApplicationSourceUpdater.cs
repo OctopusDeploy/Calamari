@@ -40,16 +40,19 @@ public class ApplicationSourceUpdater
         this.repositoryAdapter = repositoryAdapter;
     }
 
-    public ManifestUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    public bool IsAppInScope(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var applicationSource = sourceWithMetadata.Source;
         var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, applicationFromYaml.Spec.Sources.Count > 1);
 
         log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
-        if (!deploymentScope.Matches(annotatedScope))
-            return new ManifestUpdateResult(false, string.Empty, []);
+        return deploymentScope.Matches(annotatedScope);
+    }
 
+    public ManifestUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    {
+        var applicationSource = sourceWithMetadata.Source;
         log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationFromYaml.Metadata.Name}'");
 
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory);
@@ -66,7 +69,7 @@ public class ApplicationSourceUpdater
             return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.ReplacedFiles);
         }
         
-        log.Info("No changes were commited");
-        return new ManifestUpdateResult(false, string.Empty, []);
+        log.Info("No changes were committed");
+        return new ManifestUpdateResult(false, null, sourceUpdateResult.ReplacedFiles);
     }
 }

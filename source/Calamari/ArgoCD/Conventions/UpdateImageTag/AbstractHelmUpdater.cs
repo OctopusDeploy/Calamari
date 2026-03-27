@@ -44,20 +44,18 @@ public abstract class AbstractHelmUpdater : BaseUpdater
     /// <returns>Images that were updated</returns>
     protected FileUpdateResult ProcessHelmUpdateTargets(
         string workingDirectory,
-        ApplicationSourceWithMetadata sourceWithMetadata,
         IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets)
     {
-        var results = targets.Select(t => UpdateHelmImageValues(workingDirectory,
-                                                                t,
-                                                                deploymentConfig.ImageReferences
-                                                               ))
-                             .Where(r => r.ImagesUpdated.Any())
-                             .ToList();
+        var results =
+            targets.Select(t => UpdateHelmImageValues(workingDirectory, t, deploymentConfig.ImageReferences))
+                   .Where(r => r.Updated)
+                   .ToList();
 
         if (results.Any())
         {
-            var patchedFiles = results.Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
-                                      .ToList();
+            var patchedFiles = results
+                .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
+                .ToList();
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 
             return new FileUpdateResult(updatedImages, [], patchedFiles, []);
@@ -78,12 +76,12 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         var imageUpdateResult = helmImageReplacer.UpdateImages(imagesToUpdate);
 
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
-        {
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
-            var jsonPatch = CreateJsonPatch(fileContent, imageUpdateResult.UpdatedContents);
-            return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
-        }
 
-        return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), null);
+        var jsonPatch = CreateJsonPatch(fileContent,
+                                        imagesToUpdate.Select(i => i.ContainerReference.FriendlyName()).ToHashSet(),
+                                        tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
+
+        return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
     }
 }

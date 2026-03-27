@@ -26,13 +26,13 @@ namespace Calamari.ArgoCD
         public void ReportFilesUpdated(IReadOnlyList<ProcessApplicationResult> applicationResults)
         {
             //file paths _must_ use forward slashes for directory separators
-            foreach (var appResult in applicationResults.Where(r => r.Updated))
+            foreach (var appResult in applicationResults.Where(r => r.Tracked))
             {
                 var parameters = new Dictionary<string, string>
                 {
                     { ArgoCDFilesUpdatedAttributes.GatewayId, appResult.GatewayId },
                     { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Value },
-                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(ConvertPathsToPosix(appResult.UpdatedSourceDetails)) }
+                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(ConvertPathsToPosix(appResult.TrackedSourceDetails)) }
                 };
 
                 var message = new ServiceMessage(
@@ -43,7 +43,7 @@ namespace Calamari.ArgoCD
             }
         }
 
-        List<UpdatedSourceDetail> ConvertPathsToPosix(List<UpdatedSourceDetail> inputs)
+        List<TrackedSourceDetail> ConvertPathsToPosix(List<TrackedSourceDetail> inputs)
         {
             return inputs.Select(usd => usd with
                          {

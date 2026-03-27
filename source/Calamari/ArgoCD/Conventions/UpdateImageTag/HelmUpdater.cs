@@ -80,7 +80,6 @@ public class HelmUpdater : AbstractHelmUpdater
         HelmHelpers.LogHelmSourceConfigurationProblems(log, valueFileProblems);
 
         return ProcessHelmUpdateTargets(workingDirectory,
-                                        sourceWithMetadata,
                                         valuesFilesToUpdate);
     }
 

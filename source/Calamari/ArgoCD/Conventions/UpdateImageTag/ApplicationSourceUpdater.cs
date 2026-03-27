@@ -42,7 +42,7 @@ public class ApplicationSourceUpdater
         this.fileSystem = fileSystem;
     }
 
-    public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    public bool IsAppInScope(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
@@ -50,11 +50,11 @@ public class ApplicationSourceUpdater
         var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
 
         log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
-        if (!deploymentScope.Matches(annotatedScope))
-        {
-            return new SourceUpdateResult(new HashSet<string>(), null, [], []);
-        }
-        
+        return deploymentScope.Matches(annotatedScope);
+    }
+
+    public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    {
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
 
         var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
