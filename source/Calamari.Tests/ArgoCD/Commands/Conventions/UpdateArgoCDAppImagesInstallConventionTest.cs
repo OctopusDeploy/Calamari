@@ -1056,6 +1056,108 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             source1.PatchedFiles.Single().FilePath.Should().Be(file1);
         }
 
+        [Test]
+        public void MultiSource_BothSourcesAlreadyAtTarget_BothTrackedWithNullCommitSha()
+        {
+            // Arrange: both sources already have the target image — no commits expected.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var file0 = Path.Combine("source0", "deployment.yaml");
+            var file1 = Path.Combine("source1", "deployment.yaml");
+            originRepo.AddFilesToBranch(argoCDBranchName, [
+                (file0, MakeDeploymentYaml("source0-deployment", "nginx:1.27.1")),
+                (file1, MakeDeploymentYaml("source1-deployment", "nginx:1.27.1")),
+            ]);
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(new ArgoCDApplicationBuilder()
+                                                        .WithName("App1")
+                                                        .WithAnnotations(new Dictionary<string, string>
+                                                        {
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source0"))] = ProjectSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source0"))] = EnvironmentSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
+                                                        })
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .Build());
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+            var results = getResults();
+            results.Should().NotBeNull();
+            var actual = results.Single();
+            actual.Updated.Should().BeFalse("neither source required a commit");
+            actual.Tracked.Should().BeTrue("both sources are in scope and should be tracked");
+            actual.UpdatedImages.Should().BeEmpty();
+            actual.TrackedSourceDetails.Should().HaveCount(2, "both in-scope sources should be tracked regardless of commit status");
+
+            var source0 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 0);
+            source0.CommitSha.Should().BeNull("source 0 was already at the target tag");
+            source0.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated");
+            source0.PatchedFiles.Single().FilePath.Should().Be(file0);
+
+            var source1 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 1);
+            source1.CommitSha.Should().BeNull("source 1 was already at the target tag");
+            source1.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated");
+            source1.PatchedFiles.Single().FilePath.Should().Be(file1);
+        }
+
+        [Test]
+        public void MultiSource_OutOfScopeSource_IsNotTracked()
+        {
+            // Arrange: source 0 has a mismatched project scope and must not be tracked.
+            // Source 1 is in scope and has an outdated image that gets updated.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var file0 = Path.Combine("source0", "deployment.yaml");
+            var file1 = Path.Combine("source1", "deployment.yaml");
+            originRepo.AddFilesToBranch(argoCDBranchName, [
+                (file0, MakeDeploymentYaml("source0-deployment", "nginx:1.19")),
+                (file1, MakeDeploymentYaml("source1-deployment", "nginx:1.19")),
+            ]);
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(new ArgoCDApplicationBuilder()
+                                                        .WithName("App1")
+                                                        .WithAnnotations(new Dictionary<string, string>
+                                                        {
+                                                            // source0 is annotated for a different project — out of scope for this deployment
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source0"))] = "other-project",
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source0"))] = EnvironmentSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
+                                                        })
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .Build());
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+            var results = getResults();
+            results.Should().NotBeNull();
+            var actual = results.Single();
+            actual.Updated.Should().BeTrue("source 1 had an outdated image and was committed");
+            actual.TrackedSourceDetails.Should().HaveCount(1, "only in-scope sources should be tracked");
+
+            var source1 = actual.TrackedSourceDetails.Single();
+            source1.SourceIndex.Should().Be(1, "source 0 was out of scope and excluded");
+            source1.CommitSha.Should().HaveLength(40, "source 1 was updated and committed");
+        }
+
         static string MakeDeploymentYaml(string name, params string[] images)
         {
             var containerName = (string image) => image.Split('/').Last().Split(':').First();
