@@ -7,6 +7,7 @@ using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
+using Calamari.ArgoCD.Models;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
@@ -961,6 +962,98 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             TargetRevision = ArgoCDBranchFriendlyName,
                                                         }, sourceType)
                                                         .Build());
+        }
+
+        [Test]
+        public void KustomizeSource_ImageAlreadyAtTargetTag_TracksSourceWithNullCommitSha()
+        {
+            // Arrange
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            originRepo.AddFilesToBranch(argoCDBranchName, [("kustomization.yaml",
+                """
+                images:
+                - name: "docker.io/nginx"
+                  newTag: "1.27.1"
+                """)]);
+
+            OverrideApplicationSourceType(SourceTypeConstants.Kustomize);
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+            var results = getResults();
+            results.Should().NotBeNull();
+            var actual = results.Single();
+            actual.Updated.Should().BeFalse("image is already at the target tag so no commit should be made");
+            actual.UpdatedImages.Should().BeEmpty();
+            actual.TrackedSourceDetails.Should().HaveCount(1, "source should still be tracked for the no-op case");
+
+            var sourceDetails = actual.TrackedSourceDetails.First();
+            sourceDetails.CommitSha.Should().BeNull("no commit was made");
+            // The placeholder-substitution technique locates the tag value in the YAML and produces a patch entry,
+            // but because the before/after content is identical the resulting patch has zero operations.
+            sourceDetails.PatchedFiles.Should().HaveCount(1);
+            sourceDetails.PatchedFiles.Single().FilePath.Should().Be("kustomization.yaml");
+            sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be("[]");
+        }
+
+        [Test]
+        public void MultiSource_OneSourceUpdated_OtherAlreadyAtTarget_BothTracked()
+        {
+            // Arrange: Source 0 has an outdated image; Source 1 already has the target image.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var file0 = Path.Combine("source0", "deployment.yaml");
+            var file1 = Path.Combine("source1", "deployment.yaml");
+            originRepo.AddFilesToBranch(argoCDBranchName, [
+                (file0, MakeDeploymentYaml("source0-deployment", "nginx:1.19")),
+                (file1, MakeDeploymentYaml("source1-deployment", "nginx:1.27.1")),
+            ]);
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(new ArgoCDApplicationBuilder()
+                                                        .WithName("App1")
+                                                        .WithAnnotations(new Dictionary<string, string>
+                                                        {
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source0"))] = ProjectSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source0"))] = EnvironmentSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
+                                                        })
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .Build());
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+            var results = getResults();
+            results.Should().NotBeNull();
+            var actual = results.Single();
+            actual.Updated.Should().BeTrue("source 0 had an outdated image");
+            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
+            actual.TrackedSourceDetails.Should().HaveCount(2, "both sources should be tracked regardless of whether they made a commit");
+
+            var source0 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 0);
+            source0.CommitSha.Should().HaveLength(40, "source 0 had an outdated image and was committed");
+            source0.PatchedFiles.Should().HaveCount(1);
+            source0.PatchedFiles.Single().FilePath.Should().Be(file0);
+
+            var source1 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 1);
+            source1.CommitSha.Should().BeNull("source 1 was already at the target tag so no commit was made");
+            source1.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated for source 1");
+            source1.PatchedFiles.Single().FilePath.Should().Be(file1);
         }
 
         static string MakeDeploymentYaml(string name, params string[] images)
