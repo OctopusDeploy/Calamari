@@ -50,7 +50,7 @@ namespace Calamari.Scripting
         {
             var variables = deployment.Variables;
 
-            // No need to check for "default" package since it gets extracted in the current directory in previous step.”
+            // No need to check for "default" package since it gets extracted in the current directory in previous step.
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection)
                                                  .Where(i => !string.IsNullOrEmpty(i));
 
