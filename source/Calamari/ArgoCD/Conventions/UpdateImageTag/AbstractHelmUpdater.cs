@@ -79,7 +79,7 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
         {
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
-            var jsonPatch = CreateJsonPatch(fileContent, imageUpdateResult.UpdatedContents);
+            var jsonPatch = CreateJsonPatchFromDiff(fileContent, imageUpdateResult.UpdatedContents);
             return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
         }
 
@@ -89,9 +89,9 @@ public abstract class AbstractHelmUpdater : BaseUpdater
             // generate a temporary patch representing the intended change,
             // so the server can verify the specific image tag without being
             // sensitive to unrelated file changes.
-            var jsonPatch = CreateNoOpJsonPatch(fileContent,
-                                               imageUpdateResult.AlreadyUpToDateImages,
-                                               tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
+            var jsonPatch = CreateJsonPatch(fileContent,
+                                           imageUpdateResult.AlreadyUpToDateImages,
+                                           tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
             if (jsonPatch != null)
             {
                 return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), jsonPatch);
