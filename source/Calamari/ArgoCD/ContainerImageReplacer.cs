@@ -27,7 +27,7 @@ namespace Calamari.ArgoCD
         {
             if (string.IsNullOrWhiteSpace(yamlContent))
             {
-                return new ImageReplacementResult(yamlContent, new HashSet<string>());
+                return new ImageReplacementResult(yamlContent, new HashSet<string>(), new HashSet<string>());
             }
 
             var documents = yamlContent.SplitYamlDocuments();

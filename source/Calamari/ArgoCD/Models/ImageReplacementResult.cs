@@ -5,11 +5,11 @@ namespace Calamari.ArgoCD.Models
 {
     public class ImageReplacementResult
     {
-        public ImageReplacementResult(string updatedContents, HashSet<string> updatedImageReferences, HashSet<string>? alreadyUpToDateImages = null)
+        public ImageReplacementResult(string updatedContents, HashSet<string> updatedImageReferences, HashSet<string> alreadyUpToDateImages)
         {
             UpdatedContents = updatedContents;
             UpdatedImageReferences = updatedImageReferences;
-            AlreadyUpToDateImages = alreadyUpToDateImages ?? new HashSet<string>();
+            AlreadyUpToDateImages = alreadyUpToDateImages;
         }
 
         public string UpdatedContents { get; }
