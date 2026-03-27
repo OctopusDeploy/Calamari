@@ -127,7 +127,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 1, 1,
-                    [new UpdatedSourceDetail("def456", 0, [], [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]""")])],
+                    [new TrackedSourceDetail("def456", 0, [], [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]""")])],
                     [], [])
             };
 
@@ -219,8 +219,8 @@ namespace Calamari.Tests.ArgoCD
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
                     [
-                        new UpdatedSourceDetail("abc123", 0, [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")], []),
-                        new UpdatedSourceDetail("abc123", 1, [], [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"redis:latest"}]""")])
+                        new TrackedSourceDetail("abc123", 0, [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")], []),
+                        new TrackedSourceDetail("abc123", 1, [], [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"redis:latest"}]""")])
                     ],
                     [], [])
             };
