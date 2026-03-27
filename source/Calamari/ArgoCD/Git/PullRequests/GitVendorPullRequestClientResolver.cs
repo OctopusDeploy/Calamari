@@ -7,10 +7,6 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git.PullRequests
 {
-    /// <summary>
-    /// Using all registered <see cref="IGitVendorPullRequestClientFactory"/> instances, resolves the correct adapter based on which self-reports as being able to utilize the provided connection details.
-    /// Returns the first matching adapter in the order provided in the constructor.
-    /// </summary>
     public interface IGitVendorPullRequestClientResolver
     {
         Task<IGitVendorPullRequestClient> TryResolve(IRepositoryConnection repositoryConnection, ILog log,

@@ -30,14 +30,11 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
         {
             await Task.CompletedTask;
             
-            var gitlabSrcBranch = StripBranchPrefix(sourceBranch.Value);
-            var gitlabDestBranch = StripBranchPrefix(destinationBranch.Value);
-            
             var mergeRequest = gitLabClient.GetMergeRequest(projectPath).Create(new MergeRequestCreate()
             {
                 Title = pullRequestTitle,
-                SourceBranch = gitlabSrcBranch,
-                TargetBranch = gitlabDestBranch,
+                SourceBranch = sourceBranch.ToFriendlyName(),
+                TargetBranch = destinationBranch.ToFriendlyName(),
                 Description = body
             });
             return new PullRequest(mergeRequest.Title, mergeRequest.Id, mergeRequest.WebUrl);
@@ -48,17 +45,6 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
         {
             //return gitLabProviderApi.GetCommits(projectPath).GetCommit(commit).WebUrl;
             return $"{baseUrl.AbsoluteUri}/{projectPath}/-/commit/{commit}";
-        }
-        
-        static string StripBranchPrefix(string input)
-        {
-            const string branchPrefix = "refs/heads/";
-            if (input.StartsWith(branchPrefix))
-            {
-                return input.Substring(branchPrefix.Length);
-            }
-
-            return input;
         }
     }
 }

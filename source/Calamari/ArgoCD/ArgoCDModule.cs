@@ -3,7 +3,6 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab;
-using Calamari.ArgoCD.GitHub;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
@@ -27,6 +26,12 @@ namespace Calamari.ArgoCD
             
             builder.RegisterType<SelfHostedGitLabInspector>().AsSelf().InstancePerLifetimeScope();
             
+            RegisterMemoryCache(builder);;
+        }
+
+        void RegisterMemoryCache(ContainerBuilder builder)
+        {
+               // We need to firstly register all the options needed for IMemoryCache.
             builder.RegisterGeneric(typeof(OptionsManager<>))
                    .As(typeof(IOptions<>))
                    .InstancePerLifetimeScope();
