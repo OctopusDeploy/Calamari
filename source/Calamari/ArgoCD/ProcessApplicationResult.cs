@@ -3,13 +3,15 @@ using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD
 {
-    public record FilePathContent(string FilePath, string Content);
+    public record FileHash(string FilePath, string Hash);
+
+    public record FileJsonPatch(string FilePath, string JsonPatch);
 
     public record UpdatedSourceDetail(
         string CommitSha,
         int SourceIndex,
-        List<FilePathContent> ReplacedFiles,
-        List<FilePathContent> PatchedFiles);
+        List<FileHash> ReplacedFiles,
+        List<FileJsonPatch> PatchedFiles);
 
     public class ProcessApplicationResult
     {

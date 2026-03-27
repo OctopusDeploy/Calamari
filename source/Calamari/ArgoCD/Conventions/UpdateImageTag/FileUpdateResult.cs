@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-public record FileUpdateResult(HashSet<string> UpdatedImages, List<FilePathContent> PatchedFileContent, string[] FilesRemoved)
+public record FileUpdateResult(HashSet<string> UpdatedImages, List<FileHash> ReplacedFiles, List<FileJsonPatch> PatchedFiles, string[] FilesRemoved)
 {
-    public bool HasChanges() 
+    public bool HasChanges()
     {
-        return PatchedFileContent.Count > 0 || FilesRemoved.Length > 0;
+        return ReplacedFiles.Count > 0 || PatchedFiles.Count > 0 || FilesRemoved.Length > 0;
     }
 }

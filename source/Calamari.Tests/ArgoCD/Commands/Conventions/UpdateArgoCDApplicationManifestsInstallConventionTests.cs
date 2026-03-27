@@ -441,7 +441,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var sourceDetails = actual.UpdatedSourceDetails.First();
             sourceDetails.CommitSha.Should().HaveLength(40);
-            sourceDetails.ReplacedFiles.Should().BeEquivalentTo([new FilePathContent("first.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")]);
+            sourceDetails.ReplacedFiles.Should().BeEquivalentTo([new FileHash("first.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")]);
             sourceDetails.PatchedFiles.Should().BeEmpty();
         }
 
