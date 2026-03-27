@@ -48,7 +48,7 @@ public class RepositoryAdapter
             }
         }
 
-        return new SourceUpdateResult([], null, result.ReplacedFiles, []);
+        return new SourceUpdateResult([], null, result.ReplacedFiles, result.PatchedFiles);
     }
     
     

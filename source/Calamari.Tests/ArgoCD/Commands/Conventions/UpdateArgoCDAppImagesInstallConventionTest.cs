@@ -491,7 +491,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.TrackedSourceDetails.Should().HaveCount(1, "source should still be tracked for the no-op case");
 
             var sourceDetails = actual.TrackedSourceDetails.First();
-            sourceDetails.CommitSha.Should().BeEmpty("no commit was made");
+            sourceDetails.CommitSha.Should().BeNull("no commit was made");
             sourceDetails.PatchedFiles.Should().HaveCount(1, "a patch should be generated even when no commit is needed");
             sourceDetails.PatchedFiles.First().FilePath.Should().Be(yamlFilename);
         }
@@ -821,7 +821,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var sourceDetails = actual.TrackedSourceDetails.First();
-            sourceDetails.CommitSha.Should().BeEmpty();
+            sourceDetails.CommitSha.Should().BeNull();
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
             if (useSeparateFiles)
@@ -894,7 +894,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var sourceDetails = actual.TrackedSourceDetails.First();
-            sourceDetails.CommitSha.Should().BeEmpty();
+            sourceDetails.CommitSha.Should().BeNull();
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
             if (useSeparateFiles)
