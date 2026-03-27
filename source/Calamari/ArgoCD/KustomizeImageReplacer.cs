@@ -33,7 +33,7 @@ namespace Calamari.ArgoCD
         }
         
         /// <param name="alreadyUpToDateImages">Optionally add images that are already up-to-date</param>
-        ImageReplacementResult NoChangeResult(HashSet<string>? alreadyUpToDateImages = null) => new(yamlContent, [], alreadyUpToDateImages);
+        ImageReplacementResult NoChangeResult(HashSet<string>? alreadyUpToDateImages = null) => new(yamlContent, [], alreadyUpToDateImages ?? []);
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {

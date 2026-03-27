@@ -486,7 +486,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.TrackedSourceDetails.Should().HaveCount(1, "desired state should still be reported for the no-op case");
 
             var sourceDetails = actual.TrackedSourceDetails.First();
-            sourceDetails.CommitSha.Should().BeEmpty("no commit was made so the SHA should be empty");
+            sourceDetails.CommitSha.Should().BeNull("no commit was made so the SHA should be null");
             sourceDetails.ReplacedFiles.Should().BeEquivalentTo([new FileHash("first.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")]);
         }
 

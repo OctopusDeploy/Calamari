@@ -70,6 +70,6 @@ public class ApplicationSourceUpdater
         }
         
         log.Info("No changes were committed");
-        return new ManifestUpdateResult(false, string.Empty, sourceUpdateResult.ReplacedFiles);
+        return new ManifestUpdateResult(false, null, sourceUpdateResult.ReplacedFiles);
     }
 }
