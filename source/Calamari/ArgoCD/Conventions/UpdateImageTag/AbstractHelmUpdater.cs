@@ -76,27 +76,12 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         var imageUpdateResult = helmImageReplacer.UpdateImages(imagesToUpdate);
 
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
-        {
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
-            var jsonPatch = CreateJsonPatchFromDiff(fileContent, imageUpdateResult.UpdatedContents);
-            return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
-        }
 
-        if (imageUpdateResult.AlreadyUpToDateImages.Count > 0)
-        {
-            // Image was found but tag is already correct:
-            // generate a temporary patch representing the intended change,
-            // so the server can verify the specific image tag without being
-            // sensitive to unrelated file changes.
-            var jsonPatch = CreateJsonPatch(fileContent,
-                                           imageUpdateResult.AlreadyUpToDateImages,
-                                           tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
-            if (jsonPatch != null)
-            {
-                return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), jsonPatch);
-            }
-        }
-        
-        return new HelmRefUpdatedResult([], Path.Combine(target.Path, target.FileName), null);
+        var jsonPatch = CreateJsonPatch(fileContent,
+                                        imagesToUpdate.Select(i => i.ContainerReference.FriendlyName()).ToHashSet(),
+                                        tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
+
+        return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
     }
 }
