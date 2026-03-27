@@ -48,13 +48,12 @@ public abstract class AbstractHelmUpdater : BaseUpdater
     {
         var results =
             targets.Select(t => UpdateHelmImageValues(workingDirectory, t, deploymentConfig.ImageReferences))
-                   .Where(r => r.ImagesUpdated.Any() || r.JsonPatch != null)
+                   .Where(r => r.Updated)
                    .ToList();
 
         if (results.Any())
         {
             var patchedFiles = results
-                .Where(r => r.JsonPatch != null)
                 .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
                 .ToList();
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
