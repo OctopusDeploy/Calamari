@@ -8,7 +8,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
@@ -65,7 +65,7 @@ image:
                 new CommitMessageGenerator(),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
-                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                Substitute.For<IGitVendorPullRequestClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));
