@@ -30,7 +30,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     {
         if (!TryCalculateOutputPath(sourceWithMetadata.Source, out var outputPath))
         {
-            return new FileUpdateResult([], [], []);
+            return new FileUpdateResult([], [], [], []);
         }
         log.VerboseFormat("Copying files into '{0}'", outputPath);
 
@@ -41,9 +41,9 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, workingDirectory, outputPath)).ToList();
         CopyFiles(filesToCopy);
         
-        var fileHashes = filesToCopy.Select(f => new FilePathContent(f.DestinationRelativePath, HashCalculator.Hash(f.DestinationAbsolutePath)))
+        var fileHashes = filesToCopy.Select(f => new FileHash(f.DestinationRelativePath, HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
-        return new FileUpdateResult([], fileHashes, purgedFiles.Select(pf => Path.GetRelativePath(workingDirectory, pf)).ToArray());
+        return new FileUpdateResult([], fileHashes, [], purgedFiles.Select(pf => Path.GetRelativePath(workingDirectory, pf)).ToArray());
     }
     
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
