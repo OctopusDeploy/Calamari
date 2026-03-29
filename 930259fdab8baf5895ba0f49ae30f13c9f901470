@@ -1,0 +1,29 @@
+source/Calamari/ArgoCD/ProcessApplicationResult.cs
+  cf190b4db3b27f27 15
+source/Calamari/ArgoCD/Conventions/ManifestTemplating/ApplicationSourceUpdater.cs
+  cf190b4db3b27f27 73
+source/Calamari.Tests/ArgoCD/ArgoCDFilesUpdatedReporterTests.cs
+  cf190b4db3b27f27 55,84,94,124,153,184,221,253,284,298,312,341
+source/Calamari/ArgoCD/Conventions/ManifestTemplating/ManifestUpdateResult.cs
+  cf190b4db3b27f27 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "930259fdab8baf5895ba0f49ae30f13c9f901470",
+  "prompts": {
+    "cf190b4db3b27f27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c569ea6-5cc8-4c49-ab1a-186029252efe",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Noam Gal <noam.gal@octopus.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 22,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
