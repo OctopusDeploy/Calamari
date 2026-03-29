@@ -52,7 +52,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[],"PatchedFiles":[]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                 }
             });
         }
@@ -81,7 +81,7 @@ namespace Calamari.Tests.ArgoCD
                     {
                         ["gatewayId"] = "gateway1",
                         ["applicationName"] = "app1",
-                        ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[],"PatchedFiles":[]}}]"""
+                        ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                     }
                 },
                 new
@@ -91,7 +91,7 @@ namespace Calamari.Tests.ArgoCD
                     {
                         ["gatewayId"] = "gateway2",
                         ["applicationName"] = "app2",
-                        ["sources"] = $"""[{{"CommitSha":"def456","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[],"PatchedFiles":[]}}]"""
+                        ["sources"] = $"[{{\"CommitSha\":\"def456\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                     }
                 }
             ]);
@@ -121,7 +121,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[{{"FilePath":"values.yaml","Hash":"22c0df2cceca5273e4dc569dda52805d27df3360"}}],"PatchedFiles":[]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Hash\":\"22c0df2cceca5273e4dc569dda52805d27df3360\"}}],\"PatchedFiles\":[]}}]"
                 }
             });
         }
@@ -150,7 +150,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":"def456","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[],"PatchedFiles":[{{"FilePath":"kustomization.yaml","JsonPatch":"[{{\u0022op\u0022:\u0022replace\u0022,\u0022path\u0022:\u0022/images/0/name\u0022,\u0022value\u0022:\u0022nginx:latest\u0022}}]"}}]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"def456\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"JsonPatch\":\"[{{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/images/0/name\\u0022,\\u0022value\\u0022:\\u0022nginx:latest\\u0022}}]\"}}]}}]"
                 }
             });
         }
@@ -181,7 +181,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[{{"FilePath":"values.yaml","Hash":"22c0df2cceca5273e4dc569dda52805d27df3360"}}],"PatchedFiles":[{{"FilePath":"kustomization.yaml","JsonPatch":"[{{\u0022op\u0022:\u0022replace\u0022,\u0022path\u0022:\u0022/images/0/name\u0022,\u0022value\u0022:\u0022nginx:latest\u0022}}]"}}]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Hash\":\"22c0df2cceca5273e4dc569dda52805d27df3360\"}}],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"JsonPatch\":\"[{{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/images/0/name\\u0022,\\u0022value\\u0022:\\u0022nginx:latest\\u0022}}]\"}}]}}]"
                 }
             });
         }
@@ -218,7 +218,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[{{"FilePath":"values.yaml","Hash":"22c0df2cceca5273e4dc569dda52805d27df3360"}},{{"FilePath":"values-prod.yaml","Hash":"a3b4c5d6e7f8a3b4c5d6e7f8a3b4c5d6e7f8a3b4"}}],"PatchedFiles":[{{"FilePath":"kustomization.yaml","JsonPatch":"[{{\u0022op\u0022:\u0022replace\u0022,\u0022path\u0022:\u0022/images/0/name\u0022,\u0022value\u0022:\u0022nginx:latest\u0022}}]"}},{{"FilePath":"patch.yaml","JsonPatch":"[{{\u0022op\u0022:\u0022replace\u0022,\u0022path\u0022:\u0022/spec/replicas\u0022,\u0022value\u0022:3}}]"}}]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Hash\":\"22c0df2cceca5273e4dc569dda52805d27df3360\"}},{{\"FilePath\":\"values-prod.yaml\",\"Hash\":\"a3b4c5d6e7f8a3b4c5d6e7f8a3b4c5d6e7f8a3b4\"}}],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"JsonPatch\":\"[{{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/images/0/name\\u0022,\\u0022value\\u0022:\\u0022nginx:latest\\u0022}}]\"}},{{\"FilePath\":\"patch.yaml\",\"JsonPatch\":\"[{{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/spec/replicas\\u0022,\\u0022value\\u0022:3}}]\"}}]}}]"
                 }
             });
         }
@@ -250,7 +250,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[{{"FilePath":"values.yaml","Hash":"22c0df2cceca5273e4dc569dda52805d27df3360"}}],"PatchedFiles":[]}},{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":1,"ReplacedFiles":[],"PatchedFiles":[{{"FilePath":"kustomization.yaml","JsonPatch":"[{{\u0022op\u0022:\u0022replace\u0022,\u0022path\u0022:\u0022/images/0/name\u0022,\u0022value\u0022:\u0022redis:latest\u0022}}]"}}]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Hash\":\"22c0df2cceca5273e4dc569dda52805d27df3360\"}}],\"PatchedFiles\":[]}},{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":1,\"ReplacedFiles\":[],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"JsonPatch\":\"[{{\\u0022op\\u0022:\\u0022replace\\u0022,\\u0022path\\u0022:\\u0022/images/0/name\\u0022,\\u0022value\\u0022:\\u0022redis:latest\\u0022}}]\"}}]}}]"
                 }
             });
         }
@@ -281,7 +281,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[{{"FilePath":"some/nested/values.yaml","Hash":"22c0df2cceca5273e4dc569dda52805d27df3360"}}],"PatchedFiles":[]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"some/nested/values.yaml\",\"Hash\":\"22c0df2cceca5273e4dc569dda52805d27df3360\"}}],\"PatchedFiles\":[]}}]"
                 }
             });
         }
@@ -291,13 +291,11 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
-            var timestamp = DateTimeOffset.MinValue;
-            var tsJson = JsonSerializer.Serialize(timestamp).Trim('"');
 
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 1, 1,
-                    [new TrackedSourceDetail(null, timestamp, 0, [],
+                    [new TrackedSourceDetail(null, null, 0, [],
                         [new FileJsonPatch("values.yaml", """[{"op":"replace","path":"/image","value":"nginx:1.27"}]""")])],
                     [], [])
             };
@@ -311,7 +309,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = $"""[{{"CommitSha":null,"Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[],"PatchedFiles":[{{"FilePath":"values.yaml","JsonPatch":"[{{\u0022op\u0022:\u0022replace\u0022,\u0022path\u0022:\u0022/image\u0022,\u0022value\u0022:\u0022nginx:1.27\u0022}}]"}}]}}]"""
+                    ["sources"] = """[{"CommitSha":null,"CommitTimestamp":null,"SourceIndex":0,"ReplacedFiles":[],"PatchedFiles":[{"FilePath":"values.yaml","JsonPatch":"[{\u0022op\u0022:\u0022replace\u0022,\u0022path\u0022:\u0022/image\u0022,\u0022value\u0022:\u0022nginx:1.27\u0022}]"}]}]"""
                 }
             });
         }
@@ -340,7 +338,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway2",
                     ["applicationName"] = "app2",
-                    ["sources"] = $"""[{{"CommitSha":"abc123","Timestamp":"{tsJson}","SourceIndex":0,"ReplacedFiles":[],"PatchedFiles":[]}}]"""
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"CommitTimestamp\":\"{tsJson}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                 }
             });
         }

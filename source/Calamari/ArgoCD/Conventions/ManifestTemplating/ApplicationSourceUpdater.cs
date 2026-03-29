@@ -1,4 +1,3 @@
-using System;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -71,6 +70,6 @@ public class ApplicationSourceUpdater
         }
 
         log.Info("No changes were committed");
-        return new ManifestUpdateResult(false, null, DateTimeOffset.MinValue, sourceUpdateResult.ReplacedFiles);
+        return new ManifestUpdateResult(false, null, null, sourceUpdateResult.ReplacedFiles);
     }
 }
