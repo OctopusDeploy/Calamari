@@ -957,7 +957,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                         })
                                                         .WithSource(new ApplicationSource
                                                         {
-                                                            OriginalRepoUrl = OriginPath,
+                                                            RepoUrl = OriginPath,
                                                             Path = path,
                                                             TargetRevision = ArgoCDBranchFriendlyName,
                                                         }, sourceType)
@@ -1027,8 +1027,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
                                                             [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
                                                         })
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { RepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { RepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
                                                         .Build());
 
             var getResults = CaptureReporterResults();
@@ -1080,8 +1080,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
                                                             [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
                                                         })
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { RepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { RepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
                                                         .Build());
 
             var getResults = CaptureReporterResults();
@@ -1136,8 +1136,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
                                                             [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
                                                         })
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { RepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { RepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
                                                         .Build());
 
             var getResults = CaptureReporterResults();
