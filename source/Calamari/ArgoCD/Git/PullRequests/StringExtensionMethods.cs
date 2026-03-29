@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests
 {
     public static class StringExtensionMethods
     {
