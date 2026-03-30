@@ -26,7 +26,8 @@ namespace Calamari.CloudAccounts
                 var region = variables.Get(AuthenticationVariables.Aws.Region);
                 var sessionDuration = variables.Get(AuthenticationVariables.Aws.SessionDuration);
                 
-                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                // AWS SDK v4 requires an explicit region. Use USEast1 to preserve v3 behaviour where the global STS endpoint was used.
+                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), RegionEndpoint.USEast1);
                 var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                 {
                     RoleArn = roleArn,
