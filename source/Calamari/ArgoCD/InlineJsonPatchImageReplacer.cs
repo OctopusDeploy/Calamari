@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD
     /// </summary>
     public class InlineJsonPatchImageReplacer : IContainerImageReplacer
     {
-        private static class FieldNames
+        static class FieldNames
         {
             public const string Patches = "patches";
             public const string Patch = "patch";
@@ -34,12 +34,12 @@ namespace Calamari.ArgoCD
 
         public InlineJsonPatchImageReplacer(string yamlContent, string defaultRegistry, ILog log)
         {
-            this.yamlContent = yamlContent ?? throw new ArgumentNullException(nameof(yamlContent));
-            this.defaultRegistry = defaultRegistry ?? throw new ArgumentNullException(nameof(defaultRegistry));
-            this.log = log ?? throw new ArgumentNullException(nameof(log));
+            this.yamlContent = yamlContent;
+            this.defaultRegistry = defaultRegistry;
+            this.log = log;
         }
 
-        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>(), new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new(yamlContent, new HashSet<string>(), new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
@@ -80,27 +80,20 @@ namespace Calamari.ArgoCD
             }
 
             var replacementsMade = new HashSet<string>();
-            var hasChanges = false;
-
             foreach (var patchNode in patchesSequence.OfType<YamlMappingNode>())
             {
                 var changes = ProcessPatchNode(patchNode, imagesToUpdate);
                 replacementsMade.UnionWith(changes);
-                if (changes.Count > 0)
-                {
-                    hasChanges = true;
-                }
             }
 
-            if (!hasChanges)
+            if (!replacementsMade.Any())
             {
                 return NoChangeResult;
             }
-
+            
             using var writer = new StringWriter();
             stream.Save(writer, false);
             var modifiedYaml = writer.ToString().TrimEnd();
-
             return new ImageReplacementResult(modifiedYaml, replacementsMade, new HashSet<string>());
         }
 

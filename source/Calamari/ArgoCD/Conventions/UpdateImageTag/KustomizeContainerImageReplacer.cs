@@ -14,31 +14,30 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
     readonly string input;
     readonly string defaultRegistry;
     readonly ILog log;
+    readonly KustomizeDiscovery discovery;
 
     public KustomizeContainerImageReplacer(string input, string defaultRegistry, ILog log)
     {
         this.input = input;
         this.defaultRegistry = defaultRegistry;
         this.log = log;
+        discovery = new KustomizeDiscovery(log);
     }
 
     public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         if (KustomizationValidator.IsKustomizationResource(input))
         {
-            return UpdateImageTags(imagesToUpdate);
+            return UpdateKustomizeResource(imagesToUpdate);
         }
-        else
-        {
-            return UpdatePatchFields(imagesToUpdate);
-        }
+
+        return UpdateKustomizePatch(imagesToUpdate);
     }
 
-    private ImageReplacementResult UpdateImageTags(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    ImageReplacementResult UpdateKustomizeResource(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         var updatedContent = input;
         var allUpdatedImages = new HashSet<string>();
-
 
         var kustomizeReplacer = new KustomizeImageReplacer(updatedContent, defaultRegistry, log);
         var result = kustomizeReplacer.UpdateImages(imagesToUpdate);
@@ -87,9 +86,9 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         return new ImageReplacementResult(updatedContent, allUpdatedImages, new HashSet<string>());
     }
 
-    private ImageReplacementResult UpdatePatchFields(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    ImageReplacementResult UpdateKustomizePatch(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
-        var patchType = DeterminePatchTypeFromFile(input);
+        var patchType = discovery.DeterminePatchType(input);
 
         IContainerImageReplacer replacer = patchType switch
         {
@@ -102,79 +101,11 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         {
             return replacer.UpdateImages(imagesToUpdate);
         }
-        else
-        {
-            log.Verbose($"Unable to determine patch type for content, no image updates will be performed");
-            return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
-        }
+
+        log.Verbose($"Unable to determine patch type for content, no image updates will be performed");
+        return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
     }
     
-
-    internal PatchType? DeterminePatchTypeFromFile(string content)
-    {
-        if (KustomizationValidator.IsKustomizationResource(content))
-            return null;
-
-        if (IsJson6902PatchContent(content))
-            return PatchType.Json6902;
-
-        if (IsStrategicMergePatchContent(content))
-            return PatchType.StrategicMerge;
-
-        return null;
-    }
-
-    internal bool IsJson6902PatchContent(string content)
-    {
-        try
-        {
-
-            var trimmedContent = content.Trim();
-
-            if (trimmedContent.StartsWith("[") || trimmedContent.StartsWith("-"))
-            {
-
-                var hasOpField = System.Text.RegularExpressions.Regex.IsMatch(content,
-                    @"[""']?op[""']?\s*:\s*[""']?(add|remove|replace|move|copy|test)[""']?",
-                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-                var hasPathField = content.Contains("path") || content.Contains("\"path\"") || content.Contains("'path'");
-
-                return hasOpField && hasPathField;
-            }
-
-            return false;
-        }
-        catch (Exception ex)
-        {
-            log.Verbose($"Error determining if content is JSON 6902 patch: {ex.Message}");
-            return false;
-        }
-    }
-
-    internal bool IsStrategicMergePatchContent(string content)
-    {
-        try
-        {
-
-            var hasKubernetesFields = System.Text.RegularExpressions.Regex.IsMatch(content,
-                @"[""']?(apiVersion|kind|metadata|spec|data)[""']?\s*:",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-            var hasImageReferences = System.Text.RegularExpressions.Regex.IsMatch(content,
-                @"[""']?(image|containers)[""']?\s*:",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-            return hasKubernetesFields || hasImageReferences;
-        }
-        catch (Exception ex)
-        {
-            log.Verbose($"Error determining if content is strategic merge patch: {ex.Message}");
-            return false;
-        }
-    }
-
-
     internal bool HasInlinePatches(string content)
     {
         var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline patches");
@@ -220,85 +151,83 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         return false;
     }
 
-    private ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline strategic merge patches");
         if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
             return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
-        if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) ||
-            !(patchesNode is YamlSequenceNode patchSequence))
+        if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) || !(patchesNode is YamlSequenceNode patchSequence))
             return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
-            var allUpdatedImages = new HashSet<string>();
-            var hasChanges = false;
+        var allUpdatedImages = new HashSet<string>();
+        var hasChanges = false;
 
-            foreach (var patchNode in patchSequence.Children)
+        foreach (var patchNode in patchSequence.Children)
+        {
+            if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
             {
-                if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
-                {
-                    var patchContent = patchScalar.Value ?? "";
-                    var replacer = new StrategicMergePatchImageReplacer(patchContent, defaultRegistry, log);
-                    var result = replacer.UpdateImages(imagesToUpdate);
+                var patchContent = patchScalar.Value ?? "";
+                var replacer = new StrategicMergePatchImageReplacer(patchContent, defaultRegistry, log);
+                var result = replacer.UpdateImages(imagesToUpdate);
 
-                    if (result.UpdatedImageReferences.Count > 0)
-                    {
-                        patchScalar.Value = result.UpdatedContents;
-                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
-                        hasChanges = true;
-                    }
+                if (result.UpdatedImageReferences.Count > 0)
+                {
+                    patchScalar.Value = result.UpdatedContents;
+                    allUpdatedImages.UnionWith(result.UpdatedImageReferences);
+                    hasChanges = true;
                 }
             }
+        }
 
-            if (!hasChanges)
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        if (!hasChanges)
+            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
-            using var writer = new StringWriter();
-            yamlStream.Save(writer, false);
-            var modifiedContent = writer.ToString().TrimEnd();
+        using var writer = new StringWriter();
+        yamlStream.Save(writer, false);
+        var modifiedContent = writer.ToString().TrimEnd();
 
-            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
+        return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
     }
 
-    private ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline JSON 6902 patches");
         if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+        {
             return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        }
 
-        if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) ||
-            !(patchesNode is YamlSequenceNode patchSequence))
+        if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) || !(patchesNode is YamlSequenceNode patchSequence))
+        {
             return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        }
 
-            var allUpdatedImages = new HashSet<string>();
-            var hasChanges = false;
+        var allUpdatedImages = new HashSet<string>();
 
-            foreach (var patchEntryNode in patchSequence.Children.OfType<YamlMappingNode>())
+        foreach (var patchEntryNode in patchSequence.Children.OfType<YamlMappingNode>())
+        {
+            if (patchEntryNode.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContentNode) && patchContentNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
             {
-                if (patchEntryNode.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContentNode) &&
-                    patchContentNode is YamlScalarNode patchScalar &&
-                    patchScalar.Style == ScalarStyle.Literal)
-                {
-                    var patchContent = patchScalar.Value ?? "";
-                    var replacer = new YamlJson6902PatchImageReplacer(patchContent, defaultRegistry, log);
-                    var result = replacer.UpdateImages(imagesToUpdate);
+                var patchContent = patchScalar.Value ?? "";
+                var replacer = new YamlJson6902PatchImageReplacer(patchContent, defaultRegistry, log);
+                var result = replacer.UpdateImages(imagesToUpdate);
 
-                    if (result.UpdatedImageReferences.Count > 0)
-                    {
-                        patchScalar.Value = result.UpdatedContents;
-                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
-                        hasChanges = true;
-                    }
+                if (result.UpdatedImageReferences.Count > 0)
+                {
+                    patchScalar.Value = result.UpdatedContents;
+                    allUpdatedImages.UnionWith(result.UpdatedImageReferences);
                 }
             }
+        }
 
-            if (!hasChanges)
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        if (!allUpdatedImages.Any())
+            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
-            using var writer = new StringWriter();
-            yamlStream.Save(writer, false);
-            var modifiedContent = writer.ToString().TrimEnd();
+        using var writer = new StringWriter();
+        yamlStream.Save(writer, false);
+        var modifiedContent = writer.ToString().TrimEnd();
 
-            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
+        return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
     }
 }
