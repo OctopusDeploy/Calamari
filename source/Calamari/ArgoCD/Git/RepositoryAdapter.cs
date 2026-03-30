@@ -58,18 +58,19 @@ public class RepositoryAdapter
         return new SourceUpdateResult([], null, result.ReplacedFiles, result.PatchedFiles);
     }
     
+    
     protected PushResult? PushToRemote(
         RepositoryWrapper repository,
         GitReference branchName, 
         FileUpdateResult result)
     {
         log.Info("Staging files in repository");
-        repository.AddFiles(result.PatchedFileContent.Select(pf => pf.FilePath).Distinct().ToArray());
+        repository.AddFiles(result.ReplacedFiles.Select(f => f.FilePath).Concat(result.PatchedFiles.Select(f => f.FilePath)).Distinct().ToArray());
         repository.RemoveFiles(result.FilesRemoved ?? []);
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);
 
-        log.Info("Commiting changes");
+        log.Info("Committing changes");
         if (!repository.CommitChanges(commitParameters.Summary, commitDescription))
             return null;
 
