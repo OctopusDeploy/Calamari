@@ -244,7 +244,7 @@ namespace Calamari.Tests.ArgoCD
             var result2 = new ImageReplacementResult("content2", new HashSet<string> { "busybox:stable" });
             var result3 = new ImageReplacementResult("content3", new HashSet<string>());
 
-            var combined = YamlJson6902PatchImageReplacer.CombineResults(result1, result2, result3);
+            var combined = ImageReplacementResult.CombineResults(result1, result2, result3);
 
             combined.UpdatedContents.Should().Be("content3"); // Last non-empty content
             combined.UpdatedImageReferences.Should().HaveCount(2);
@@ -255,7 +255,7 @@ namespace Calamari.Tests.ArgoCD
         [Test]
         public void CombineResults_WithNoResults_ReturnsOriginalContent()
         {
-            var combined = YamlJson6902PatchImageReplacer.CombineResults();
+            var combined = ImageReplacementResult.CombineResults();
 
             combined.UpdatedContents.Should().Be("");
             combined.UpdatedImageReferences.Should().BeEmpty();

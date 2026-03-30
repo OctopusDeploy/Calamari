@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD
                 }
             }
 
-            var combinedResult = CombineResults(results.ToArray());
+            var combinedResult = ImageReplacementResult.CombineResults(results.ToArray());
             if (combinedResult.UpdatedImageReferences.Count == 0)
             {
                 return NoChangeResult;
@@ -147,7 +147,7 @@ namespace Calamari.ArgoCD
                 results.Add(result);
             }
 
-            return CombineResults(results.ToArray());
+            return ImageReplacementResult.CombineResults(results.ToArray());
         }
 
         ImageReplacementResult ProcessContainerMapping(YamlMappingNode containerNode,
@@ -204,25 +204,6 @@ namespace Calamari.ArgoCD
                    path.EndsWith("/containers/-") || path.EndsWith("/initContainers/-");
         }
 
-        internal static ImageReplacementResult CombineResults(params ImageReplacementResult[] results)
-        {
-            if (results == null || results.Length == 0)
-                return new ImageReplacementResult(string.Empty, new HashSet<string>());
-
-            var allReplacements = new HashSet<string>();
-            var latestContent = string.Empty;
-
-            foreach (var result in results)
-            {
-                foreach (var replacement in result.UpdatedImageReferences)
-                    allReplacements.Add(replacement);
-
-                if (!string.IsNullOrEmpty(result.UpdatedContents))
-                    latestContent = result.UpdatedContents;
-            }
-
-            return new ImageReplacementResult(latestContent, allReplacements);
-        }
 
         record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
     }

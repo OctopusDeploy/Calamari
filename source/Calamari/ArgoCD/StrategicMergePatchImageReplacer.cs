@@ -43,8 +43,10 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
-            var documents = LoadYamlDocuments();
-            if (documents == null || documents.Count == 0) return NoChangeResult;
+            var stream = YamlStreamLoader.TryLoad(yamlContent, log, "Strategic merge patch");
+            if (stream == null) return NoChangeResult;
+            var documents = stream.Documents.ToList();
+            if (documents.Count == 0) return NoChangeResult;
 
             var (modifiedDocuments, replacementsMade) = ProcessAllDocuments(documents, imagesToUpdate);
 
@@ -54,33 +56,6 @@ namespace Calamari.ArgoCD
             return new ImageReplacementResult(modifiedYaml, replacementsMade);
         }
 
-        private List<YamlDocument>? LoadYamlDocuments()
-        {
-            try
-            {
-                using var reader = new StringReader(yamlContent);
-                var stream = new YamlStream();
-                stream.Load(reader);
-
-                if (stream.Documents.Count == 0)
-                {
-                    log.Warn("Strategic merge patch file contains no YAML documents.");
-                    return null;
-                }
-
-                return stream.Documents.ToList();
-            }
-            catch (YamlException ex)
-            {
-                log.WarnFormat("Invalid YAML in strategic merge patch: {0}", ex.Message);
-                return null;
-            }
-            catch (Exception ex)
-            {
-                log.WarnFormat("Error loading YAML documents: {0}", ex.Message);
-                return null;
-            }
-        }
 
         private (List<YamlDocument> documents, HashSet<string> replacements) ProcessAllDocuments(
             List<YamlDocument> documents,
@@ -126,8 +101,12 @@ namespace Calamari.ArgoCD
 
         void ProcessContainerSpecs(YamlMappingNode node, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
         {
-            ProcessContainersArray(node, FieldNames.Containers, imagesToUpdate, changes);
-            ProcessContainersArray(node, FieldNames.InitContainers, imagesToUpdate, changes);
+            var results = new List<ImageReplacementResult>();
+
+            results.Add(ProcessContainersArray(node, FieldNames.Containers, imagesToUpdate));
+            results.Add(ProcessContainersArray(node, FieldNames.InitContainers, imagesToUpdate));
+
+
 
             foreach (var kvp in node.Children.ToList())
             {
@@ -143,24 +122,35 @@ namespace Calamari.ArgoCD
                     }
                 }
             }
+
+            var combinedResult = ImageReplacementResult.CombineResults(results.ToArray());
+            foreach (var replacement in combinedResult.UpdatedImageReferences)
+            {
+                changes.Add(replacement);
+            }
         }
 
-        void ProcessContainersArray(YamlMappingNode node, string containerKey, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
+        internal ImageReplacementResult ProcessContainersArray(YamlMappingNode node, string containerKey, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
+            var results = new List<ImageReplacementResult>();
+
             foreach (var kvp in node.Children)
             {
                 if (kvp.Key is YamlScalarNode scalar && scalar.Value == containerKey && kvp.Value is YamlSequenceNode containersSequence)
                 {
                     foreach (var containerNode in containersSequence.OfType<YamlMappingNode>())
                     {
-                        ProcessSingleContainer(containerNode, imagesToUpdate, changes);
+                        var containerResult = ProcessSingleContainer(containerNode, imagesToUpdate);
+                        results.Add(containerResult);
                     }
                     break;
                 }
             }
+
+            return ImageReplacementResult.CombineResults(results.ToArray());
         }
 
-        void ProcessSingleContainer(YamlMappingNode containerNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
+        private ImageReplacementResult ProcessSingleContainer(YamlMappingNode containerNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             foreach (var kvp in containerNode.Children)
             {
@@ -175,12 +165,16 @@ namespace Calamari.ArgoCD
                     {
                         var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
                         imageScalar.Value = newImageRef;
-                        changes.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+                        var replacement = $"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}";
                         log.Verbose($"Updated container image in strategic merge patch: {newImageRef}");
+
+                        return new ImageReplacementResult(string.Empty, new HashSet<string> { replacement });
                     }
                     break;
                 }
             }
+
+            return new ImageReplacementResult(string.Empty, new HashSet<string>());
         }
 
         YamlMappingNode DeepCopyMappingNode(YamlMappingNode original)
@@ -230,6 +224,7 @@ namespace Calamari.ArgoCD
                 ? serializedDocs[0]
                 : string.Join($"{newLine}---{newLine}", serializedDocs);
         }
+
 
         record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
     }
