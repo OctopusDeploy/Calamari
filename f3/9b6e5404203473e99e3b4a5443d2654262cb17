@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "f39b6e5404203473e99e3b4a5443d2654262cb17",
+  "prompts": {
+    "cf190b4db3b27f27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c569ea6-5cc8-4c49-ab1a-186029252efe",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Noam Gal <noam.gal@octopus.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 22,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    }
+  }
+}
