@@ -1222,13 +1222,13 @@ service:
             // Only values.yaml should be in PatchedFiles — values-extra.yaml had no image match and must not produce a patch entry
             using var scope = new AssertionScope();
             capturedResults.Should().NotBeNull();
-            var sourceDetails = capturedResults.Single().UpdatedSourceDetails.First();
+            var sourceDetails = capturedResults.Single().TrackedSourceDetails.First();
             var expectedPatch = new JsonPatchDocument([
                 JsonPatchOperation.Replace(new JsonPointer("/0/image/tag"), "1.27.1"),
             ]);
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
-                             new FilePathContent("./otherRepoPath/values.yaml", JsonSerializer.Serialize(expectedPatch)),
+                             new FileJsonPatch("./otherRepoPath/values.yaml", JsonSerializer.Serialize(expectedPatch)),
                          ]);
         }
 
@@ -1395,19 +1395,19 @@ service:
             var actual = capturedResults.Single();
             actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1", "alpine:2.2"]);
             actual.GitReposUpdated.Should().HaveCount(1);
-            actual.UpdatedSourceDetails.Should().HaveCount(1);
+            actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var expectedPatch = new JsonPatchDocument([
                 JsonPatchOperation.Replace(new JsonPointer("/0/image1/name"), "nginx:1.27.1"),
                 JsonPatchOperation.Replace(new JsonPointer("/0/image2/tag"), 2.2),
             ]);
 
-            var sourceDetails = actual.UpdatedSourceDetails.First();
+            var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
-                             new FilePathContent(valuesFilename, JsonSerializer.Serialize(expectedPatch)),
+                             new FileJsonPatch(valuesFilename, JsonSerializer.Serialize(expectedPatch)),
                          ]);
         }
 
@@ -1611,6 +1611,54 @@ image:
             // Assert
             log.MessagesVerboseFormatted.Should().Contain(
                 "alpine:3.21 will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
+        }
+
+        [Test]
+        public void HelmSource_ImageAlreadyAtTargetTag_TracksSourceWithNullCommitSha()
+        {
+            // Arrange
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", @"
+image:
+  name: nginx:1.27.1
+"));
+
+            var updater = CreateConvention();
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            IReadOnlyList<ProcessApplicationResult> capturedResults = null;
+            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+            capturedResults.Should().NotBeNull();
+            var actual = capturedResults.Single();
+            actual.Updated.Should().BeFalse("image is already at the target tag so no commit should be made");
+            actual.UpdatedImages.Should().BeEmpty();
+            actual.TrackedSourceDetails.Should().HaveCount(1, "source should still be tracked for the no-op case");
+
+            var sourceDetails = actual.TrackedSourceDetails.First();
+            sourceDetails.CommitSha.Should().BeNull("no commit was made");
+
+            var expectedPatch = new JsonPatchDocument([
+                JsonPatchOperation.Replace(new JsonPointer("/0/image/name"), "nginx:1.27.1"),
+            ]);
+            sourceDetails.PatchedFiles.Should()
+                         .BeEquivalentTo([
+                             new FileJsonPatch(Path.Combine("files", "values.yml"), JsonSerializer.Serialize(expectedPatch)),
+                         ]);
         }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)

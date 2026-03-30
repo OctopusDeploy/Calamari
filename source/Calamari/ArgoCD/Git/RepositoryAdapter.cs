@@ -55,7 +55,13 @@ public class RepositoryAdapter
         return new SourceUpdateResult([], null, []);
     }
 
-    protected PushResult? PushToRemote(RepositoryWrapper repository, GitReference branchName, FileUpdateResult result)
+        return new SourceUpdateResult([], null, result.ReplacedFiles, result.PatchedFiles);
+    }
+    
+    protected PushResult? PushToRemote(
+        RepositoryWrapper repository,
+        GitReference branchName, 
+        FileUpdateResult result)
     {
         log.Info("Staging files in repository");
         repository.AddFiles(result.PatchedFileContent.Select(pf => pf.FilePath).Distinct().ToArray());
