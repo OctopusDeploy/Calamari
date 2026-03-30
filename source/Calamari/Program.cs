@@ -29,6 +29,7 @@ using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
+using Calamari.Deployment.PackageRetention;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
 
@@ -125,6 +126,7 @@ namespace Calamari
                    .As<ILaunchTool>();
 
             builder.RegisterModule<ArgoCDModule>();
+            builder.RegisterModule<PackageRetentionModule>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()
