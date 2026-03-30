@@ -57,7 +57,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(query, "Query for stack may not be null");
 
             List<VariableOutput> ConvertStackOutputs(Stack stack) =>
-                stack.Outputs?.Select(p => new VariableOutput(p.OutputKey, p.OutputValue)).ToList() ?? new List<VariableOutput>();
+                stack.Outputs.Select(p => new VariableOutput(p.OutputKey, p.OutputValue)).ToList();
 
             return (await query()).Select(ConvertStackOutputs)
                 .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: true));
