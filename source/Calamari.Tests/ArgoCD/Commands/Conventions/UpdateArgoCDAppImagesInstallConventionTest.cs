@@ -340,6 +340,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var kustomizeFile = "kustomization.yaml";
             originRepo.AddFilesToBranch(argoCDBranchName, [(kustomizeFile,
                 """
+                apiVersion: kustomize.config.k8s.io/v1beta1
+                kind: Kustomization
                 images:
                 - name: "docker.io/nginx"
                   newTag: "1.25"
@@ -352,6 +354,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             // Assert
             var updatedYamlContent = """
+                                     apiVersion: kustomize.config.k8s.io/v1beta1
+                                     kind: Kustomization
                                      images:
                                      - name: "docker.io/nginx"
                                        newTag: "1.27.1"
@@ -973,6 +977,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             originRepo.AddFilesToBranch(argoCDBranchName, [("kustomization.yaml",
                 """
+                apiVersion: kustomize.config.k8s.io/v1beta1
+                kind: Kustomization
                 images:
                 - name: "docker.io/nginx"
                   newTag: "1.27.1"
