@@ -5,7 +5,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git;
 
-public class AuthenticatingRepositoryFactory
+public class AuthenticatingRepositoryFactory : IRepositoryFactory
 {
     readonly Dictionary<string, GitCredentialDto> gitCredentials;
     readonly RepositoryFactory repositoryFactory;
@@ -29,5 +29,14 @@ public class AuthenticatingRepositoryFactory
 
         var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
         return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
+    }
+
+    public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection connection)
+    {
+        var cred = gitCredentials.GetValueOrDefault(connection.Url.ToString());
+        var credentialed = cred != null
+            ? new GitConnection(cred.Username, cred.Password, connection.Url, connection.GitReference)
+            : connection;
+        return repositoryFactory.CloneRepository(repositoryName, credentialed);
     }
 }
