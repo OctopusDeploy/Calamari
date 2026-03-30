@@ -61,6 +61,8 @@ namespace Calamari.ArgoCD.Git
                 };
 
             options.FetchOptions.CredentialsProvider = CreateCredentialsProvider(gitConnection);
+            // TODO(eddy): Implement proper SSH host key verification instead of blindly accepting
+            options.FetchOptions.CertificateCheck = (_, _, _) => true;
 
             string repoPath;
             var repoDisplayUrl = gitConnection.Url.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase)

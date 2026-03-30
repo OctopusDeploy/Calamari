@@ -201,6 +201,8 @@ namespace Calamari.ArgoCD.Git
             var pushOptions = new PushOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
+                // TODO(eddy): Implement proper SSH host key verification instead of blindly accepting
+                CertificateCheck = (_, _, _) => true,
                 OnPushStatusError = errors => errorsDetected = errors
             };
 
@@ -217,7 +219,9 @@ namespace Calamari.ArgoCD.Git
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
             var fetchOptions = new FetchOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials
+                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
+                // TODO(eddy): Implement proper SSH host key verification instead of blindly accepting
+                CertificateCheck = (_, _, _) => true
             };
 
             log.Verbose($"Fetching from remote '{remote.Name}'");
