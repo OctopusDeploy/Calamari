@@ -41,8 +41,6 @@ patchesStrategicMerge:
 
             fileSystem.FileExists(kustomizationPath).Returns(true);
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
-            fileSystem.FileExists(deploymentPatchPath).Returns(true);
-            fileSystem.FileExists(servicePatchPath).Returns(true);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
             var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
@@ -74,8 +72,6 @@ patchesJson6902:
 
             fileSystem.FileExists(kustomizationPath).Returns(true);
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
-            fileSystem.FileExists(deploymentPatchPath).Returns(true);
-            fileSystem.FileExists(servicePatchPath).Returns(true);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
             var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
@@ -140,8 +136,6 @@ patches:
 
             fileSystem.FileExists(kustomizationPath).Returns(true);
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
-            fileSystem.FileExists(deploymentPatchPath).Returns(true);
-            fileSystem.FileExists(servicePatchPath).Returns(true);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
             var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
@@ -153,7 +147,7 @@ patches:
         }
 
         [Test]
-        public void DiscoverPatchFiles_WithNonExistentPatchFiles_IgnoresMissingFiles()
+        public void DiscoverPatchFiles_WithNonExistentPatchFiles_ReturnsAllDiscoveredPaths()
         {
             const string kustomizationContent = @"
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -168,14 +162,13 @@ patchesStrategicMerge:
 
             fileSystem.FileExists(kustomizationPath).Returns(true);
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
-            fileSystem.FileExists(deploymentPatchPath).Returns(true);
-            fileSystem.FileExists(missingPatchPath).Returns(false);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
             var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
-            result.Should().HaveCount(1);
+            result.Should().HaveCount(2);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.StrategicMerge);
+            result.Should().Contain(p => p.FilePath == missingPatchPath && p.Type == PatchType.StrategicMerge);
         }
 
         [Test]

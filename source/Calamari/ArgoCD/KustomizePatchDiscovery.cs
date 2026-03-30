@@ -111,48 +111,34 @@ namespace Calamari.ArgoCD
         private void ProcessStrategicMergePatches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
         {
             var strategicMergeSequence = rootNode.GetSequenceNode(FieldNames.PatchesStrategicMerge);
-            if (strategicMergeSequence != null)
-            {
-                foreach (var pathNode in strategicMergeSequence.OfType<YamlScalarNode>())
-                {
-                    if (!string.IsNullOrEmpty(pathNode.Value))
-                    {
-                        var fullPath = Path.IsPathRooted(pathNode.Value) ? pathNode.Value : Path.Combine(kustomizationDir, pathNode.Value);
-                        if (fileSystem.FileExists(fullPath))
-                        {
-                            patchFiles.Add(new PatchFileInfo(fullPath, PatchType.StrategicMerge));
-                        }
-                        else
-                        {
-                            log.VerboseFormat("Strategic merge patch file not found: {0}", fullPath);
-                        }
-                    }
-                }
-            }
+            if (strategicMergeSequence == null)
+                return;
+
+            var strategicMergePatches = strategicMergeSequence
+                .OfType<YamlScalarNode>()
+                .Where(pathNode => !string.IsNullOrEmpty(pathNode.Value))
+                .Select(pathNode => new PatchFileInfo(
+                    Path.IsPathRooted(pathNode.Value!) ? pathNode.Value! : Path.Combine(kustomizationDir, pathNode.Value!),
+                    PatchType.StrategicMerge));
+
+            patchFiles.AddRange(strategicMergePatches);
         }
 
         private void ProcessJson6902Patches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
         {
             var json6902Sequence = rootNode.GetSequenceNode(FieldNames.PatchesJson6902);
-            if (json6902Sequence != null)
-            {
-                foreach (var entryNode in json6902Sequence.OfType<YamlMappingNode>())
-                {
-                    var pathValue = entryNode.GetStringValue(FieldNames.Path);
-                    if (!string.IsNullOrEmpty(pathValue))
-                    {
-                        var fullPath = Path.IsPathRooted(pathValue) ? pathValue : Path.Combine(kustomizationDir, pathValue);
-                        if (fileSystem.FileExists(fullPath))
-                        {
-                            patchFiles.Add(new PatchFileInfo(fullPath, PatchType.Json6902));
-                        }
-                        else
-                        {
-                            log.VerboseFormat("JSON 6902 patch file not found: {0}", fullPath);
-                        }
-                    }
-                }
-            }
+            if (json6902Sequence == null)
+                return;
+
+            var json6902Patches = json6902Sequence
+                .OfType<YamlMappingNode>()
+                .Select(entryNode => entryNode.GetStringValue(FieldNames.Path))
+                .Where(pathValue => !string.IsNullOrEmpty(pathValue))
+                .Select(pathValue => new PatchFileInfo(
+                    Path.IsPathRooted(pathValue!) ? pathValue! : Path.Combine(kustomizationDir, pathValue!),
+                    PatchType.Json6902));
+
+            patchFiles.AddRange(json6902Patches);
         }
 
         private static void ProcessInlinePatches(YamlMappingNode rootNode, string kustomizationFilePath, List<PatchFileInfo> patchFiles)
