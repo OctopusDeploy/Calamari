@@ -2,27 +2,29 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Calamari.Common.Plumbing.Logging;
+using Calamari.ArgoCD.GitHub;
 using Octokit;
 using Octokit.Internal;
 
-namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
+namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
-    public class GitHubPullRequestClientFactory: IGitVendorPullRequestClientFactory
+    public class GitHubApiAdapterFactory: IGitVendorApiAdapterFactory
     {
-        public string Name => "GitHub";
-        
-        public bool CanHandleAsCloudHosted(Uri repositoryUri) => GitHubRepositoryUriParser.IsGitHub(repositoryUri);
-
-        public async Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
+        bool CanInvokeWith(IRepositoryConnection repositoryConnection)
         {
-            await Task.CompletedTask;
+            return GitHubRepositoryOwnerParser.IsGitHub(repositoryConnection.Url);
+        }
+
+        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        {
+            if (!CanInvokeWith(repositoryConnection))
+            {
+                return null;
+            }
             
             var credentials = new Credentials(repositoryConnection.Username, repositoryConnection.Password);
             var client = CreateGitHubClient(credentials);
-            return new GitHubPullRequestClient(client, repositoryConnection, new Uri("https://github.com/"));
+            return new GitHubApiAdapter(client, repositoryConnection, new Uri("https://github.com/"));
         }
         
         IGitHubClient CreateGitHubClient(Credentials? credentials)

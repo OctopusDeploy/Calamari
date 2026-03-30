@@ -5,7 +5,7 @@ using System.Linq;
 using Calamari.ArgoCD.Conventions.ManifestTemplating;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.PullRequests;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
-        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
         readonly IClock clock;
         readonly IArgoCDFilesUpdatedReporter reporter;
         readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
@@ -37,7 +37,7 @@ namespace Calamari.ArgoCD.Conventions
             ICustomPropertiesLoader customPropertiesLoader,
             IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
+            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
             IClock clock,
             IArgoCDFilesUpdatedReporter reporter,
             ArgoCDOutputVariablesWriter outputVariablesWriter)
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Conventions
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
-            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
+            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
             this.clock = clock;
             this.outputVariablesWriter = outputVariablesWriter;
             this.packageSubfolder = packageSubfolder;
@@ -64,7 +64,7 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryFactory = new RepositoryFactory(log,
                 fileSystem,
                 deployment.CurrentDirectory,
-                gitVendorPullRequestClientResolver,
+                gitVendorAgnosticApiAdapterFactory,
                 clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();

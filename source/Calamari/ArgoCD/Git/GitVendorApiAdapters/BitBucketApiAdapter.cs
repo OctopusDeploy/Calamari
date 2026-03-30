@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
+namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
-    public class BitBucketPullRequestClient : IGitVendorPullRequestClient
+    public class BitBucketApiAdapter : IGitVendorApiAdapter
     {
         readonly IRepositoryConnection repositoryConnection;
         readonly Uri baseUrl;
 
         readonly string workspace;
         readonly string repositorySlug;
-        public BitBucketPullRequestClient(IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public BitBucketApiAdapter(IRepositoryConnection repositoryConnection, Uri baseUrl)
         {
             this.repositoryConnection = repositoryConnection;
             this.baseUrl = baseUrl;

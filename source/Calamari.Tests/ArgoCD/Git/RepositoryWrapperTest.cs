@@ -4,10 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.PullRequests;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -32,8 +31,8 @@ namespace Calamari.Tests.ArgoCD.Git
 
         IGitConnection gitConnection;
         RepositoryWrapper repository;
-        IGitVendorPullRequestClientResolver gitVendorAgnosticPullRequestClientFactory = Substitute.For<IGitVendorPullRequestClientResolver>();
-        IGitVendorPullRequestClient gitVendorPullRequestClient = Substitute.For<IGitVendorPullRequestClient>();
+        IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory = Substitute.For<IGitVendorAgnosticApiAdapterFactory>();
+        IGitVendorApiAdapter gitVendorApiAdapter = Substitute.For<IGitVendorApiAdapter>();
 
         [SetUp]
         public void Init()
@@ -45,15 +44,15 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            gitVendorPullRequestClient.CreatePullRequest(Arg.Any<string>(),
+            gitVendorApiAdapter.CreatePullRequest(Arg.Any<string>(),
                                                   Arg.Any<string>(),
                                                   Arg.Any<GitBranchName>(),
                                                   Arg.Any<GitBranchName>(),
                                                   Arg.Any<CancellationToken>())
                                .Returns(new PullRequest("title", 1, "url"));
-            gitVendorAgnosticPullRequestClientFactory.TryResolve(Arg.Any<IRepositoryConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
+            gitVendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(Arg.Any<IRepositoryConnection>()).Returns(gitVendorApiAdapter);
             
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
@@ -142,7 +141,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                          commitDescription,
                                          prBranch,
                                          CancellationToken.None);
-            await gitVendorPullRequestClient.Received(1)
+            await gitVendorApiAdapter.Received(1)
                                                  .CreatePullRequest(
                                                                     commitSummary,
                                                                     commitDescription,
@@ -179,7 +178,7 @@ namespace Calamari.Tests.ArgoCD.Git
 
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), GitReference.CreateFromString("1.0.0"));
             
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
             var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
 
             act.Should()
