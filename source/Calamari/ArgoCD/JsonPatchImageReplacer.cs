@@ -194,40 +194,58 @@ namespace Calamari.ArgoCD
 
         void ProcessImageValue(JsonValue imageValue, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
         {
-            if (imageValue.TryGetValue<string>(out var currentImageString) && !string.IsNullOrEmpty(currentImageString))
+            if (!imageValue.TryGetValue<string>(out var currentImageString) || string.IsNullOrEmpty(currentImageString))
+                return;
+
+            var matchedUpdate = FindMatchingImageUpdate(currentImageString, imagesToUpdate);
+            if (matchedUpdate == null || matchedUpdate.Comparison.TagMatch)
+                return;
+
+            var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
+            UpdateJsonImageValue(imageValue, newImageRef);
+
+            changes.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+            log.Verbose($"Updated container image in JSON patch: {newImageRef}");
+        }
+
+        ImageReferenceMatch? FindMatchingImageUpdate(string currentImageString, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+        {
+            var currentImageRef = ContainerImageReference.FromReferenceString(currentImageString, defaultRegistry);
+            return imagesToUpdate
+                .Select(i => new ImageReferenceMatch(i.ContainerReference, i.ContainerReference.CompareWith(currentImageRef)))
+                .FirstOrDefault(i => i.Comparison.MatchesImage());
+        }
+
+        void UpdateJsonImageValue(JsonValue imageValue, string newImageRef)
+        {
+            var parentArray = imageValue.Parent as JsonArray;
+            var parentObject = imageValue.Parent as JsonObject;
+
+            if (parentArray != null)
             {
-                var currentImageRef = ContainerImageReference.FromReferenceString(currentImageString, defaultRegistry);
-                var matchedUpdate = imagesToUpdate
-                    .Select(i => new ImageReferenceMatch(i.ContainerReference, i.ContainerReference.CompareWith(currentImageRef)))
-                    .FirstOrDefault(i => i.Comparison.MatchesImage());
+                UpdateImageInJsonArray(parentArray, imageValue, newImageRef);
+            }
+            else if (parentObject != null)
+            {
+                UpdateImageInJsonObject(parentObject, imageValue, newImageRef);
+            }
+        }
 
-                if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
-                {
-                    var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
+        void UpdateImageInJsonArray(JsonArray parentArray, JsonValue imageValue, string newImageRef)
+        {
+            var index = parentArray.IndexOf(imageValue);
+            if (index >= 0)
+            {
+                parentArray[index] = JsonValue.Create(newImageRef);
+            }
+        }
 
-                    var parentArray = imageValue.Parent as JsonArray;
-                    var parentObject = imageValue.Parent as JsonObject;
-
-                    if (parentArray != null)
-                    {
-                        var index = parentArray.IndexOf(imageValue);
-                        if (index >= 0)
-                        {
-                            parentArray[index] = JsonValue.Create(newImageRef);
-                        }
-                    }
-                    else if (parentObject != null)
-                    {
-                        var property = parentObject.FirstOrDefault(kvp => ReferenceEquals(kvp.Value, imageValue));
-                        if (property.Key != null)
-                        {
-                            parentObject[property.Key] = JsonValue.Create(newImageRef);
-                        }
-                    }
-
-                    changes.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
-                    log.Verbose($"Updated container image in JSON patch: {newImageRef}");
-                }
+        void UpdateImageInJsonObject(JsonObject parentObject, JsonValue imageValue, string newImageRef)
+        {
+            var property = parentObject.FirstOrDefault(kvp => ReferenceEquals(kvp.Value, imageValue));
+            if (property.Key != null)
+            {
+                parentObject[property.Key] = JsonValue.Create(newImageRef);
             }
         }
 
