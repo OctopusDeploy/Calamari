@@ -1,4 +1,5 @@
 using System;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 
 namespace Calamari.ArgoCD.GitHub
 {

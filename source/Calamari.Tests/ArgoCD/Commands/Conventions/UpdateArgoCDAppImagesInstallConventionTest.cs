@@ -9,7 +9,7 @@ using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Models;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.PullRequests;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -60,7 +60,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new CommitMessageGenerator(),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
-                Substitute.For<IGitVendorPullRequestClientResolver>(),
+                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
                 deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));

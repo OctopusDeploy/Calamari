@@ -2,19 +2,19 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.ArgoCD.GitHub;
 using Octokit;
-using PullRequest = Calamari.ArgoCD.Git.PullRequests.PullRequest;
 
-namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
+namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
-    public class GitHubPullRequestClient: IGitVendorPullRequestClient
+    public class GitHubApiAdapter: IGitVendorApiAdapter
     {
         readonly IGitHubClient client;
         readonly Uri baseUrl;
         readonly string repoOwner;
         readonly string repoName;
 
-        public GitHubPullRequestClient(IGitHubClient client, IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public GitHubApiAdapter(IGitHubClient client, IRepositoryConnection repositoryConnection, Uri baseUrl)
         {
             this.client = client;
             this.baseUrl = baseUrl;

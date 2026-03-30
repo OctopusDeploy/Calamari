@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 using NGitLab;
 using NGitLab.Models;
 
-namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
+namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
-    public class GitLabPullRequestClient : IGitVendorPullRequestClient
+    public class GitLabApiAdapter : IGitVendorApiAdapter
     {
         readonly GitLabClient gitLabClient;
         readonly Uri baseUrl;
         readonly string projectPath;
 
-        public GitLabPullRequestClient(GitLabClient gitLabClient, IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public GitLabApiAdapter(GitLabClient gitLabClient, IRepositoryConnection repositoryConnection, Uri baseUrl)
         {
             this.gitLabClient = gitLabClient;
             this.baseUrl = baseUrl;
@@ -33,8 +33,8 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
             var mergeRequest = gitLabClient.GetMergeRequest(projectPath).Create(new MergeRequestCreate()
             {
                 Title = pullRequestTitle,
-                SourceBranch = sourceBranch.ToFriendlyName(),
-                TargetBranch = destinationBranch.ToFriendlyName(),
+                SourceBranch = sourceBranch.Value,
+                TargetBranch = destinationBranch.Value,
                 Description = body
             });
             return new PullRequest(mergeRequest.Title, mergeRequest.Id, mergeRequest.WebUrl);

@@ -3,9 +3,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Calamari.ArgoCD.Git.PullRequests
+namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
-    public interface IGitVendorPullRequestClient
+    public interface IGitVendorApiAdapter
     {
 
         public Task<PullRequest> CreatePullRequest(string pullRequestTitle,
