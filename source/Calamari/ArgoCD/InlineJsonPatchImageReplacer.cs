@@ -172,7 +172,8 @@ namespace Calamari.ArgoCD
             {
                 if (kvp.Key is YamlScalarNode scalar && scalar.Value == FieldNames.Image && kvp.Value is YamlScalarNode imageScalar && !string.IsNullOrEmpty(imageScalar.Value))
                 {
-                    ProcessImageReference(imageScalar, imagesToUpdate, changes);
+                    var imageChanges = ProcessImageReference(imageScalar, imagesToUpdate);
+                    changes.UnionWith(imageChanges);
                     break;
                 }
             }
@@ -209,7 +210,8 @@ namespace Calamari.ArgoCD
                     {
                         if (kvp.Key is YamlScalarNode scalar && scalar.Value == FieldNames.Image && kvp.Value is YamlScalarNode imageScalar)
                         {
-                            ProcessImageReference(imageScalar, imagesToUpdate, changes);
+                            var imageChanges = ProcessImageReference(imageScalar, imagesToUpdate);
+                            changes.UnionWith(imageChanges);
                             break;
                         }
                     }
@@ -217,10 +219,12 @@ namespace Calamari.ArgoCD
             }
         }
 
-        void ProcessImageReference(YamlScalarNode imageScalar, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
+        HashSet<string> ProcessImageReference(YamlScalarNode imageScalar, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
+            var changes = new HashSet<string>();
+
             if (string.IsNullOrEmpty(imageScalar.Value))
-                return;
+                return changes;
 
             var currentImageRef = ContainerImageReference.FromReferenceString(imageScalar.Value, defaultRegistry);
             var matchedUpdate = imagesToUpdate
@@ -240,6 +244,8 @@ namespace Calamari.ArgoCD
                 changes.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                 log.Verbose($"Updated container image in inline patch: {newImageRef}");
             }
+
+            return changes;
         }
 
         record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
