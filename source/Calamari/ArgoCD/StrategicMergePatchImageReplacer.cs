@@ -52,7 +52,7 @@ namespace Calamari.ArgoCD
 
             if (replacementsMade.Count == 0) return NoChangeResult;
 
-            var modifiedYaml = SerializeDocuments(modifiedDocuments);
+            var modifiedYaml = YamlStreamLoader.SerializeDocuments(modifiedDocuments, yamlContent);
             return new ImageReplacementResult(modifiedYaml, replacementsMade);
         }
 
@@ -200,30 +200,6 @@ namespace Calamari.ArgoCD
             };
         }
 
-        string SerializeDocuments(List<YamlDocument> documents)
-        {
-            var newLine = yamlContent.DetectLineEnding() ?? "\n";
-            var serializedDocs = new List<string>();
-            foreach (var doc in documents)
-            {
-                using var writer = new StringWriter();
-                var tempStream = new YamlStream(doc);
-                tempStream.Save(writer, false);
-                var serialized = writer.ToString();
-
-                serialized = serialized.TrimEnd();
-                if (serialized.EndsWith("..."))
-                {
-                    serialized = serialized.Substring(0, serialized.Length - 3).TrimEnd();
-                }
-
-                serializedDocs.Add(serialized);
-            }
-
-            return documents.Count == 1
-                ? serializedDocs[0]
-                : string.Join($"{newLine}---{newLine}", serializedDocs);
-        }
 
 
         record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
