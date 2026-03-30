@@ -1,8 +1,7 @@
 using System;
 using System.IO;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using System.Linq;
-using System.Threading;
-using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -22,16 +21,16 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
         readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory,
                                  IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
+            this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
             this.clock = clock;
         }
 
@@ -98,9 +97,8 @@ namespace Calamari.ArgoCD.Git
             }
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
-
-            //TODO(tmm): Is this an acceptable way to call an async function?
-            var gitVendorApiAdapter = gitVendorPullRequestClientResolver.TryResolve(gitConnection, log, CancellationToken.None).Result;
+            
+            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,
