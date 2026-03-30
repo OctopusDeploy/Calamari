@@ -155,14 +155,16 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
     {
         var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline strategic merge patches");
         if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+        {
             return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        }
 
         if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) || !(patchesNode is YamlSequenceNode patchSequence))
+        {
             return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        }
 
         var allUpdatedImages = new HashSet<string>();
-        var hasChanges = false;
-
         foreach (var patchNode in patchSequence.Children)
         {
             if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
@@ -175,13 +177,14 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
                 {
                     patchScalar.Value = result.UpdatedContents;
                     allUpdatedImages.UnionWith(result.UpdatedImageReferences);
-                    hasChanges = true;
                 }
             }
         }
 
-        if (!hasChanges)
-            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        if (!allUpdatedImages.Any())
+        {
+            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());   
+        }
 
         using var writer = new StringWriter();
         yamlStream.Save(writer, false);
@@ -222,7 +225,10 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
 
         if (!allUpdatedImages.Any())
+        {
             return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+        }
+            
 
         using var writer = new StringWriter();
         yamlStream.Save(writer, false);
