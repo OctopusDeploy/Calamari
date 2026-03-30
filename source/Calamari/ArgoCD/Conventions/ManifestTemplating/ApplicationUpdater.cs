@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -63,24 +64,24 @@ public class ApplicationUpdater
                                                          outputVariablesWriter,
                                                          repositoryAdapter);
         
-        var updatedSourcesResults = applicationFromYaml
+        var trackedSourceUpdateResults = applicationFromYaml
                                     .GetSourcesWithMetadata()
+                                    .Where(sourceUpdater.IsAppInScope)
                                     .Select(applicationSource => new
                                     {
                                         UpdateResult = sourceUpdater.ProcessSource(applicationSource),
                                         applicationSource
                                     })
-                                    .Where(u => u.UpdateResult.Updated)
                                     .ToList();
-        
+
         //if we have links, use that to generate a link, otherwise just put the name there
         var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
         var linkifiedAppName = instanceLinks != null
             ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, applicationFromYaml.Metadata.Namespace), applicationName)
             : applicationName;
 
-        var message = updatedSourcesResults.Any()
-            ? "Updated Application {0}" 
+        var message = trackedSourceUpdateResults.Any(u => u.UpdateResult.Updated)
+            ? "Updated Application {0}"
             : "Nothing to update for Application {0}";
 
         log.InfoFormat(message, linkifiedAppName);
@@ -90,9 +91,9 @@ public class ApplicationUpdater
                                             applicationName.ToApplicationName(),
                                             applicationFromYaml.Spec.Sources.Count,
                                             applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                            updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
+                                            trackedSourceUpdateResults.Select(r => new TrackedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
                                             [],
-                                            updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+                                            trackedSourceUpdateResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
     }
     
     void LogWarningIfUpdatingMultipleSources(
