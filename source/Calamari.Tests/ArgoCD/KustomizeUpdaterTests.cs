@@ -295,7 +295,7 @@ spec:
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().BeEmpty();
-            result.PatchedFileContent.Should().BeEmpty();
+            result.PatchedFiles.Should().BeEmpty();
         }
 
         [Test]

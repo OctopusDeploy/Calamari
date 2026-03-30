@@ -84,7 +84,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             }
         }
 
-        return new ImageReplacementResult(updatedContent, allUpdatedImages);
+        return new ImageReplacementResult(updatedContent, allUpdatedImages, new HashSet<string>());
     }
 
     private ImageReplacementResult UpdatePatchFields(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
@@ -105,7 +105,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         else
         {
             log.Verbose($"Unable to determine patch type for content, no image updates will be performed");
-            return new ImageReplacementResult(input, new HashSet<string>());
+            return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
         }
     }
     
@@ -224,11 +224,11 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
     {
         var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline strategic merge patches");
         if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
-            return new ImageReplacementResult(content, new HashSet<string>());
+            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
         if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) ||
             !(patchesNode is YamlSequenceNode patchSequence))
-            return new ImageReplacementResult(content, new HashSet<string>());
+            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
             var allUpdatedImages = new HashSet<string>();
             var hasChanges = false;
@@ -251,24 +251,24 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             }
 
             if (!hasChanges)
-                return new ImageReplacementResult(content, new HashSet<string>());
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
             using var writer = new StringWriter();
             yamlStream.Save(writer, false);
             var modifiedContent = writer.ToString().TrimEnd();
 
-            return new ImageReplacementResult(modifiedContent, allUpdatedImages);
+            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
     }
 
     private ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline JSON 6902 patches");
         if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
-            return new ImageReplacementResult(content, new HashSet<string>());
+            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
         if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) ||
             !(patchesNode is YamlSequenceNode patchSequence))
-            return new ImageReplacementResult(content, new HashSet<string>());
+            return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
             var allUpdatedImages = new HashSet<string>();
             var hasChanges = false;
@@ -293,12 +293,12 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             }
 
             if (!hasChanges)
-                return new ImageReplacementResult(content, new HashSet<string>());
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
 
             using var writer = new StringWriter();
             yamlStream.Save(writer, false);
             var modifiedContent = writer.ToString().TrimEnd();
 
-            return new ImageReplacementResult(modifiedContent, allUpdatedImages);
+            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
     }
 }

@@ -240,9 +240,9 @@ namespace Calamari.Tests.ArgoCD
         [Test]
         public void CombineResults_WithMultipleResults_MergesReplacementsAndUsesLatestContent()
         {
-            var result1 = new ImageReplacementResult("content1", new HashSet<string> { "nginx:1.25" });
-            var result2 = new ImageReplacementResult("content2", new HashSet<string> { "busybox:stable" });
-            var result3 = new ImageReplacementResult("content3", new HashSet<string>());
+            var result1 = new ImageReplacementResult("content1", new HashSet<string> { "nginx:1.25" }, new HashSet<string>());
+            var result2 = new ImageReplacementResult("content2", new HashSet<string> { "busybox:stable" }, new HashSet<string>());
+            var result3 = new ImageReplacementResult("content3", new HashSet<string>(), new HashSet<string>());
 
             var combined = ImageReplacementResult.CombineResults(result1, result2, result3);
 

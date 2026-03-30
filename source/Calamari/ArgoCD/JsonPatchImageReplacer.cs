@@ -58,7 +58,7 @@ namespace Calamari.ArgoCD
             this.imageReferencePattern = imagePattern;
         }
 
-        ImageReplacementResult NoChangeResult => new ImageReplacementResult(jsonContent, new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new ImageReplacementResult(jsonContent, new HashSet<string>(), new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
@@ -113,7 +113,7 @@ namespace Calamari.ArgoCD
                     : JsonProcessingConstants.CompactSerializerOptions;
 
                 var modifiedJson = JsonSerializer.Serialize(patchArray, options);
-                return new ImageReplacementResult(modifiedJson, replacementsMade);
+                return new ImageReplacementResult(modifiedJson, replacementsMade, new HashSet<string>());
             }
             catch (Exception ex)
             {

@@ -42,7 +42,7 @@ namespace Calamari.ArgoCD
             this.log = log;
         }
 
-        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>(), new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
@@ -82,7 +82,7 @@ namespace Calamari.ArgoCD
             }
             var modifiedContent = writer.ToString().TrimEnd();
 
-            return new ImageReplacementResult(modifiedContent, combinedResult.UpdatedImageReferences);
+            return new ImageReplacementResult(modifiedContent, combinedResult.UpdatedImageReferences, combinedResult.AlreadyUpToDateImages);
         }
 
         internal ImageReplacementResult ProcessPatchOperation(YamlMappingNode operationNode,
@@ -186,7 +186,7 @@ namespace Calamari.ArgoCD
                 var replacement = $"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}";
                 log.Verbose($"Updated container image in YAML JSON 6902 patch: {newImageRef}");
 
-                return new ImageReplacementResult(yamlContent, new HashSet<string> { replacement });
+                return new ImageReplacementResult(yamlContent, new HashSet<string> { replacement }, new HashSet<string>());
             }
 
             return NoChangeResult;

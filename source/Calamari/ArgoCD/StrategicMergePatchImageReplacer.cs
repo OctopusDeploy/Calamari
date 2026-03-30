@@ -33,7 +33,7 @@ namespace Calamari.ArgoCD
             this.log = log;
         }
 
-        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>(), new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
@@ -53,7 +53,7 @@ namespace Calamari.ArgoCD
             if (replacementsMade.Count == 0) return NoChangeResult;
 
             var modifiedYaml = YamlStreamLoader.SerializeDocuments(modifiedDocuments, yamlContent);
-            return new ImageReplacementResult(modifiedYaml, replacementsMade);
+            return new ImageReplacementResult(modifiedYaml, replacementsMade, new HashSet<string>());
         }
 
 
@@ -168,13 +168,13 @@ namespace Calamari.ArgoCD
                         var replacement = $"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}";
                         log.Verbose($"Updated container image in strategic merge patch: {newImageRef}");
 
-                        return new ImageReplacementResult(string.Empty, new HashSet<string> { replacement });
+                        return new ImageReplacementResult(string.Empty, new HashSet<string> { replacement }, new HashSet<string>());
                     }
                     break;
                 }
             }
 
-            return new ImageReplacementResult(string.Empty, new HashSet<string>());
+            return new ImageReplacementResult(string.Empty, new HashSet<string>(), new HashSet<string>());
         }
 
         YamlMappingNode DeepCopyMappingNode(YamlMappingNode original)

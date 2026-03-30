@@ -39,7 +39,7 @@ namespace Calamari.ArgoCD
             this.log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
-        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>(), new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
@@ -101,7 +101,7 @@ namespace Calamari.ArgoCD
             stream.Save(writer, false);
             var modifiedYaml = writer.ToString().TrimEnd();
 
-            return new ImageReplacementResult(modifiedYaml, replacementsMade);
+            return new ImageReplacementResult(modifiedYaml, replacementsMade, new HashSet<string>());
         }
 
         HashSet<string> ProcessPatchNode(YamlMappingNode patchNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
