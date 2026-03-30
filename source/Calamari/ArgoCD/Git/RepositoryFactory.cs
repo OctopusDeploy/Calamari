@@ -108,13 +108,9 @@ namespace Calamari.ArgoCD.Git
 
                 LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
             }
-            catch (CommandException)
+            catch (LibGit2SharpException e)
             {
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw new CommandException($"Failed to checkout branch '{gitConnection.GitReference}' in repository at {gitConnection.Url}", e);
+                throw new CommandException($"Failed to checkout branch '{gitConnection.GitReference}' in repository at {gitConnection.Url}. Error: {e.Message}", e);
             }
             
             var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);

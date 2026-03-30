@@ -14,37 +14,21 @@ using Polly.Retry;
 
 namespace Calamari.ArgoCD.Git
 {
-    public class RepositoryWrapper : IDisposable
+    public class RepositoryWrapper(
+        Repository repository,
+        ICalamariFileSystem calamariFileSystem,
+        string repoCheckoutDirectoryPath,
+        ILog log,
+        IGitConnection connection,
+        IGitVendorApiAdapter? vendorApiAdapter,
+        IClock clock)
+        : IDisposable
     {
-        readonly Repository repository;
-        readonly ICalamariFileSystem calamariFileSystem;
-        readonly string repoCheckoutDirectoryPath;
-        readonly ILog log;
-        readonly IGitConnection connection;
-        readonly IGitVendorApiAdapter? vendorApiAdapter;
-        readonly IClock clock;
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(Repository repository,
-                                 ICalamariFileSystem calamariFileSystem,
-                                 string repoCheckoutDirectoryPath,
-                                 ILog log,
-                                 IGitConnection connection,
-                                 IGitVendorApiAdapter? vendorApiAdapter,
-                                 IClock clock)
-        {
-            this.repository = repository;
-            this.calamariFileSystem = calamariFileSystem;
-            this.repoCheckoutDirectoryPath = repoCheckoutDirectoryPath;
-            this.log = log;
-            this.connection = connection;
-            this.vendorApiAdapter = vendorApiAdapter;
-            this.clock = clock;
-        }
-
-        Credentials RepositoryCredentials => new UsernamePasswordCredentials() { Username = connection.Username, Password = connection.Password };
+        Credentials RepositoryCredentials => new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password };
 
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
@@ -64,9 +48,9 @@ namespace Calamari.ArgoCD.Git
                 log.Verbose("No changes required committing.");
                 return false;
             }
-            catch (Exception e)
+            catch (LibGit2SharpException e)
             {
-                throw new CommandException("Failed to commit changes to git repository", e);
+                throw new CommandException($"Failed to commit changes to git repository. Error: {e.Message}", e);
             }
         }
 
@@ -77,9 +61,9 @@ namespace Calamari.ArgoCD.Git
                 foreach (var file in filesToStage)
                     repository.Index.Add(NormalizePath(file));
             }
-            catch (Exception e)
+            catch (LibGit2SharpException e)
             {
-                throw new CommandException("Failed to stage files in git repository", e);
+                throw new CommandException($"Failed to stage files in git repository. Error: {e.Message}", e);
             }
         }
 
@@ -90,9 +74,9 @@ namespace Calamari.ArgoCD.Git
                 foreach (var file in filesToRemove)
                     repository.Index.Remove(NormalizePath(file));
             }
-            catch (Exception e)
+            catch (LibGit2SharpException e)
             {
-                throw new CommandException("Failed to remove files from git repository", e);
+                throw new CommandException($"Failed to remove files from git repository. Error: {e.Message}", e);
             }
         }
 
@@ -133,13 +117,9 @@ namespace Calamari.ArgoCD.Git
             {
                 retryPipeline.Execute(() => PushChanges(pushToBranchName));
             }
-            catch (CommandException)
+            catch (LibGit2SharpException e)
             {
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw new CommandException($"Failed to push to branch '{pushToBranchName.ToFriendlyName()}'", e);
+                throw new CommandException($"Failed to push to branch '{pushToBranchName.ToFriendlyName()}'. Error: {e.Message}", e);
             }
 
             var commit = repository.Head.Tip;
@@ -204,9 +184,9 @@ namespace Calamari.ArgoCD.Git
 
                 return pullRequest;
             }
-            catch (Exception e)
+            catch (LibGit2SharpException e)
             {
-                throw new CommandException("Pull Request Creation Failed", e);
+                throw new CommandException($"Pull Request Creation Failed. Error: {e.Message}", e);
             }
         }
 
@@ -232,7 +212,7 @@ namespace Calamari.ArgoCD.Git
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
-                throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
+                throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()}. Error: {errorsDetected.Message}");
             }
         }
 
@@ -250,9 +230,9 @@ namespace Calamari.ArgoCD.Git
                 log.Verbose($"Fetching from remote '{remote.Name}'");
                 LibGit2Sharp.Commands.Fetch(repository, remote.Name, refSpecs, fetchOptions, null);
             }
-            catch (Exception e)
+            catch (LibGit2SharpException e)
             {
-                throw new CommandException($"Failed to fetch from remote '{remote.Name}'", e);
+                throw new CommandException($"Failed to fetch from remote '{remote.Name}'. Error: {e.Message}", e);
             }
 
             var trackingBranchName = $"{remote.Name}/{branchName.ToFriendlyName()}";
@@ -273,18 +253,14 @@ namespace Calamari.ArgoCD.Git
                                                            new RebaseOptions());
                 if (rebaseResult.Status == RebaseStatus.Conflicts)
                 {
-                    throw new CommandException($"Rebase conflict detected when rebasing onto '{trackingBranch.FriendlyName}' - cannot automatically resolve conflicts");
+                    throw new CommandException($"Rebase conflict detected when rebasing onto '{trackingBranch.FriendlyName}'. Error: Cannot automatically resolve conflicts");
                 }
 
                 log.Verbose($"Rebase result: {rebaseResult.Status}");
             }
-            catch (CommandException)
+            catch (LibGit2SharpException e)
             {
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw new CommandException($"Failed to rebase onto '{trackingBranch.FriendlyName}'", e);
+                throw new CommandException($"Failed to rebase onto '{trackingBranch.FriendlyName}'. Error: {e.Message}", e);
             }
         }
 
