@@ -177,119 +177,58 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
     internal bool HasInlinePatches(string content)
     {
-        try
-        {
-            var yamlStream = new YamlStream();
-            yamlStream.Load(new StringReader(content));
-
-            if (yamlStream.Documents.Count == 0)
-            {
-                return false;
-            }
-
-            var rootNode = yamlStream.Documents[0].RootNode;
-            if (rootNode is not YamlMappingNode mappingNode)
-            {
-                return false;
-            }
-
-            return mappingNode.Children.ContainsKey(new YamlScalarNode("patches"));
-        }
-        catch (Exception ex)
-        {
-            log.Verbose($"Error checking for inline patches: {ex.Message}");
-            return false;
-        }
+        var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline patches");
+        return mappingNode?.Children.ContainsKey(new YamlScalarNode("patches")) ?? false;
     }
 
     internal bool HasInlineStrategicMergePatches(string content)
     {
-        try
-        {
-            var yamlStream = new YamlStream();
-            yamlStream.Load(new StringReader(content));
-
-            if (yamlStream.Documents.Count == 0)
-            {
-                return false;
-            }
-
-            var rootNode = yamlStream.Documents[0].RootNode;
-            if (rootNode is not YamlMappingNode mappingNode)
-            {
-                return false;
-            }
-
-            if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode))
-            {
-                if (patchesNode is YamlSequenceNode sequence)
-                {
-                    // Look for inline YAML patches (multi-line strings starting with |)
-                    return sequence.Children.Any(node => node is YamlScalarNode scalar &&
-                                                         scalar.Style == ScalarStyle.Literal);
-                }
-            }
-
+        var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline strategic merge patches");
+        if (mappingNode == null)
             return false;
-        }
-        catch (Exception ex)
+
+        if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode))
         {
-            log.Verbose($"Error checking for inline strategic merge patches: {ex.Message}");
-            return false;
+            if (patchesNode is YamlSequenceNode sequence)
+            {
+                // Look for inline YAML patches (multi-line strings starting with |)
+                return sequence.Children.Any(node => node is YamlScalarNode scalar &&
+                                                     scalar.Style == ScalarStyle.Literal);
+            }
         }
+
+        return false;
     }
 
     internal bool HasInlineJson6902Patches(string content)
     {
-        try
-        {
-            var yamlStream = new YamlStream();
-            yamlStream.Load(new StringReader(content));
-
-            if (yamlStream.Documents.Count == 0)
-            {
-                return false;
-            }
-
-            var rootNode = yamlStream.Documents[0].RootNode;
-            if (rootNode is not YamlMappingNode mappingNode)
-            {
-                return false;
-            }
-
-            if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode))
-            {
-                if (patchesNode is YamlSequenceNode sequence)
-                {
-                    return sequence.Children.OfType<YamlMappingNode>().Any(patchEntry =>
-                        patchEntry.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContent) &&
-                        patchContent is YamlScalarNode patchScalar &&
-                        patchScalar.Style == ScalarStyle.Literal);
-                }
-            }
-
+        var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline JSON 6902 patches");
+        if (mappingNode == null)
             return false;
-        }
-        catch (Exception ex)
+
+        if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode))
         {
-            log.Verbose($"Error checking for inline JSON 6902 patches: {ex.Message}");
-            return false;
+            if (patchesNode is YamlSequenceNode sequence)
+            {
+                return sequence.Children.OfType<YamlMappingNode>().Any(patchEntry =>
+                    patchEntry.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContent) &&
+                    patchContent is YamlScalarNode patchScalar &&
+                    patchScalar.Style == ScalarStyle.Literal);
+            }
         }
+
+        return false;
     }
 
     private ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
-        try
-        {
-            var yamlStream = new YamlStream();
-            yamlStream.Load(new StringReader(content));
+        var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline strategic merge patches");
+        if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+            return new ImageReplacementResult(content, new HashSet<string>());
 
-            if (yamlStream.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
-                return new ImageReplacementResult(content, new HashSet<string>());
-
-            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) ||
-                !(patchesNode is YamlSequenceNode patchSequence))
-                return new ImageReplacementResult(content, new HashSet<string>());
+        if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) ||
+            !(patchesNode is YamlSequenceNode patchSequence))
+            return new ImageReplacementResult(content, new HashSet<string>());
 
             var allUpdatedImages = new HashSet<string>();
             var hasChanges = false;
@@ -319,27 +258,17 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             var modifiedContent = writer.ToString().TrimEnd();
 
             return new ImageReplacementResult(modifiedContent, allUpdatedImages);
-        }
-        catch (Exception ex)
-        {
-            log.WarnFormat("Error processing inline strategic merge patches: {0}", ex.Message);
-            return new ImageReplacementResult(content, new HashSet<string>());
-        }
     }
 
     private ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
-        try
-        {
-            var yamlStream = new YamlStream();
-            yamlStream.Load(new StringReader(content));
+        var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline JSON 6902 patches");
+        if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+            return new ImageReplacementResult(content, new HashSet<string>());
 
-            if (yamlStream.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
-                return new ImageReplacementResult(content, new HashSet<string>());
-
-            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) ||
-                !(patchesNode is YamlSequenceNode patchSequence))
-                return new ImageReplacementResult(content, new HashSet<string>());
+        if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) ||
+            !(patchesNode is YamlSequenceNode patchSequence))
+            return new ImageReplacementResult(content, new HashSet<string>());
 
             var allUpdatedImages = new HashSet<string>();
             var hasChanges = false;
@@ -371,11 +300,5 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             var modifiedContent = writer.ToString().TrimEnd();
 
             return new ImageReplacementResult(modifiedContent, allUpdatedImages);
-        }
-        catch (Exception ex)
-        {
-            log.WarnFormat("Error processing inline JSON 6902 patches: {0}", ex.Message);
-            return new ImageReplacementResult(content, new HashSet<string>());
-        }
     }
 }

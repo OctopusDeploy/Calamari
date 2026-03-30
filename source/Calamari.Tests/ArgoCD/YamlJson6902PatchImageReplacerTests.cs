@@ -236,5 +236,58 @@ namespace Calamari.Tests.ArgoCD
             var updatedLines = result.UpdatedContents.Split('\n').Where(line => line.Contains("nginx:1.25")).ToArray();
             updatedLines.Should().HaveCount(3);
         }
+
+        [Test]
+        public void CombineResults_WithMultipleResults_MergesReplacementsAndUsesLatestContent()
+        {
+            var result1 = new ImageReplacementResult("content1", new HashSet<string> { "nginx:1.25" });
+            var result2 = new ImageReplacementResult("content2", new HashSet<string> { "busybox:stable" });
+            var result3 = new ImageReplacementResult("content3", new HashSet<string>());
+
+            var combined = YamlJson6902PatchImageReplacer.CombineResults(result1, result2, result3);
+
+            combined.UpdatedContents.Should().Be("content3"); // Last non-empty content
+            combined.UpdatedImageReferences.Should().HaveCount(2);
+            combined.UpdatedImageReferences.Should().Contain("nginx:1.25");
+            combined.UpdatedImageReferences.Should().Contain("busybox:stable");
+        }
+
+        [Test]
+        public void CombineResults_WithNoResults_ReturnsOriginalContent()
+        {
+            var combined = YamlJson6902PatchImageReplacer.CombineResults();
+
+            combined.UpdatedContents.Should().Be("");
+            combined.UpdatedImageReferences.Should().BeEmpty();
+        }
+
+
+        [Test]
+        public void ProcessContainersSequence_WithMultipleContainers_CombinesResults()
+        {
+            const string yamlContent = @"
+- op: add
+  path: /spec/template/spec/containers
+  value:
+    - name: nginx
+      image: nginx:1.21
+    - name: busybox
+      image: my-registry.com/busybox:1.35";
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
+            var containersSequence = new YamlDotNet.RepresentationModel.YamlSequenceNode();
+            var container1 = new YamlDotNet.RepresentationModel.YamlMappingNode();
+            container1.Add("image", "nginx:1.21");
+            var container2 = new YamlDotNet.RepresentationModel.YamlMappingNode();
+            container2.Add("image", "my-registry.com/busybox:1.35");
+            containersSequence.Add(container1);
+            containersSequence.Add(container2);
+
+            var result = replacer.ProcessContainersSequence(containersSequence, imagesToUpdate);
+
+            result.UpdatedImageReferences.Should().Contain("nginx:1.25");
+            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+        }
+
     }
 }

@@ -37,41 +37,20 @@ namespace Calamari.ArgoCD
 
         public YamlJson6902PatchImageReplacer(string yamlContent, string defaultRegistry, ILog log)
         {
-            this.yamlContent = yamlContent ?? throw new ArgumentNullException(nameof(yamlContent));
-            this.defaultRegistry = defaultRegistry ?? throw new ArgumentNullException(nameof(defaultRegistry));
-            this.log = log ?? throw new ArgumentNullException(nameof(log));
+            this.yamlContent = yamlContent;
+            this.defaultRegistry = defaultRegistry;
+            this.log = log;
         }
 
         ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
-            if (string.IsNullOrWhiteSpace(yamlContent))
-            {
-                log.Warn("YAML JSON 6902 patch content is empty or whitespace only.");
+            var stream = YamlStreamLoader.TryLoad(yamlContent, log, "YAML JSON 6902 patch");
+            if (stream == null)
                 return NoChangeResult;
-            }
 
-            YamlStream stream;
-            try
-            {
-                using var reader = new StringReader(yamlContent);
-                stream = new YamlStream();
-                stream.Load(reader);
-
-                if (stream.Documents.Count == 0)
-                {
-                    log.Warn("YAML JSON 6902 patch content contains no documents.");
-                    return NoChangeResult;
-                }
-            }
-            catch (Exception ex)
-            {
-                log.WarnFormat("Error parsing YAML JSON 6902 patch content: {0}", ex.Message);
-                return NoChangeResult;
-            }
-
-            var replacementsMade = new HashSet<string>();
+            var results = new List<ImageReplacementResult>();
 
             // Process each document in the YAML stream
             foreach (var document in stream.Documents)
@@ -81,16 +60,14 @@ namespace Calamari.ArgoCD
                     // JSON 6902 patches are arrays of operation objects
                     foreach (var operationNode in patchSequence.Children.OfType<YamlMappingNode>())
                     {
-                        var operationReplacements = ProcessPatchOperation(operationNode, imagesToUpdate);
-                        foreach (var replacement in operationReplacements)
-                        {
-                            replacementsMade.Add(replacement);
-                        }
+                        var operationResult = ProcessPatchOperation(operationNode, imagesToUpdate);
+                        results.Add(operationResult);
                     }
                 }
             }
 
-            if (replacementsMade.Count == 0)
+            var combinedResult = CombineResults(results.ToArray());
+            if (combinedResult.UpdatedImageReferences.Count == 0)
             {
                 return NoChangeResult;
             }
@@ -105,10 +82,10 @@ namespace Calamari.ArgoCD
             }
             var modifiedContent = writer.ToString().TrimEnd();
 
-            return new ImageReplacementResult(modifiedContent, replacementsMade);
+            return new ImageReplacementResult(modifiedContent, combinedResult.UpdatedImageReferences);
         }
 
-        List<string> ProcessPatchOperation(YamlMappingNode operationNode,
+        internal ImageReplacementResult ProcessPatchOperation(YamlMappingNode operationNode,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var opValue = operationNode.GetStringValue(FieldNames.Op);
@@ -116,18 +93,18 @@ namespace Calamari.ArgoCD
 
             if (string.IsNullOrEmpty(opValue) || string.IsNullOrEmpty(pathValue))
             {
-                return new List<string>();
+                return NoChangeResult;
             }
 
             return opValue switch
             {
                 OpValues.Replace => ProcessReplaceOperation(operationNode, pathValue, imagesToUpdate),
                 OpValues.Add => ProcessAddOperation(operationNode, pathValue, imagesToUpdate),
-                _ => new List<string>()
+                _ => NoChangeResult
             };
         }
 
-        List<string> ProcessReplaceOperation(YamlMappingNode operationNode, string path,
+        ImageReplacementResult ProcessReplaceOperation(YamlMappingNode operationNode, string path,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (IsImagePath(path) && operationNode.Children.TryGetValue(new YamlScalarNode(FieldNames.Value), out var valueNode))
@@ -138,10 +115,10 @@ namespace Calamari.ArgoCD
                 }
             }
 
-            return new List<string>();
+            return NoChangeResult;
         }
 
-        List<string> ProcessAddOperation(YamlMappingNode operationNode, string path,
+        ImageReplacementResult ProcessAddOperation(YamlMappingNode operationNode, string path,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (IsContainersPath(path) && operationNode.Children.TryGetValue(new YamlScalarNode(FieldNames.Value), out var valueNode))
@@ -156,24 +133,24 @@ namespace Calamari.ArgoCD
                 }
             }
 
-            return new List<string>();
+            return NoChangeResult;
         }
 
-        List<string> ProcessContainersSequence(YamlSequenceNode containersSequence,
+        internal ImageReplacementResult ProcessContainersSequence(YamlSequenceNode containersSequence,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
-            var allReplacements = new List<string>();
+            var results = new List<ImageReplacementResult>();
 
             foreach (var containerNode in containersSequence.Children.OfType<YamlMappingNode>())
             {
-                var replacements = ProcessContainerMapping(containerNode, imagesToUpdate);
-                allReplacements.AddRange(replacements);
+                var result = ProcessContainerMapping(containerNode, imagesToUpdate);
+                results.Add(result);
             }
 
-            return allReplacements;
+            return CombineResults(results.ToArray());
         }
 
-        List<string> ProcessContainerMapping(YamlMappingNode containerNode,
+        ImageReplacementResult ProcessContainerMapping(YamlMappingNode containerNode,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (containerNode.Children.TryGetValue(new YamlScalarNode(FieldNames.Image), out var imageNode) &&
@@ -182,14 +159,14 @@ namespace Calamari.ArgoCD
                 return ProcessImageReference(imageScalar, imagesToUpdate);
             }
 
-            return new List<string>();
+            return NoChangeResult;
         }
 
-        List<string> ProcessImageReference(YamlScalarNode imageScalar,
+        ImageReplacementResult ProcessImageReference(YamlScalarNode imageScalar,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (string.IsNullOrEmpty(imageScalar.Value))
-                return new List<string>();
+                return NoChangeResult;
 
             var currentImageRef = ContainerImageReference.FromReferenceString(imageScalar.Value, defaultRegistry);
             var matchedUpdate = imagesToUpdate
@@ -208,10 +185,11 @@ namespace Calamari.ArgoCD
 
                 var replacement = $"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}";
                 log.Verbose($"Updated container image in YAML JSON 6902 patch: {newImageRef}");
-                return new List<string> { replacement };
+
+                return new ImageReplacementResult(yamlContent, new HashSet<string> { replacement });
             }
 
-            return new List<string>();
+            return NoChangeResult;
         }
 
         static bool IsImagePath(string path)
@@ -224,6 +202,26 @@ namespace Calamari.ArgoCD
         {
             return path.EndsWith("/containers") || path.EndsWith("/initContainers") ||
                    path.EndsWith("/containers/-") || path.EndsWith("/initContainers/-");
+        }
+
+        internal static ImageReplacementResult CombineResults(params ImageReplacementResult[] results)
+        {
+            if (results == null || results.Length == 0)
+                return new ImageReplacementResult(string.Empty, new HashSet<string>());
+
+            var allReplacements = new HashSet<string>();
+            var latestContent = string.Empty;
+
+            foreach (var result in results)
+            {
+                foreach (var replacement in result.UpdatedImageReferences)
+                    allReplacements.Add(replacement);
+
+                if (!string.IsNullOrEmpty(result.UpdatedContents))
+                    latestContent = result.UpdatedContents;
+            }
+
+            return new ImageReplacementResult(latestContent, allReplacements);
         }
 
         record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
