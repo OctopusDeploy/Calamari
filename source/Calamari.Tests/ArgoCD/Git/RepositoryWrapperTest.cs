@@ -69,7 +69,7 @@ namespace Calamari.Tests.ArgoCD.Git
         public void StagingANonExistentFileThrowsException()
         {
             Action act = () => repository.AddFiles(new[] { "nonexistent.txt" });
-            act.Should().Throw<LibGit2SharpException>().And.Message.Should().Contain("could not find ");
+            act.Should().Throw<CommandException>().And.Message.Should().Contain("could not find ");
         }
 
         [Test]
