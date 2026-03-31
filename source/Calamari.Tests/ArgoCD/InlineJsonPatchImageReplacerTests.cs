@@ -106,26 +106,37 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 patches:
 - target:
-    kind: CronJob
-    name: my-cronjob
+    kind: StatefulSet
+    name: database-cluster
   patch: |-
-    apiVersion: batch/v1
-    kind: CronJob
+    apiVersion: apps/v1
+    kind: StatefulSet
     spec:
-      jobTemplate:
+      template:
         spec:
-          template:
-            spec:
-              containers:
-              - name: worker
-                image: nginx:1.21
-              jobs:
-                - spec:
-                    template:
-                      spec:
-                        containers:
-                        - name: nested-worker
-                          image: my-registry.com/busybox:1.0
+          initContainers:
+          - name: schema-migration
+            image: nginx:1.21
+          containers:
+          - name: primary-db
+            image: my-registry.com/busybox:1.0
+          - name: sidecar-proxy
+            image: proxy:v1.0
+          volumes:
+          - name: config-volume
+            projected:
+              sources:
+              - configMap:
+                  name: db-config
+              - secret:
+                  name: db-credentials
+      volumeClaimTemplates:
+      - metadata:
+          name: data-volume
+        spec:
+          resources:
+            requests:
+              storage: 100Gi
 ";
 
             var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
@@ -133,9 +144,9 @@ patches:
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
             result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedImageReferences.Count.Should().Be(1);
+            result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            //result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("busybox:stable");
         }
 
         [Test]

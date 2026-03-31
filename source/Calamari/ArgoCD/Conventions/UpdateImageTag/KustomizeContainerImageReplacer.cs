@@ -92,7 +92,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
         IContainerImageReplacer replacer = patchType switch
         {
-            PatchType.StrategicMerge => new StrategicMergePatchImageReplacer(input, defaultRegistry, log),
+            PatchType.StrategicMerge => new ContainerImageReplacer(input, defaultRegistry),
             PatchType.Json6902 => new JsonPatchImageReplacer(input, defaultRegistry, log),
             _ => null
         };
@@ -170,7 +170,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
             {
                 var patchContent = patchScalar.Value ?? "";
-                var replacer = new StrategicMergePatchImageReplacer(patchContent, defaultRegistry, log);
+                var replacer = new ContainerImageReplacer(patchContent, defaultRegistry);
                 var result = replacer.UpdateImages(imagesToUpdate);
 
                 if (result.UpdatedImageReferences.Count > 0)

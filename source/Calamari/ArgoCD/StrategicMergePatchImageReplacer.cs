@@ -15,7 +15,7 @@ namespace Calamari.ArgoCD
 {
     public class StrategicMergePatchImageReplacer : IContainerImageReplacer
     {
-        private static class FieldNames
+        static class FieldNames
         {
             public const string Containers = "containers";
             public const string InitContainers = "initContainers";
@@ -33,7 +33,7 @@ namespace Calamari.ArgoCD
             this.log = log;
         }
 
-        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>(), new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new(yamlContent, new HashSet<string>(), new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
@@ -57,7 +57,7 @@ namespace Calamari.ArgoCD
         }
 
 
-        private (List<YamlDocument> documents, HashSet<string> replacements) ProcessAllDocuments(
+        (List<YamlDocument> documents, HashSet<string> replacements) ProcessAllDocuments(
             List<YamlDocument> documents,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
@@ -69,13 +69,16 @@ namespace Calamari.ArgoCD
                 try
                 {
                     var (modifiedDocument, documentChanges) = ProcessDocument(document, imagesToUpdate);
-                    modifiedDocuments.Add(modifiedDocument);
-                    replacementsMade.UnionWith(documentChanges);
+
+                    if (documentChanges.Any())
+                    {
+                        modifiedDocuments.Add(modifiedDocument);
+                        replacementsMade.UnionWith(documentChanges);                        
+                    }
                 }
                 catch (Exception ex)
                 {
                     log.WarnFormat("Skipping corrupted YAML document: {0}", ex.Message);
-                    modifiedDocuments.Add(document);
                 }
             }
 
@@ -105,9 +108,7 @@ namespace Calamari.ArgoCD
 
             results.Add(ProcessContainersArray(node, FieldNames.Containers, imagesToUpdate));
             results.Add(ProcessContainersArray(node, FieldNames.InitContainers, imagesToUpdate));
-
-
-
+            
             foreach (var kvp in node.Children.ToList())
             {
                 if (kvp.Value is YamlMappingNode childMapping)
@@ -130,7 +131,7 @@ namespace Calamari.ArgoCD
             }
         }
 
-        internal ImageReplacementResult ProcessContainersArray(YamlMappingNode node, string containerKey, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+        ImageReplacementResult ProcessContainersArray(YamlMappingNode node, string containerKey, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var results = new List<ImageReplacementResult>();
 
@@ -150,7 +151,7 @@ namespace Calamari.ArgoCD
             return ImageReplacementResult.CombineResults(results.ToArray());
         }
 
-        private ImageReplacementResult ProcessSingleContainer(YamlMappingNode containerNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+        ImageReplacementResult ProcessSingleContainer(YamlMappingNode containerNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             foreach (var kvp in containerNode.Children)
             {
