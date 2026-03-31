@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Models;
@@ -11,6 +12,7 @@ namespace Calamari.ArgoCD
 
     public record TrackedSourceDetail(
         string? CommitSha,
+        DateTimeOffset? CommitTimestamp,
         int SourceIndex,
         List<FileHash> ReplacedFiles,
         List<FileJsonPatch> PatchedFiles);
