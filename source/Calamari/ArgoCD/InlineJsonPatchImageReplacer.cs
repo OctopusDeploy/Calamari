@@ -90,7 +90,7 @@ namespace Calamari.ArgoCD
             {
                 return NoChangeResult;
             }
-            
+
             using var writer = new StringWriter();
             stream.Save(writer, false);
             var modifiedYaml = writer.ToString().TrimEnd();
@@ -127,26 +127,14 @@ namespace Calamari.ArgoCD
                 var patchContent = patchContentNode.Value;
                 if (string.IsNullOrEmpty(patchContent))
                     return changes;
-
-                using var reader = new StringReader(patchContent);
-                var patchStream = new YamlStream();
-                patchStream.Load(reader);
                 
-                if (patchStream.Documents.Count > 0 && patchStream.Documents[0].RootNode is YamlMappingNode patchRoot)
-                {
-                    var blah = new ContainerImageReplacer(patchRoot.ToString(), defaultRegistry);
-                    var result = blah.UpdateImages(imagesToUpdate);
-                    //var patchChanges = ProcessPatchContentRecursive(patchRoot, imagesToUpdate);
-                    //changes.UnionWith(patchChagnes);
-                    changes.Add(result.UpdatedContents);
+                var patchImageReplacer = new ContainerImageReplacer(patchContent!, defaultRegistry);
+                var result = patchImageReplacer.UpdateImages(imagesToUpdate);
+                changes.UnionWith(result.UpdatedImageReferences);
 
-                    if (result.UpdatedImageReferences.Count > 0)
-                    {
-                        using var writer = new StringWriter();
-                        patchStream.Save(writer, false);
-                        var modifiedPatchContent = writer.ToString().TrimEnd();
-                        patchContentNode.Value = modifiedPatchContent;
-                    }
+                if (result.UpdatedImageReferences.Count > 0)
+                {
+                    patchContentNode.Value = result.UpdatedContents;
                 }
             }
             catch (Exception ex)
@@ -156,94 +144,5 @@ namespace Calamari.ArgoCD
 
             return changes;
         }
-
-        HashSet<string> ProcessPatchContentRecursive(YamlMappingNode node, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
-        {
-            var changes = new HashSet<string>();
-
-            ProcessContainersInNode(node, FieldNames.Containers, imagesToUpdate, changes);
-            ProcessContainersInNode(node, FieldNames.InitContainers, imagesToUpdate, changes);
-
-            foreach (var kvp in node.Children)
-            {
-                if (kvp.Key is YamlScalarNode scalar && scalar.Value == FieldNames.Image && kvp.Value is YamlScalarNode imageScalar && !string.IsNullOrEmpty(imageScalar.Value))
-                {
-                    var imageChanges = ProcessImageReference(imageScalar, imagesToUpdate);
-                    changes.UnionWith(imageChanges);
-                    break;
-                }
-            }
-
-            foreach (var kvp in node.Children)
-            {
-                switch (kvp.Value)
-                {
-                    case YamlMappingNode childMapping:
-                        var childChanges = ProcessPatchContentRecursive(childMapping, imagesToUpdate);
-                        changes.UnionWith(childChanges);
-                        break;
-                    case YamlSequenceNode sequence:
-                        foreach (var item in sequence.OfType<YamlMappingNode>())
-                        {
-                            var itemChanges = ProcessPatchContentRecursive(item, imagesToUpdate);
-                            changes.UnionWith(itemChanges);
-                        }
-                        break;
-                }
-            }
-
-            return changes;
-        }
-
-        void ProcessContainersInNode(YamlMappingNode node, string containerKey, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
-        {
-            var containersSequence = node.GetSequenceNode(containerKey);
-            if (containersSequence != null)
-            {
-                foreach (var containerNode in containersSequence.OfType<YamlMappingNode>())
-                {
-                    foreach (var kvp in containerNode.Children)
-                    {
-                        if (kvp.Key is YamlScalarNode scalar && scalar.Value == FieldNames.Image && kvp.Value is YamlScalarNode imageScalar)
-                        {
-                            var imageChanges = ProcessImageReference(imageScalar, imagesToUpdate);
-                            changes.UnionWith(imageChanges);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        HashSet<string> ProcessImageReference(YamlScalarNode imageScalar, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
-        {
-            var changes = new HashSet<string>();
-
-            if (string.IsNullOrEmpty(imageScalar.Value))
-                return changes;
-
-            var currentImageRef = ContainerImageReference.FromReferenceString(imageScalar.Value, defaultRegistry);
-            var matchedUpdate = imagesToUpdate
-                .Select(i => new ImageReferenceMatch(i.ContainerReference, i.ContainerReference.CompareWith(currentImageRef)))
-                .FirstOrDefault(i => i.Comparison.MatchesImage());
-
-            if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
-            {
-                var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
-                imageScalar.Value = newImageRef;
-
-                if (imageScalar.Style != ScalarStyle.SingleQuoted && imageScalar.Style != ScalarStyle.DoubleQuoted)
-                {
-                    imageScalar.Style = ScalarStyle.DoubleQuoted;
-                }
-
-                changes.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
-                log.Verbose($"Updated container image in inline patch: {newImageRef}");
-            }
-
-            return changes;
-        }
-
-        record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
     }
 }
