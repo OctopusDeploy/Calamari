@@ -56,20 +56,20 @@ public class ApplicationSourceUpdater
         log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationFromYaml.Metadata.Name}'");
 
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory);
-            
+
         var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
-        
+
         if (sourceUpdateResult.PushResult is not null)
         {
             outputVariablesWriter.WritePushResultOutput(gateway.Name,
                                                         applicationFromYaml.Metadata.Name,
                                                         sourceWithMetadata.Index,
                                                         sourceUpdateResult.PushResult);
-            
-            return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.ReplacedFiles);
+
+            return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.PushResult.CommitTimestamp, sourceUpdateResult.ReplacedFiles);
         }
-        
+
         log.Info("No changes were committed");
-        return new ManifestUpdateResult(false, null, sourceUpdateResult.ReplacedFiles);
+        return new ManifestUpdateResult(false, null, null, sourceUpdateResult.ReplacedFiles);
     }
 }
