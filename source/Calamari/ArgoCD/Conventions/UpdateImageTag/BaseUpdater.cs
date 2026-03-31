@@ -54,6 +54,11 @@ public abstract class BaseUpdater : ISourceUpdater
             var allTargetedImages = new HashSet<string>(imageReplacementResult.UpdatedImageReferences);
             allTargetedImages.UnionWith(imageReplacementResult.AlreadyUpToDateImages);
 
+            foreach (var unrecognisedKind in imageReplacementResult.UnrecognisedKinds)
+            {
+                log.WarnFormat("Skipping image replacement for resource of type '{0}' in file {1}. Each resource type must be explicitly supported — if you expect images to be updated in this resource, please raise a request at https://github.com/OctopusDeploy/Calamari/issues.", unrecognisedKind, relativePath);
+            }
+
             if (imageReplacementResult.UpdatedImageReferences.Count > 0)
             {
                 fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);

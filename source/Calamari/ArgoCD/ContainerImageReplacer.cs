@@ -40,6 +40,7 @@ namespace Calamari.ArgoCD
             var updatedDocuments = new List<string>();
             var imageReplacements = new HashSet<string>();
             var alreadyUpToDateImages = new HashSet<string>();
+            var unrecognisedKinds = new HashSet<string>();
 
             foreach (var document in documents)
             {
@@ -63,6 +64,10 @@ namespace Calamari.ArgoCD
                     continue;
                 }
 
+                var apiVersion = ((YamlScalarNode)rootNode.Children[new YamlScalarNode("apiVersion")]).Value!;
+                var kind = ((YamlScalarNode)rootNode.Children[new YamlScalarNode("kind")]).Value!;
+                var resourceIdentifier = $"{apiVersion}/{kind}";
+
                 try
                 {
                     var resources = KubernetesYaml.LoadAllFromString(document.RemoveDocumentSeparators(), RolloutTypeMap); // we remove trailing --- to avoid issues with deserialization, and we do it with regex so we can account for newline values etc
@@ -79,28 +84,35 @@ namespace Calamari.ArgoCD
                     }
 
                     var resource = resources[0];
-                    var (updatedDocument, changes, alreadyUpToDate) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate.Select(i => i.ContainerReference).ToList());
+                    var (updatedDocument, changes, alreadyUpToDate, wasRecognised) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate.Select(i => i.ContainerReference).ToList());
                     imageReplacements.UnionWith(changes);
                     alreadyUpToDateImages.UnionWith(alreadyUpToDate);
+                    if (!wasRecognised)
+                        unrecognisedKinds.Add(resourceIdentifier);
                     // NOTE: We don't need to check if a change has been made or not, if it hasn't, the final document will remain unchanged.
                     updatedDocuments.Add(updatedDocument);
                 }
                 catch
                 {
-                    // If deserialization fails, skip
+                    // Deserialization failed — likely an unknown CRD that the SDK cannot parse
+                    unrecognisedKinds.Add(resourceIdentifier);
                     updatedDocuments.Add(document);
                 }
             }
 
             // Stitch documents back together, trailing --- will remain in places for valid yaml
-            return new ImageReplacementResult(string.Concat(updatedDocuments), imageReplacements, alreadyUpToDateImages);
+            return new ImageReplacementResult(string.Concat(updatedDocuments), imageReplacements, alreadyUpToDateImages, unrecognisedKinds);
         }
 
-        (string, HashSet<string>, HashSet<string>) UpdateImagesInKubernetesResource(string initialDocument, object? resourceObject, List<ContainerImageReference> imagesToUpdate)
+        // Returns (updatedDocument, imageReplacements, alreadyUpToDate, wasRecognised)
+        // wasRecognised is false when the resource type is not handled by any switch case, indicating
+        // it may be an unknown CRD that the user expects to be updated.
+        (string, HashSet<string>, HashSet<string>, bool) UpdateImagesInKubernetesResource(string initialDocument, object? resourceObject, List<ContainerImageReference> imagesToUpdate)
         {
             var updatedDocument = initialDocument;
             var imageReplacements = new HashSet<string>();
             var alreadyUpToDateImages = new HashSet<string>();
+            var wasRecognised = true;
 
             List<string> replacementResult;
             List<string> alreadyUpToDateResult;
@@ -196,10 +208,16 @@ namespace Calamari.ArgoCD
                     imageReplacements.UnionWith(replacementResult);
                     alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
+
+                default:
+                    // Known SDK types (e.g. V1Service, V1ConfigMap) intentionally have no containers to
+                    // update and fall through here silently. Unknown types (e.g. unregistered CRDs) are
+                    // not IKubernetesObject and should be flagged so the caller can warn the user.
+                    wasRecognised = resourceObject is IKubernetesObject;
+                    break;
             }
 
-
-            return (updatedDocument, imageReplacements, alreadyUpToDateImages);
+            return (updatedDocument, imageReplacements, alreadyUpToDateImages, wasRecognised);
         }
 
         (string, List<string>, List<string>) ReplaceImageReferences(string document, List<ContainerImageReference> imagesToUpdate, IList<V1Container>? containers)
