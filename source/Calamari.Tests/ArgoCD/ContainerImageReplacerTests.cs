@@ -1003,6 +1003,52 @@ spec:
     }
 
     [Test]
+    public void UpdateImages_WithUnknownCrd_ReportsUnrecognisedKind()
+    {
+      // An arbitrary CRD not in the type map — the replacer cannot handle it
+      const string inputYaml = @"
+apiVersion: my-company.io/v1
+kind: MyCustomApp
+metadata:
+  name: sample
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UpdatedImageReferences.Should().BeEmpty();
+      result.UnrecognisedKinds.Should().ContainSingle(k => k == "my-company.io/v1/MyCustomApp");
+    }
+
+    [Test]
+    public void UpdateImages_WithKnownK8sTypeNotHandled_DoesNotReportUnrecognisedKind()
+    {
+      // V1Service is a known SDK type — it just doesn't have containers, so it should pass silently
+      const string inputYaml = @"
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  ports:
+    - port: 80
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UnrecognisedKinds.Should().BeEmpty();
+    }
+
+    [Test]
     public void ReplacerWillMatchImageNameInsensitivelyAndReplaceWithLowerCase()
     {
       const string inputYaml = @"
