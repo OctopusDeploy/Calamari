@@ -131,13 +131,16 @@ namespace Calamari.ArgoCD
                 using var reader = new StringReader(patchContent);
                 var patchStream = new YamlStream();
                 patchStream.Load(reader);
-
+                
                 if (patchStream.Documents.Count > 0 && patchStream.Documents[0].RootNode is YamlMappingNode patchRoot)
                 {
-                    var patchChanges = ProcessPatchContentRecursive(patchRoot, imagesToUpdate);
-                    changes.UnionWith(patchChanges);
+                    var blah = new ContainerImageReplacer(patchRoot.ToString(), defaultRegistry);
+                    var result = blah.UpdateImages(imagesToUpdate);
+                    //var patchChanges = ProcessPatchContentRecursive(patchRoot, imagesToUpdate);
+                    //changes.UnionWith(patchChagnes);
+                    changes.Add(result.UpdatedContents);
 
-                    if (patchChanges.Count > 0)
+                    if (result.UpdatedImageReferences.Count > 0)
                     {
                         using var writer = new StringWriter();
                         patchStream.Save(writer, false);
