@@ -1,0 +1,25 @@
+source/Calamari/ArgoCD/ContainerImageReplacer.cs
+  ad12743b77b1e16d 17-21,68,182-190
+source/Calamari/ArgoCD/Models/V1alpha1Rollout.cs
+  ad12743b77b1e16d 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "928aa47f6d9bf6ad3aefa8e6d93ba7442ec21448",
+  "prompts": {
+    "ad12743b77b1e16d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27c95ee8-8978-45d6-9474-faa25d427e60",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "scme0 <scott.merchant@octopus.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 57,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    }
+  }
+}
