@@ -14,6 +14,11 @@ namespace Calamari.ArgoCD
 {
     public class ContainerImageReplacer : IContainerImageReplacer
     {
+        static readonly Dictionary<string, Type> RolloutTypeMap = new()
+        {
+            ["argoproj.io/v1alpha1/Rollout"] = typeof(V1alpha1Rollout)
+        };
+
         readonly string yamlContent;
         readonly string defaultRegistry;
 
@@ -58,20 +63,9 @@ namespace Calamari.ArgoCD
                     continue;
                 }
 
-                // Argo Rollouts are CRDs not known to the Kubernetes SDK, so handle them before deserialization
-                var kind = (rootNode.Children.TryGetValue(new YamlScalarNode("kind"), out var kindNode) ? kindNode : null) as YamlScalarNode;
-                if (kind?.Value == "Rollout")
-                {
-                    var (rolloutDoc, rolloutChanges, rolloutAlreadyUpToDate) = UpdateImagesInArgoRollout(document, rootNode, imagesToUpdate.Select(i => i.ContainerReference).ToList());
-                    imageReplacements.UnionWith(rolloutChanges);
-                    alreadyUpToDateImages.UnionWith(rolloutAlreadyUpToDate);
-                    updatedDocuments.Add(rolloutDoc);
-                    continue;
-                }
-
                 try
                 {
-                    var resources = KubernetesYaml.LoadAllFromString(document.RemoveDocumentSeparators()); // we remove trailing --- to avoid issues with deserialization, and we do it with regex so we can account for newline values etc
+                    var resources = KubernetesYaml.LoadAllFromString(document.RemoveDocumentSeparators(), RolloutTypeMap); // we remove trailing --- to avoid issues with deserialization, and we do it with regex so we can account for newline values etc
                     if (resources == null || resources.Count == 0)
                     {
                         updatedDocuments.Add(document);
@@ -185,6 +179,15 @@ namespace Calamari.ArgoCD
                     alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
                     break;
 
+                case V1alpha1Rollout rollout:
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rollout.Spec?.Template?.Spec?.Containers);
+                    imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, rollout.Spec?.Template?.Spec?.InitContainers);
+                    imageReplacements.UnionWith(replacementResult);
+                    alreadyUpToDateImages.UnionWith(alreadyUpToDateResult);
+                    break;
+
                 case V1PodTemplate podTemplate:
                     (updatedDocument, replacementResult, alreadyUpToDateResult) = ReplaceImageReferences(updatedDocument, imagesToUpdate, podTemplate.Template.Spec.Containers);
                     imageReplacements.UnionWith(replacementResult);
@@ -250,51 +253,6 @@ namespace Calamari.ArgoCD
             }
 
             return (document, replacementsMade, alreadyUpToDate);
-        }
-
-        (string, HashSet<string>, HashSet<string>) UpdateImagesInArgoRollout(string document, YamlMappingNode rootNode, List<ContainerImageReference> imagesToUpdate)
-        {
-            var imageReplacements = new HashSet<string>();
-            var alreadyUpToDateImages = new HashSet<string>();
-
-            // Argo Rollout containers live at spec.template.spec.containers (same path as Deployment)
-            var containers = ExtractContainersFromYamlPath(rootNode, "spec", "template", "spec", "containers");
-            var initContainers = ExtractContainersFromYamlPath(rootNode, "spec", "template", "spec", "initContainers");
-
-            List<string> changes, alreadyUpToDate;
-            (document, changes, alreadyUpToDate) = ReplaceImageReferences(document, imagesToUpdate, containers);
-            imageReplacements.UnionWith(changes);
-            alreadyUpToDateImages.UnionWith(alreadyUpToDate);
-
-            (document, changes, alreadyUpToDate) = ReplaceImageReferences(document, imagesToUpdate, initContainers);
-            imageReplacements.UnionWith(changes);
-            alreadyUpToDateImages.UnionWith(alreadyUpToDate);
-
-            return (document, imageReplacements, alreadyUpToDateImages);
-        }
-
-        static IList<V1Container> ExtractContainersFromYamlPath(YamlMappingNode rootNode, params string[] path)
-        {
-            YamlMappingNode? current = rootNode;
-            foreach (var segment in path[..^1])
-            {
-                if (!current.Children.TryGetValue(new YamlScalarNode(segment), out var next) || next is not YamlMappingNode nextMapping)
-                    return new List<V1Container>();
-                current = nextMapping;
-            }
-
-            var lastKey = path[^1];
-            if (!current.Children.TryGetValue(new YamlScalarNode(lastKey), out var containersNode) || containersNode is not YamlSequenceNode sequence)
-                return new List<V1Container>();
-
-            var result = new List<V1Container>();
-            foreach (var item in sequence)
-            {
-                if (item is not YamlMappingNode containerMapping) continue;
-                if (!containerMapping.Children.TryGetValue(new YamlScalarNode("image"), out var imageNode) || imageNode is not YamlScalarNode imageScalar) continue;
-                result.Add(new V1Container { Image = imageScalar.Value });
-            }
-            return result;
         }
 
         static bool IsPotentialKubernetesResource(YamlMappingNode rootNode)
