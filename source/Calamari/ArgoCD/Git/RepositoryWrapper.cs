@@ -146,7 +146,7 @@ namespace Calamari.ArgoCD.Git
 
             if (!requiresPullRequest)
             {
-                return new PushResult(commit.Sha, commit.ShortSha());
+                return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
             }
 
             var (title, number, uri) = await CreatePullRequest(
@@ -159,6 +159,7 @@ namespace Calamari.ArgoCD.Git
             return new PullRequestPushResult(
                 commit.Sha,
                 commit.ShortSha(),
+                commit.Author.When,
                 connection.Url.AbsoluteUri,
                 title,
                 uri,
@@ -307,13 +308,14 @@ namespace Calamari.ArgoCD.Git
         }
     }
 
-    public record PushResult(string CommitSha, string ShortSha);
+    public record PushResult(string CommitSha, string ShortSha, DateTimeOffset CommitTimestamp);
 
     public record PullRequestPushResult(
         string CommitSha,
         string ShortSha,
+        DateTimeOffset CommitTimestamp,
         string RepositoryUri,
         string PullRequestTitle,
         string PullRequestUri,
-        long PullRequestNumber) : PushResult(CommitSha, ShortSha);
+        long PullRequestNumber) : PushResult(CommitSha, ShortSha, CommitTimestamp);
 }
