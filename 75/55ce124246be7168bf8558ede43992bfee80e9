@@ -1,0 +1,40 @@
+source/Calamari.Tests/ArgoCD/Git/RepositoryWrapperTest.cs
+  7f23305b87df0024 72
+source/Calamari.Tests/ArgoCD/ContainerImageReplacerTests.cs
+  ad12743b77b1e16d 866-1004
+source/Calamari/ArgoCD/ContainerImageReplacer.cs
+  ad12743b77b1e16d 61-71,255-299
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "7555ce124246be7168bf8558ede43992bfee80e9",
+  "prompts": {
+    "7f23305b87df0024": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f3f771c-fa6f-4ccd-8a04-eb6b97596e1d",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "scme0 <scott.merchant@octopus.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "ad12743b77b1e16d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27c95ee8-8978-45d6-9474-faa25d427e60",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "scme0 <scott.merchant@octopus.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 195,
+      "overriden_lines": 0
+    }
+  }
+}
