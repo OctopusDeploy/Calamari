@@ -24,6 +24,16 @@ namespace Calamari.ArgoCD.Git
         IClock clock)
         : IDisposable
     {
+        // ReSharper disable ReplaceWithPrimaryConstructorParameter - This makes parameters readonly
+        readonly Repository repository = repository;
+        readonly ICalamariFileSystem calamariFileSystem = calamariFileSystem;
+        readonly string repoCheckoutDirectoryPath = repoCheckoutDirectoryPath;
+        readonly ILog log = log;
+        readonly IGitConnection connection = connection;
+        readonly IGitVendorApiAdapter? vendorApiAdapter = vendorApiAdapter;
+        readonly IClock clock = clock;
+        // ReSharper restore ReplaceWithPrimaryConstructorParameter
+        
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
