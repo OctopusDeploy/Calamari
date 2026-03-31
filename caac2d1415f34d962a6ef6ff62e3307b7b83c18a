@@ -1,0 +1,25 @@
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/BaseUpdater.cs
+  ad12743b77b1e16d 59
+source/Calamari.Tests/ArgoCD/Commands/Conventions/UpdateArgoCDAppImagesInstallConventionTest.cs
+  ad12743b77b1e16d 287
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "caac2d1415f34d962a6ef6ff62e3307b7b83c18a",
+  "prompts": {
+    "ad12743b77b1e16d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27c95ee8-8978-45d6-9474-faa25d427e60",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "scme0 <scott.merchant@octopus.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
