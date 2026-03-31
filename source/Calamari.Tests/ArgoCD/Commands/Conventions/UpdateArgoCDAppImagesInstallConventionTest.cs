@@ -284,7 +284,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, yamlFilename, fileContents);
 
-            log.MessagesWarnFormatted.Should().Contain(m => m.Contains("my-company.io/v1/MyCustomApp"));
+            log.MessagesWarnFormatted.Should().Contain(m => m.Contains("Type 'my-company.io/v1/MyCustomApp' is not recognised by the Image Update step"));
 
             AssertOutputVariables(false);
         }
