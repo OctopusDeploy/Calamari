@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
@@ -31,7 +32,13 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             return UpdateKustomizeResource(imagesToUpdate);
         }
 
-        return UpdateKustomizePatch(imagesToUpdate);
+
+        if (IsKustomizePatchUpdatesEnabled())
+        {
+            return UpdateKustomizePatch(imagesToUpdate);
+        }
+
+        return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
     }
 
     ImageReplacementResult UpdateKustomizeResource(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
@@ -48,38 +55,40 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             allUpdatedImages.UnionWith(result.UpdatedImageReferences);
         }
 
-
-        if (HasInlinePatches(input))
+        if (IsKustomizePatchUpdatesEnabled())
         {
-            var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
-            var patchResult = inlinePatchReplacer.UpdateImages(imagesToUpdate);
-
-            if (patchResult.UpdatedImageReferences.Count > 0)
+            if (HasInlinePatches(input))
             {
-                updatedContent = patchResult.UpdatedContents;
-                allUpdatedImages.UnionWith(patchResult.UpdatedImageReferences);
+                var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
+                var patchResult = inlinePatchReplacer.UpdateImages(imagesToUpdate);
+
+                if (patchResult.UpdatedImageReferences.Count > 0)
+                {
+                    updatedContent = patchResult.UpdatedContents;
+                    allUpdatedImages.UnionWith(patchResult.UpdatedImageReferences);
+                }
             }
-        }
 
-        if (HasInlineStrategicMergePatches(input))
-        {
-            var strategicMergeResult = ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate);
-
-            if (strategicMergeResult.UpdatedImageReferences.Count > 0)
+            if (HasInlineStrategicMergePatches(input))
             {
-                updatedContent = strategicMergeResult.UpdatedContents;
-                allUpdatedImages.UnionWith(strategicMergeResult.UpdatedImageReferences);
+                var strategicMergeResult = ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate);
+
+                if (strategicMergeResult.UpdatedImageReferences.Count > 0)
+                {
+                    updatedContent = strategicMergeResult.UpdatedContents;
+                    allUpdatedImages.UnionWith(strategicMergeResult.UpdatedImageReferences);
+                }
             }
-        }
 
-        if (HasInlineJson6902Patches(input))
-        {
-            var json6902Result = ProcessInlineJson6902Patches(updatedContent, imagesToUpdate);
-
-            if (json6902Result.UpdatedImageReferences.Count > 0)
+            if (HasInlineJson6902Patches(input))
             {
-                updatedContent = json6902Result.UpdatedContents;
-                allUpdatedImages.UnionWith(json6902Result.UpdatedImageReferences);
+                var json6902Result = ProcessInlineJson6902Patches(updatedContent, imagesToUpdate);
+
+                if (json6902Result.UpdatedImageReferences.Count > 0)
+                {
+                    updatedContent = json6902Result.UpdatedContents;
+                    allUpdatedImages.UnionWith(json6902Result.UpdatedImageReferences);
+                }
             }
         }
 
@@ -235,5 +244,11 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         var modifiedContent = writer.ToString().TrimEnd();
 
         return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
+    }
+
+    bool IsKustomizePatchUpdatesEnabled()
+    {
+        var enabledFeatureToggles = Environment.GetEnvironmentVariable("OctopusEnabledFeatureToggles") ?? "";
+        return enabledFeatureToggles.Contains(OctopusFeatureToggles.KnownSlugs.KustomizePatchImageUpdatesFeatureToggle);
     }
 }
