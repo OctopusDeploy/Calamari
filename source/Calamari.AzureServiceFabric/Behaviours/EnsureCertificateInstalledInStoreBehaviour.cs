@@ -1,23 +1,19 @@
 ﻿using System;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Calamari.Common.Plumbing.Variables;
+using Calamari.Integration.Certificates;
 
 namespace Calamari.AzureServiceFabric.Behaviours
 {
     class EnsureCertificateInstalledInStoreBehaviour : IDeployBehaviour
     {
-        readonly ILog log;
+        readonly ICertificateStore certificateStore;
         readonly string certificateIdVariableName = SpecialVariables.Action.ServiceFabric.ClientCertVariable;
-        readonly string storeLocationVariableName = SpecialVariables.Action.ServiceFabric.CertificateStoreLocation;
-        readonly string storeNameVariableName = SpecialVariables.Action.ServiceFabric.CertificateStoreName;
 
-        public EnsureCertificateInstalledInStoreBehaviour(ILog log)
+        public EnsureCertificateInstalledInStoreBehaviour(ICertificateStore certificateStore)
         {
-            this.log = log;
+            this.certificateStore = certificateStore;
         }
         public bool IsEnabled(RunningDeployment context)
         {
@@ -31,22 +27,12 @@ namespace Calamari.AzureServiceFabric.Behaviours
             var clientCertVariable = variables.Get(certificateIdVariableName);
             if (!string.IsNullOrEmpty(clientCertVariable))
             {
-                EnsureCertificateInStore(variables, clientCertVariable);
+                var storeName = variables.GetServiceFabricCertificateStoreName();
+                var storeLocation = variables.GetServiceFabricCertificateStoreLocation();
+                certificateStore.GetOrAdd(variables, clientCertVariable, storeName, storeLocation);
             }
 
             return Task.CompletedTask;
-        }
-
-        void EnsureCertificateInStore(IVariables variables, string certificateVariable)
-        {
-            var storeLocation = StoreLocation.LocalMachine;
-            if (!string.IsNullOrWhiteSpace(storeLocationVariableName) && Enum.TryParse(variables.Get(storeLocationVariableName, StoreLocation.LocalMachine.ToString()), out StoreLocation storeLocationOverride))
-                storeLocation = storeLocationOverride;
-            var storeName = StoreName.My;
-            if (!string.IsNullOrWhiteSpace(storeNameVariableName) && Enum.TryParse(variables.Get(storeNameVariableName, StoreName.My.ToString()), out StoreName storeNameOverride))
-                storeName = storeNameOverride;
-
-            new CalamariCertificateStore(log).GetOrAdd(variables, certificateVariable, storeName, storeLocation);
         }
     }
 }

@@ -37,11 +37,11 @@ namespace Calamari.AzureServiceFabric
         }
         
         
-        public static X509Credentials GetX509Credentials(string clientCertThumbprint, string clientCertStoreLocation, string clientCertStoreName, string serverCertThumb, string commonName)
+        public static X509Credentials GetX509Credentials(string clientCertThumbprint, StoreLocation clientCertStoreLocation, string clientCertStoreName, string serverCertThumb, string commonName)
         {
             var xc = new X509Credentials
             {
-                StoreLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), clientCertStoreLocation),
+                StoreLocation = clientCertStoreLocation,
                 StoreName = clientCertStoreName,
                 FindType = X509FindType.FindByThumbprint,
                 FindValue = clientCertThumbprint

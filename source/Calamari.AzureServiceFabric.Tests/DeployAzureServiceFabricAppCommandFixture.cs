@@ -3,6 +3,7 @@ using System.Fabric;
 using System.Fabric.Description;
 using System.IO;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureServiceFabric.Commands;
@@ -54,7 +55,7 @@ namespace Calamari.AzureServiceFabric.Tests
         public async Task TearDown()
         {
             var xc = ServiceFabricHelper.GetX509Credentials(clientCertThumbprint,
-                                                            clientCertStoreLocation,
+                                                            (StoreLocation)Enum.Parse(typeof(StoreLocation), clientCertStoreLocation),
                                                             clientCertStoreName,
                                                             serverCertThumbprint,
                                                             clientCertSubjectCommonName);
