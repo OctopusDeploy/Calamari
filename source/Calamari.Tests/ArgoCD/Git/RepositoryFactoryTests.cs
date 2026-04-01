@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Time;
@@ -37,7 +37,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorAgnosticApiAdapterFactory(Array.Empty<IGitVendorApiAdapterFactory>()), new SystemClock());
+            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorPullRequestClientResolver(Array.Empty<IGitVendorPullRequestClientFactory>()), new SystemClock());
         }
 
         [TearDown]

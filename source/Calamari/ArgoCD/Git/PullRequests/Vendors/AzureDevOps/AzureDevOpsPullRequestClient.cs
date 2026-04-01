@@ -7,17 +7,19 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
-	public class AzureDevOpsApiAdapter : IGitVendorApiAdapter
+	public class AzureDevOpsPullRequestClient : IGitVendorPullRequestClient
 	{
+		public const string CloudHost = "dev.azure.com";
+		
 		readonly IRepositoryConnection repositoryConnection;
 
 		readonly string organization;
 		readonly string projectName;
 		readonly string repositoryId;
 
-		public AzureDevOpsApiAdapter(IRepositoryConnection repositoryConnection)
+		public AzureDevOpsPullRequestClient(IRepositoryConnection repositoryConnection)
 		{
 			this.repositoryConnection = repositoryConnection;
 			(organization, projectName, repositoryId) = ExtractUriComponents(repositoryConnection.Url);
