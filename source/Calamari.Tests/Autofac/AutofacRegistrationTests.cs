@@ -17,7 +17,7 @@ public class AutofacRegistrationTests
     [Category("PlatformAgnostic")]
     public void AllCommandsCanBeConstructed()
     {
-        using var container = new TestableProgram().BuildTestContainer();
+        using var container = TestableSyncProgram.For<Calamari.Program>().BuildTestContainer();
 
         var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
 
