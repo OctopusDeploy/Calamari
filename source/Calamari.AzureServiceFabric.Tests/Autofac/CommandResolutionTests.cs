@@ -2,19 +2,18 @@ using System;
 using System.Collections.Generic;
 using Autofac;
 using Calamari.Testing;
-using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.AzureScripting.Tests.Autofac;
+namespace Calamari.AzureServiceFabric.Tests.Autofac;
 
 [TestFixture]
-public class AutofacRegistrationTests
+public class CommandResolutionTests
 {
     [Test]
     [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
-        var program = TestablePipelineProgram.For<Calamari.AzureScripting.Program>();
+        var program = TestablePipelineProgram.For<Calamari.AzureServiceFabric.Program>();
         using var container = program.BuildTestContainer();
 
         var failures = new List<string>();
@@ -30,6 +29,6 @@ public class AutofacRegistrationTests
             }
         }
 
-        failures.Should().BeEmpty("all pipeline commands must be constructable from the DI container");
+        Assert.That(failures, Is.Empty, "all pipeline commands must be constructable from the DI container");
     }
 }
