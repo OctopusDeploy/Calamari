@@ -1,36 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Autofac;
 using Autofac.Features.Metadata;
 using Calamari.Commands;
 using Calamari.Commands.Support;
-using Calamari.Common.Plumbing.Commands;
-using Calamari.Common.Plumbing.Logging;
+using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests;
+namespace Calamari.Tests.Autofac;
 
 [TestFixture]
 public class AutofacRegistrationTests
 {
-    class TestableProgram : Program
-    {
-        public TestableProgram() : base(ConsoleLog.Instance) { }
-
-        // Pin to the production assembly so the test assembly (and its StubCommand) isn't scanned
-        protected override Assembly GetProgramAssemblyToRegister() => typeof(Program).Assembly;
-
-        public IContainer BuildTestContainer()
-        {
-            var options = CommonOptions.Parse(["version"]);
-            var builder = new ContainerBuilder();
-            ConfigureContainer(builder, options);
-            return builder.Build();
-        }
-    }
-
     [Test]
     [Category("PlatformAgnostic")]
     public void AllCommandsCanBeConstructed()
@@ -53,5 +35,28 @@ public class AutofacRegistrationTests
         }
 
         failures.Should().BeEmpty("all commands must be constructable from the DI container");
+    }
+
+    [Test]
+    [Category("PlatformAgnostic")]
+    public void AllPipelineCommandsCanBeConstructed()
+    {
+        var program = new TestablePipelineProgram(typeof(Calamari.Program).Assembly);
+        using var container = program.BuildTestContainer();
+
+        var failures = new List<string>();
+        foreach (var type in program.PipelineCommandTypes)
+        {
+            try
+            {
+                container.Resolve(type);
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"'{type.Name}': {ex.Message}");
+            }
+        }
+
+        failures.Should().BeEmpty("all pipeline commands must be constructable from the DI container");
     }
 }
