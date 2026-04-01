@@ -4,7 +4,7 @@ using Autofac;
 using Calamari.Testing;
 using NUnit.Framework;
 
-namespace Calamari.AzureScripting.Tests.Autofac;
+namespace Calamari.AzureWebApp.Tests;
 
 [TestFixture]
 public class CommandResolutionTests
@@ -13,7 +13,7 @@ public class CommandResolutionTests
     [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
-        var program = TestablePipelineProgram.For<Calamari.AzureScripting.Program>();
+        var program = TestablePipelineProgram.For<Calamari.AzureWebApp.Program>();
         using var container = program.BuildTestContainer();
 
         var failures = new List<string>();

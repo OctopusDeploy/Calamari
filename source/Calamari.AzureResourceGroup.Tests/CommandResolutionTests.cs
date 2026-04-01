@@ -4,7 +4,7 @@ using Autofac;
 using Calamari.Testing;
 using NUnit.Framework;
 
-namespace Calamari.GoogleCloudScripting.Tests.Autofac;
+namespace Calamari.AzureResourceGroup.Tests;
 
 [TestFixture]
 public class CommandResolutionTests
@@ -13,7 +13,7 @@ public class CommandResolutionTests
     [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
-        var program = TestablePipelineProgram.For<Calamari.GoogleCloudScripting.Program>();
+        var program = TestablePipelineProgram.For<Calamari.AzureResourceGroup.Program>();
         using var container = program.BuildTestContainer();
 
         var failures = new List<string>();
