@@ -107,7 +107,7 @@ namespace Calamari.ArgoCD.Git
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
 
-            //TODO(tmm): Is this an acceptable way to call an async function?
+            //TODO(tmm): Make this function (and all callers async).
             var gitVendorApiAdapter = gitVendorPullRequestClientResolver.TryResolve(gitConnection, log, CancellationToken.None).Result;
             return new RepositoryWrapper(repo,
                                          fileSystem,
