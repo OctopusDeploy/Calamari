@@ -7,6 +7,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
@@ -40,12 +41,17 @@ namespace Calamari.Tests.ArgoCD
             log = new InMemoryLog();
             fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
             tempDir = fileSystem.CreateTemporaryDirectory();
+
+            Environment.SetEnvironmentVariable("OctopusEnabledFeatureToggles",
+                OctopusFeatureToggles.KnownSlugs.KustomizePatchImageUpdatesFeatureToggle);
         }
 
         [TearDown]
         public void TearDown()
         {
             fileSystem?.DeleteDirectory(tempDir);
+
+            Environment.SetEnvironmentVariable("OctopusEnabledFeatureToggles", null);
         }
 
         private void CreateKustomizationFile(string content)
