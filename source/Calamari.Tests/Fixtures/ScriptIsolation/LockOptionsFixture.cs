@@ -297,7 +297,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         // -------------------------------------------------------------------------
-        // LockOptionsFactory.UseExclusiveIfSharedIsNotSupported tests
+        // LockOptionsFactory.DetermineActualLockTypeToUseBasedOnSupport tests
         // -------------------------------------------------------------------------
 
         // Builds a LockOptions with a LockDirectory that has the given capability.
@@ -316,7 +316,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         static (LockOptions? result, InMemoryLog log) UseExclusiveIfSharedIsNotSupported(LockOptions opts)
         {
             var log = new InMemoryLog();
-            var result = new LockOptionsFactory(new StubLockDirectoryFactory(), log).UseExclusiveIfSharedIsNotSupported(opts);
+            var result = new LockOptionsFactory(new StubLockDirectoryFactory(), log).DetermineActualLockTypeToUseBasedOnSupport(opts);
             return (result, log);
         }
 
