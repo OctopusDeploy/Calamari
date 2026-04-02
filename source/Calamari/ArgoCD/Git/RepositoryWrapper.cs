@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -20,7 +20,7 @@ namespace Calamari.ArgoCD.Git
         string repoCheckoutDirectoryPath,
         ILog log,
         IGitConnection connection,
-        IGitVendorApiAdapter? vendorApiAdapter,
+        IGitVendorPullRequestClient? vendorApiAdapter,
         IClock clock)
         : IDisposable
     {
@@ -30,7 +30,7 @@ namespace Calamari.ArgoCD.Git
         readonly string repoCheckoutDirectoryPath = repoCheckoutDirectoryPath;
         readonly ILog log = log;
         readonly IGitConnection connection = connection;
-        readonly IGitVendorApiAdapter? vendorApiAdapter = vendorApiAdapter;
+        readonly IGitVendorPullRequestClient? vendorApiAdapter = vendorApiAdapter;
         readonly IClock clock = clock;
         // ReSharper restore ReplaceWithPrimaryConstructorParameter
         
