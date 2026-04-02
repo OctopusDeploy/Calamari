@@ -14,7 +14,7 @@ namespace Calamari.ArgoCD.Models
         // reference the same image name with different tags.
         public HashSet<string> AlreadyUpToDateImages { get; } = alreadyUpToDateImages;
 
-        internal static ImageReplacementResult CombineResults(params ImageReplacementResult[] results)
+        public static ImageReplacementResult CombineResults(params ImageReplacementResult[] results)
         {
             if (results == null || results.Length == 0)
                 return new ImageReplacementResult(string.Empty, new HashSet<string>(), new HashSet<string>());
