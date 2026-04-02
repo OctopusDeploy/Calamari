@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.4",
+  "base_commit_sha": "bb256fc8aa15269492b16275c35f0a6b42319a92",
+  "prompts": {
+    "7f23305b87df0024": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f3f771c-fa6f-4ccd-8a04-eb6b97596e1d",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "scme0 <scott.merchant@octopus.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
