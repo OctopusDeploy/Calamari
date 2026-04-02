@@ -37,7 +37,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
                 TargetBranch = destinationBranch.ToFriendlyName(),
                 Description = body
             });
-            return new PullRequest(mergeRequest.Title, mergeRequest.Id, mergeRequest.WebUrl);
+            return new PullRequest(mergeRequest.Title, mergeRequest.Iid, mergeRequest.WebUrl);
         }
 
         
