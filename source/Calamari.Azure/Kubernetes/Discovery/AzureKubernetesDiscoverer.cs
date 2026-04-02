@@ -62,9 +62,9 @@ namespace Calamari.Azure.Kubernetes.Discovery
                     discoveredClusters.AddRange(
                                                 clusters
                                                     .Select(c => KubernetesCluster.CreateForAks(
-                                                                                                $"aks/{account.SubscriptionNumber}/{c.Id.ResourceGroupName}/{c.Data.Name}",
+                                                                                                $"aks/{account.SubscriptionNumber}/{resourceGroup.Data.Name}/{c.Data.Name}",
                                                                                                 c.Data.Name,
-                                                                                                c.Id.ResourceGroupName,
+                                                                                                resourceGroup.Data.Name,
                                                                                                 accountId,
                                                                                                 c.Data.Tags.ToTargetTags())));
                 }
