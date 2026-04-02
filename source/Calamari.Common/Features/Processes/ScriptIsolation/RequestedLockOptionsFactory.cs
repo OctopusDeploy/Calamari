@@ -11,7 +11,7 @@ public sealed class RequestedLockOptionsFactory(
     ILog log
 )
 {
-    public RequestedLockOptions? CreateOrNull(CommonOptions.ScriptIsolationOptions options)
+    public RequestedLockOptions? CreateFromIsolationOptions(CommonOptions.ScriptIsolationOptions options)
     {
         if (!options.FullyConfigured)
         {

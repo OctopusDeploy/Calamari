@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             };
 
         static RequestedLockOptions? CreateRequestedOrNull(CommonOptions.ScriptIsolationOptions options)
-            => new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateOrNull(options);
+            => new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateFromIsolationOptions(options);
 
         static LockOptions? CreateLockOptionsOrNull(CommonOptions.ScriptIsolationOptions options)
         {

@@ -66,7 +66,7 @@ public sealed class ScriptIsolationEnforcer(
     LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
         // Validate the options from the command line
-        var requestedOptions = requestedLockOptionsFactory.CreateOrNull(scriptIsolationOptions);
+        var requestedOptions = requestedLockOptionsFactory.CreateFromIsolationOptions(scriptIsolationOptions);
         if (requestedOptions is null)
         {
             return null;
