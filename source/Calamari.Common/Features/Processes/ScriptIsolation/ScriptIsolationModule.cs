@@ -24,7 +24,7 @@ public class ScriptIsolationModule : Module
         builder.RegisterType<RequestedLockOptionsFactory>()
                .AsSelf()
                .InstancePerLifetimeScope();
-        builder.RegisterType<LockOptionsFactory>()
+        builder.RegisterType<LockOptionsResolver>()
                .AsSelf()
                .InstancePerLifetimeScope();
         builder.RegisterType<TemporaryDirectoryFallbackProvider>()

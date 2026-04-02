@@ -9,7 +9,7 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 public sealed class ScriptIsolationEnforcer(
     RequestedLockOptionsFactory requestedLockOptionsFactory,
-    LockOptionsFactory lockOptionsFactory,
+    LockOptionsResolver lockOptionsResolver,
     ILog log)
     : IScriptIsolationEnforcer
 {
@@ -73,7 +73,7 @@ public sealed class ScriptIsolationEnforcer(
         }
 
         // Create the actual options, adjusting based on underlying system support
-        var lockOptions = lockOptionsFactory.Create(requestedOptions);
+        var lockOptions = lockOptionsResolver.Create(requestedOptions);
 
         if (lockOptions is null)
         {

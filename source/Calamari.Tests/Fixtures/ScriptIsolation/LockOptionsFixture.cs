@@ -71,7 +71,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var requested = CreateRequestedOrNull(options);
             if (requested is null)
                 return null;
-            return new LockOptionsFactory(new StubLockDirectoryFactory(), ConsoleLog.Instance).Create(requested);
+            return new LockOptionsResolver(new StubLockDirectoryFactory(), ConsoleLog.Instance).Create(requested);
         }
 
         /// <summary>
@@ -297,7 +297,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         // -------------------------------------------------------------------------
-        // LockOptionsFactory.DetermineActualLockTypeToUseBasedOnSupport tests
+        // LockOptionsResolver.DetermineActualLockTypeToUseBasedOnSupport tests
         // -------------------------------------------------------------------------
 
         // Builds a LockOptions with a LockDirectory that has the given capability.
@@ -316,7 +316,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         static (LockOptions? result, InMemoryLog log) UseExclusiveIfSharedIsNotSupported(LockOptions opts)
         {
             var log = new InMemoryLog();
-            var result = new LockOptionsFactory(new StubLockDirectoryFactory(), log).DetermineActualLockTypeToUseBasedOnSupport(opts);
+            var result = new LockOptionsResolver(new StubLockDirectoryFactory(), log).DetermineActualLockTypeToUseBasedOnSupport(opts);
             return (result, log);
         }
 

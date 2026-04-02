@@ -4,7 +4,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
-public sealed class LockOptionsFactory(
+public sealed class LockOptionsResolver(
     ILockDirectoryFactory lockDirectoryFactory,
     ILog log)
 {
