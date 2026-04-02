@@ -55,7 +55,7 @@ public class ApplicationSourceUpdater
         var applicationSource = sourceWithMetadata.Source;
         log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationFromYaml.Metadata.Name}'");
 
-        applicationFromYaml.Metadata.Annotations.TryGetValue(ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(applicationSource.Name.ToApplicationSourceName()), out var pathOverrideFromAnnotation); 
+        applicationFromYaml.Metadata.Annotations.TryGetValue(ArgoCDConstants.Annotations.OctopusPathAnnotationKey(applicationSource.Name.ToApplicationSourceName()), out var pathOverrideFromAnnotation); 
         
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory, pathOverrideFromAnnotation);
 
