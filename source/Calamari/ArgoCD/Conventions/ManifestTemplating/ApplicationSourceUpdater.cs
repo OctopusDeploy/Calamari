@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -50,14 +51,14 @@ public class ApplicationSourceUpdater
         return deploymentScope.Matches(annotatedScope);
     }
 
-    public ManifestUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    public async Task<ManifestUpdateResult> ProcessSourceAsync(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var applicationSource = sourceWithMetadata.Source;
         log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationFromYaml.Metadata.Name}'");
 
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory);
 
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        var sourceUpdateResult = await repositoryAdapter.ProcessAsync(sourceWithMetadata, sourceUpdater);
 
         if (sourceUpdateResult.PushResult is not null)
         {

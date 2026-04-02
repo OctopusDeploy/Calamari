@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -47,27 +48,27 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void ThrowsExceptionIfUrlDoesNotExist()
+        public async Task ThrowsExceptionIfUrlDoesNotExist()
         {
             var connection = new GitConnection("username",
                                                "password",
                                                new Uri("file://doesNotExist"),
                                                branchName);
 
-            Action action = () => repositoryFactory.CloneRepository("name", connection);
+            Func<Task> action = () => repositoryFactory.CloneRepositoryAsync("name", connection);
 
-            action.Should().Throw<CommandException>().And.Message.Should().Contain("Failed to clone Git repository");
+            await action.Should().ThrowAsync<CommandException>().WithMessage("*Failed to clone Git repository*");
         }
 
         [Test]
-        public void CanCloneAnExistingRepositoryWithExplicitBranchNameAndAssociatedFiles()
+        public async Task CanCloneAnExistingRepositoryWithExplicitBranchNameAndAssociatedFiles()
         {
             var filename = "firstFile.txt";
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(branchName, filename, originalContent);
 
             var connection = new GitConnection(null, null, new Uri(OriginPath), branchName);
-            var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
+            var clonedRepository = await repositoryFactory.CloneRepositoryAsync("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
 
@@ -77,14 +78,14 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void CanCloneAnExistingRepositoryAtHEADAndAssociatedFiles()
+        public async Task CanCloneAnExistingRepositoryAtHEADAndAssociatedFiles()
         {
             var filename = "firstFile.txt";
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(RepositoryHelpers.MainBranchName, filename, originalContent);
 
             var connection = new GitConnection(null, null, new Uri(OriginPath), new GitHead());
-            var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
+            var clonedRepository = await repositoryFactory.CloneRepositoryAsync("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
 

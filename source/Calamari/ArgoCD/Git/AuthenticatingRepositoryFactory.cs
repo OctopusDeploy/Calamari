@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.Common.Plumbing.Logging;
@@ -10,7 +11,7 @@ public class AuthenticatingRepositoryFactory
     readonly Dictionary<string, GitCredentialDto> gitCredentials;
     readonly RepositoryFactory repositoryFactory;
     readonly ILog log;
-    
+
 
     public AuthenticatingRepositoryFactory(Dictionary<string, GitCredentialDto> gitCredentials, RepositoryFactory repositoryFactory, ILog log)
     {
@@ -18,8 +19,8 @@ public class AuthenticatingRepositoryFactory
         this.repositoryFactory = repositoryFactory;
         this.log = log;
     }
-    
-    public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
+
+    public async Task<RepositoryWrapper> CloneRepositoryAsync(string requestedUrl, string targetRevision)
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
         if (gitCredential == null)
@@ -28,6 +29,6 @@ public class AuthenticatingRepositoryFactory
         }
 
         var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
-        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
+        return await repositoryFactory.CloneRepositoryAsync(UniqueRepoNameGenerator.Generate(), gitConnection);
     }
 }

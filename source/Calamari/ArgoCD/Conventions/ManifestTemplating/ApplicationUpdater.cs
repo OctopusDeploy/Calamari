@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
@@ -20,7 +21,7 @@ public class ApplicationUpdater
     readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
     readonly IPackageRelativeFile[] packageFiles;
-    
+
 
     public ApplicationUpdater(AuthenticatingRepositoryFactory repositoryFactory, DeploymentScope deploymentScope, ArgoCommitToGitConfig deploymentConfig, ILog log,
                               ICalamariFileSystem fileSystem,
@@ -37,8 +38,8 @@ public class ApplicationUpdater
         this.outputVariablesWriter = outputVariablesWriter;
         this.packageFiles = packageFiles;
     }
-    
-    public ProcessApplicationResult ProcessApplication(
+
+    public async Task<ProcessApplicationResult> ProcessApplicationAsync(
         ArgoCDApplicationDto application,
         ArgoCDGatewayDto gateway)
     {
@@ -50,7 +51,7 @@ public class ApplicationUpdater
         LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                             applicationFromYaml.Metadata.Annotations,
                                             containsMultipleSources);
-        
+
         ValidateApplication(applicationFromYaml);
 
         var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, new CommitMessageGenerator());
@@ -63,16 +64,13 @@ public class ApplicationUpdater
                                                          fileSystem,
                                                          outputVariablesWriter,
                                                          repositoryAdapter);
-        
-        var trackedSourceUpdateResults = applicationFromYaml
-                                    .GetSourcesWithMetadata()
-                                    .Where(sourceUpdater.IsAppInScope)
-                                    .Select(applicationSource => new
-                                    {
-                                        UpdateResult = sourceUpdater.ProcessSource(applicationSource),
-                                        applicationSource
-                                    })
-                                    .ToList();
+
+        var trackedSourceUpdateResults = new List<(ManifestUpdateResult UpdateResult, ApplicationSourceWithMetadata applicationSource)>();
+        foreach (var applicationSource in applicationFromYaml.GetSourcesWithMetadata().Where(sourceUpdater.IsAppInScope))
+        {
+            var updateResult = await sourceUpdater.ProcessSourceAsync(applicationSource);
+            trackedSourceUpdateResults.Add((updateResult, applicationSource));
+        }
 
         //if we have links, use that to generate a link, otherwise just put the name there
         var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
@@ -95,7 +93,7 @@ public class ApplicationUpdater
                                             [],
                                             trackedSourceUpdateResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
     }
-    
+
     void LogWarningIfUpdatingMultipleSources(
         List<ApplicationSource> sourcesToInspect,
         Dictionary<string, string> applicationAnnotations,

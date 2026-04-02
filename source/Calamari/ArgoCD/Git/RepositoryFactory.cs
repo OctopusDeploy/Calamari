@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
@@ -14,7 +15,7 @@ namespace Calamari.ArgoCD.Git
 {
     public interface IRepositoryFactory
     {
-        RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection);
+        Task<RepositoryWrapper> CloneRepositoryAsync(string repositoryName, IGitConnection gitConnection);
     }
 
     public class RepositoryFactory : IRepositoryFactory
@@ -43,15 +44,15 @@ namespace Calamari.ArgoCD.Git
             GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Xdg, []);
         }
 
-        public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
+        public async Task<RepositoryWrapper> CloneRepositoryAsync(string repositoryName, IGitConnection gitConnection)
         {
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
             fileSystem.CreateDirectory(repositoryPath);
 
-            return CheckoutGitRepository(gitConnection, repositoryPath);
+            return await CheckoutGitRepositoryAsync(gitConnection, repositoryPath);
         }
 
-        RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
+        async Task<RepositoryWrapper> CheckoutGitRepositoryAsync(IGitConnection gitConnection, string checkoutPath)
         {
             //if the branch name is head, then we just clone the default
             //if it's not head, then clone the branch immediately
@@ -114,8 +115,7 @@ namespace Calamari.ArgoCD.Git
                 throw new CommandException($"Failed to checkout branch '{gitConnection.GitReference}' in repository at {gitConnection.Url}. Error: {e.Message}", e);
             }
 
-            //TODO(tmm): Make this function (and all callers async).
-            var gitVendorApiAdapter = gitVendorPullRequestClientResolver.TryResolve(gitConnection, log, CancellationToken.None).Result;
+            var gitVendorApiAdapter = await gitVendorPullRequestClientResolver.TryResolve(gitConnection, log, CancellationToken.None);
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,

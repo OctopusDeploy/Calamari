@@ -36,7 +36,7 @@ namespace Calamari.Tests.ArgoCD.Git
         IGitVendorPullRequestClient gitVendorPullRequestClient = Substitute.For<IGitVendorPullRequestClient>();
 
         [SetUp]
-        public void Init()
+        public async Task Init()
         {
             log = new InMemoryLog();
 
@@ -52,10 +52,10 @@ namespace Calamari.Tests.ArgoCD.Git
                                                   Arg.Any<CancellationToken>())
                                .Returns(new PullRequest("title", 1, "url"));
             gitVendorAgnosticPullRequestClientFactory.TryResolve(Arg.Any<IRepositoryConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
-            
+
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
-            repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
+            repository = await repositoryFactory.CloneRepositoryAsync(repositoryPath, gitConnection);
         }
 
         [TearDown]
@@ -172,19 +172,19 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void CloningAReferenceOtherThanABranchFails()
+        public async Task CloningAReferenceOtherThanABranchFails()
         {
             bareOrigin.AddFilesToBranch(branchName, ("file.yaml", ""));
             bareOrigin.ApplyTag("1.0.0", bareOrigin.Head.Tip.Sha);
 
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), GitReference.CreateFromString("1.0.0"));
-            
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
-            var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
 
-            act.Should()
-               .Throw<CommandException>()
-               .WithMessage($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?");
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
+            Func<Task> act = () => repositoryFactory.CloneRepositoryAsync($"{repositoryPath}/sut", gitConnection);
+
+            await act.Should()
+                     .ThrowAsync<CommandException>()
+                     .WithMessage($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?");
         }
 
         [Test]

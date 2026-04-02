@@ -1,7 +1,9 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Conventions.ManifestTemplating;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -57,6 +59,11 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        async Task InstallAsync(RunningDeployment deployment)
+        {
             log.Verbose("Executing Update Argo CD Application manifests operation");
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
@@ -84,13 +91,12 @@ namespace Calamari.ArgoCD.Conventions
                                                             outputVariablesWriter,
                                                             packageFiles);
 
-            var applicationResults = argoProperties.Applications
-                                                   .Select(application =>
-                                                           {
-                                                               var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
-                                                               return applicationUpdater.ProcessApplication(application, gateway);
-                                                           })
-                                                   .ToList();
+            var applicationResults = new List<ProcessApplicationResult>();
+            foreach (var application in argoProperties.Applications)
+            {
+                var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
+                applicationResults.Add(await applicationUpdater.ProcessApplicationAsync(application, gateway));
+            }
 
             reporter.ReportFilesUpdated(applicationResults);
 

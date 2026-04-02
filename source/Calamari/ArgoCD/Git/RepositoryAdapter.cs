@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
@@ -25,22 +26,22 @@ public class RepositoryAdapter
         this.commitParameters = commitParameters;
     }
 
-    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
+    public async Task<SourceUpdateResult> ProcessAsync(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
     {
-        using (var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision))
+        using (var repository = await repositoryFactory.CloneRepositoryAsync(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision))
         {
             var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
-            return PersistChangesToRepository(repository, sourceWithMetadata.Source.TargetRevision, filesUpdated);
+            return await PersistChangesToRepositoryAsync(repository, sourceWithMetadata.Source.TargetRevision, filesUpdated);
         }
     }
-    
-    SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
+
+    async Task<SourceUpdateResult> PersistChangesToRepositoryAsync(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
     {
         if (result.HasChanges())
         {
-            var pushResult = PushToRemote(repository,
-                                          GitReference.CreateFromString(targetRevision),
-                                          result);
+            var pushResult = await PushToRemoteAsync(repository,
+                                                     GitReference.CreateFromString(targetRevision),
+                                                     result);
 
             if (pushResult is not null)
             {
@@ -50,11 +51,11 @@ public class RepositoryAdapter
 
         return new SourceUpdateResult([], null, result.ReplacedFiles, result.PatchedFiles);
     }
-    
-    
-    protected PushResult? PushToRemote(
+
+
+    protected async Task<PushResult?> PushToRemoteAsync(
         RepositoryWrapper repository,
-        GitReference branchName, 
+        GitReference branchName,
         FileUpdateResult result)
     {
         log.Info("Staging files in repository");
@@ -68,12 +69,10 @@ public class RepositoryAdapter
             return null;
 
         log.Verbose("Pushing to remote");
-        return repository.PushChanges(commitParameters.RequiresPr,
-                                      commitParameters.Summary,
-                                      commitDescription,
-                                      branchName,
-                                      CancellationToken.None)
-                         .GetAwaiter()
-                         .GetResult();
+        return await repository.PushChanges(commitParameters.RequiresPr,
+                                            commitParameters.Summary,
+                                            commitDescription,
+                                            branchName,
+                                            CancellationToken.None);
     }
 }

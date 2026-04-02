@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -53,6 +54,11 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            InstallAsync(deployment).GetAwaiter().GetResult();
+        }
+
+        async Task InstallAsync(RunningDeployment deployment)
+        {
             log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
@@ -78,13 +84,12 @@ namespace Calamari.ArgoCD.Conventions
                                                     commitMessageGenerator,
                                                     outputVariablesWriter);
 
-            var applicationResults = argoProperties.Applications
-                                                   .Select(application =>
-                                                           {
-                                                               var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
-                                                               return appUpdater.ProcessApplication(application, gateway);
-                                                           })
-                                                   .ToList();
+            var applicationResults = new System.Collections.Generic.List<ProcessApplicationResult>();
+            foreach (var application in argoProperties.Applications)
+            {
+                var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
+                applicationResults.Add(await appUpdater.ProcessApplicationAsync(application, gateway));
+            }
 
             reporter.ReportFilesUpdated(applicationResults);
 

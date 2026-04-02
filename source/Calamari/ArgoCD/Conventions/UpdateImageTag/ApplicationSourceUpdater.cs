@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -53,11 +54,11 @@ public class ApplicationSourceUpdater
         return deploymentScope.Matches(annotatedScope);
     }
 
-    public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    public async Task<SourceUpdateResult> ProcessSourceAsync(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
 
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        var sourceUpdateResult = await repositoryAdapter.ProcessAsync(sourceWithMetadata, sourceUpdater);
 
         if (sourceUpdateResult.PushResult is not null)
         {
