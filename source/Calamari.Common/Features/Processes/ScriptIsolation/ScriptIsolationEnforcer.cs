@@ -15,7 +15,7 @@ public sealed class ScriptIsolationEnforcer(
 {
     public ILockHandle Enforce(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
-        var lockOptions = PrepareLockOptions(scriptIsolationOptions);
+        var lockOptions = DetermineLockOptionsToEnforceBasedOnIsolationOptions(scriptIsolationOptions);
         if (lockOptions is null)
         {
             return new NoLock();
@@ -38,7 +38,7 @@ public sealed class ScriptIsolationEnforcer(
         CancellationToken cancellationToken
     )
     {
-        var lockOptions = PrepareLockOptions(scriptIsolationOptions);
+        var lockOptions = DetermineLockOptionsToEnforceBasedOnIsolationOptions(scriptIsolationOptions);
         if (lockOptions is null)
         {
             return new NoLock();
@@ -63,7 +63,7 @@ public sealed class ScriptIsolationEnforcer(
             .Build();
     }
 
-    LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
+    LockOptions? DetermineLockOptionsToEnforceBasedOnIsolationOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
         // Validate the options from the command line
         var requestedOptions = requestedLockOptionsFactory.CreateFromIsolationOptions(scriptIsolationOptions);
