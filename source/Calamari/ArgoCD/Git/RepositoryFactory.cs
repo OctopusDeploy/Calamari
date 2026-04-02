@@ -1,7 +1,8 @@
 using System;
 using System.IO;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using System.Linq;
+using System.Threading;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -21,17 +22,25 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory,
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
                                  IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
+            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             this.clock = clock;
+
+            // Calamari runs as a single-purpose process per deployment step and always receives
+            // explicit credentials. Clear the search paths for all global config levels so libgit2
+            // cannot load ~/.gitconfig or /etc/gitconfig and pick up a credential helper (e.g.
+            // osxkeychain) that would silently override or bypass the credentials we provide.
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Global, []);
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.System, []);
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Xdg, []);
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
@@ -97,8 +106,9 @@ namespace Calamari.ArgoCD.Git
             }
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
-            
-            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
+
+            //TODO(tmm): Make this function (and all callers async).
+            var gitVendorApiAdapter = gitVendorPullRequestClientResolver.TryResolve(gitConnection, log, CancellationToken.None).Result;
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,

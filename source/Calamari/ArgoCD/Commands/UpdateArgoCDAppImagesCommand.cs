@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly DeploymentConfigFactory configFactory;
-        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         readonly ICommitMessageGenerator commitMessageGenerator;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -34,14 +34,14 @@ namespace Calamari.ArgoCD.Commands
                                             ICalamariFileSystem fileSystem,
                                             ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
-                                            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+                                            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.commitMessageGenerator = commitMessageGenerator;
             this.configFactory = configFactory;
-            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             Options.Add("customPropertiesFile=",
                         "Name of the custom properties file",
                         v => customPropertiesFile = Path.GetFullPath(v));
@@ -64,7 +64,7 @@ namespace Calamari.ArgoCD.Commands
                                                            commitMessageGenerator,
                                                            new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                            new ArgoCdApplicationManifestParser(),
-                                                           gitVendorAgnosticApiAdapterFactory,
+                                                           gitVendorPullRequestClientResolver,
                                                            clock,
                                                            new ArgoCDFilesUpdatedReporter(log),
                                                            new ArgoCDOutputVariablesWriter(log, variables)),

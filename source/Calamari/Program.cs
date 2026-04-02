@@ -29,6 +29,7 @@ using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
+using Calamari.Deployment.PackageRetention;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
 
@@ -104,8 +105,6 @@ namespace Calamari
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
 
-            builder.RegisterAssemblyModules(assembliesToRegister);
-
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<IKubernetesDiscoverer>()
                    .As<IKubernetesDiscoverer>();
@@ -127,6 +126,7 @@ namespace Calamari
                    .As<ILaunchTool>();
 
             builder.RegisterModule<ArgoCDModule>();
+            builder.RegisterModule<PackageRetentionModule>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()
