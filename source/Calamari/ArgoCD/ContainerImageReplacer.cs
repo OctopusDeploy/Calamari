@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Kubernetes;
 using k8s;
 using k8s.Models;
 using YamlDotNet.RepresentationModel;
@@ -64,8 +65,8 @@ namespace Calamari.ArgoCD
                     continue;
                 }
 
-                var apiVersion = ((YamlScalarNode)rootNode.Children[new YamlScalarNode("apiVersion")]).Value!;
-                var kind = ((YamlScalarNode)rootNode.Children[new YamlScalarNode("kind")]).Value!;
+                var apiVersion = rootNode.GetChildNodeIfExists<YamlScalarNode>("apiVersion")?.Value ?? "";
+                var kind = rootNode.GetChildNodeIfExists<YamlScalarNode>("kind")?.Value ?? "";
                 var resourceIdentifier = $"{apiVersion}/{kind}";
 
                 try
