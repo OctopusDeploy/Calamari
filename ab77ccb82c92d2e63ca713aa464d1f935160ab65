@@ -1,0 +1,23 @@
+source/Calamari/ArgoCD/ContainerImageReplacer.cs
+  3affd96e3c1829fc 9,68-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.4",
+  "base_commit_sha": "ab77ccb82c92d2e63ca713aa464d1f935160ab65",
+  "prompts": {
+    "3affd96e3c1829fc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8afcad05-c6c9-4700-8355-f6dc0da3b160",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
