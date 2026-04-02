@@ -57,7 +57,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
         if (IsKustomizePatchUpdatesEnabled())
         {
-            if (HasInlinePatches(input))
+            if (HasPatchesNode(input))
             {
                 var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
                 var patchResult = inlinePatchReplacer.UpdateImages(imagesToUpdate);
@@ -69,7 +69,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
                 }
             }
 
-            if (HasInlineStrategicMergePatches(input))
+            if (HasStrategicMergePatchNode(input))
             {
                 var strategicMergeResult = ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate);
 
@@ -80,7 +80,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
                 }
             }
 
-            if (HasInlineJson6902Patches(input))
+            if (HasJson6902PatchesNode(input))
             {
                 var json6902Result = ProcessInlineJson6902Patches(updatedContent, imagesToUpdate);
 
@@ -115,13 +115,13 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
     }
     
-    internal bool HasInlinePatches(string content)
+    internal bool HasPatchesNode(string content)
     {
         var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline patches");
         return mappingNode?.Children.ContainsKey(new YamlScalarNode("patches")) ?? false;
     }
 
-    internal bool HasInlineStrategicMergePatches(string content)
+    internal bool HasStrategicMergePatchNode(string content)
     {
         var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline strategic merge patches");
         if (mappingNode == null)
@@ -140,7 +140,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         return false;
     }
 
-    internal bool HasInlineJson6902Patches(string content)
+    internal bool HasJson6902PatchesNode(string content)
     {
         var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline JSON 6902 patches");
         if (mappingNode == null)

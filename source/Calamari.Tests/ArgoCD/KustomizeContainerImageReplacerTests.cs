@@ -105,7 +105,7 @@ patches:
           - name: nginx
             image: nginx:1.25";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlinePatches(content);
+                    var result = replacer.HasPatchesNode(content);
                     result.Should().BeTrue();
                 }
 
@@ -118,7 +118,7 @@ images:
 - name: nginx
   newTag: 1.25";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlinePatches(content);
+                    var result = replacer.HasPatchesNode(content);
                     result.Should().BeFalse();
                 }
 
@@ -129,7 +129,7 @@ images:
 kind: Kustomization
 patches: []";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlinePatches(content);
+                    var result = replacer.HasPatchesNode(content);
                     result.Should().BeTrue();
                 }
 
@@ -138,7 +138,7 @@ patches: []";
                 {
                     const string content = @"invalid: yaml: [unclosed";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlinePatches(content);
+                    var result = replacer.HasPatchesNode(content);
                     result.Should().BeFalse();
                 }
 
@@ -146,7 +146,7 @@ patches: []";
                 public void HasInlinePatches_EmptyContent_ReturnsFalse()
                 {
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlinePatches("");
+                    var result = replacer.HasPatchesNode("");
                     result.Should().BeFalse();
                 }
 
@@ -157,7 +157,7 @@ patches: []";
 - item2
 - item3";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlinePatches(content);
+                    var result = replacer.HasPatchesNode(content);
                     result.Should().BeFalse();
                 }
             }
@@ -181,7 +181,7 @@ patchesStrategicMerge:
         - name: nginx
           image: nginx:1.25";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineStrategicMergePatches(content);
+                    var result = replacer.HasStrategicMergePatchNode(content);
                     result.Should().BeTrue();
                 }
 
@@ -194,7 +194,7 @@ patchesStrategicMerge:
 - deployment-patch.yaml
 - service-patch.yaml";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineStrategicMergePatches(content);
+                    var result = replacer.HasStrategicMergePatchNode(content);
                     result.Should().BeFalse();
                 }
 
@@ -207,7 +207,7 @@ images:
 - name: nginx
   newTag: 1.25";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineStrategicMergePatches(content);
+                    var result = replacer.HasStrategicMergePatchNode(content);
                     result.Should().BeFalse();
                 }
 
@@ -216,7 +216,7 @@ images:
                 {
                     const string content = @"invalid: yaml: [unclosed";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineStrategicMergePatches(content);
+                    var result = replacer.HasStrategicMergePatchNode(content);
                     result.Should().BeFalse();
                 }
             }
@@ -238,7 +238,7 @@ patchesJson6902:
       path: /spec/template/spec/containers/0/image
       value: nginx:1.25";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineJson6902Patches(content);
+                    var result = replacer.HasJson6902PatchesNode(content);
                     result.Should().BeTrue();
                 }
 
@@ -253,7 +253,7 @@ patchesJson6902:
     name: nginx-deployment
   path: deployment.json";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineJson6902Patches(content);
+                    var result = replacer.HasJson6902PatchesNode(content);
                     result.Should().BeFalse();
                 }
 
@@ -266,7 +266,7 @@ images:
 - name: nginx
   newTag: 1.25";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineJson6902Patches(content);
+                    var result = replacer.HasJson6902PatchesNode(content);
                     result.Should().BeFalse();
                 }
 
@@ -275,7 +275,7 @@ images:
                 {
                     const string content = @"invalid: yaml: [unclosed";
                     var replacer = CreateReplacer();
-                    var result = replacer.HasInlineJson6902Patches(content);
+                    var result = replacer.HasJson6902PatchesNode(content);
                     result.Should().BeFalse();
                 }
             }

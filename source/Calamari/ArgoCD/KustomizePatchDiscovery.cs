@@ -38,7 +38,7 @@ namespace Calamari.ArgoCD
             this.log = log;
         }
 
-        public List<PatchFileInfo> DiscoverPatchFiles(string kustomizationFilePath)
+        public List<PatchFileInfo> DiscoverPatch(string kustomizationFilePath)
         {
             if (string.IsNullOrWhiteSpace(kustomizationFilePath))
                 throw new ArgumentException("Kustomization file path cannot be null or empty", nameof(kustomizationFilePath));

@@ -66,7 +66,7 @@ public class KustomizeUpdater : BaseUpdater
 
         var allFilesToUpdate = new HashSet<string> { kustomizationFile };
         var patchDiscovery = new KustomizePatchDiscovery(fileSystem, log);
-        var patchFiles = patchDiscovery.DiscoverPatchFiles(kustomizationFile);
+        var patchFiles = patchDiscovery.DiscoverPatch(kustomizationFile);
 
         var externalPatchFiles = patchFiles
                                  .Where(p => p.Type != PatchType.InlineJsonPatch)

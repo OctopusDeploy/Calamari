@@ -43,7 +43,7 @@ patchesStrategicMerge:
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().HaveCount(2);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.StrategicMerge);
@@ -74,7 +74,7 @@ patchesJson6902:
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().HaveCount(2);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.Json6902);
@@ -101,7 +101,7 @@ patches:
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().HaveCount(1);
             result.First().FilePath.Should().Be(kustomizationPath);
@@ -138,7 +138,7 @@ patches:
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().HaveCount(3);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.StrategicMerge);
@@ -164,7 +164,7 @@ patchesStrategicMerge:
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().HaveCount(2);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.StrategicMerge);
@@ -186,7 +186,7 @@ images:
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().BeEmpty();
         }
@@ -197,7 +197,7 @@ images:
             fileSystem.FileExists(kustomizationPath).Returns(false);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().BeEmpty();
         }
@@ -211,7 +211,7 @@ images:
             fileSystem.ReadFile(kustomizationPath).Returns(invalidYamlContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().BeEmpty();
         }
@@ -235,7 +235,7 @@ patches:
             fileSystem.ReadFile(kustomizationPath).Returns(nonKustomizationContent);
 
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
-            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+            var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().BeEmpty();
         }
