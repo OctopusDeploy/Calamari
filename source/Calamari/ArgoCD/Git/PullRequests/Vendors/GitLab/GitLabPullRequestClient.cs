@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
             this.baseUrl = baseUrl;
             
             var parts = repositoryConnection.Url.ExtractPropertiesFromUrlPath();
-            projectPath = $"{parts[0]}/{parts[1]}";
+            projectPath = $"{parts[^2]}/{parts[^1]}";
         }
         
         public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
@@ -37,7 +37,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
                 TargetBranch = destinationBranch.ToFriendlyName(),
                 Description = body
             });
-            return new PullRequest(mergeRequest.Title, mergeRequest.Id, mergeRequest.WebUrl);
+            return new PullRequest(mergeRequest.Title, mergeRequest.Iid, mergeRequest.WebUrl);
         }
 
         
