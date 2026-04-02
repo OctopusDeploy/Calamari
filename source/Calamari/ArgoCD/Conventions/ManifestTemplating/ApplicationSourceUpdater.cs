@@ -57,7 +57,7 @@ public class ApplicationSourceUpdater
 
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory);
 
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision,  workingDir => sourceUpdater.Process(sourceWithMetadata, workingDir));
 
         if (sourceUpdateResult.PushResult is not null)
         {

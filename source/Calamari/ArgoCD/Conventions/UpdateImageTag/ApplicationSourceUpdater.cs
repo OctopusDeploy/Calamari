@@ -56,8 +56,7 @@ public class ApplicationSourceUpdater
     public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
-
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision,  workingDir => sourceUpdater.Process(sourceWithMetadata, workingDir));
 
         if (sourceUpdateResult.PushResult is not null)
         {

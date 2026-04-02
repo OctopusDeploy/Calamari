@@ -8,14 +8,19 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git;
 
+// public interface FileSystemUpdater
+// {
+//     FileUpdateResult Update(string workingDirectory);
+// }
+
 public class RepositoryAdapter
 {
-    readonly IRepositoryFactory repositoryFactory;
+    readonly AuthenticatingRepositoryFactory repositoryFactory;
     readonly ILog log;
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly GitCommitParameters commitParameters;
 
-    public RepositoryAdapter(IRepositoryFactory repositoryFactory,
+    public RepositoryAdapter(AuthenticatingRepositoryFactory repositoryFactory,
                              GitCommitParameters commitParameters,
                              ILog log,
                              ICommitMessageGenerator commitMessageGenerator)
@@ -26,38 +31,32 @@ public class RepositoryAdapter
         this.commitParameters = commitParameters;
     }
 
+    public delegate FileUpdateResult RepositoryMutator(string workingDir);
+
     // New generic overload — used by CommitToGitConvention and (after Task 3) ArgoCD callers
-    public SourceUpdateResult Process(IGitConnection connection, Func<string, FileUpdateResult> updater)
+    public SourceUpdateResult Process(string repoUrl, string targetRevision, RepositoryMutator mutator)
     {
-        using var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), connection);
-        var result = updater(repository.WorkingDirectory);
-        return PersistChangesToRepository(repository, connection.GitReference, result);
+        using var repository = repositoryFactory.CloneRepository(repoUrl, targetRevision);
+        var result = mutator(repository.WorkingDirectory);
+        return PersistChangesToRepository(repository, targetRevision, result);
     }
 
-    // Legacy overload — delegates to new one; will be removed in Task 3 after ArgoCD callers are migrated
-    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
-    {
-        var connection = new GitConnection(
-            null, null,
-            GitCloneSafeUrl.FromString(sourceWithMetadata.Source.OriginalRepoUrl),
-            GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision));
-        return Process(connection, workingDir => updater.Process(sourceWithMetadata, workingDir));
-    }
-
-    SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, GitReference gitReference, FileUpdateResult result)
+    SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
     {
         if (result.HasChanges())
         {
-            var pushResult = PushToRemote(repository, gitReference, result);
+            var pushResult = PushToRemote(repository,
+                                          GitReference.CreateFromString(targetRevision),
+                                          result);
+
             if (pushResult is not null)
-                return new SourceUpdateResult(result.UpdatedImages, pushResult, result.PatchedFileContent);
+            {
+                return new SourceUpdateResult(result.UpdatedImages, pushResult, result.ReplacedFiles, result.PatchedFiles);
+            }
         }
-        return new SourceUpdateResult([], null, []);
-    }
 
         return new SourceUpdateResult([], null, result.ReplacedFiles, result.PatchedFiles);
     }
-    
     
     protected PushResult? PushToRemote(
         RepositoryWrapper repository,
