@@ -101,7 +101,7 @@ public class ApplicationSourceUpdater
         }
         else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
         {
-            sourceUpdater = new KustomizeUpdater(deploymentConfig.ImageReferences,
+            sourceUpdater = new KustomizeUpdater(deploymentConfig,
                                                  defaultRegistry,
                                                  log,
                                                  fileSystem);
