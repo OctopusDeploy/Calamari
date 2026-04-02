@@ -45,12 +45,12 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
             var armClient = account.CreateArmClient();
             var subscription = armClient.GetSubscriptionResource(
-                new ResourceIdentifier($"/subscriptions/{account.SubscriptionNumber}"));
+                                                                 new ResourceIdentifier($"/subscriptions/{account.SubscriptionNumber}"));
 
             var discoveredClusters = new List<KubernetesCluster>();
 
             var resourceGroups = subscription.GetResourceGroups().GetAll();
-            foreach (var resourceGroup in resourceGroups)
+            foreach (var resourceGroup in resourceGroups.Where(rg => rg.Data.ResourceGroupProvisioningState != "Deleting"))
             {
                 try
                 {
