@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Models;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
@@ -14,13 +12,15 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 {
     readonly string input;
     readonly string defaultRegistry;
+    readonly bool updateKustomizePatches;
     readonly ILog log;
     readonly KustomizeDiscovery discovery;
 
-    public KustomizeContainerImageReplacer(string input, string defaultRegistry, ILog log)
+    public KustomizeContainerImageReplacer(string input, string defaultRegistry, bool updateKustomizePatches, ILog log)
     {
         this.input = input;
         this.defaultRegistry = defaultRegistry;
+        this.updateKustomizePatches = updateKustomizePatches;
         this.log = log;
         discovery = new KustomizeDiscovery(log);
     }
@@ -36,7 +36,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
 
 
-        if (IsKustomizePatchUpdatesEnabled())
+        if (updateKustomizePatches)
         {
             return UpdateKustomizePatch(imagesToUpdate, inputCopy);
         }
@@ -58,7 +58,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
             allUpdatedImages.UnionWith(result.UpdatedImageReferences);
         }
 
-        if (IsKustomizePatchUpdatesEnabled())
+        if (updateKustomizePatches)
         {
             if (HasPatchesNode(inputContent))
             {
@@ -249,9 +249,4 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
     }
 
-    bool IsKustomizePatchUpdatesEnabled()
-    {
-        var enabledFeatureToggles = Environment.GetEnvironmentVariable("OctopusEnabledFeatureToggles") ?? "";
-        return enabledFeatureToggles.Contains(OctopusFeatureToggles.KnownSlugs.KustomizePatchImageUpdatesFeatureToggle);
-    }
 }

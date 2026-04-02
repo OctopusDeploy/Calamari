@@ -17,20 +17,22 @@ public class KustomizeUpdater : BaseUpdater
 {
     readonly IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate;
     readonly string defaultRegistry;
+    readonly bool updateKustomizePatches;
 
-    public KustomizeUpdater(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
+    public KustomizeUpdater(UpdateArgoCDAppDeploymentConfig deploymentConfig,
                             string defaultRegistry,
                             ILog log,
                             ICalamariFileSystem fileSystem) : base(log,
                                                                    fileSystem)
     {
-        this.imagesToUpdate = imagesToUpdate;
+        this.imagesToUpdate = deploymentConfig.ImageReferences;
+        this.updateKustomizePatches = deploymentConfig.UpdateKustomizePatches;
         this.defaultRegistry = defaultRegistry;
     }
 
     public override ImageReplacementResult ReplaceImages(string input)
     {
-        var imageReplacer = new KustomizeContainerImageReplacer(input, defaultRegistry, log);
+        var imageReplacer = new KustomizeContainerImageReplacer(input, defaultRegistry, updateKustomizePatches, log);
         return imageReplacer.UpdateImages(imagesToUpdate);
     }
 

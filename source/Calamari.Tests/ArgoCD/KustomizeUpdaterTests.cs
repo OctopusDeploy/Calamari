@@ -66,6 +66,12 @@ namespace Calamari.Tests.ArgoCD
             fileSystem.OverwriteFile(filePath, content);
         }
 
+        private static UpdateArgoCDAppDeploymentConfig CreateMockDeploymentConfig(List<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+        {
+            var gitCommitParameters = new GitCommitParameters("Test commit", "Test description", false);
+            return new UpdateArgoCDAppDeploymentConfig(gitCommitParameters, imagesToUpdate, false, true);
+        }
+
         [Test]
         public void Process_WithImagesFieldOnly_UpdatesImagesFieldOnly()
         {
@@ -83,7 +89,7 @@ images:
 
             CreateKustomizationFile(kustomizationContent);
 
-            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(imagesToUpdate), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
@@ -124,7 +130,7 @@ spec:
             CreateKustomizationFile(kustomizationContent);
             CreatePatchFile("deployment-patch.yaml", patchContent);
 
-            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(imagesToUpdate), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
@@ -163,7 +169,7 @@ patchesJson6902:
             CreateKustomizationFile(kustomizationContent);
             CreatePatchFile("deployment.json", patchContent);
 
-            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(imagesToUpdate), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
@@ -201,7 +207,7 @@ patches:
 
             CreateKustomizationFile(kustomizationContent);
 
-            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(imagesToUpdate), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
@@ -268,7 +274,7 @@ spec:
             CreatePatchFile("deployment-patch.yaml", deploymentPatchContent);
             CreatePatchFile("service.json", servicePatchContent);
 
-            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(imagesToUpdate), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
@@ -296,7 +302,7 @@ spec:
 
             // Don't create any files - the directory should be empty
 
-            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(imagesToUpdate), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
@@ -353,7 +359,7 @@ spec:
             CreateKustomizationFile(kustomizationContent);
             CreatePatchFile("external-patch.yaml", externalPatchContent);
 
-            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(imagesToUpdate), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
