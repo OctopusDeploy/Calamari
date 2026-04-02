@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -21,7 +21,7 @@ namespace Calamari.ArgoCD.Git
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
         readonly IGitConnection connection;
-        readonly IGitVendorApiAdapter? vendorApiAdapter;
+        readonly IGitVendorPullRequestClient? vendorApiAdapter;
         readonly IClock clock;
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
@@ -32,7 +32,7 @@ namespace Calamari.ArgoCD.Git
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
                                  IGitConnection connection,
-                                 IGitVendorApiAdapter? vendorApiAdapter,
+                                 IGitVendorPullRequestClient? vendorApiAdapter,
                                  IClock clock)
         {
             this.repository = repository;
@@ -131,7 +131,7 @@ namespace Calamari.ArgoCD.Git
 
             if (!requiresPullRequest)
             {
-                return new PushResult(commit.Sha, commit.ShortSha());
+                return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
             }
 
             var (title, number, uri) = await CreatePullRequest(
@@ -144,6 +144,7 @@ namespace Calamari.ArgoCD.Git
             return new PullRequestPushResult(
                 commit.Sha,
                 commit.ShortSha(),
+                commit.Author.When,
                 connection.Url.AbsoluteUri,
                 title,
                 uri,
@@ -279,13 +280,14 @@ namespace Calamari.ArgoCD.Git
         }
     }
 
-    public record PushResult(string CommitSha, string ShortSha);
+    public record PushResult(string CommitSha, string ShortSha, DateTimeOffset CommitTimestamp);
 
     public record PullRequestPushResult(
         string CommitSha,
         string ShortSha,
+        DateTimeOffset CommitTimestamp,
         string RepositoryUri,
         string PullRequestTitle,
         string PullRequestUri,
-        long PullRequestNumber) : PushResult(CommitSha, ShortSha);
+        long PullRequestNumber) : PushResult(CommitSha, ShortSha, CommitTimestamp);
 }
