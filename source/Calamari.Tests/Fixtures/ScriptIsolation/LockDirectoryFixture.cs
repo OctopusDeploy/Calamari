@@ -220,14 +220,30 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         /// <summary>
-        /// Supplies a fixed list of fallback temporary directory candidates, removing
-        /// any dependency on environment variables or the real filesystem layout.
+        /// Supplies a fixed list of fallback candidates, removing any dependency on
+        /// environment variables or the real filesystem layout.  Each candidate is a
+        /// fully-specified <see cref="LockDirectoryFallback"/> so that tests can
+        /// assert on the exact <see cref="LockDirectoryFallbackType"/> that is
+        /// threaded through into <see cref="LockSupportDetectionResult.FallbackType"/>.
         /// </summary>
-        sealed class FakeTemporaryDirectoryFallbackProvider(params string[] temporaryDirectories)
+        sealed class FakeTemporaryDirectoryFallbackProvider(params LockDirectoryFallback[] fallbacks)
             : ITemporaryDirectoryFallbackProvider
         {
-            public IEnumerable<DirectoryInfo> GetFallbackCandidates(DirectoryInfo preferredDirectory)
-                => Array.ConvertAll(temporaryDirectories, p => new DirectoryInfo(p));
+            /// <summary>
+            /// Convenience constructor: wraps bare directory paths with
+            /// <see cref="LockDirectoryFallbackType.TempFixed"/> so that existing
+            /// tests that only care about which directory is chosen still compile
+            /// without specifying a type.
+            /// </summary>
+            public FakeTemporaryDirectoryFallbackProvider(params string[] temporaryDirectories)
+                : this(Array.ConvertAll(temporaryDirectories,
+                                        p => new LockDirectoryFallback(LockDirectoryFallbackType.TempFixed,
+                                                                        new DirectoryInfo(p))))
+            {
+            }
+
+            public IEnumerable<LockDirectoryFallback> GetFallbackCandidates(DirectoryInfo preferredDirectory)
+                => fallbacks;
         }
 
         sealed class FakeMountedDrivesProvider(
@@ -251,6 +267,18 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             FakeLockService lockService,
             params string[] tempPaths)
             => new(drives, lockService, new FakeTemporaryDirectoryFallbackProvider(tempPaths));
+
+        /// <summary>
+        /// Builds a <see cref="LockDirectoryFactory"/> where each fallback candidate is a
+        /// fully-typed <see cref="LockDirectoryFallback"/>, allowing tests to assert on
+        /// the exact <see cref="LockDirectoryFallbackType"/> recorded in
+        /// <see cref="LockSupportDetectionResult.FallbackType"/>.
+        /// </summary>
+        static LockDirectoryFactory CreateFactoryWithTypedFallbacks(
+            FakeMountedDrivesProvider drives,
+            FakeLockService lockService,
+            params LockDirectoryFallback[] typedFallbacks)
+            => new(drives, lockService, new FakeTemporaryDirectoryFallbackProvider(typedFallbacks));
 
         // -------------------------------------------------------------------------
         // Group A: LockDirectory.Supports(LockType)
@@ -567,6 +595,276 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().StartWith(secondTempRoot,
                                                              because: "the second temp candidate is on a Supported drive and should be chosen");
+        }
+
+        // -------------------------------------------------------------------------
+        // Group D-2: LockDirectory.DetectionResults and IsFallback populated by
+        //            LockDirectoryFactory.Create
+        //
+        // These tests verify that the factory records a LockSupportDetectionResult
+        // entry for every candidate location it evaluates when the preferred
+        // directory is not fully supported.  The early-return path (preferred is
+        // Supported) deliberately omits DetectionResults to keep the common case
+        // cheap; all other paths must capture at minimum the preferred-directory
+        // entry and one entry per fallback candidate inspected.
+        //
+        // Each test uses the same FakeMountedDrivesProvider / FakeLockService
+        // infrastructure as Group D so results are fully deterministic.
+        // -------------------------------------------------------------------------
+
+        [Test]
+        public void Create_DetectionResults_AreEmpty_WhenPreferredIsSupported()
+        {
+            // The preferred drive is pre-detected as Supported, so the factory returns
+            // immediately without building any DetectionResults list.
+            var drives = PassThroughDrives(DriveWithCapability(FakeRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults.Should().BeEmpty(
+                because: "the early-return path for a fully-supported preferred drive skips detection tracking");
+            result.IsFallback.Should().BeFalse();
+        }
+
+        [Test]
+        public void Create_DetectionResults_ContainsPreferredEntry_WhenPreferredIsNotSupported()
+        {
+            // Preferred is ExclusiveOnly (no temp is better) → factory records an entry
+            // for the preferred directory with FallbackType = null.
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly));
+            var fs = FakeLockService.FullySupported();
+
+            // No temp candidates → only the preferred entry should be recorded
+            var result = CreateFactory(drives, fs)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults.Should().ContainSingle(
+                because: "only the preferred directory was evaluated");
+            var entry = result.DetectionResults[0];
+            entry.FallbackType.Should().BeNull(
+                because: "the preferred directory has no fallback type");
+            entry.LockCapability.Should().Be(LockCapability.ExclusiveOnly);
+        }
+
+        [Test]
+        public void Create_DetectionResults_FileSystem_IsFromDriveFormat_WhenDriveKnown()
+        {
+            // DriveWithCapability uses Format "ntfs" when capability is pre-set.
+            // The preferred entry's FileSystem must reflect that drive format.
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults[0].FileSystem.Should().Be("ntfs",
+                because: "DriveWithCapability uses 'ntfs' as the format when a capability override is supplied");
+        }
+
+        [Test]
+        public void Create_DetectionResults_FileSystem_IsUnknown_WhenNoDriveAssociated()
+        {
+            // Preferred path has no drive in MountedDrives (GetDriveOrNull returns null),
+            // so the factory falls back to DetectLockSupport and records FileSystem = "Unknown".
+            var drives = PassThroughDrives(); // no drives at all
+            var fs = FakeLockService.Unsupported();
+
+            var result = CreateFactory(drives, fs)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults.Should().ContainSingle();
+            result.DetectionResults[0].FileSystem.Should().Be("Unknown",
+                because: "no associated drive means the filesystem cannot be identified");
+        }
+
+        [Test]
+        public void Create_DetectionResults_IncludesFallbackEntry_WhenFallbackIsInspected()
+        {
+            // Preferred is Unsupported; one temp candidate is inspected.
+            // DetectionResults must contain two entries: one for the preferred directory
+            // (FallbackType = null) and one for the temp candidate (FallbackType = TempFixed).
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(TempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults.Should().HaveCount(2,
+                because: "the preferred directory and one temp candidate were both evaluated");
+            result.DetectionResults[0].FallbackType.Should().BeNull(
+                because: "the first entry is always for the preferred directory");
+            result.DetectionResults[0].LockCapability.Should().Be(LockCapability.Unsupported);
+            result.DetectionResults[1].FallbackType.Should().Be(LockDirectoryFallbackType.TempFixed,
+                because: "FakeTemporaryDirectoryFallbackProvider assigns TempFixed to all candidates");
+            result.DetectionResults[1].LockCapability.Should().Be(LockCapability.Supported);
+        }
+
+        [Test]
+        public void Create_DetectionResults_IncludesAllInspectedFallbacks_WhenMultipleCandidates()
+        {
+            // Preferred is Unsupported; two temps are inspected before a Supported one is found.
+            // All three entries (preferred + 2 temps) must appear in DetectionResults.
+            var secondTempRoot = OperatingSystem.IsWindows() ? @"E:\" : "/dev/shm";
+            var secondTempPath = OperatingSystem.IsWindows()
+                ? @"E:\tentacle"
+                : "/dev/shm/tentacle";
+
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly),
+                DriveWithCapability(secondTempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath, secondTempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults.Should().HaveCount(3,
+                because: "the preferred directory and both temp candidates were evaluated before a Supported one was found");
+            result.DetectionResults[0].FallbackType.Should().BeNull();
+            result.DetectionResults[0].LockCapability.Should().Be(LockCapability.Unsupported);
+            result.DetectionResults[1].LockCapability.Should().Be(LockCapability.ExclusiveOnly);
+            result.DetectionResults[2].LockCapability.Should().Be(LockCapability.Supported);
+        }
+
+        [Test]
+        public void Create_IsFallback_IsFalse_WhenPreferredPathIsReturned()
+        {
+            // Preferred is ExclusiveOnly; no temp offers anything better.
+            // The preferred directory is returned — IsFallback must be false.
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly),
+                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.IsFallback.Should().BeFalse(
+                because: "the preferred directory was chosen");
+            result.DirectoryInfo.FullName.Should().Be(CandidatePath);
+        }
+
+        [Test]
+        public void Create_IsFallback_IsTrue_WhenTempPathIsReturned_BecausePreferredIsUnsupported()
+        {
+            // Preferred is Unsupported; temp is Supported.
+            // The temp directory is returned — IsFallback must be true.
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(TempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.IsFallback.Should().BeTrue(
+                because: "a temp directory was chosen because the preferred directory was unsupported");
+        }
+
+        [Test]
+        public void Create_IsFallback_IsTrue_WhenTempExclusiveOnlyPathIsReturned()
+        {
+            // Preferred is Unsupported; best available temp is ExclusiveOnly.
+            // The temp directory is returned — IsFallback must be true.
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.IsFallback.Should().BeTrue(
+                because: "a temp directory was chosen because it offers better support than the preferred directory");
+        }
+
+        [Test]
+        public void Create_IsFallback_IsFalse_WhenNothingIsSupported()
+        {
+            // Everything is Unsupported; the preferred directory is returned as a
+            // last resort — IsFallback must be false.
+            var drives = PassThroughDrives(DriveWithCapability(FakeRoot, null));
+            var fs = FakeLockService.Unsupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.IsFallback.Should().BeFalse(
+                because: "the preferred directory is returned when nothing better is available");
+            result.LockSupport.Should().Be(LockCapability.Unsupported);
+        }
+
+        [Test]
+        public void Create_DetectionResults_StopsAfterFirstSupportedFallback()
+        {
+            // Three temps: ExclusiveOnly, Supported, Supported.
+            // The factory must stop after finding the first Supported temp and must
+            // NOT include the third candidate in DetectionResults.
+            var secondTempRoot = OperatingSystem.IsWindows() ? @"E:\" : "/dev/shm";
+            var secondTempPath = OperatingSystem.IsWindows() ? @"E:\tentacle" : "/dev/shm/tentacle";
+            var thirdTempRoot = OperatingSystem.IsWindows() ? @"F:\" : "/run";
+            var thirdTempPath = OperatingSystem.IsWindows() ? @"F:\tentacle" : "/run/tentacle";
+
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly),
+                DriveWithCapability(secondTempRoot, LockCapability.Supported),
+                DriveWithCapability(thirdTempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath, secondTempPath, thirdTempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults.Should().HaveCount(3,
+                because: "iteration stops as soon as the first Supported fallback is found; the third candidate is never inspected");
+            result.LockSupport.Should().Be(LockCapability.Supported);
+            result.IsFallback.Should().BeTrue();
+        }
+
+        // -------------------------------------------------------------------------
+        // Group D-3: LockDirectoryFallbackType round-trip through DetectionResults
+        //
+        // Each test uses CreateFactoryWithTypedFallbacks to supply a single fallback
+        // with a specific LockDirectoryFallbackType and asserts that the same type
+        // appears verbatim in DetectionResults[1].FallbackType.  This proves the
+        // factory does not hard-code or transform the type value — it threads whatever
+        // the provider supplies directly into the recorded result.
+        //
+        // All five enum members are covered, one test each.
+        // -------------------------------------------------------------------------
+
+        // Builds a LockDirectoryFallback with a given type pointing at TempPath,
+        // which lives under TempRoot where a drive with the given capability is registered.
+        static LockDirectoryFallback Fallback(LockDirectoryFallbackType type, string path)
+            => new(Type: type, Directory: new DirectoryInfo(path));
+
+        [TestCase(LockDirectoryFallbackType.WindowsLocalAppData)]
+        [TestCase(LockDirectoryFallbackType.WindowsTempPath)]
+        [TestCase(LockDirectoryFallbackType.TempEnvironmentVariable)]
+        [TestCase(LockDirectoryFallbackType.TempFixed)]
+        [TestCase(LockDirectoryFallbackType.DevShm)]
+        public void Create_DetectionResults_FallbackType_IsPassedThrough(LockDirectoryFallbackType fallbackType)
+        {
+            // Preferred is Unsupported so the factory enters the fallback loop.
+            // The single temp candidate carries the fallbackType under test.
+            // DetectionResults[1] must record that exact type unchanged.
+            var drives = PassThroughDrives(
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(TempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactoryWithTypedFallbacks(drives, fs, Fallback(fallbackType, TempPath))
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DetectionResults.Should().HaveCount(2);
+            result.DetectionResults[1].FallbackType.Should().Be(fallbackType,
+                because: "the factory must record the FallbackType supplied by the provider without modification");
         }
 
         // -------------------------------------------------------------------------

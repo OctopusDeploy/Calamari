@@ -6,5 +6,5 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 interface ITemporaryDirectoryFallbackProvider
 {
-    IEnumerable<DirectoryInfo> GetFallbackCandidates(DirectoryInfo preferredDirectory);
+    IEnumerable<LockDirectoryFallback> GetFallbackCandidates(DirectoryInfo preferredDirectory);
 }

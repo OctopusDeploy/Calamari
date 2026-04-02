@@ -1,11 +1,13 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
@@ -389,6 +391,164 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 because: "no locking is supported at all so no lock should be acquired");
             log.MessagesWarnFormatted.Should().NotBeEmpty(
                 because: "a warning should be issued when no isolation is available");
+        }
+
+        // -------------------------------------------------------------------------
+        // Service message tests: CalamariScriptIsolationAlert is only emitted when
+        // the original lock requirement cannot be satisfied as requested.
+        // -------------------------------------------------------------------------
+
+        [Test]
+        public void NoServiceMessage_WhenFullySupportedAndExclusiveRequested()
+        {
+            // Fully supported + exclusive → returned unchanged, no alert needed
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Supported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().BeEmpty(
+                because: "no alert should be emitted when the lock requirement is fully satisfied");
+        }
+
+        [Test]
+        public void NoServiceMessage_WhenExclusiveOnlyAndExclusiveRequested()
+        {
+            // ExclusiveOnly + exclusive → returned unchanged, no alert needed
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.ExclusiveOnly);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().BeEmpty(
+                because: "no alert should be emitted when the exclusive lock requirement is satisfied");
+        }
+
+        [Test]
+        public void ServiceMessage_EmittedWithExclusiveEnforcedType_WhenSharedPromotedToExclusive()
+        {
+            // ExclusiveOnly + shared → promoted to exclusive; alert emitted
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.ExclusiveOnly);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().ContainSingle(
+                because: "exactly one alert message should be emitted on lock type promotion");
+            var msg = log.ServiceMessages[0];
+            msg.Name.Should().Be(ServiceMessageNames.CalamariScriptIsolationAlert.Name);
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.RequestedTypeAttribute)
+               .Should().Be(LockType.Shared.ToString(),
+                            because: "the requested type was Shared");
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.EnforcedTypeAttribute)
+               .Should().Be(LockType.Exclusive.ToString(),
+                            because: "the enforced type is Exclusive after promotion");
+        }
+
+        [Test]
+        public void ServiceMessage_EmittedWithNoneEnforcedType_WhenExclusiveUnsupported()
+        {
+            // Unsupported + exclusive → no lock at all; alert emitted with enforcedType = "None"
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Unsupported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().ContainSingle(
+                because: "exactly one alert message should be emitted when no isolation is available");
+            var msg = log.ServiceMessages[0];
+            msg.Name.Should().Be(ServiceMessageNames.CalamariScriptIsolationAlert.Name);
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.RequestedTypeAttribute)
+               .Should().Be(LockType.Exclusive.ToString(),
+                            because: "the requested type was Exclusive");
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.EnforcedTypeAttribute)
+               .Should().Be("None",
+                            because: "no locking could be enforced");
+        }
+
+        [Test]
+        public void ServiceMessage_EmittedWithNoneEnforcedType_WhenSharedUnsupported()
+        {
+            // Unsupported + shared → no lock at all; alert emitted with enforcedType = "None"
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.Unsupported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().ContainSingle(
+                because: "exactly one alert message should be emitted when no isolation is available");
+            var msg = log.ServiceMessages[0];
+            msg.Name.Should().Be(ServiceMessageNames.CalamariScriptIsolationAlert.Name);
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.RequestedTypeAttribute)
+               .Should().Be(LockType.Shared.ToString(),
+                            because: "the requested type was Shared");
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.EnforcedTypeAttribute)
+               .Should().Be("None",
+                            because: "no locking could be enforced");
+        }
+
+        [Test]
+        public void ServiceMessage_FallbackUsed_IsFalse_WhenNoFallback()
+        {
+            // The 2-arg LockDirectory constructor sets IsFallback = false
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Unsupported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            var msg = log.ServiceMessages.Should().ContainSingle().Subject;
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.FallbackUsedAttribute)
+               .Should().Be(false.ToString(),
+                            because: "the lock directory was constructed without a fallback");
+        }
+
+        [Test]
+        public void ServiceMessage_FallbackUsed_IsTrue_WhenFallbackDirectoryWasChosen()
+        {
+            // Construct a LockDirectory explicitly marked as a fallback
+            var fallbackDir = new LockDirectory(
+                DirectoryInfo: new DirectoryInfo(tempDir),
+                LockSupport: LockCapability.Unsupported,
+                IsFallback: true,
+                DetectionResults: []);
+            var lockFile = fallbackDir.GetLockFile("ScriptIsolation.TestMutex.lock");
+            var opts = new LockOptions(LockType.Exclusive, "TestMutex", lockFile, TimeSpan.FromMinutes(1));
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            var msg = log.ServiceMessages.Should().ContainSingle().Subject;
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.FallbackUsedAttribute)
+               .Should().Be(true.ToString(),
+                            because: "the lock directory was a fallback");
+        }
+
+        [Test]
+        public void ServiceMessage_CapabilityInfo_IncludesDetectionResults()
+        {
+            // Construct a LockDirectory with non-empty DetectionResults
+            var detectionResults = new List<LockSupportDetectionResult>
+            {
+                new(FallbackType: null,
+                    FileSystem: "nfs",
+                    LockCapability: LockCapability.Unsupported),
+                new(FallbackType: LockDirectoryFallbackType.TempFixed,
+                    FileSystem: "ext4",
+                    LockCapability: LockCapability.Supported)
+            };
+            var lockDir = new LockDirectory(
+                DirectoryInfo: new DirectoryInfo(tempDir),
+                LockSupport: LockCapability.Unsupported,
+                IsFallback: false,
+                DetectionResults: detectionResults);
+            var lockFile = lockDir.GetLockFile("ScriptIsolation.TestMutex.lock");
+            var opts = new LockOptions(LockType.Exclusive, "TestMutex", lockFile, TimeSpan.FromMinutes(1));
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            var msg = log.ServiceMessages.Should().ContainSingle().Subject;
+            var capabilityInfo = msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.CapabilityInfoAttribute);
+            capabilityInfo.Should().NotBeNullOrEmpty(
+                because: "detection results should be serialised into the capability info attribute");
+            // Each detection result's ToString() should appear in the joined output
+            foreach (var result in detectionResults)
+            {
+                capabilityInfo.Should().Contain(result.ToString(),
+                                                because: $"detection result '{result}' should be included in capability info");
+            }
         }
     }
 }

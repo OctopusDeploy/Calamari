@@ -12,7 +12,7 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 class TemporaryDirectoryFallbackProvider
     : ITemporaryDirectoryFallbackProvider
 {
-    public IEnumerable<DirectoryInfo> GetFallbackCandidates(DirectoryInfo preferredDirectory)
+    public IEnumerable<LockDirectoryFallback> GetFallbackCandidates(DirectoryInfo preferredDirectory)
     {
         var pathNamespace = $"octopus.{preferredDirectory.Name}";
 
@@ -22,27 +22,42 @@ class TemporaryDirectoryFallbackProvider
                                             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                                             "Calamari"
                                            );
-            yield return ApplyNamespace(localAppData);
-            yield return ApplyNamespace(Path.GetTempPath());
+            yield return new(
+                             Type: LockDirectoryFallbackType.WindowsLocalAppData,
+                             Directory: ApplyNamespace(localAppData)
+                            );
+            yield return new(
+                             Type: LockDirectoryFallbackType.WindowsTempPath,
+                             Directory: ApplyNamespace(Path.GetTempPath())
+                            );
             yield break;
         }
 
         var tmpDir = Environment.GetEnvironmentVariable("TMPDIR");
         if (!string.IsNullOrWhiteSpace(tmpDir))
         {
-            yield return ApplyNamespace(tmpDir);
+            yield return new(
+                             Type: LockDirectoryFallbackType.TempEnvironmentVariable,
+                             Directory: ApplyNamespace(tmpDir)
+                            );
         }
 
         const string tmp = "/tmp";
-        if (Directory.Exists(tmp))
+        if (tmp != tmpDir && Directory.Exists(tmp))
         {
-            yield return ApplyNamespace(tmp);
+            yield return new(
+                             Type: LockDirectoryFallbackType.TempFixed,
+                             Directory: ApplyNamespace(tmp)
+                            );
         }
 
         const string devShm = "/dev/shm";
         if (Directory.Exists(devShm))
         {
-            yield return ApplyNamespace(devShm);
+            yield return new(
+                             Type: LockDirectoryFallbackType.DevShm,
+                             Directory: ApplyNamespace(devShm)
+                            );
         }
 
         yield break;

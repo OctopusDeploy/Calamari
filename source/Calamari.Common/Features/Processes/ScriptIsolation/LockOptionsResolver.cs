@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
@@ -32,7 +36,7 @@ public sealed class LockOptionsResolver(
                 return lockOptions;
             }
 
-            LogUnableToSupportAnyScriptIsolation();
+            LogUnableToSupportAnyScriptIsolation(lockOptions);
 
             return null;
         }
@@ -51,17 +55,37 @@ public sealed class LockOptionsResolver(
             // running things serially.
             log.Warn($"Requested {LockType.Shared} lock is unavailable. Will acquire {LockType.Exclusive} lock.");
             log.Warn("Script is running with elevated isolation level because the filesystem does not support shared file locks.");
-            // TODO: Service Message
+            var alertMessage = BuildScriptIsolationAlertServiceMessage(lockOptions, typeEnforced: LockType.Exclusive);
+            log.WriteServiceMessage(alertMessage);
             return lockOptions with { Type = LockType.Exclusive };
         }
 
-        LogUnableToSupportAnyScriptIsolation();
+        LogUnableToSupportAnyScriptIsolation(lockOptions);
         return null;
     }
 
-    void LogUnableToSupportAnyScriptIsolation()
+    void LogUnableToSupportAnyScriptIsolation(LockOptions originalOptions)
     {
         log.Warn("Unable to support any script isolation. Running without any isolation.");
-        // TODO: Service Message
+        var alertMessage = BuildScriptIsolationAlertServiceMessage(originalOptions, typeEnforced: null);
+        log.WriteServiceMessage(alertMessage);
+    }
+
+    static ServiceMessage BuildScriptIsolationAlertServiceMessage(LockOptions originalOptions, LockType? typeEnforced)
+    {
+        var requestedType = originalOptions.Type.ToString();
+        var enforcedType = typeEnforced?.ToString() ?? "None";
+        var fallbackUsed = originalOptions.LockFile.Directory.IsFallback.ToString();
+        var capabilityInfo = originalOptions.LockFile.Directory.DetectionResults.Select(r => r.ToString()).StringJoin(", ");
+        return new ServiceMessage(
+                                  ServiceMessageNames.CalamariScriptIsolationAlert.Name,
+                                  new Dictionary<string, string>()
+                                  {
+                                      { ServiceMessageNames.CalamariScriptIsolationAlert.RequestedTypeAttribute, requestedType },
+                                      { ServiceMessageNames.CalamariScriptIsolationAlert.EnforcedTypeAttribute, enforcedType },
+                                      { ServiceMessageNames.CalamariScriptIsolationAlert.FallbackUsedAttribute, fallbackUsed },
+                                      { ServiceMessageNames.CalamariScriptIsolationAlert.CapabilityInfoAttribute, capabilityInfo }
+                                  }
+                                 );
     }
 }
