@@ -64,21 +64,25 @@ public class KustomizeUpdater : BaseUpdater
             return new FileUpdateResult([], [], [], []);
         }
 
-        log.Verbose("kustomization file found, processing images and discovering patch files");
-
         var allFilesToUpdate = new HashSet<string> { kustomizationFile };
-        var patchDiscovery = new KustomizePatchDiscovery(fileSystem, log);
-        var patchFiles = patchDiscovery.DiscoverPatch(kustomizationFile);
 
-        var externalPatchFiles = patchFiles
-                                 .Where(p => p.Type != PatchType.InlineJsonPatch)
-                                 .Select(p => p.FilePath)
-                                 .Where(fileSystem.FileExists);
+        if (updateKustomizePatches)
+        {
+            log.Verbose("kustomization file found, processing images and discovering patch files");
 
-        allFilesToUpdate.UnionWith(externalPatchFiles);
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, log);
+            var patchFiles = patchDiscovery.DiscoverPatch(kustomizationFile);
 
-        log.VerboseFormat("Processing {0} files total (kustomization + {1} external patch files)",
-                          allFilesToUpdate.Count, externalPatchFiles.Count());
+            var externalPatchFiles = patchFiles
+                                     .Where(p => p.Type != PatchType.InlineJsonPatch)
+                                     .Select(p => p.FilePath)
+                                     .Where(fileSystem.FileExists);
+
+            allFilesToUpdate.UnionWith(externalPatchFiles);
+
+            log.VerboseFormat("Processing {0} files total (kustomization + {1} external patch files)",
+                              allFilesToUpdate.Count, externalPatchFiles.Count());
+        }
 
         return Update(rootPath, allFilesToUpdate);
     }
