@@ -85,7 +85,7 @@ namespace Calamari.ArgoCD
             return new ImageReplacementResult(modifiedContent, combinedResult.UpdatedImageReferences, combinedResult.AlreadyUpToDateImages);
         }
 
-        internal ImageReplacementResult ProcessPatchOperation(YamlMappingNode operationNode,
+        ImageReplacementResult ProcessPatchOperation(YamlMappingNode operationNode,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var opValue = operationNode.GetStringValue(FieldNames.Op);
@@ -136,7 +136,7 @@ namespace Calamari.ArgoCD
             return NoChangeResult;
         }
 
-        internal ImageReplacementResult ProcessContainersSequence(YamlSequenceNode containersSequence,
+        ImageReplacementResult ProcessContainersSequence(YamlSequenceNode containersSequence,
             IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var results = new List<ImageReplacementResult>();

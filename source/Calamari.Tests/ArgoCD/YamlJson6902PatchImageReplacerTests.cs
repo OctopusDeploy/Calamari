@@ -262,32 +262,6 @@ namespace Calamari.Tests.ArgoCD
         }
 
 
-        [Test]
-        public void ProcessContainersSequence_WithMultipleContainers_CombinesResults()
-        {
-            const string yamlContent = @"
-- op: add
-  path: /spec/template/spec/containers
-  value:
-    - name: nginx
-      image: nginx:1.21
-    - name: busybox
-      image: my-registry.com/busybox:1.35";
-
-            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
-            var containersSequence = new YamlDotNet.RepresentationModel.YamlSequenceNode();
-            var container1 = new YamlDotNet.RepresentationModel.YamlMappingNode();
-            container1.Add("image", "nginx:1.21");
-            var container2 = new YamlDotNet.RepresentationModel.YamlMappingNode();
-            container2.Add("image", "my-registry.com/busybox:1.35");
-            containersSequence.Add(container1);
-            containersSequence.Add(container2);
-
-            var result = replacer.ProcessContainersSequence(containersSequence, imagesToUpdate);
-
-            result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
-        }
 
     }
 }
