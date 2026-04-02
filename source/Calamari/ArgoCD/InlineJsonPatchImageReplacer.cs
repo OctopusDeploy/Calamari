@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
@@ -31,12 +32,14 @@ namespace Calamari.ArgoCD
         readonly string yamlContent;
         readonly string defaultRegistry;
         readonly ILog log;
+        readonly KustomizeDiscovery discovery;
 
         public InlineJsonPatchImageReplacer(string yamlContent, string defaultRegistry, ILog log)
         {
             this.yamlContent = yamlContent;
             this.defaultRegistry = defaultRegistry;
             this.log = log;
+            discovery = new KustomizeDiscovery(log);
         }
 
         ImageReplacementResult NoChangeResult => new(yamlContent, new HashSet<string>(), new HashSet<string>());
@@ -127,8 +130,17 @@ namespace Calamari.ArgoCD
                 var patchContent = patchContentNode.Value;
                 if (string.IsNullOrEmpty(patchContent))
                     return changes;
-                
-                var patchImageReplacer = new ContainerImageReplacer(patchContent!, defaultRegistry);
+
+                IContainerImageReplacer patchImageReplacer;
+                if (discovery.IsJson6902PatchContent(patchContent!))
+                {
+                    patchImageReplacer = new YamlJson6902PatchImageReplacer(patchContent!, defaultRegistry, log);
+                }
+                else
+                {
+                    patchImageReplacer = new ContainerImageReplacer(patchContent!, defaultRegistry);
+                }
+
                 var result = patchImageReplacer.UpdateImages(imagesToUpdate);
                 changes.UnionWith(result.UpdatedImageReferences);
 
@@ -144,5 +156,6 @@ namespace Calamari.ArgoCD
 
             return changes;
         }
+
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;

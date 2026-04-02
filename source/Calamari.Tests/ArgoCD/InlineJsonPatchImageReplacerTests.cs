@@ -331,5 +331,157 @@ patches:
             result.UpdatedContents.Should().Be(inputYaml);
             result.UpdatedImageReferences.Should().BeEmpty();
         }
+
+        [Test]
+        public void UpdateImages_WithJson6902PatchReplaceOperation_UpdatesImageReference()
+        {
+            const string inputYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: nginx:1.21
+";
+
+            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().NotBeNull();
+            result.UpdatedContents.Should().Contain("nginx:1.25");
+            result.UpdatedContents.Should().NotContain("nginx:1.21");
+            result.UpdatedImageReferences.Count.Should().Be(1);
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+        }
+
+        [Test]
+        public void UpdateImages_WithJson6902PatchAddOperation_UpdatesImageReferences()
+        {
+            const string inputYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  patch: |-
+    - op: add
+      path: /spec/template/spec/containers
+      value:
+      - name: nginx
+        image: nginx:1.21
+      - name: busybox
+        image: my-registry.com/busybox:1.0
+";
+
+            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().NotBeNull();
+            result.UpdatedContents.Should().Contain("nginx:1.25");
+            result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
+            result.UpdatedImageReferences.Count.Should().Be(2);
+            result.UpdatedImageReferences.Should().Contain("nginx:1.25");
+            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+        }
+
+        [Test]
+        public void UpdateImages_WithMixedStrategicMergeAndJson6902Patches_UpdatesBothTypes()
+        {
+            const string inputYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- target:
+    kind: Deployment
+    name: strategic-merge-deployment
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    spec:
+      template:
+        spec:
+          containers:
+          - name: nginx
+            image: nginx:1.21
+- target:
+    kind: Deployment
+    name: json6902-deployment
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: my-registry.com/busybox:1.0
+";
+
+            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().NotBeNull();
+            result.UpdatedContents.Should().Contain("nginx:1.25");
+            result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
+            result.UpdatedImageReferences.Count.Should().Be(2);
+            result.UpdatedImageReferences.Should().Contain("nginx:1.25");
+            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+        }
+
+        [Test]
+        public void UpdateImages_WithJson6902PatchInitContainerOperation_UpdatesInitContainerImage()
+        {
+            const string inputYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- target:
+    kind: Deployment
+    name: init-container-deployment
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/initContainers/0/image
+      value: nginx:1.21
+";
+
+            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().NotBeNull();
+            result.UpdatedContents.Should().Contain("nginx:1.25");
+            result.UpdatedImageReferences.Count.Should().Be(1);
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+        }
+
+        [Test]
+        public void UpdateImages_WithJson6902PatchNonImageOperation_DoesNotUpdate()
+        {
+            const string inputYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- target:
+    kind: Deployment
+    name: non-image-deployment
+  patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 3
+    - op: add
+      path: /metadata/labels/env
+      value: production
+";
+
+            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(inputYaml);
+            result.UpdatedImageReferences.Should().BeEmpty();
+        }
     }
 }
