@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Calamari.ArgoCD.Models
 {
-    public class ImageReplacementResult(string updatedContents, HashSet<string> updatedImageReferences, HashSet<string> alreadyUpToDateImages)
+    public class ImageReplacementResult(string updatedContents, HashSet<string> updatedImageReferences, HashSet<string> alreadyUpToDateImages, HashSet<string>? unrecognisedKinds = null)
     {
         public string UpdatedContents { get; } = updatedContents;
         public HashSet<string> UpdatedImageReferences { get; } = updatedImageReferences;
@@ -14,6 +14,10 @@ namespace Calamari.ArgoCD.Models
         // reference the same image name with different tags.
         public HashSet<string> AlreadyUpToDateImages { get; } = alreadyUpToDateImages;
 
+        // Resource kinds (formatted as "apiVersion/kind") encountered in the YAML that this replacer
+        // does not know how to process. Each type must be explicitly handled in ContainerImageReplacer.
+        public HashSet<string> UnrecognisedKinds { get; } = unrecognisedKinds ?? [];
+		
         public static ImageReplacementResult CombineResults(params ImageReplacementResult[] results)
         {
             if (results == null || results.Length == 0)
