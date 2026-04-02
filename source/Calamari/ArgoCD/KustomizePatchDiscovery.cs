@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.Core;
@@ -193,6 +195,92 @@ namespace Calamari.ArgoCD
             }
 
             return false;
+        }
+
+        public static ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, string defaultRegistry, ILog log)
+        {
+            var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline strategic merge patches");
+            if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+            {
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+            }
+
+            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) || !(patchesNode is YamlSequenceNode patchSequence))
+            {
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+            }
+
+            var allUpdatedImages = new HashSet<string>();
+            foreach (var patchNode in patchSequence.Children)
+            {
+                if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
+                {
+                    var patchContent = patchScalar.Value ?? "";
+                    var replacer = new ContainerImageReplacer(patchContent, defaultRegistry);
+                    var result = replacer.UpdateImages(imagesToUpdate);
+
+                    if (result.UpdatedImageReferences.Count > 0)
+                    {
+                        patchScalar.Value = result.UpdatedContents;
+                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
+                    }
+                }
+            }
+
+            if (!allUpdatedImages.Any())
+            {
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+            }
+
+            using var writer = new StringWriter();
+            yamlStream.Save(writer, false);
+            var modifiedContent = writer.ToString().TrimEnd();
+
+            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
+        }
+
+        public static ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, string defaultRegistry, ILog log)
+        {
+            var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline JSON 6902 patches");
+            if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+            {
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+            }
+
+            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) || !(patchesNode is YamlSequenceNode patchSequence))
+            {
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+            }
+
+            var allUpdatedImages = new HashSet<string>();
+
+            foreach (var patchEntryNode in patchSequence.Children.OfType<YamlMappingNode>())
+            {
+                if (patchEntryNode.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContentNode) && patchContentNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
+                {
+                    var patchContent = patchScalar.Value ?? "";
+                    var replacer = new YamlJson6902PatchImageReplacer(patchContent, defaultRegistry, log);
+                    var result = replacer.UpdateImages(imagesToUpdate);
+
+                    if (result.UpdatedImageReferences.Count > 0)
+                    {
+                        patchScalar.Value = result.UpdatedContents;
+                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
+                    }
+                }
+            }
+
+            if (!allUpdatedImages.Any())
+            {
+                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
+            }
+
+
+            using var writer = new StringWriter();
+            yamlStream.Save(writer, false);
+            var modifiedContent = writer.ToString().TrimEnd();
+
+            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
         }
     }
 }
