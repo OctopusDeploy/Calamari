@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD
 {
     [TestFixture]
-    public class InlineJsonPatchImageReplacerTests
+    public class InlineJsonPatchReplacerTests
     {
         readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate = new()
         {
@@ -42,7 +42,7 @@ patches:
             image: nginx:1.21
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -86,7 +86,7 @@ patches:
         image: redis:6.0
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -139,7 +139,7 @@ patches:
               storage: 100Gi
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -167,7 +167,7 @@ patches:
       - image: nginx:1.21
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -188,7 +188,7 @@ images:
   newTag: 1.25
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -217,7 +217,7 @@ patches:
             image: redis:6.0
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -246,7 +246,7 @@ patches:
             image: nginx:1.25
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -259,7 +259,7 @@ patches:
         {
             const string inputYaml = "";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -272,7 +272,7 @@ patches:
         {
             const string inputYaml = @"invalid: yaml: content: [unclosed";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -306,7 +306,7 @@ patches:
     invalid: yaml: [unclosed
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -324,7 +324,7 @@ patches:
 - item2
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -348,7 +348,7 @@ patches:
       value: nginx:1.21
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -379,7 +379,7 @@ patches:
         image: my-registry.com/busybox:1.0
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -419,7 +419,7 @@ patches:
       value: my-registry.com/busybox:1.0
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -447,7 +447,7 @@ patches:
       value: nginx:1.21
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
@@ -476,7 +476,7 @@ patches:
       value: production
 ";
 
-            var imageReplacer = new InlineJsonPatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 

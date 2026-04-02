@@ -63,7 +63,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         {
             if (KustomizePatchDiscovery.HasPatchesNode(inputContent, log))
             {
-                var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
+                var inlinePatchReplacer = new InlineJsonPatchReplacer(updatedContent, defaultRegistry, log);
                 var patchResult = inlinePatchReplacer.UpdateImages(imagesToUpdate);
 
                 if (patchResult.UpdatedImageReferences.Count > 0)

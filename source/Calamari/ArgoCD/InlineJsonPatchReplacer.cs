@@ -18,7 +18,7 @@ namespace Calamari.ArgoCD
     /// Handles updating container image references in inline patches within kustomization.yaml files.
     /// The patches field contains an array of patch objects with inline patch operations.
     /// </summary>
-    public class InlineJsonPatchImageReplacer : IContainerImageReplacer
+    public class InlineJsonPatchReplacer : IContainerImageReplacer
     {
         static class FieldNames
         {
@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD
         readonly ILog log;
         readonly KustomizeDiscovery discovery;
 
-        public InlineJsonPatchImageReplacer(string yamlContent, string defaultRegistry, ILog log)
+        public InlineJsonPatchReplacer(string yamlContent, string defaultRegistry, ILog log)
         {
             this.yamlContent = yamlContent;
             this.defaultRegistry = defaultRegistry;

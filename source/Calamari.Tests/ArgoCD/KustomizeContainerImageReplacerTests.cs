@@ -12,12 +12,6 @@ namespace Calamari.Tests.ArgoCD
     [TestFixture]
     public class KustomizeContainerImageReplacerTests
     {
-        static KustomizeContainerImageReplacer CreateReplacer(string content = "", bool updateKustomizePatches = true)
-        {
-            var log = Substitute.For<ILog>();
-            return new KustomizeContainerImageReplacer(content, "default-registry", updateKustomizePatches, log);
-        }
-
         [TestFixture]
         public class DeterminePatchTypeFromFileTests
         {
