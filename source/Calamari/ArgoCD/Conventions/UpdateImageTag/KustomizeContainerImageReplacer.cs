@@ -27,23 +27,26 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
     public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
-        if (KustomizationValidator.IsKustomizationResource(input))
+        // Create a copy of input to avoid modifying the original data
+        var inputCopy = input;
+
+        if (KustomizationValidator.IsKustomizationResource(inputCopy))
         {
-            return UpdateKustomizeResource(imagesToUpdate);
+            return UpdateKustomizeResource(imagesToUpdate, inputCopy);
         }
 
 
         if (IsKustomizePatchUpdatesEnabled())
         {
-            return UpdateKustomizePatch(imagesToUpdate);
+            return UpdateKustomizePatch(imagesToUpdate, inputCopy);
         }
 
-        return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
+        return new ImageReplacementResult(inputCopy, new HashSet<string>(), new HashSet<string>());
     }
 
-    ImageReplacementResult UpdateKustomizeResource(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    ImageReplacementResult UpdateKustomizeResource(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, string inputContent)
     {
-        var updatedContent = input;
+        var updatedContent = inputContent;
         var allUpdatedImages = new HashSet<string>();
 
         var kustomizeReplacer = new KustomizeImageReplacer(updatedContent, defaultRegistry, log);
@@ -57,7 +60,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
         if (IsKustomizePatchUpdatesEnabled())
         {
-            if (HasPatchesNode(input))
+            if (HasPatchesNode(inputContent))
             {
                 var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
                 var patchResult = inlinePatchReplacer.UpdateImages(imagesToUpdate);
@@ -69,7 +72,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
                 }
             }
 
-            if (HasStrategicMergePatchNode(input))
+            if (HasStrategicMergePatchNode(inputContent))
             {
                 var strategicMergeResult = ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate);
 
@@ -80,7 +83,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
                 }
             }
 
-            if (HasJson6902PatchesNode(input))
+            if (HasJson6902PatchesNode(inputContent))
             {
                 var json6902Result = ProcessInlineJson6902Patches(updatedContent, imagesToUpdate);
 
@@ -95,14 +98,14 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         return new ImageReplacementResult(updatedContent, allUpdatedImages, new HashSet<string>());
     }
 
-    ImageReplacementResult UpdateKustomizePatch(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    ImageReplacementResult UpdateKustomizePatch(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, string inputContent)
     {
-        var patchType = discovery.DeterminePatchType(input);
+        var patchType = discovery.DeterminePatchType(inputContent);
 
         IContainerImageReplacer replacer = patchType switch
         {
-            PatchType.StrategicMerge => new ContainerImageReplacer(input, defaultRegistry),
-            PatchType.Json6902 => new JsonPatchImageReplacer(input, defaultRegistry, log),
+            PatchType.StrategicMerge => new ContainerImageReplacer(inputContent, defaultRegistry),
+            PatchType.Json6902 => new JsonPatchImageReplacer(inputContent, defaultRegistry, log),
             _ => null
         };
 
@@ -112,7 +115,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
 
         log.Verbose($"Unable to determine patch type for content, no image updates will be performed");
-        return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
+        return new ImageReplacementResult(inputContent, new HashSet<string>(), new HashSet<string>());
     }
     
     internal bool HasPatchesNode(string content)
