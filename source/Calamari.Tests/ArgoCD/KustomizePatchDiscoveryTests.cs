@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NSubstitute;
@@ -238,6 +239,207 @@ patches:
             var result = patchDiscovery.DiscoverPatch(kustomizationPath);
 
             result.Should().BeEmpty();
+        }
+
+        [TestFixture]
+        public class InlinePatchDetectionTests
+        {
+            static ILog CreateMockLog() => Substitute.For<ILog>();
+
+            [TestFixture]
+            public class HasPatchesNodeTests
+            {
+                [Test]
+                public void HasPatchesNode_WithPatchesField_ReturnsTrue()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  patch: |-
+    spec:
+      template:
+        spec:
+          containers:
+          - name: nginx
+            image: nginx:1.25";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasPatchesNode(content, log);
+                    result.Should().BeTrue();
+                }
+
+                [Test]
+                public void HasPatchesNode_WithoutPatchesField_ReturnsFalse()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: nginx
+  newTag: 1.25";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasPatchesNode(content, log);
+                    result.Should().BeFalse();
+                }
+
+                [Test]
+                public void HasPatchesNode_WithEmptyPatchesField_ReturnsTrue()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches: []";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasPatchesNode(content, log);
+                    result.Should().BeTrue();
+                }
+
+                [Test]
+                public void HasPatchesNode_InvalidYaml_ReturnsFalse()
+                {
+                    const string content = @"invalid: yaml: [unclosed";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasPatchesNode(content, log);
+                    result.Should().BeFalse();
+                }
+
+                [Test]
+                public void HasPatchesNode_EmptyContent_ReturnsFalse()
+                {
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasPatchesNode("", log);
+                    result.Should().BeFalse();
+                }
+
+                [Test]
+                public void HasPatchesNode_NotAMappingNode_ReturnsFalse()
+                {
+                    const string content = @"- item1
+- item2
+- item3";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasPatchesNode(content, log);
+                    result.Should().BeFalse();
+                }
+            }
+
+            [TestFixture]
+            public class HasStrategicMergePatchNodeTests
+            {
+                [Test]
+                public void HasStrategicMergePatchNode_WithInlinePatches_ReturnsTrue()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesStrategicMerge:
+- |
+  apiVersion: apps/v1
+  kind: Deployment
+  spec:
+    template:
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.25";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasStrategicMergePatchNode(content, log);
+                    result.Should().BeTrue();
+                }
+
+                [Test]
+                public void HasStrategicMergePatchNode_WithExternalFileReferences_ReturnsFalse()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesStrategicMerge:
+- deployment-patch.yaml
+- service-patch.yaml";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasStrategicMergePatchNode(content, log);
+                    result.Should().BeFalse();
+                }
+
+                [Test]
+                public void HasStrategicMergePatchNode_WithoutPatchesField_ReturnsFalse()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: nginx
+  newTag: 1.25";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasStrategicMergePatchNode(content, log);
+                    result.Should().BeFalse();
+                }
+
+                [Test]
+                public void HasStrategicMergePatchNode_InvalidYaml_ReturnsFalse()
+                {
+                    const string content = @"invalid: yaml: [unclosed";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasStrategicMergePatchNode(content, log);
+                    result.Should().BeFalse();
+                }
+            }
+
+            [TestFixture]
+            public class HasJson6902PatchesNodeTests
+            {
+                [Test]
+                public void HasJson6902PatchesNode_WithInlinePatches_ReturnsTrue()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesJson6902:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: nginx:1.25";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasJson6902PatchesNode(content, log);
+                    result.Should().BeTrue();
+                }
+
+                [Test]
+                public void HasJson6902PatchesNode_WithExternalFileReferences_ReturnsFalse()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesJson6902:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  path: deployment.json";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasJson6902PatchesNode(content, log);
+                    result.Should().BeFalse();
+                }
+
+                [Test]
+                public void HasJson6902PatchesNode_WithoutPatchesField_ReturnsFalse()
+                {
+                    const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: nginx
+  newTag: 1.25";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasJson6902PatchesNode(content, log);
+                    result.Should().BeFalse();
+                }
+
+                [Test]
+                public void HasJson6902PatchesNode_InvalidYaml_ReturnsFalse()
+                {
+                    const string content = @"invalid: yaml: [unclosed";
+                    var log = CreateMockLog();
+                    var result = KustomizePatchDiscovery.HasJson6902PatchesNode(content, log);
+                    result.Should().BeFalse();
+                }
+            }
         }
     }
 }

@@ -50,7 +50,7 @@ namespace Calamari.ArgoCD
         {
         }
 
-        internal JsonPatchImageReplacer(string jsonContent, string defaultRegistry, ILog log, Regex imagePattern)
+        JsonPatchImageReplacer(string jsonContent, string defaultRegistry, ILog log, Regex imagePattern)
         {
             this.jsonContent = jsonContent;
             this.defaultRegistry = defaultRegistry;

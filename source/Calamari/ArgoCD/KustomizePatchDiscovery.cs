@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.Core;
@@ -149,5 +150,49 @@ namespace Calamari.ArgoCD
             }
         }
 
+        public static bool HasPatchesNode(string content, ILog log)
+        {
+            var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline patches");
+            return mappingNode?.Children.ContainsKey(new YamlScalarNode("patches")) ?? false;
+        }
+
+        public static bool HasStrategicMergePatchNode(string content, ILog log)
+        {
+            var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline strategic merge patches");
+            if (mappingNode == null)
+                return false;
+
+            if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode))
+            {
+                if (patchesNode is YamlSequenceNode sequence)
+                {
+                    // Look for inline YAML patches (multi-line strings starting with |)
+                    return sequence.Children.Any(node => node is YamlScalarNode scalar &&
+                                                         scalar.Style == ScalarStyle.Literal);
+                }
+            }
+
+            return false;
+        }
+
+        public static bool HasJson6902PatchesNode(string content, ILog log)
+        {
+            var mappingNode = YamlStreamLoader.TryLoadFirstMappingNode(content, log, "inline JSON 6902 patches");
+            if (mappingNode == null)
+                return false;
+
+            if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode))
+            {
+                if (patchesNode is YamlSequenceNode sequence)
+                {
+                    return sequence.Children.OfType<YamlMappingNode>().Any(patchEntry =>
+                        patchEntry.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContent) &&
+                        patchContent is YamlScalarNode patchScalar &&
+                        patchScalar.Style == ScalarStyle.Literal);
+                }
+            }
+
+            return false;
+        }
     }
 }
