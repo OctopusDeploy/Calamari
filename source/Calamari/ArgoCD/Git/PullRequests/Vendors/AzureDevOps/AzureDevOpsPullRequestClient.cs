@@ -11,20 +11,15 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
 	public class AzureDevOpsPullRequestClient : IGitVendorPullRequestClient
 	{
-		public const string CloudHost = "dev.azure.com";
+		const string CloudHost = "dev.azure.com";
 		
 		readonly IRepositoryConnection repositoryConnection;
-
-		readonly string organization;
-		readonly string projectName;
-		readonly string repositoryId;
 
 		public AzureDevOpsPullRequestClient(IRepositoryConnection repositoryConnection)
 		{
 			this.repositoryConnection = repositoryConnection;
-			(organization, projectName, repositoryId) = ExtractUriComponents(repositoryConnection.Url);
 		}
-
+		
 		public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
 		                                                 string body,
 		                                                 GitBranchName sourceBranch,
@@ -36,7 +31,9 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
 			                                                                           Convert.ToBase64String(Encoding.ASCII.GetBytes($"{repositoryConnection.Username}:{repositoryConnection.Password}")));
 
-			var apiUrl = $"https://{Host}/{organization}/{projectName}/_apis/git/repositories/{repositoryId}/pullrequests?api-version=7.1";
+			
+			var (organizationName, projectName, repositoryName) = AzureDevOpsRepositoryUriParser.Parse(repositoryConnection.Url);
+			var apiUrl = $"https://{CloudHost}/{organizationName}/{projectName}/_apis/git/repositories/{repositoryName}/pullrequests?api-version=7.1";
 
 			var pullRequest = new
 			{
@@ -49,49 +46,25 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 			var jsonContent = JsonConvert.SerializeObject(pullRequest);
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-			var response = await client.PostAsync(apiUrl, content);
+			var response = await client.PostAsync(apiUrl, content, cancellationToken);
 
 			if (response.IsSuccessStatusCode)
 			{
-				var responseBody = await response.Content.ReadAsStringAsync();
+				var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 				var responseObject = JObject.Parse(responseBody);
 				var pullRequestId = responseObject["pullRequestId"]!.ToString();
-				var prUrl = $"https://{Host}/{organization}/{projectName}/_git/{repositoryId}/pullrequest/{pullRequestId}";
+				var prUrl = $"https://{CloudHost}/{organizationName}/{projectName}/_git/{repositoryName}/pullrequest/{pullRequestId}";
 				return new PullRequest(responseObject["title"]!.ToString(), responseObject.Value<int>("pullRequestId"), prUrl);
 			}
-			else
-			{
-				var errorContent = await response.Content.ReadAsStringAsync();
-				throw new Exception(errorContent);
-				//Console.WriteLine($"Error creating Pull Request: {response.StatusCode} - {errorContent}");
-			}
+
+			var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+			throw new Exception(errorContent);
 		}
 
 		public string GenerateCommitUrl(string commit)
 		{
-			return $"https://{Host}/{organization}/{projectName}/_git/{repositoryId}/commit/{commit}";
-		}
-
-		static readonly string Host = "dev.azure.com";
-
-		public static bool CanInvokeWith(Uri uri)
-		{
-			return uri.Host.Equals(Host);
-		}
-
-		public static (string organization, string projectName, string repositoryId) ExtractUriComponents(Uri uri)
-		{
-			// Example URI: https://robe-octopus@dev.azure.com/robe-octopus/octopus-testing/_git/secondaryrepo
-			var parts = uri.ExtractPropertiesFromUrlPath();
-			var organization = parts[0];
-			var projectName = parts[1];
-			if (parts[2] != "_git")
-			{
-				throw new InvalidOperationException($"Unexpected Uri Format: {uri.AbsoluteUri}");
-			}
-
-			var repositoryId = parts[3];
-			return (organization, projectName, repositoryId);
+			var (organizationName, projectName, repositoryName) = AzureDevOpsRepositoryUriParser.Parse(repositoryConnection.Url);
+			return $"https://{CloudHost}/{organizationName}/{projectName}/_git/{repositoryName}/commit/{commit}";
 		}
 	}
 }
