@@ -6,6 +6,7 @@ using Calamari.ArgoCD.Domain;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions.ManifestTemplating;
 
@@ -15,15 +16,21 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     readonly IPackageRelativeFile[] packageFiles;
     readonly ICalamariFileSystem fileSystem;
     readonly bool purgeOutputDirectory;
+    readonly string? overriddenPath;
 
     readonly string[] foldersExcludedFromPurge = [".git"];
 
-    public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles, ILog log, ICalamariFileSystem fileSystem, bool purgeOutputDirectory)
+    public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles,
+                                      ILog log,
+                                      ICalamariFileSystem fileSystem,
+                                      bool purgeOutputDirectory,
+                                      string? overriddenPath = null)
     {
         this.packageFiles = packageFiles;
         this.log = log;
         this.fileSystem = fileSystem;
         this.purgeOutputDirectory = purgeOutputDirectory;
+        this.overriddenPath = overriddenPath;
     }
 
     public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
@@ -48,6 +55,12 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
     {
+        if (!overriddenPath.IsNullOrEmpty())
+        {
+            outputPath = overriddenPath;
+            return true;
+        }
+        
         outputPath = "";
         var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.OriginalRepoUrl : sourceToUpdate.Name;
         if (sourceToUpdate.Ref != null)
