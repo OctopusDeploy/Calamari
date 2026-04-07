@@ -64,6 +64,7 @@ namespace Calamari.Common
             
             builder.RegisterModule<VariablesModule>();
             builder.RegisterModule<SubstitutionsModule>();
+            builder.RegisterModule<ScriptIsolationModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
@@ -145,7 +146,8 @@ namespace Calamari.Common
                 }
 #endif
 
-                await using var _ = await Isolation.EnforceAsync(options.ScriptIsolation, CancellationToken.None);
+                var isolation = container.Resolve<IScriptIsolationEnforcer>();
+                await using var _ = await isolation.EnforceAsync(options.ScriptIsolation, CancellationToken.None);
                 await ResolveAndExecuteCommand(container, options);
                 return 0;
             }

@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void CalamariBinary_InheritsFromCalamariFlavourProgram()
         {
-            typeof(global::Calamari.Program)
+            typeof(Program)
                 .IsSubclassOf(typeof(CalamariFlavourProgram))
                 .Should().BeTrue(
                     because: "Calamari.Program must inherit CalamariFlavourProgram to receive script isolation enforcement");

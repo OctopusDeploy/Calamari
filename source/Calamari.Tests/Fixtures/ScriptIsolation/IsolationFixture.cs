@@ -3,8 +3,11 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -14,12 +17,18 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
     public class IsolationFixture
     {
         string tempDir = null!;
+        IContainer container = null!;
 
         [SetUp]
         public void SetUp()
         {
             tempDir = Path.Join(Path.GetTempPath(), $"IsolationFixture.{Guid.NewGuid()}");
             Directory.CreateDirectory(tempDir);
+
+            var builder = new ContainerBuilder();
+            builder.RegisterModule<ScriptIsolationModule>();
+            builder.RegisterType<InMemoryLog>().As<ILog>().SingleInstance();
+            container = builder.Build();
         }
 
         [TearDown]
@@ -29,7 +38,12 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             {
                 Directory.Delete(tempDir, recursive: true);
             }
+
+            container?.Dispose();
+            container = null!;
         }
+
+        IScriptIsolationEnforcer ScriptIsolationEnforcer => container.Resolve<IScriptIsolationEnforcer>();
 
         CommonOptions.ScriptIsolationOptions FullIsolationOptions(
             string mutexName = "TestMutex",
@@ -64,7 +78,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var emptyOptions = new CommonOptions.ScriptIsolationOptions();
 
             ILockHandle handle = null!;
-            Action enforce = () => handle = Isolation.Enforce(emptyOptions);
+            Action enforce = () => handle = ScriptIsolationEnforcer.Enforce(emptyOptions);
 
             enforce.Should().NotThrow();
             handle.Should().NotBeNull();
@@ -77,7 +91,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void Enforce_AcquiresLock_WhenOptionsArePresent()
         {
-            using var handle = Isolation.Enforce(FullIsolationOptions());
+            using var handle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions());
 
             handle.Should().NotBeNull();
             var expectedLockFile = Path.Join(tempDir, "ScriptIsolation.TestMutex.lock");
@@ -87,13 +101,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void Enforce_ReleasesLock_OnDispose()
         {
-            var handle = Isolation.Enforce(FullIsolationOptions());
+            var handle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions());
             handle.Dispose();
 
             // After releasing, a second Enforce call should succeed (exclusive lock is free)
             Action secondEnforce = () =>
             {
-                using var secondHandle = Isolation.Enforce(FullIsolationOptions());
+                using var secondHandle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions());
             };
 
             secondEnforce.Should().NotThrow();
@@ -103,11 +117,11 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         public void Enforce_ThrowsLockRejectedException_WhenLockedExclusivelyByAnotherThread()
         {
             // Use a very short timeout so the test doesn't hang
-            using var firstHandle = Isolation.Enforce(FullIsolationOptions(timeout: "00:00:00.010"));
+            using var firstHandle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions(timeout: "00:00:00.010"));
 
             Action secondEnforce = () =>
             {
-                using var secondHandle = Isolation.Enforce(FullIsolationOptions(timeout: "00:00:00.010"));
+                using var secondHandle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions(timeout: "00:00:00.010"));
             };
 
             secondEnforce.Should().Throw<LockRejectedException>();
@@ -116,11 +130,11 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void Enforce_AllowsConcurrentSharedLocks()
         {
-            using var firstHandle = Isolation.Enforce(NoIsolationOptions());
+            using var firstHandle = ScriptIsolationEnforcer.Enforce(NoIsolationOptions());
 
             Action secondEnforce = () =>
             {
-                using var secondHandle = Isolation.Enforce(NoIsolationOptions());
+                using var secondHandle = ScriptIsolationEnforcer.Enforce(NoIsolationOptions());
             };
 
             secondEnforce.Should().NotThrow();
@@ -129,7 +143,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public async Task EnforceAsync_AcquiresLock_WhenOptionsArePresent()
         {
-            await using var handle = await Isolation.EnforceAsync(FullIsolationOptions(), CancellationToken.None);
+            await using var handle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(), CancellationToken.None);
 
             handle.Should().NotBeNull();
             var expectedLockFile = Path.Join(tempDir, "ScriptIsolation.TestMutex.lock");
@@ -139,12 +153,12 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public async Task EnforceAsync_ReleasesLock_OnDisposeAsync()
         {
-            var handle = await Isolation.EnforceAsync(FullIsolationOptions(), CancellationToken.None);
+            var handle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(), CancellationToken.None);
             await handle.DisposeAsync();
 
             Func<Task> secondEnforce = async () =>
             {
-                await using var secondHandle = await Isolation.EnforceAsync(FullIsolationOptions(), CancellationToken.None);
+                await using var secondHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(), CancellationToken.None);
             };
 
             await secondEnforce.Should().NotThrowAsync();
@@ -153,11 +167,11 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public async Task EnforceAsync_ThrowsLockRejectedException_WhenLockedExclusivelyByAnotherThread()
         {
-            await using var firstHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.010"), CancellationToken.None);
+            await using var firstHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.010"), CancellationToken.None);
 
             Func<Task> secondEnforce = async () =>
             {
-                await using var secondHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.010"), CancellationToken.None);
+                await using var secondHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.010"), CancellationToken.None);
             };
 
             await secondEnforce.Should().ThrowAsync<LockRejectedException>();
@@ -166,10 +180,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public async Task Enforce_WillWaitForLockToBeReleased()
         {
-            var firstHandle = Isolation.Enforce(FullIsolationOptions(timeout: "00:00:00.010"));
+            var firstHandle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions(timeout: "00:00:00.010"));
             var t = Task.Run(() =>
                              {
-                                 using var secondHandle = Isolation.Enforce(FullIsolationOptions(timeout: "00:00:00.500"));
+                                 using var secondHandle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions(timeout: "00:00:00.500"));
                              }
                             );
             await Task.Delay(TimeSpan.FromMilliseconds(20));
@@ -180,10 +194,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public async Task EnforceAsync_WillWaitForLockToBeReleased()
         {
-            var firstHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.500"), CancellationToken.None);
+            var firstHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.500"), CancellationToken.None);
             var t = Task.Run(async () =>
                              {
-                                 await using var secondHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.500"), CancellationToken.None);
+                                 await using var secondHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.500"), CancellationToken.None);
                              }
                             );
             await Task.Delay(TimeSpan.FromMilliseconds(20));
@@ -192,7 +206,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         /// <summary>
-        /// Verifies that <see cref="Isolation.Enforce"/> honours its timeout when the lock is held
+        /// Verifies that <see cref="ScriptIsolationEnforcer.Enforce"/> honours its timeout when the lock is held
         /// by another thread for the duration.  A timeout in the range (10ms, 1 day) should trigger
         /// the Polly timeout strategy; without it the call would retry forever and this test would hang.
         /// </summary>
@@ -206,13 +220,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             const string lockTimeout = "00:00:00.200";
 
             // Acquire the exclusive lock on the current thread and hold it indefinitely.
-            using var firstHandle = Isolation.Enforce(FullIsolationOptions(timeout: lockTimeout));
+            using var firstHandle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions(timeout: lockTimeout));
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             Action secondEnforce = () =>
             {
-                using var secondHandle = Isolation.Enforce(FullIsolationOptions(timeout: lockTimeout));
+                using var secondHandle = ScriptIsolationEnforcer.Enforce(FullIsolationOptions(timeout: lockTimeout));
             };
 
             // The second acquire must fail because the first lock is never released.
@@ -236,13 +250,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             const string lockTimeout = "00:00:00.200";
 
-            await using var firstHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
+            await using var firstHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             Func<Task> secondEnforce = async () =>
             {
-                await using var secondHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
+                await using var secondHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
             };
 
             await secondEnforce.Should().ThrowAsync<LockRejectedException>();
