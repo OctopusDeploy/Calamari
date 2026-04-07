@@ -17,7 +17,7 @@ namespace Calamari.ArgoCD
     /// </summary>
     public class YamlJson6902PatchImageReplacer : IContainerImageReplacer
     {
-        private static class FieldNames
+        static class FieldNames
         {
             public const string Op = "op";
             public const string Path = "path";
@@ -25,7 +25,7 @@ namespace Calamari.ArgoCD
             public const string Image = "image";
         }
 
-        private static class OpValues
+        static class OpValues
         {
             public const string Add = "add";
             public const string Replace = "replace";

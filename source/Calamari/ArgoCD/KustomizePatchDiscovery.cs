@@ -3,9 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateImageTag;
-using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.Core;
@@ -24,7 +21,7 @@ namespace Calamari.ArgoCD
 
     public class KustomizePatchDiscovery
     {
-        private static class FieldNames
+        static class FieldNames
         {
             public const string PatchesStrategicMerge = "patchesStrategicMerge";
             public const string PatchesJson6902 = "patchesJson6902";
@@ -32,8 +29,8 @@ namespace Calamari.ArgoCD
             public const string Path = "path";
         }
 
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly ILog log;
+        readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
         public KustomizePatchDiscovery(ICalamariFileSystem fileSystem, ILog log)
         {
@@ -93,14 +90,12 @@ namespace Calamari.ArgoCD
             return patchFiles;
         }
 
-        private static bool ContainsPatchFields(string content)
+        static bool ContainsPatchFields(string content)
         {
-            return content.Contains(FieldNames.Patches) ||
-                   content.Contains(FieldNames.PatchesStrategicMerge) ||
-                   content.Contains(FieldNames.PatchesJson6902);
+            return content.Contains(FieldNames.Patches) || content.Contains(FieldNames.PatchesStrategicMerge) || content.Contains(FieldNames.PatchesJson6902);
         }
 
-        private static YamlMappingNode? ParseKustomizationYaml(string content)
+        static YamlMappingNode? ParseKustomizationYaml(string content)
         {
             using var reader = new StringReader(content);
             var stream = new YamlStream();
@@ -111,40 +106,40 @@ namespace Calamari.ArgoCD
                 : null;
         }
 
-        private void ProcessStrategicMergePatches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
+        void ProcessStrategicMergePatches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
         {
             var strategicMergeSequence = rootNode.GetSequenceNode(FieldNames.PatchesStrategicMerge);
             if (strategicMergeSequence == null)
                 return;
 
             var strategicMergePatches = strategicMergeSequence
-                .OfType<YamlScalarNode>()
-                .Where(pathNode => !string.IsNullOrEmpty(pathNode.Value))
-                .Select(pathNode => new PatchFileInfo(
-                    Path.IsPathRooted(pathNode.Value!) ? pathNode.Value! : Path.Combine(kustomizationDir, pathNode.Value!),
-                    PatchType.StrategicMerge));
+                                        .OfType<YamlScalarNode>()
+                                        .Where(pathNode => !string.IsNullOrEmpty(pathNode.Value))
+                                        .Select(pathNode => new PatchFileInfo(
+                                                                              Path.IsPathRooted(pathNode.Value!) ? pathNode.Value! : Path.Combine(kustomizationDir, pathNode.Value!),
+                                                                              PatchType.StrategicMerge));
 
             patchFiles.AddRange(strategicMergePatches);
         }
 
-        private void ProcessJson6902Patches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
+        void ProcessJson6902Patches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
         {
             var json6902Sequence = rootNode.GetSequenceNode(FieldNames.PatchesJson6902);
             if (json6902Sequence == null)
                 return;
 
             var json6902Patches = json6902Sequence
-                .OfType<YamlMappingNode>()
-                .Select(entryNode => entryNode.GetStringValue(FieldNames.Path))
-                .Where(pathValue => !string.IsNullOrEmpty(pathValue))
-                .Select(pathValue => new PatchFileInfo(
-                    Path.IsPathRooted(pathValue!) ? pathValue! : Path.Combine(kustomizationDir, pathValue!),
-                    PatchType.Json6902));
+                                  .OfType<YamlMappingNode>()
+                                  .Select(entryNode => entryNode.GetStringValue(FieldNames.Path))
+                                  .Where(pathValue => !string.IsNullOrEmpty(pathValue))
+                                  .Select(pathValue => new PatchFileInfo(
+                                                                         Path.IsPathRooted(pathValue!) ? pathValue! : Path.Combine(kustomizationDir, pathValue!),
+                                                                         PatchType.Json6902));
 
             patchFiles.AddRange(json6902Patches);
         }
 
-        private static void ProcessInlinePatches(YamlMappingNode rootNode, string kustomizationFilePath, List<PatchFileInfo> patchFiles)
+        static void ProcessInlinePatches(YamlMappingNode rootNode, string kustomizationFilePath, List<PatchFileInfo> patchFiles)
         {
             if (rootNode.ContainsKey(FieldNames.Patches))
             {
@@ -169,8 +164,7 @@ namespace Calamari.ArgoCD
                 if (patchesNode is YamlSequenceNode sequence)
                 {
                     // Look for inline YAML patches (multi-line strings starting with |)
-                    return sequence.Children.Any(node => node is YamlScalarNode scalar &&
-                                                         scalar.Style == ScalarStyle.Literal);
+                    return sequence.Children.Any(node => node is YamlScalarNode scalar && scalar.Style == ScalarStyle.Literal);
                 }
             }
 
@@ -187,100 +181,13 @@ namespace Calamari.ArgoCD
             {
                 if (patchesNode is YamlSequenceNode sequence)
                 {
-                    return sequence.Children.OfType<YamlMappingNode>().Any(patchEntry =>
-                        patchEntry.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContent) &&
-                        patchContent is YamlScalarNode patchScalar &&
-                        patchScalar.Style == ScalarStyle.Literal);
+                    return sequence.Children.OfType<YamlMappingNode>()
+                                   .Any(patchEntry =>
+                                            patchEntry.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContent) && patchContent is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal);
                 }
             }
 
             return false;
-        }
-
-        public static ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, string defaultRegistry, ILog log)
-        {
-            var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline strategic merge patches");
-            if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
-            {
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
-            }
-
-            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) || !(patchesNode is YamlSequenceNode patchSequence))
-            {
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
-            }
-
-            var allUpdatedImages = new HashSet<string>();
-            foreach (var patchNode in patchSequence.Children)
-            {
-                if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
-                {
-                    var patchContent = patchScalar.Value ?? "";
-                    var replacer = new ContainerImageReplacer(patchContent, defaultRegistry);
-                    var result = replacer.UpdateImages(imagesToUpdate);
-
-                    if (result.UpdatedImageReferences.Count > 0)
-                    {
-                        patchScalar.Value = result.UpdatedContents;
-                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
-                    }
-                }
-            }
-
-            if (!allUpdatedImages.Any())
-            {
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
-            }
-
-            using var writer = new StringWriter();
-            yamlStream.Save(writer, false);
-            var modifiedContent = writer.ToString().TrimEnd();
-
-            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
-        }
-
-        public static ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, string defaultRegistry, ILog log)
-        {
-            var yamlStream = YamlStreamLoader.TryLoad(content, log, "inline JSON 6902 patches");
-            if (yamlStream?.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
-            {
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
-            }
-
-            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) || !(patchesNode is YamlSequenceNode patchSequence))
-            {
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
-            }
-
-            var allUpdatedImages = new HashSet<string>();
-
-            foreach (var patchEntryNode in patchSequence.Children.OfType<YamlMappingNode>())
-            {
-                if (patchEntryNode.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContentNode) && patchContentNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
-                {
-                    var patchContent = patchScalar.Value ?? "";
-                    var replacer = new YamlJson6902PatchImageReplacer(patchContent, defaultRegistry, log);
-                    var result = replacer.UpdateImages(imagesToUpdate);
-
-                    if (result.UpdatedImageReferences.Count > 0)
-                    {
-                        patchScalar.Value = result.UpdatedContents;
-                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
-                    }
-                }
-            }
-
-            if (!allUpdatedImages.Any())
-            {
-                return new ImageReplacementResult(content, new HashSet<string>(), new HashSet<string>());
-            }
-
-
-            using var writer = new StringWriter();
-            yamlStream.Save(writer, false);
-            var modifiedContent = writer.ToString().TrimEnd();
-
-            return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
         }
     }
 }

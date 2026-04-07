@@ -1,11 +1,9 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
@@ -14,7 +12,7 @@ namespace Calamari.ArgoCD
 {
     public class JsonPatchImageReplacer : IContainerImageReplacer
     {
-        private static class JsonProcessingConstants
+        static class JsonProcessingConstants
         {
             public const int RegexTimeoutMs = 100;
             public const string ContainersFieldName = "containers";
@@ -38,27 +36,15 @@ namespace Calamari.ArgoCD
         readonly string jsonContent;
         readonly string defaultRegistry;
         readonly ILog log;
-        readonly Regex imageReferencePattern;
-
-        static readonly Regex DefaultImageReferencePattern = new Regex(
-            @"""(?<image>[a-zA-Z0-9\.\-_/]+(?::[a-zA-Z0-9\.\-_]+)?(?:@sha256:[a-fA-F0-9]{64})?)""",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture,
-            TimeSpan.FromMilliseconds(JsonProcessingConstants.RegexTimeoutMs));
 
         public JsonPatchImageReplacer(string jsonContent, string defaultRegistry, ILog log)
-            : this(jsonContent, defaultRegistry, log, DefaultImageReferencePattern)
-        {
-        }
-
-        JsonPatchImageReplacer(string jsonContent, string defaultRegistry, ILog log, Regex imagePattern)
         {
             this.jsonContent = jsonContent;
             this.defaultRegistry = defaultRegistry;
             this.log = log;
-            this.imageReferencePattern = imagePattern;
         }
 
-        ImageReplacementResult NoChangeResult => new ImageReplacementResult(jsonContent, new HashSet<string>(), new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new(jsonContent, new HashSet<string>(), new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
