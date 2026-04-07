@@ -31,6 +31,7 @@ namespace Calamari.Aws.Commands
         PathToPackage pathToPackage;
         string bucket;
         string targetMode;
+        bool includeOutputVariables = true;
 
         public UploadAwsS3Command(
             ILog log,
@@ -50,6 +51,7 @@ namespace Calamari.Aws.Commands
             Options.Add("package=", "Path to the package to extract that contains the package.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
             Options.Add("targetMode=", "Whether the entire package or files within the package should be uploaded to the s3 bucket", v => targetMode = v);
+            Options.Add("includeOutputVariables=", "True to generate output variables for uploaded files (default), False to skip output variable generation.", v => includeOutputVariables = !bool.FalseString.Equals(v, StringComparison.OrdinalIgnoreCase));
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -82,7 +84,8 @@ namespace Calamari.Aws.Commands
                     new VariableS3TargetOptionsProvider(variables),
                     bucketKeyProvider,
                     substituteInFiles,
-                    structuredConfigVariablesService
+                    structuredConfigVariablesService,
+                    includeOutputVariables
                 )
             };
 
