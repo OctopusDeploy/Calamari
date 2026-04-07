@@ -2,11 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using Calamari.ArgoCD;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -25,8 +21,8 @@ public class KustomizeUpdater : BaseUpdater
                             ICalamariFileSystem fileSystem) : base(log,
                                                                    fileSystem)
     {
-        this.imagesToUpdate = deploymentConfig.ImageReferences;
-        this.updateKustomizePatches = deploymentConfig.UpdateKustomizePatches;
+        imagesToUpdate = deploymentConfig.ImageReferences;
+        updateKustomizePatches = deploymentConfig.UpdateKustomizePatches;
         this.defaultRegistry = defaultRegistry;
     }
 
@@ -76,12 +72,13 @@ public class KustomizeUpdater : BaseUpdater
             var externalPatchFiles = patchFiles
                                      .Where(p => p.Type != PatchType.InlineJsonPatch)
                                      .Select(p => p.FilePath)
-                                     .Where(fileSystem.FileExists);
+                                     .Where(fileSystem.FileExists)
+                                     .ToList();
 
             allFilesToUpdate.UnionWith(externalPatchFiles);
 
             log.VerboseFormat("Processing {0} files total (kustomization + {1} external patch files)",
-                              allFilesToUpdate.Count, externalPatchFiles.Count());
+                              allFilesToUpdate.Count, externalPatchFiles.Count);
         }
 
         return Update(rootPath, allFilesToUpdate);

@@ -24,9 +24,6 @@ namespace Calamari.ArgoCD
         {
             public const string Patches = "patches";
             public const string Patch = "patch";
-            public const string Containers = "containers";
-            public const string InitContainers = "initContainers";
-            public const string Image = "image";
         }
 
         readonly string yamlContent;

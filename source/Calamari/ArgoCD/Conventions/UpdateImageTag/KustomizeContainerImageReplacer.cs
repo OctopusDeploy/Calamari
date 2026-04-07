@@ -1,11 +1,6 @@
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Calamari.ArgoCD;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
-using YamlDotNet.Core;
-using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
@@ -75,7 +70,8 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
             if (KustomizePatchDiscovery.HasStrategicMergePatchNode(inputContent, log))
             {
-                var strategicMergeResult = KustomizePatchDiscovery.ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate, defaultRegistry, log);
+                var replacer = new InlineStrategicMergeImageReplacer(updatedContent, defaultRegistry, log);
+                var strategicMergeResult = replacer.UpdateImages(imagesToUpdate);
 
                 if (strategicMergeResult.UpdatedImageReferences.Count > 0)
                 {
@@ -86,7 +82,8 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
             if (KustomizePatchDiscovery.HasJson6902PatchesNode(inputContent, log))
             {
-                var json6902Result = KustomizePatchDiscovery.ProcessInlineJson6902Patches(updatedContent, imagesToUpdate, defaultRegistry, log);
+                var replacer = new InlineJson6902ImageReplacer(updatedContent, defaultRegistry, log);
+                var json6902Result = replacer.UpdateImages(imagesToUpdate);
 
                 if (json6902Result.UpdatedImageReferences.Count > 0)
                 {
