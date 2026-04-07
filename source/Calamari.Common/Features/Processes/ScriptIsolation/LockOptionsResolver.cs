@@ -55,8 +55,7 @@ public sealed class LockOptionsResolver(
             // running things serially.
             log.Warn($"Requested {LockType.Shared} lock is unavailable. Will acquire {LockType.Exclusive} lock.");
             log.Warn("Script is running with elevated isolation level because the filesystem does not support shared file locks.");
-            var alertMessage = BuildScriptIsolationAlertServiceMessage(lockOptions, typeEnforced: LockType.Exclusive);
-            log.WriteServiceMessage(alertMessage);
+            LogScriptIsolationAlertServiceMessage(lockOptions, typeEnforced: LockType.Exclusive);
             return lockOptions with { Type = LockType.Exclusive };
         }
 
@@ -67,8 +66,16 @@ public sealed class LockOptionsResolver(
     void LogUnableToSupportAnyScriptIsolation(LockOptions originalOptions)
     {
         log.Warn("Unable to support any script isolation. Running without any isolation.");
-        var alertMessage = BuildScriptIsolationAlertServiceMessage(originalOptions, typeEnforced: null);
-        log.WriteServiceMessage(alertMessage);
+        LogScriptIsolationAlertServiceMessage(originalOptions, typeEnforced: null);
+    }
+
+    void LogScriptIsolationAlertServiceMessage(LockOptions originalOptions, LockType? typeEnforced)
+    {
+        var alertMessage = BuildScriptIsolationAlertServiceMessage(originalOptions, typeEnforced);
+        if (string.Empty.Length > 0)  // Temporarily disabling until server support for message
+        {
+            log.WriteServiceMessage(alertMessage);
+        }
     }
 
     static ServiceMessage BuildScriptIsolationAlertServiceMessage(LockOptions originalOptions, LockType? typeEnforced)
