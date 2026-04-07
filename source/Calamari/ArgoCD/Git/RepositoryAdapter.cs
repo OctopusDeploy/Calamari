@@ -34,14 +34,14 @@ public class RepositoryAdapter
     public delegate FileUpdateResult RepositoryMutator(string workingDir);
 
     // New generic overload — used by CommitToGitConvention and (after Task 3) ArgoCD callers
-    public SourceUpdateResult Process(string repoUrl, string targetRevision, RepositoryMutator mutator)
+    public RepositoryUpdates Process(string repoUrl, string targetRevision, RepositoryMutator mutator)
     {
         using var repository = repositoryFactory.CloneRepository(repoUrl, targetRevision);
         var result = mutator(repository.WorkingDirectory);
         return PersistChangesToRepository(repository, targetRevision, result);
     }
 
-    SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
+    RepositoryUpdates PersistChangesToRepository(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
     {
         if (result.HasChanges())
         {
@@ -51,11 +51,11 @@ public class RepositoryAdapter
 
             if (pushResult is not null)
             {
-                return new SourceUpdateResult(result.UpdatedImages, pushResult, result.ReplacedFiles, result.PatchedFiles);
+                return new RepositoryUpdates(result.UpdatedImages, pushResult, result.ReplacedFiles, result.PatchedFiles);
             }
         }
 
-        return new SourceUpdateResult([], null, result.ReplacedFiles, result.PatchedFiles);
+        return new RepositoryUpdates([], null, result.ReplacedFiles, result.PatchedFiles);
     }
     
     protected PushResult? PushToRemote(

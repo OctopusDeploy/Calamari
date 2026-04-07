@@ -53,7 +53,7 @@ public class ApplicationSourceUpdater
         return deploymentScope.Matches(annotatedScope);
     }
 
-    public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    public RepositoryUpdates ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
         var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision,  workingDir => sourceUpdater.Process(sourceWithMetadata, workingDir));
