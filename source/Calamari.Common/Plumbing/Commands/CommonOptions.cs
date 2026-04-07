@@ -72,7 +72,7 @@ namespace Calamari.Common.Plumbing.Commands
             [MemberNotNullWhen(true, nameof(TentacleHome))]
             public bool FullyConfigured => !string.IsNullOrWhiteSpace(Level) && !string.IsNullOrWhiteSpace(MutexName) && !string.IsNullOrWhiteSpace(TentacleHome);
 
-            public bool PartiallyConfigured => !string.IsNullOrWhiteSpace(Level) || !string.IsNullOrWhiteSpace(MutexName) || !string.IsNullOrWhiteSpace(TentacleHome);
+            public bool PartiallyConfigured => !string.IsNullOrWhiteSpace(Level) || !string.IsNullOrWhiteSpace(MutexName);
         }
     }
 }
