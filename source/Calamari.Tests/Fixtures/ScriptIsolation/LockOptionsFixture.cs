@@ -86,6 +86,37 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 => new(preferredLockDirectory, LockCapability.Supported);
         }
 
+        static (RequestedLockOptions? result, InMemoryLog log) CreateRequestedOrNullWithLog(CommonOptions.ScriptIsolationOptions options)
+        {
+            var log = new InMemoryLog();
+            var result = new RequestedLockOptionsFactory(log).CreateFromIsolationOptions(options);
+            return (result, log);
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ProducesNoLogMessages_WhenAllOptionsAreEmpty()
+        {
+            // When no script isolation options are configured at all (Level, MutexName, Timeout all null),
+            // no log messages should be emitted — in particular, no spurious "partially configured" warning
+            // even if TentacleHome happens to be set via the environment variable (which is the normal case
+            // on a Tentacle host where TentacleHome is always set).
+            var options = new CommonOptions.ScriptIsolationOptions
+            {
+                Level = null,
+                MutexName = null,
+                Timeout = null,
+                // TentacleHome is left at its default, which reads from the TentacleHome environment variable.
+                // We simulate a Tentacle host by providing an explicit non-null value so the test is
+                // deterministic regardless of the test machine's environment.
+                TentacleHome = DefaultTentacleHome
+            };
+
+            var (result, log) = CreateRequestedOrNullWithLog(options);
+
+            result.Should().BeNull(because: "no isolation options were provided");
+            log.Messages.Should().BeEmpty(because: "no log messages should be emitted when no options are specified");
+        }
+
         [Test]
         public void CreateRequestedOrNull_ReturnsNull_WhenLevelIsNull()
         {
