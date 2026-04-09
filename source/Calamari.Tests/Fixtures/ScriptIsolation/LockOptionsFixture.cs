@@ -454,7 +454,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        [Ignore("Service Message not yet handled")]
         public void ServiceMessage_EmittedWithExclusiveEnforcedType_WhenSharedPromotedToExclusive()
         {
             // ExclusiveOnly + shared → promoted to exclusive; alert emitted
@@ -475,7 +474,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        [Ignore("Service Message not yet handled")]
         public void ServiceMessage_EmittedWithNoneEnforcedType_WhenExclusiveUnsupported()
         {
             // Unsupported + exclusive → no lock at all; alert emitted with enforcedType = "None"
@@ -496,7 +494,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        [Ignore("Service Message not yet handled")]
         public void ServiceMessage_EmittedWithNoneEnforcedType_WhenSharedUnsupported()
         {
             // Unsupported + shared → no lock at all; alert emitted with enforcedType = "None"
@@ -517,7 +514,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        [Ignore("Service Message not yet handled")]
         public void ServiceMessage_FallbackUsed_IsFalse_WhenNoFallback()
         {
             // The 2-arg LockDirectory constructor sets IsFallback = false
@@ -532,7 +528,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        [Ignore("Service Message not yet handled")]
         public void ServiceMessage_FallbackUsed_IsTrue_WhenFallbackDirectoryWasChosen()
         {
             // Construct a LockDirectory explicitly marked as a fallback
@@ -553,7 +548,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        [Ignore("Service Message not yet handled")]
         public void ServiceMessage_CapabilityInfo_IncludesDetectionResults()
         {
             // Construct a LockDirectory with non-empty DetectionResults
