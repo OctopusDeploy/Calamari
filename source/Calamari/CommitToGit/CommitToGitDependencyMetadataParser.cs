@@ -52,15 +52,14 @@ namespace Calamari.CommitToGit
                 var dependencies = jToken.ToObject<CommitToGitDependency>();
                 switch (dependencies.Type)
                 {
-
                     case CommitToGitDependencyType.Package:
-                        var packageTvs = PackageDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
+                        var package = PackageDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
                         var packageFilenames = PackageValuesFileWriter.FindPackageValuesFiles(deployment,
                                                                                               fileSystem,
                                                                                               log,
-                                                                                              packageTvs.ValuesFilePaths,
-                                                                                              packageTvs.PackageId,
-                                                                                              packageTvs.PackageName,
+                                                                                              package.DestinationSubFolder,
+                                                                                              package.PackageId,
+                                                                                              package.PackageName,
                                                                                               logIncludedFiles);
 
                         if (packageFilenames != null)
@@ -72,18 +71,18 @@ namespace Calamari.CommitToGit
 
                     case CommitToGitDependencyType.Inline:
                         var inlineYamlTvs = InlineDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
-                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, inlineYamlTvs.Value, index);
+                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, inlineYamlTvs.DestinationFilename, index);
 
                         AddIfNotNull(filenames, inlineYamlFilename);
                         break;
 
                     case CommitToGitDependencyType.GitRepository:
-                        var gitRepTvs = GitRepositoryTemplateValuesSource.FromJTokenWithEvaluation(jToken, deployment.Variables);
+                        var gitRepTvs = GitRepositoryDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
                         var gitRepositoryFilenames = GitRepositoryValuesFileWriter.FindGitDependencyValuesFiles(deployment,
                                                                                                                 fileSystem,
                                                                                                                 log,
                                                                                                                 gitRepTvs.GitDependencyName,
-                                                                                                                gitRepTvs.ValuesFilePaths,
+                                                                                                                gitRepTvs.DestinationSubFolder,
                                                                                                                 logIncludedFiles);
 
                         if (gitRepositoryFilenames != null)
@@ -99,6 +98,50 @@ namespace Calamari.CommitToGit
             }
 
             return filenames;
+        }
+
+        public IEnumerable<string> ReferencedDependencyNames(RunningDeployment deployment)
+        {
+            var templateValueSources = deployment.Variables.GetRaw(SpecialVariables.Helm.TemplateValuesSources);
+
+            if (string.IsNullOrWhiteSpace(templateValueSources))
+                return Enumerable.Empty<string>();
+
+            var parsedJsonArray = JArray.Parse(templateValueSources);
+
+            //we are only interested in the values files in external dependencies (chart/package/git repo), so filter this array
+            var relevantTypes = parsedJsonArray.Where(t =>
+                                                      {
+                                                          var type = (CommitToGitDependencyType)Enum.Parse(typeof(CommitToGitDependencyType), t.Value<string>(nameof(CommitToGitDependency.Type)));
+                                                          return type == CommitToGitDependencyType.Package || type == CommitToGitDependencyType.GitRepository;
+                                                      })
+                                               .ToList();
+
+            return ParseReferenceNames(deployment, relevantTypes);
+        }
+
+        IEnumerable<string> ParseReferenceNames(RunningDeployment deployment, IEnumerable<JToken> parsedJsonArray)
+        {
+            var dependencyNames = new List<string>();
+            // we reverse the order of the array so that we maintain the order that sources at the top take higher precendences (i.e. are adding to the --values list later),
+            // however, within a source, the file path order must be maintained (for consistency) so that later file paths take higher precendence 
+            foreach (var jToken in parsedJsonArray.Select((json, index) => json))
+            {
+                var dependencies = jToken.ToObject<CommitToGitDependency>();
+                switch (dependencies.Type)
+                {
+                    case CommitToGitDependencyType.Package:
+                        var package = PackageDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
+                        dependencyNames.Add(package.GetName());
+                        break;
+                    case CommitToGitDependencyType.GitRepository:
+                        var gitDependency = GitRepositoryDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
+                        dependencyNames.Add(gitDependency.GetName());
+                        break;
+                }
+            }
+
+            return dependencyNames;
         }
 
         static void AddIfNotNull(List<string> filenames, string filename)
@@ -143,13 +186,22 @@ namespace Calamari.CommitToGit
         }
     }
 
-    internal class PackageDependency : CommitToGitDependency
+    internal abstract class NamedDependency : CommitToGitDependency
+    {
+        public abstract string GetName();
+    }
+
+    internal class PackageDependency : NamedDependency
     {
         public string PackageId { get; set; }
         public string PackageName { get; set; }
         public string[] InputFilePaths { get; set; }
         public string DestinationSubFolder { get; set; }
-        
+
+        public override string GetName()
+        {
+            return PackageName;
+        }
 
         public PackageDependency()
         {
@@ -170,27 +222,30 @@ namespace Calamari.CommitToGit
         }
     }
 
-    internal class GitRepositoryTemplateValuesSource : CommitToGitDependency
+    internal class GitRepositoryDependency : NamedDependency
     {
         public string GitDependencyName { get; set; }
         public string DestinationSubFolder { get; set; }
 
-        public GitRepositoryTemplateValuesSource()
+        public override string GetName()
+        {
+            return GitDependencyName;
+        }
+
+        public GitRepositoryDependency()
         {
             Type = CommitToGitDependencyType.GitRepository;
         }
 
-        public static GitRepositoryTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+        public static GitRepositoryDependency FromJTokenWithEvaluation(JToken jToken, IVariables variables)
         {
-            var gitRepositoryTvs = jToken.ToObject<GitRepositoryTemplateValuesSource>();
+            var gitRepositoryTvs = jToken.ToObject<GitRepositoryDependency>();
 
-            return new GitRepositoryTemplateValuesSource
+            return new GitRepositoryDependency
             {
                 GitDependencyName = variables.Evaluate(gitRepositoryTvs.GitDependencyName),
                 DestinationSubFolder = variables.Evaluate(gitRepositoryTvs.DestinationSubFolder)
             };
         }
     }
-}
-
 }

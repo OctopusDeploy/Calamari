@@ -67,11 +67,10 @@ namespace Calamari.Deployment.Conventions
                     Log.Verbose($"Dependency '{referenceName}' was not found at '{originalFullPath}', skipping extraction");
                     continue;
                 }
-
-                                   
+                
                 var sanitizedReferenceName = fileSystem.RemoveInvalidFileNameChars(referenceName);
 
-                if (forceExtract || ShouldExtractReference(variables, sanitizedReferenceName))
+                if (forceExtract || ShouldExtractReference(deployment, sanitizedReferenceName))
                 {
                     var extractionPath = Path.Combine(deployment.CurrentDirectory, sanitizedReferenceName);
                     ExtractDependency(originalFullPath, extractionPath);
@@ -89,7 +88,7 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        protected bool ShouldExtractReference(RunningDeployment deployment, string referenceName)
+        protected virtual bool ShouldExtractReference(RunningDeployment deployment, string referenceName)
         {
             var dependencyVariables = dependencyVariablesFactory.GetDependencyVariables(deployment.Variables);
             return dependencyVariables.Extract(referenceName);

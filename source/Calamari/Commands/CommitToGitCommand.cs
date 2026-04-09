@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Commands.Support;
+using Calamari.CommitToGit;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.StructuredVariables;
@@ -80,13 +81,17 @@ public class CommitToGitCommand : Command
             new DelegateInstallConvention(d =>
                                           {
                                               var workingDirectory = d.CurrentDirectory;
-                                              var packageDirectory = Path.Combine(workingDirectory, TransformsDirectoryName);
-                                              fileSystem.EnsureDirectoryExists(packageDirectory);
-                                              extractPackage.ExtractToCustomDirectory(pathToPackage, packageDirectory);
+                                              var transformsDirectory = Path.Combine(workingDirectory, TransformsDirectoryName);
+                                              fileSystem.EnsureDirectoryExists(transformsDirectory);
+                                              
+                                              // do not need to extract package, as that will happen in the SelectiveDependencyStagingConvention
+                                              //extractPackage.ExtractToCustomDirectory(pathToPackage, transformsDirectory);
 
                                               d.StagingDirectory = workingDirectory;
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                           }),
+            //This will stage files into the deployment's 'currentDir' (aka the new staging directory).
+            new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log)))
         };
 
 
@@ -98,7 +103,7 @@ public class CommitToGitCommand : Command
 
         conventions.AddRange(new IConvention[]
         {
-            new StageDependenciesConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory())
+            
         });
 
         conventions.AddRange(new IConvention[]
