@@ -19,6 +19,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Util;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Integration.Time;
@@ -80,6 +81,7 @@ public class CommitToGitCommand : Command
         string baseWorkingDirectory = "";
         string transformsDirectory = "";
         string inputsDirectory = "";
+        var deployment = new RunningDeployment(pathToPackage, variables);
 
         var conventions = new List<IConvention>
         {
@@ -96,7 +98,7 @@ public class CommitToGitCommand : Command
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                           }),
             //we only want to include files which are NOT explicitly referenced as dependencies (i.e. we have files which are to be copied into the repo (referenced in variable), and some which should just be used for script dependencies. 
-            new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new NegatingExtractionChecker(new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))))
+            new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new NegatingExtractionChecker(new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log)))),
             new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
         };
 
@@ -141,6 +143,12 @@ public class CommitToGitCommand : Command
         conventions.AddRange(transformRepository);
         conventions.AddRange(stagePackagesToIncludeInRepository);
         conventions.AddRange(commitToRemote);
+        
+        var conventionRunner = new ConventionProcessor(deployment, conventions, log);
+        conventionRunner.RunConventions();
+        var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
+        deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
+        return exitCode.Value;
     }
     
     IEnumerable<string> ScriptFileTargetFactory(RunningDeployment deployment)
