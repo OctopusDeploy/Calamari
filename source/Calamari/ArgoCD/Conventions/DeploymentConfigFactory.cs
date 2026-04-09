@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
+using Calamari.CommitToGit;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
@@ -68,6 +70,25 @@ namespace Calamari.ArgoCD.Conventions
 
             return result;
         }
+        
+        public CommitToGitRepositorySettings CreateCommitToGitRepositoryConfig(RunningDeployment deployment)
+        {
+            var variables = deployment.Variables;
+
+            var uriAsString = variables.Get(Deployment.SpecialVariables.Git.Url);
+            
+            var gitReferenceAsString = variables.Get(Deployment.SpecialVariables.Git.Reference);
+        
+            return new CommitToGitRepositorySettings(
+                                                     new GitConnection(
+                                                                       variables.Get(Deployment.SpecialVariables.Git.Username),
+                                                                       variables.Get(Deployment.SpecialVariables.Git.Password),
+                                                                       new Uri(uriAsString),
+                                                                       GitReference.CreateFromString(gitReferenceAsString)),
+            CommitParameters(deployment),
+            variables.Get(Deployment.SpecialVariables.Git.DestinationPath));
+
+        } 
     }
 }
 

@@ -18,9 +18,11 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
+using Calamari.Common.Util;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Integration.Time;
+using Sprache;
 
 namespace Calamari.Commands;
 
@@ -29,6 +31,7 @@ public class CommitToGitCommand : Command
 {
     public const string Name = "update-argo-cd-app-manifests";
     public const string TransformsDirectoryName = "transforms";
+    public const string InputsDirectoryName = "inputs";
     
     string scriptFileArg;
     PathToPackage pathToPackage;
@@ -74,55 +77,70 @@ public class CommitToGitCommand : Command
     public override int Execute(string[] commandLineArguments)
     {
         Options.Parse(commandLineArguments);
-        var clock = new SystemClock();
+        string baseWorkingDirectory = "";
+        string transformsDirectory = "";
+        string inputsDirectory = "";
 
         var conventions = new List<IConvention>
         {
+            new DelegateInstallConvention(d => baseWorkingDirectory = d.CurrentDirectory),
+        };
+        
+        var stageTransformScriptAndSubstitute = new List<IConvention>
+        {
             new DelegateInstallConvention(d =>
                                           {
-                                              var workingDirectory = d.CurrentDirectory;
-                                              var transformsDirectory = Path.Combine(workingDirectory, TransformsDirectoryName);
+                                              transformsDirectory = Path.Combine(baseWorkingDirectory, TransformsDirectoryName);
                                               fileSystem.EnsureDirectoryExists(transformsDirectory);
-                                              
-                                              // do not need to extract package, as that will happen in the SelectiveDependencyStagingConvention
-                                              //extractPackage.ExtractToCustomDirectory(pathToPackage, transformsDirectory);
-
-                                              d.StagingDirectory = workingDirectory;
+                                              d.StagingDirectory = transformsDirectory;
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                           }),
-            //This will stage files into the deployment's 'currentDir' (aka the new staging directory).
-            new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log)))
+            //we only want to include files which are NOT explicitly referenced as dependencies (i.e. we have files which are to be copied into the repo (referenced in variable), and some which should just be used for script dependencies. 
+            new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new NegatingExtractionChecker(new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))))
+            new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
         };
 
-
-        var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
-        var transformFileLocator = new TransformFileLocator(fileSystem, log);
-        var replacer = new ConfigurationVariablesReplacer(variables, log);
-
-        var deployment = new RunningDeployment(pathToPackage, variables);
-
-        conventions.AddRange(new IConvention[]
+        var stagePackagesToIncludeInRepository = new List<IConvention>
         {
-            
-        });
-
-        conventions.AddRange(new IConvention[]
+            new DelegateInstallConvention(d =>
+                                          {
+                                              inputsDirectory = Path.Combine(baseWorkingDirectory, InputsDirectoryName);
+                                              fileSystem.EnsureDirectoryExists(inputsDirectory);
+                                              d.StagingDirectory = inputsDirectory;
+                                              d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                                          }),
+            new SelectiveDependencyStagingConvention(pathToPackage,
+                                                     fileSystem,
+                                                     new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
+                                                     new PackageVariablesFactory(),
+                                                     new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
+            new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(nonSensitiveSubstituteInFiles)),
+        };
+        
+        // Create a repository and copy the inputs into the repository
+        var repositoryOperations = new List<IConvention>
         {
-            // Substitute the script source file
-            new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
-            // Substitute any user-specified files
-            new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
-            new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem,
-                                                                                       variables,
-                                                                                       configurationTransformer,
-                                                                                       transformFileLocator,
-                                                                                       log)),
-            new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
-            new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
-            new ExecuteScriptConvention(scriptEngine, commandLineRunner, log)
-        });
+
+        };
+        
+        // Execute the transform script over the repository from its 'base directory'
+        var transformRepository = new List<IConvention>
+        {
+
+        };
+
+        var commitToRemote = new List<IConvention>
+        {
+
+        };
         
         
+        conventions.AddRange(stageTransformScriptAndSubstitute);
+        conventions.AddRange(stagePackagesToIncludeInRepository);
+        conventions.AddRange(repositoryOperations);
+        conventions.AddRange(transformRepository);
+        conventions.AddRange(stagePackagesToIncludeInRepository);
+        conventions.AddRange(commitToRemote);
     }
     
     IEnumerable<string> ScriptFileTargetFactory(RunningDeployment deployment)

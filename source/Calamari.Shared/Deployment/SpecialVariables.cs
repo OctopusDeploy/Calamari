@@ -355,6 +355,15 @@ namespace Calamari.Deployment
             }
         }
 
+        public static class Git
+        {
+            public const string Url = "Octopus.Action.Git.TargetRepositoryUrl";
+            public const string Username = "Octopus.Action.Git.TargetRepositoryUsername";
+            public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
+            public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
+            public const string DestinationPath = "Octopus.Action.Git.DestinationPath";
+        }
+
         public static class Account
         {
             public const string Name = "Octopus.Account.Name";
