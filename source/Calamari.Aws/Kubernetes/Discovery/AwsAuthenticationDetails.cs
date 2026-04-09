@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
@@ -51,7 +53,8 @@ namespace Calamari.Aws.Kubernetes.Discovery
                 var sessionDuration = Credentials.Account.SessionDuration;
                 var jwt = Credentials.Account.Jwt;
 
-                var assumeRoleWithWebIdentityResponse = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials()).AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
+                var regionEndpoint = RegionEndpoint.GetBySystemName(Regions.First());
+                var assumeRoleWithWebIdentityResponse = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), regionEndpoint).AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                 {
                     RoleArn = roleArn,
                     DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
