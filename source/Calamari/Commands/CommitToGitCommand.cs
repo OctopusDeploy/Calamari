@@ -96,10 +96,10 @@ public class CommitToGitCommand : Command
 
         var deployment = new RunningDeployment(pathToPackage, variables);
 
-        var conventions = new List<IConvention>
+        conventions.AddRange(new IConvention[]
         {
             new StageDependenciesConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory())
-        };
+        });
 
         conventions.AddRange(new IConvention[]
         {
@@ -116,6 +116,8 @@ public class CommitToGitCommand : Command
             new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
             new ExecuteScriptConvention(scriptEngine, commandLineRunner, log)
         });
+        
+        
     }
     
     IEnumerable<string> ScriptFileTargetFactory(RunningDeployment deployment)
