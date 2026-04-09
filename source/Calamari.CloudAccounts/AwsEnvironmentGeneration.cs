@@ -82,7 +82,7 @@ namespace Calamari.CloudAccounts
                    || await PopulateKeysFromInstanceRole();
         }
 
-        public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
+        public Dictionary<string, string> EnvironmentVars { get; } = new();
 
         internal AwsEnvironmentGeneration(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
         {
@@ -121,12 +121,12 @@ namespace Calamari.CloudAccounts
         {
             get
             {
-                if (EnvironmentVars.ContainsKey("AWS_SESSION_TOKEN"))
+                if (EnvironmentVars.TryGetValue("AWS_SESSION_TOKEN", out var sessionToken))
                 {
                     return new SessionAWSCredentials(
                                                      EnvironmentVars["AWS_ACCESS_KEY_ID"],
                                                      EnvironmentVars["AWS_SECRET_ACCESS_KEY"],
-                                                     EnvironmentVars["AWS_SESSION_TOKEN"]);
+                                                     sessionToken);
                 }
 
                 return new BasicAWSCredentials(
@@ -135,7 +135,16 @@ namespace Calamari.CloudAccounts
             }
         }
 
-        public RegionEndpoint AwsRegion => RegionEndpoint.GetBySystemName(EnvironmentVars["AWS_REGION"]);
+        public RegionEndpoint AwsRegion
+        {
+            get
+            {
+                if (!EnvironmentVars.TryGetValue("AWS_REGION", out var awsRegion) || string.IsNullOrWhiteSpace(awsRegion))
+                    throw new Exception("AWS-LOGIN-ERROR-0007: No AWS region was specified. Please set the region in the step configuration.");
+
+                return RegionEndpoint.GetBySystemName(awsRegion);
+            }
+        }
 
         /// <summary>
         /// Verify that we can login with the supplied credentials
@@ -164,12 +173,6 @@ namespace Calamari.CloudAccounts
         /// </summary>
         void PopulateCommonSettings()
         {
-            if (string.IsNullOrWhiteSpace(region))
-            {
-                throw new Exception("AWS-LOGIN-ERROR-0007: "
-                                    + "No AWS region was specified. Please set the region in the AWS account or the step configuration.");
-            }
-
             EnvironmentVars["AWS_DEFAULT_REGION"] = region;
             EnvironmentVars["AWS_REGION"] = region;
         }
