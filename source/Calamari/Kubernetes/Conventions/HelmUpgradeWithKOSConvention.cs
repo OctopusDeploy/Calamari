@@ -62,7 +62,7 @@ namespace Calamari.Kubernetes.Conventions
             var helmInstallCompletedCts = new CancellationTokenSource();
             
             //This is used to cancel the get manifest when the helm install fails (and we are still trying to retrieve the manifest)
-            var helmInstallErrorCts = new CancellationTokenSource()
+            var helmInstallErrorCts = new CancellationTokenSource();
 
             var helmUpgradeTask = Task.Run(() =>
                                            {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,14 +17,14 @@ using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
-using Calamari.Integration.Time;
-using Sprache;
 
 namespace Calamari.Commands;
 
@@ -81,7 +82,10 @@ public class CommitToGitCommand : Command
         string baseWorkingDirectory = "";
         string transformsDirectory = "";
         string inputsDirectory = "";
+        
+        
         var deployment = new RunningDeployment(pathToPackage, variables);
+        WriteVariableScriptToFile(deployment);
 
         var conventions = new List<IConvention>
         {
@@ -100,6 +104,8 @@ public class CommitToGitCommand : Command
             //we only want to include files which are NOT explicitly referenced as dependencies (i.e. we have files which are to be copied into the repo (referenced in variable), and some which should just be used for script dependencies. 
             new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new NegatingExtractionChecker(new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log)))),
             new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
+            // Substitute in the script itself.
+            new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
         };
 
         var stagePackagesToIncludeInRepository = new List<IConvention>
@@ -128,7 +134,8 @@ public class CommitToGitCommand : Command
         // Execute the transform script over the repository from its 'base directory'
         var transformRepository = new List<IConvention>
         {
-
+            
+            new ExecuteScriptConvention(scriptEngine, commandLineRunner, log)
         };
 
         var commitToRemote = new List<IConvention>
@@ -151,12 +158,78 @@ public class CommitToGitCommand : Command
         return exitCode.Value;
     }
     
+    void WriteVariableScriptToFile(RunningDeployment deployment)
+    {
+        if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
+            !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
+        {
+            throw new CommandException($"Could not determine script to run.  Please provide either a `{ScriptVariables.ScriptBody}` variable, " +
+                                       $"or a `{ScriptVariables.ScriptFileName}` variable.");
+        }
+
+        if (WasProvided(scriptBody))
+        {
+            var scriptFile = Path.Combine(deployment.CurrentDirectory, relativeScriptFile);
+
+            //Set the name of the script we are about to create to the variables collection for replacement later on
+            variables.Set(ScriptVariables.ScriptFileName, relativeScriptFile);
+
+            // If the script body was supplied via a variable, then we write it out to a file.
+            // This will be deleted with the working directory.
+            // Bash files need SheBang as first few characters. This does not play well with BOM characters
+            var scriptBytes = scriptSyntax == ScriptSyntax.Bash
+                ? scriptBody.EncodeInUtf8NoBom()
+                : scriptBody.EncodeInUtf8Bom();
+            File.WriteAllBytes(scriptFile, scriptBytes);
+        }
+    }
+    
+    bool TryGetScriptFromVariables(out string scriptBody, out string scriptFileName, out ScriptSyntax syntax)
+    {
+        scriptBody = variables.GetRaw(ScriptVariables.ScriptBody);
+        if (WasProvided(scriptBody))
+        {
+            var scriptSyntax = variables.Get(ScriptVariables.Syntax);
+            if (scriptSyntax == null)
+            {
+                syntax = scriptEngine.GetSupportedTypes().FirstOrDefault();
+                log.Warn($"No script syntax provided. Defaulting to first known supported type {syntax}");
+            }
+            else if (!Enum.TryParse(scriptSyntax, out syntax))
+            {
+                throw new CommandException($"Unknown script syntax `{scriptSyntax}` provided");
+            }
+
+            scriptFileName = "Script." + syntax.FileExtension();
+            return true;
+        }
+
+        // Try get any supported script body variable
+        foreach (var supportedSyntax in scriptEngine.GetSupportedTypes())
+        {
+            scriptBody = variables.GetRaw(SpecialVariables.Action.Script.ScriptBodyBySyntax(supportedSyntax));
+            if (scriptBody == null)
+            {
+                continue;
+            }
+
+            scriptFileName = "Script." + supportedSyntax.FileExtension();
+            syntax = supportedSyntax;
+            return true;
+        }
+
+        scriptBody = null;
+        syntax = 0;
+        scriptFileName = null;
+        return false;
+    }
+    
     IEnumerable<string> ScriptFileTargetFactory(RunningDeployment deployment)
     {
         // We should not perform variable-replacement if a file arg is passed in since this deprecated property
         // should only be coming through if something isn't using the variable-dictionary and hence will
         // have already been replaced on the server
-        if (WasProvided(scriptFileArg) && !WasProvided(packageFile))
+        if (WasProvided(scriptFileArg) && !WasProvided(pathToPackage))
         {
             yield break;
         }
