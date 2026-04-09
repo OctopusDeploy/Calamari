@@ -43,6 +43,7 @@ namespace Calamari.Tests.AWS
         public async Task UsesGenericContainerCredentialsWhenAvailable()
         {
             IVariables variables = new CalamariVariables();
+            variables.Add("Octopus.Action.Aws.Region", "us-east-1");
             var server = WireMockServer.Start();
             
             // Generate data - Keeping as close as possible to AWS
@@ -89,6 +90,19 @@ namespace Calamari.Tests.AWS
             awsEnvironmentGenerator.EnvironmentVars.Should().Contain(new KeyValuePair<string, string>("AWS_ACCESS_KEY_ID", accessKeyId));
             awsEnvironmentGenerator.EnvironmentVars.Should().Contain(new KeyValuePair<string, string>("AWS_SECRET_ACCESS_KEY", secretAccessKey));
             awsEnvironmentGenerator.EnvironmentVars.Should().Contain(new KeyValuePair<string, string>("AWS_SESSION_TOKEN", sessionToken));
+        }
+        [Test]
+        public void ThrowsWhenRegionIsMissing()
+        {
+            IVariables variables = new CalamariVariables();
+            variables.Add("Octopus.Account.AccountType", "AmazonWebServicesAccount");
+            variables.Add("Octopus.Action.AwsAccount.Variable", "AWSAccount");
+            variables.Add("AWSAccount.AccessKey", "AKIAIOSFODNN7EXAMPLE");
+            variables.Add("AWSAccount.SecretKey", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
+
+            var ex = Assert.ThrowsAsync<Exception>(async () =>
+                await AwsEnvironmentGeneration.Create(Substitute.For<ILog>(), variables));
+            ex.Message.Should().Contain("AWS-LOGIN-ERROR-0007");
         }
     }
 }
