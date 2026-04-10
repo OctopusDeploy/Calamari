@@ -79,7 +79,6 @@ public class CommitToGitCommand : Command
         
         
         var deployment = new RunningDeployment(pathToPackage, variables);
-        WriteVariableScriptToFile(deployment);
 
         var conventions = new List<IConvention>
         {
@@ -128,7 +127,12 @@ public class CommitToGitCommand : Command
         // Execute the transform script over the repository from its 'base directory'
         var transformRepository = new List<IConvention>
         {
-            
+            new DelegateInstallConvention(d =>
+                                          {
+                                              d.StagingDirectory = transformsDirectory;
+                                              d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                                              WriteVariableScriptToFile(d);
+                                          }),
             new ExecuteScriptConvention(scriptEngine, commandLineRunner, log)
         };
 
