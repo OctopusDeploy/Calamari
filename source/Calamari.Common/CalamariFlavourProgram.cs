@@ -79,7 +79,8 @@ namespace Calamari.Common
                 }
 #endif
 
-                using var _ = Isolation.Enforce(options.ScriptIsolation);
+                var isolation = container.Resolve<IScriptIsolationEnforcer>();
+                using var _ = isolation.Enforce(options.ScriptIsolation);
                 return ResolveAndExecuteCommand(container, options);
             }
             catch (Exception ex)
@@ -121,6 +122,7 @@ namespace Calamari.Common
             
             builder.RegisterModule<VariablesModule>();
             builder.RegisterModule<SubstitutionsModule>();
+            builder.RegisterModule<ScriptIsolationModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 

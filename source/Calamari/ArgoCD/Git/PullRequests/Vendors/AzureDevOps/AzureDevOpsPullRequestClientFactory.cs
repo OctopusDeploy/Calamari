@@ -9,8 +9,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
     {
         public string Name => "Azure DevOps";
         
-        public bool CanHandleAsCloudHosted(Uri repositoryUri) =>
-            repositoryUri.Host.Equals(AzureDevOpsPullRequestClient.CloudHost, StringComparison.OrdinalIgnoreCase);
+        public bool CanHandleAsCloudHosted(Uri repositoryUri) => AzureDevOpsRepositoryUriParser.IsAzureDevOpsRepository(repositoryUri);
         
         public async Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {

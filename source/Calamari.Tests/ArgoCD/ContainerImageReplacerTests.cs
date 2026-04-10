@@ -863,6 +863,192 @@ spec:
     }
     
     [Test]
+    public void UpdateImages_WithArgoRollout_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-rollout
+  template:
+    metadata:
+      labels:
+        app: sample-rollout
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19 #Update
+        - name: alpine
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:unstable #Update Init
+          command: [""echo"", ""Init container added""]
+  strategy:
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: {}
+";
+      const string expectedYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-rollout
+  template:
+    metadata:
+      labels:
+        app: sample-rollout
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25 #Update
+        - name: alpine
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:stable #Update Init
+          command: [""echo"", ""Init container added""]
+  strategy:
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: {}
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
+
+    [Test]
+    public void UpdateImages_WithArgoRollout_NoMatchingImages_LeavesYamlUnchanged()
+    {
+      const string inputYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  template:
+    spec:
+      containers:
+        - name: alpine
+          image: alpine:3.21
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UpdatedImageReferences.Should().BeEmpty();
+    }
+
+    [Test]
+    public void UpdateImages_WithArgoRollout_ContainersOnly_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+  strategy:
+    blueGreen:
+      activeService: active-svc
+      previewService: preview-svc
+";
+      const string expectedYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25
+  strategy:
+    blueGreen:
+      activeService: active-svc
+      previewService: preview-svc
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+    }
+
+    [Test]
+    public void UpdateImages_WithUnknownCrd_ReportsUnrecognisedKind()
+    {
+      // An arbitrary CRD not in the type map — the replacer cannot handle it
+      const string inputYaml = @"
+apiVersion: my-company.io/v1
+kind: MyCustomApp
+metadata:
+  name: sample
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UpdatedImageReferences.Should().BeEmpty();
+      result.UnrecognisedKinds.Should().ContainSingle(k => k == "my-company.io/v1/MyCustomApp");
+    }
+
+    [Test]
+    public void UpdateImages_WithKnownK8sTypeNotHandled_DoesNotReportUnrecognisedKind()
+    {
+      // V1Service is a known SDK type — it just doesn't have containers, so it should pass silently
+      const string inputYaml = @"
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  ports:
+    - port: 80
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UnrecognisedKinds.Should().BeEmpty();
+    }
+
+    [Test]
     public void ReplacerWillMatchImageNameInsensitivelyAndReplaceWithLowerCase()
     {
       const string inputYaml = @"

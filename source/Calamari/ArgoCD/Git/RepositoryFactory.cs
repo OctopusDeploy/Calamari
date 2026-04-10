@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -65,10 +66,14 @@ namespace Calamari.ArgoCD.Git
 
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
+                // The token is required when attempting to connect to self-hosted ADO, whereby git  implicitly negotiates to use NTLM not username/password/PAT.
+                var encodedToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{gitConnection.Password!}"));
+                options.FetchOptions.CustomHeaders = [$"Authorization: Basic {encodedToken}"];
+                
                 options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                 {
                     Username = gitConnection.Username!,
-                    Password = gitConnection.Password!
+                    Password = gitConnection.Password!,
                 };
             }
 

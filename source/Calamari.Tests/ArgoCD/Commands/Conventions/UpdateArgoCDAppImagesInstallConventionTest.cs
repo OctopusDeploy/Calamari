@@ -256,6 +256,40 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
+        public void DirectorySource_UnknownCrd_LogsWarning()
+        {
+            // Arrange
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var yamlFilename = "include/file1.yaml";
+            var fileContents = """
+                               apiVersion: my-company.io/v1
+                               kind: MyCustomApp
+                               metadata:
+                                 name: sample
+                               spec:
+                                 template:
+                                   spec:
+                                     containers:
+                                       - name: nginx
+                                         image: nginx:1.19
+                               """;
+            originRepo.AddFilesToBranch(argoCDBranchName, [(yamlFilename, fileContents)]);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert — file is unchanged and a warning was emitted
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, yamlFilename, fileContents);
+
+            log.MessagesWarnFormatted.Should().Contain(m => m.Contains("Type 'my-company.io/v1/MyCustomApp' is not recognised by the Image Update step"));
+
+            AssertOutputVariables(false);
+        }
+
+        [Test]
         public void DirectorySource_NoPath_DontUpdate()
         {
             // Arrange
@@ -340,6 +374,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var kustomizeFile = "kustomization.yaml";
             originRepo.AddFilesToBranch(argoCDBranchName, [(kustomizeFile,
                 """
+                apiVersion: kustomize.config.k8s.io/v1beta1
+                kind: Kustomization
                 images:
                 - name: "docker.io/nginx"
                   newTag: "1.25"
@@ -352,6 +388,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             // Assert
             var updatedYamlContent = """
+                                     apiVersion: kustomize.config.k8s.io/v1beta1
+                                     kind: Kustomization
                                      images:
                                      - name: "docker.io/nginx"
                                        newTag: "1.27.1"
@@ -973,6 +1011,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             originRepo.AddFilesToBranch(argoCDBranchName, [("kustomization.yaml",
                 """
+                apiVersion: kustomize.config.k8s.io/v1beta1
+                kind: Kustomization
                 images:
                 - name: "docker.io/nginx"
                   newTag: "1.27.1"
