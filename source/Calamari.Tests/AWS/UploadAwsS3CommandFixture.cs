@@ -20,6 +20,7 @@ using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Serialization;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Serialization;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using FluentAssertions;
@@ -109,14 +110,15 @@ namespace Calamari.Tests.AWS
             };
 
             var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, true);
+            var outputVariables = GetOutputVariables(log);
 
-            // Verify S3-specific output variables ARE set
-            var logMessages = log.Messages.Select(m => m.FormattedMessage).ToList();
-            logMessages.Should().Contain(m => m.Contains("Saving object version id to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving bucket key to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving object S3 URI to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving object URI to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving object ARN to variable"));
+            outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().ContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().ContainKey("Package.S3Uri");
+            outputVariables.Should().ContainKey("Package.Uri");
+            outputVariables.Should().ContainKey("Package.Arn");
+            outputVariables.Should().ContainKey("Package.ObjectVersion");
+            outputVariables.Should().ContainKey("Package.FileName");
 
             await Validate(async client =>
                            {
@@ -138,14 +140,15 @@ namespace Calamari.Tests.AWS
             };
 
             var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, false);
+            var outputVariables = GetOutputVariables(log);
 
-            // Verify S3-specific output variables are NOT set
-            var logMessages = log.Messages.Select(m => m.FormattedMessage).ToList();
-            logMessages.Should().NotContain(m => m.Contains("Saving object version id to variable"));
-            logMessages.Should().NotContain(m => m.Contains("Saving bucket key to variable"));
-            logMessages.Should().NotContain(m => m.Contains("Saving object S3 URI to variable"));
-            logMessages.Should().NotContain(m => m.Contains("Saving object URI to variable"));
-            logMessages.Should().NotContain(m => m.Contains("Saving object ARN to variable"));
+            outputVariables.Should().NotContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().NotContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().NotContainKey("Package.S3Uri");
+            outputVariables.Should().NotContainKey("Package.Uri");
+            outputVariables.Should().NotContainKey("Package.Arn");
+            outputVariables.Should().NotContainKey("Package.ObjectVersion");
+            outputVariables.Should().NotContainKey("Package.FileName");
 
             await Validate(async client =>
                            {
@@ -167,14 +170,15 @@ namespace Calamari.Tests.AWS
             };
 
             var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage);
+            var outputVariables = GetOutputVariables(log);
 
-            // Verify default behavior generates all output variables (backward compatible)
-            var logMessages = log.Messages.Select(m => m.FormattedMessage).ToList();
-            logMessages.Should().Contain(m => m.Contains("Saving object version id to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving bucket key to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving object S3 URI to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving object URI to variable"));
-            logMessages.Should().Contain(m => m.Contains("Saving object ARN to variable"));
+            outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().ContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().ContainKey("Package.S3Uri");
+            outputVariables.Should().ContainKey("Package.Uri");
+            outputVariables.Should().ContainKey("Package.Arn");
+            outputVariables.Should().ContainKey("Package.ObjectVersion");
+            outputVariables.Should().ContainKey("Package.FileName");
 
             await Validate(async client =>
                            {
@@ -697,6 +701,24 @@ namespace Calamari.Tests.AWS
                                              x.Converters.Add(new FileSelectionsConverter());
                                              x.ContractResolver = new CamelCasePropertyNamesContractResolver();
                                          });
+        }
+
+        protected static Dictionary<string, string> GetOutputVariables(InMemoryLog log)
+        {
+            var serviceMessages = new List<ServiceMessage>();
+            var parser = new ServiceMessageParser(serviceMessages.Add);
+
+            foreach (var line in log.StandardOut)
+            {
+                parser.Parse(line);
+            }
+
+            return serviceMessages
+                .Where(sm => sm.Name == ServiceMessageNames.SetVariable.Name)
+                .ToDictionary(
+                    sm => sm.GetValue(ServiceMessageNames.SetVariable.NameAttribute) ?? string.Empty,
+                    sm => sm.GetValue(ServiceMessageNames.SetVariable.ValueAttribute) ?? string.Empty
+                );
         }
 
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
