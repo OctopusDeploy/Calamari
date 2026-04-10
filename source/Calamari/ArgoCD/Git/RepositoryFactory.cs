@@ -42,16 +42,6 @@ namespace Calamari.ArgoCD.Git
             GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Global, []);
             GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.System, []);
             GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Xdg, []);
-            
-            
-            // LibGit2Sharp custom sub-transports are registered by calling a static registration
-            // method on GlobalSettings. Additionally, if you try and register a multiple transports
-            // with the same scheme, it throws an exception. It's not ideal, but it's what we've got
-            // to work with.
-            //
-            // Using the type constructor to make sure that these methods are only called once.
-            GlobalSettings.RegisterSmartSubtransport<GitHttpSmartSubTransport>("http");
-            GlobalSettings.RegisterSmartSubtransport<GitHttpSmartSubTransport>("https");
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
