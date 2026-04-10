@@ -7,7 +7,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using LibGit2Sharp;
 
-
 namespace Calamari.ArgoCD.Git
 {
     /// <summary>
