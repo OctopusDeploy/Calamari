@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -94,20 +95,20 @@ namespace Calamari.ArgoCD.Git
 
             try
             {
-                //this is required to handle the issue around "HEAD"
-                var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
-                var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
-
-                log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
-
-                //A local branch is required such that libgit2sharp can create "tracking" data
-                // libgit2sharp does not support pushing from a detached head
-                if (repo.Branches[branchToCheckout.Value] == null)
-                {
-                    repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
-                }
-
-                LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
+            //this is required to handle the issue around "HEAD"
+            var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
+            var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
+            
+            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
+            
+            //A local branch is required such that libgit2sharp can create "tracking" data
+            // libgit2sharp does not support pushing from a detached head
+            if (repo.Branches[branchToCheckout.Value] == null)
+            {
+                repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
+            }
+            
+            LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
             }
             catch (LibGit2SharpException e)
             {
