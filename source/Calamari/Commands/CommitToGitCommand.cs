@@ -28,7 +28,7 @@ using Calamari.Deployment.Conventions.DependencyVariables;
 
 namespace Calamari.Commands;
 
-[Command(Name, Description = "Update Kubernetes manifests from a package for one or more Argo CD Applications, persisting them in a Git repository")]
+[Command(Name, Description = "Update a Git repository with selected package content, then transform with optional script")]
 public class CommitToGitCommand : Command
 {
     public const string Name = "commit-to-git";
@@ -98,8 +98,8 @@ public class CommitToGitCommand : Command
             //we only want to include files which are NOT explicitly referenced as dependencies (i.e. we have files which are to be copied into the repo (referenced in variable), and some which should just be used for script dependencies. 
             new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new NegatingExtractionChecker(new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log)))),
             new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
-            // Substitute in the script itself.
-            new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
+            // Substitute in the script itself - but only if it exists!
+            //new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
         };
 
         var stagePackagesToIncludeInRepository = new List<IConvention>
@@ -157,8 +157,8 @@ public class CommitToGitCommand : Command
         if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
             !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
         {
-            throw new CommandException($"Could not determine script to run.  Please provide either a `{ScriptVariables.ScriptBody}` variable, " +
-                                       $"or a `{ScriptVariables.ScriptFileName}` variable.");
+            log.Info($"No inline transformation script has been defined");
+            return;
         }
 
         if (WasProvided(scriptBody))

@@ -9,8 +9,8 @@ namespace Calamari.Deployment.Conventions
 {
     public class ExecuteScriptConvention : IInstallConvention
     {
-        private readonly IScriptEngine scriptEngine;
-        private readonly ICommandLineRunner commandLineRunner;
+        readonly IScriptEngine scriptEngine;
+        readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
 
         public ExecuteScriptConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ILog log)
