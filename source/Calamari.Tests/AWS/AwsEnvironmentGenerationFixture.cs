@@ -92,7 +92,7 @@ namespace Calamari.Tests.AWS
             awsEnvironmentGenerator.EnvironmentVars.Should().Contain(new KeyValuePair<string, string>("AWS_SESSION_TOKEN", sessionToken));
         }
         [Test]
-        public void ThrowsWhenRegionIsMissing()
+        public void FallsBackToAwsGlobalWhenRegionIsMissing()
         {
             IVariables variables = new CalamariVariables();
             variables.Add("Octopus.Account.AccountType", "AmazonWebServicesAccount");
@@ -100,9 +100,8 @@ namespace Calamari.Tests.AWS
             variables.Add("AWSAccount.AccessKey", "AKIAIOSFODNN7EXAMPLE");
             variables.Add("AWSAccount.SecretKey", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
 
-            var ex = Assert.ThrowsAsync<Exception>(async () =>
-                await AwsEnvironmentGeneration.Create(Substitute.For<ILog>(), variables));
-            ex.Message.Should().Contain("AWS-LOGIN-ERROR-0007");
+            var envGeneration = new AwsEnvironmentGeneration(Substitute.For<ILog>(), variables);
+            envGeneration.AwsRegion.SystemName.Should().Be("aws-global");
         }
     }
 }
