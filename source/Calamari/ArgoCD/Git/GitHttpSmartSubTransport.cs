@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using LibGit2Sharp;
 
+
 namespace Calamari.ArgoCD.Git
 {
     /// <summary>
@@ -21,6 +22,10 @@ namespace Calamari.ArgoCD.Git
     /// with a few changes (and simplifications) around authentication. We currently only
     /// support basic auth, but it seems to work nicely for what we need.
     /// </summary>
+    /// <remarks>
+    /// This was taken (almost) verbatim from the OctopusDeploy server code base Octopus.Core.Git.GitHttpSmartSubTransport.
+    /// https://github.com/OctopusDeploy/OctopusDeploy/blob/2026.2.3071/source/Octopus.Core/Git/GitHttpSmartSubTransport.cs
+    /// </remarks>
     public class GitHttpSmartSubTransport : RpcSmartSubtransport
     {
         protected override SmartSubtransportStream Action(string url, GitSmartSubtransportAction action)
