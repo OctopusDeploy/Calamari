@@ -31,7 +31,7 @@ namespace Calamari.Commands;
 [Command(Name, Description = "Update Kubernetes manifests from a package for one or more Argo CD Applications, persisting them in a Git repository")]
 public class CommitToGitCommand : Command
 {
-    public const string Name = "update-argo-cd-app-manifests";
+    public const string Name = "commit-to-git";
     public const string TransformsDirectoryName = "transforms";
     public const string InputsDirectoryName = "inputs";
     
@@ -43,21 +43,17 @@ public class CommitToGitCommand : Command
     readonly INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles;
     readonly ISubstituteInFiles substituteInFiles;
     readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
-    readonly IStructuredConfigVariablesService structuredConfigVariablesService;
     readonly ICalamariFileSystem fileSystem;
     readonly IVariables variables;
     readonly ICommandLineRunner commandLineRunner;
     readonly IScriptEngine scriptEngine;
-    readonly IExtractPackage extractPackage;
 
     public CommitToGitCommand(ILog log, INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles, ISubstituteInFiles substituteInFiles, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
-                              IStructuredConfigVariablesService structuredConfigVariablesService,
                               ICalamariFileSystem fileSystem,
                               IVariables variables,
                               ICommandLineRunner commandLineRunner,
                               IScriptEngine scriptEngine,
-                              IDeploymentJournalWriter deploymentJournalWriter,
-                              IExtractPackage extractPackage)
+                              IDeploymentJournalWriter deploymentJournalWriter)
     {
         Options.Add("package=", "Path to the package to extract that contains the script.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
@@ -67,13 +63,11 @@ public class CommitToGitCommand : Command
         this.nonSensitiveSubstituteInFiles = nonSensitiveSubstituteInFiles;
         this.substituteInFiles = substituteInFiles;
         this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
-        this.structuredConfigVariablesService = structuredConfigVariablesService;
         this.fileSystem = fileSystem;
         this.variables = variables;
         this.commandLineRunner = commandLineRunner;
         this.scriptEngine = scriptEngine;
         this.deploymentJournalWriter = deploymentJournalWriter;
-        this.extractPackage = extractPackage;
     }
 
     public override int Execute(string[] commandLineArguments)

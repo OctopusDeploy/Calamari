@@ -177,11 +177,12 @@ namespace Calamari.CommitToGit
 
         public static InlineDependency FromJTokenWithEvaluation(JToken jToken, IVariables variables)
         {
-            var inlineYamlTvs = jToken.ToObject<InlineDependency>();
+            var inlineContent = jToken.ToObject<InlineDependency>();
 
             return new InlineDependency
             {
-                FileContent = variables.Evaluate(inlineYamlTvs.Value)
+                FileContent = variables.Evaluate(inlineContent.FileContent),
+                DestinationFilename = variables.Evaluate(inlineContent.DestinationFilename)
             };
         }
     }
