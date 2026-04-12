@@ -3,6 +3,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
+using LibGit2Sharp;
 
 namespace Calamari.ArgoCD
 {
