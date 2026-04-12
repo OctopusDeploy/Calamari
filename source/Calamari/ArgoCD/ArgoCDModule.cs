@@ -42,7 +42,6 @@ namespace Calamari.ArgoCD
             builder.RegisterType<SelfHostedGitLabInspector>().AsSelf().InstancePerLifetimeScope();
 
             RegisterMemoryCache(builder);
-            ;
         }
 
         void RegisterMemoryCache(ContainerBuilder builder)
@@ -66,3 +65,4 @@ namespace Calamari.ArgoCD
         }
     }
 }
+
