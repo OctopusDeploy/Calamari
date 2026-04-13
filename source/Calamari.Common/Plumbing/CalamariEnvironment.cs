@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing
 {
@@ -18,6 +19,18 @@ namespace Calamari.Common.Plumbing
             Environment.OSVersion.Platform == PlatformID.Win32S ||
             Environment.OSVersion.Platform == PlatformID.Win32Windows ||
             Environment.OSVersion.Platform == PlatformID.WinCE;
+
+        public static bool ShouldWaitForDebugger(IVariables variables)
+        {
+#if DEBUG
+
+            var waitForDebugger = variables.Get(KnownVariables.Calamari.WaitForDebugger);
+            var waitForDebuggerInEnv = Environment.GetEnvironmentVariable(KnownVariables.Calamari.WaitForDebugger);
+            
+            return string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(waitForDebuggerInEnv, "true", StringComparison.OrdinalIgnoreCase);
+#endif
+            return false;
+        }
 
         public static bool IsRunningOnMac
         {
