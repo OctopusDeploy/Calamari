@@ -226,7 +226,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                .Verbose(
                         Arg.Is<string>(
                                        s => s.StartsWith(
-                                                         $"Unable to authenticate to {AwsClusterUrl} using the aws cli. Failed with error message: 'not-a-version' is not a valid version string")));
+                                                         $"Unable to authenticate using the aws cli. Failed with error message: 'not-a-version' is not a valid version string")));
         }
 
         [Test]
@@ -238,14 +238,12 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
 
             AddLogForAwsEksGetToken();
-            AddLogForWhichAws();
 
             var expectedInvocations = SetupClusterContextInvocations(clusterUrl);
-            expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
                                          new List<(string, string)>
                                          {
-                                             IamAuthenticatorInvocation,
+                                             IamAuthenticatorInvocationWithoutRegion,
                                              GetNamespaceInvocation
                                          });
 
@@ -253,7 +251,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             result.VerifySuccess();
             AssertInvocations(expectedInvocations);
-            log.Received().Verbose("The EKS cluster Url specified should contain a valid aws region name");
+            log.Received().Verbose("Could not determine AWS region from the EKS cluster URL. The AWS CLI requires a region to authenticate. Falling back to aws-iam-authenticator.");
             log.Received().Verbose("Attempting to authenticate with aws-iam-authenticator");
         }
 
@@ -290,6 +288,10 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         List<(string, string)> AwsCliInvocations() => new List<(string, string)> { ("aws", "--version") };
 
         static (string, string) IamAuthenticatorInvocation =>
+            ("kubectl",
+             $"config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg={EksClusterName} --exec-arg=--region --exec-arg={AwsRegion}");
+
+        static (string, string) IamAuthenticatorInvocationWithoutRegion =>
             ("kubectl",
              $"config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg={EksClusterName}");
 

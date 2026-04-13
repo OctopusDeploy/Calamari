@@ -26,7 +26,8 @@ namespace Calamari.CloudAccounts
                 var region = variables.Get(AuthenticationVariables.Aws.Region);
                 var sessionDuration = variables.Get(AuthenticationVariables.Aws.SessionDuration);
                 
-                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), regionEndpoint);
                 var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                 {
                     RoleArn = roleArn,
@@ -37,7 +38,6 @@ namespace Calamari.CloudAccounts
                 var credentials = new SessionAWSCredentials(assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId,
                                                             assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey,
                                                             assumeRoleWithWebIdentityResponse.Credentials.SessionToken);
-                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
                 var ecrClient = new AmazonECRClient(credentials, regionEndpoint);
                 var authToken = await GetAuthorizationData(ecrClient);
                 var creds = DecodeCredentials(authToken);
