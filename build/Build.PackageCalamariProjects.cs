@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Threading;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Nuke.Common.ProjectModel;
 
 namespace Calamari.Build;
@@ -9,7 +8,7 @@ public partial class Build
 {
     List<CalamariPackageMetadata> PackagesToPublish = new();
     List<Project> CalamariProjects = new();
-    
+
     Target GetCalamariFlavourProjectsToPublish =>
         d =>
             d.DependsOn(RestoreSolution)
@@ -56,43 +55,18 @@ public partial class Build
         d =>
             d.DependsOn(GetCalamariFlavourProjectsToPublish)
              .DependsOn(PublishAzureWebAppNetCoreShim)
-             .Executes(async () =>
+             .Executes(() =>
                        {
-                           var globalSemaphore = new SemaphoreSlim(1);
-                           var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
-
-                           var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
-                                                                     {
-                                                                         var projectName = calamariPackageMetadata.Project.Name;
-                                                                         var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
-                                                                         var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture, _ => new SemaphoreSlim(1, 1));
-
-                                                                         await globalSemaphore.WaitAsync();
-                                                                         await projectSemaphore.WaitAsync();
-                                                                         await architectureSemaphore.WaitAsync();
-                                                                         try
-                                                                         {
-                                                                             Log.Information($"Building {calamariPackageMetadata.Project.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
-
-                                                                             await Task.Run(() => DotNetBuild(s =>
-                                                                                                                  s.SetProjectFile(calamariPackageMetadata.Project)
-                                                                                                                   .SetConfiguration(Configuration)
-                                                                                                                   .SetFramework(calamariPackageMetadata.Framework)
-                                                                                                                   .SetRuntime(calamariPackageMetadata.Architecture)
-                                                                                                                   .SetVersion(NugetVersion.Value)
-                                                                                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
-                                                                                                                   .SetVerbosity(BuildVerbosity)
-                                                                                                                   .EnableSelfContained()));
-                                                                         }
-                                                                         finally
-                                                                         {
-                                                                             projectSemaphore.Release();
-                                                                             architectureSemaphore.Release();
-                                                                             globalSemaphore.Release();
-                                                                         }
-                                                                     });
-
-                           await Task.WhenAll(buildTasks);
+                           // Build the entire solution once without a RID. This compiles all projects
+                           // for their default target framework, and MSBuild handles dependency ordering
+                           // and parallelism internally. The per-RID self-contained compilation happens
+                           // later in the publish step.
+                           DotNetBuild(s =>
+                                           s.SetProjectFile(Solution)
+                                            .SetConfiguration(Configuration)
+                                            .SetVersion(NugetVersion.Value)
+                                            .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                            .SetVerbosity(BuildVerbosity));
                        });
 
     Target PublishCalamariProjects =>
@@ -100,25 +74,25 @@ public partial class Build
             d.DependsOn(BuildCalamariProjects)
              .Executes(async () =>
                        {
-                           var semaphore = new SemaphoreSlim(4);
                            var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
+                           // Publish grouped by RID: sequential within each RID to avoid file
+                           // contention on shared dependency bin/ directories, parallel across RIDs.
                            Log.Information("Publishing projects...");
-                           var publishTasks = PackagesToPublish.Select(async package =>
-                                                                       {
-                                                                           await semaphore.WaitAsync();
-                                                                           try
-                                                                           {
-                                                                               var outputPath = await PublishPackageAsync(package);
-                                                                               outputPaths.Add(outputPath);
-                                                                           }
-                                                                           finally
-                                                                           {
-                                                                               semaphore.Release();
-                                                                           }
-                                                                       });
+                           var publishByRid = PackagesToPublish
+                                              .GroupBy(p => p.Architecture)
+                                              .ToList();
 
-                           await Task.WhenAll(publishTasks);
+                           var ridTasks = publishByRid.Select(async ridGroup =>
+                                                              {
+                                                                  foreach (var package in ridGroup)
+                                                                  {
+                                                                      var outputPath = await PublishPackageAsync(package);
+                                                                      outputPaths.Add(outputPath);
+                                                                  }
+                                                              });
+
+                           await Task.WhenAll(ridTasks);
 
                            // Sign and compress tasks
                            Log.Information("Signing published binaries...");
@@ -150,8 +124,6 @@ public partial class Build
                                               .SetVersion(NugetVersion.Value)
                                               .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                               .SetVerbosity(BuildVerbosity)
-                                              .EnableNoBuild()
-                                              .EnableNoRestore()
                                               .EnableSelfContained()
                                               .SetOutput(outputDirectory)));
 
