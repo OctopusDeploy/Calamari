@@ -90,6 +90,17 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
+        public void StageAllChanges()
+        {
+            try
+            {
+                LibGit2Sharp.Commands.Stage(repository, "*");
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to stage changes in git repository. Error: {e.Message}", e);
+            }
+        }
         static string NormalizePath(string path)
         {
             var normalized = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
