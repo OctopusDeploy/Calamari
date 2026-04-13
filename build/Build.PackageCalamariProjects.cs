@@ -55,18 +55,46 @@ public partial class Build
         d =>
             d.DependsOn(GetCalamariFlavourProjectsToPublish)
              .DependsOn(PublishAzureWebAppNetCoreShim)
-             .Executes(() =>
+             .Executes(async () =>
                        {
-                           // Build the entire solution once without a RID. This compiles all projects
-                           // for their default target framework, and MSBuild handles dependency ordering
-                           // and parallelism internally. The per-RID self-contained compilation happens
-                           // later in the publish step.
+                           // First, build the entire solution once without a RID. This compiles all
+                           // shared libraries and flavour projects for their default target framework.
+                           // MSBuild handles dependency ordering and parallelism internally.
                            DotNetBuild(s =>
                                            s.SetProjectFile(Solution)
                                             .SetConfiguration(Configuration)
                                             .SetVersion(NugetVersion.Value)
                                             .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                             .SetVerbosity(BuildVerbosity));
+
+                           // Then build per-RID, grouped by RID: sequential within each RID to avoid
+                           // file contention on shared dependency bin/ directories, parallel across RIDs.
+                           // The solution build above ensures shared libraries are already compiled,
+                           // so these builds only do RID-specific work for each flavour project.
+                           var buildsByRid = PackagesToPublish
+                                             .GroupBy(p => p.Architecture)
+                                             .ToList();
+
+                           var ridTasks = buildsByRid.Select(async ridGroup =>
+                                                             {
+                                                                 foreach (var calamariPackageMetadata in ridGroup)
+                                                                 {
+                                                                     Log.Information("Building {ProjectName} for framework '{Framework}' and arch '{Architecture}'",
+                                                                                     calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+
+                                                                     await Task.Run(() => DotNetBuild(s =>
+                                                                                                          s.SetProjectFile(calamariPackageMetadata.Project)
+                                                                                                           .SetConfiguration(Configuration)
+                                                                                                           .SetFramework(calamariPackageMetadata.Framework)
+                                                                                                           .SetRuntime(calamariPackageMetadata.Architecture)
+                                                                                                           .SetVersion(NugetVersion.Value)
+                                                                                                           .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                                                                                           .SetVerbosity(BuildVerbosity)
+                                                                                                           .EnableSelfContained()));
+                                                                 }
+                                                             });
+
+                           await Task.WhenAll(ridTasks);
                        });
 
     Target PublishCalamariProjects =>
@@ -124,6 +152,8 @@ public partial class Build
                                               .SetVersion(NugetVersion.Value)
                                               .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                               .SetVerbosity(BuildVerbosity)
+                                              .EnableNoBuild()
+                                              .EnableNoRestore()
                                               .EnableSelfContained()
                                               .SetOutput(outputDirectory)));
 
