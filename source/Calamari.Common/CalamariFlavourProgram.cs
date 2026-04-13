@@ -63,10 +63,7 @@ namespace Calamari.Common
                 using var container = builder.Build();
                 container.Resolve<VariableLogger>().LogVariables();
 
-#if DEBUG
-                var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
-
-                if (string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase))
+                if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
                 {
                     using var proc = Process.GetCurrentProcess();
                     log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
@@ -76,7 +73,6 @@ namespace Calamari.Common
                         Thread.Sleep(1000);
                     }
                 }
-#endif
 
                 var isolation = container.Resolve<IScriptIsolationEnforcer>();
                 using var _ = isolation.Enforce(options.ScriptIsolation);
