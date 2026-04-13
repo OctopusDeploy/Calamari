@@ -117,15 +117,9 @@ partial class Build : NukeBuild
             d.DependsOn(Clean)
              .Executes(() =>
                        {
-                           //Do one big, default restore
+                           // A single restore generates asset targets for all RIDs declared
+                           // in each project's RuntimeIdentifiers property.
                            DotNetRestore(s => s.SetProjectFile(Solution));
-
-                           var allRuntimeIds = ListAllRuntimeIdentifiersInSolution();
-                           //we restore for all individual runtimes
-                           foreach (var runtimeId in allRuntimeIds)
-                           {
-                               DotNetRestore(s => s.SetProjectFile(Solution).SetRuntime(runtimeId));
-                           }
                        });
 
 
