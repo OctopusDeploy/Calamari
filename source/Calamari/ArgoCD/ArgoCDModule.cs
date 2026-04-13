@@ -1,11 +1,17 @@
 ﻿using Autofac;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
+<<<<<<< HEAD
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab;
 using LibGit2Sharp;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+=======
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.GitHub;
+using LibGit2Sharp;
+>>>>>>> release/2026.1
 
 namespace Calamari.ArgoCD
 {
@@ -63,6 +69,10 @@ namespace Calamari.ArgoCD
                    .InstancePerLifetimeScope();
             builder.RegisterType<MemoryCache>().As<IMemoryCache>().InstancePerLifetimeScope();
         }
+        }
     }
+<<<<<<< HEAD
 }
 
+=======
+>>>>>>> release/2026.1
