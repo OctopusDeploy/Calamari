@@ -25,7 +25,7 @@ namespace Calamari.Common.Plumbing
 #if DEBUG
 
             var waitForDebugger = variables.Get(KnownVariables.Calamari.WaitForDebugger);
-            var waitForDebuggerInEnv = Environment.GetEnvironmentVariable(KnownVariables.Calamari.WaitForDebugger);
+            var waitForDebuggerInEnv = Environment.GetEnvironmentVariable("_CALAMARI_WAIT_FOR_DEBUGGER");
             
             return string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(waitForDebuggerInEnv, "true", StringComparison.OrdinalIgnoreCase);
 #endif
