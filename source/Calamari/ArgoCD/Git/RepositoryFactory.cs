@@ -66,14 +66,10 @@ namespace Calamari.ArgoCD.Git
 
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
-                // The token is required when attempting to connect to self-hosted ADO, whereby git  implicitly negotiates to use NTLM not username/password/PAT.
-                var encodedToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{gitConnection.Password!}"));
-                options.FetchOptions.CustomHeaders = [$"Authorization: Basic {encodedToken}"];
-                
                 options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                 {
                     Username = gitConnection.Username!,
-                    Password = gitConnection.Password!,
+                    Password = gitConnection.Password!
                 };
             }
 
@@ -97,6 +93,8 @@ namespace Calamari.ArgoCD.Git
 
             var repo = new Repository(repoPath);
 
+            try
+            {
             //this is required to handle the issue around "HEAD"
             var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
             var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
@@ -111,6 +109,11 @@ namespace Calamari.ArgoCD.Git
             }
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to checkout branch '{gitConnection.GitReference}' in repository at {gitConnection.Url}. Error: {e.Message}", e);
+            }
 
             //TODO(tmm): Make this function (and all callers async).
             var gitVendorApiAdapter = gitVendorPullRequestClientResolver.TryResolve(gitConnection, log, CancellationToken.None).Result;
