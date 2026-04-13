@@ -129,7 +129,7 @@ namespace Calamari.Common
                 
                 using var container = builder.Build();
                 container.Resolve<VariableLogger>().LogVariables();
-
+#if DEBUG
                 if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
                 {
                     using var proc = Process.GetCurrentProcess();
@@ -140,7 +140,7 @@ namespace Calamari.Common
                         await Task.Delay(1000);
                     }
                 }
-
+#endif
                 var isolation = container.Resolve<IScriptIsolationEnforcer>();
                 await using var _ = await isolation.EnforceAsync(options.ScriptIsolation, CancellationToken.None);
                 await ResolveAndExecuteCommand(container, options);

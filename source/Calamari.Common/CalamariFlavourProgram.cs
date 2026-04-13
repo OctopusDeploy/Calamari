@@ -62,7 +62,7 @@ namespace Calamari.Common
 
                 using var container = builder.Build();
                 container.Resolve<VariableLogger>().LogVariables();
-
+#if DEBUG
                 if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
                 {
                     using var proc = Process.GetCurrentProcess();
@@ -73,7 +73,7 @@ namespace Calamari.Common
                         Thread.Sleep(1000);
                     }
                 }
-
+#endif
                 var isolation = container.Resolve<IScriptIsolationEnforcer>();
                 using var _ = isolation.Enforce(options.ScriptIsolation);
                 return ResolveAndExecuteCommand(container, options);
