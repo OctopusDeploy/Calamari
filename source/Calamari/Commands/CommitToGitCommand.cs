@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Commands.Support;
 using Calamari.CommitToGit;
@@ -25,6 +28,7 @@ using Calamari.Common.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
+using Calamari.Integration.Time;
 
 namespace Calamari.Commands;
 
@@ -47,13 +51,15 @@ public class CommitToGitCommand : Command
     readonly IVariables variables;
     readonly ICommandLineRunner commandLineRunner;
     readonly IScriptEngine scriptEngine;
+    readonly DeploymentConfigFactory configFactory;
 
     public CommitToGitCommand(ILog log, INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles, ISubstituteInFiles substituteInFiles, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
                               ICalamariFileSystem fileSystem,
                               IVariables variables,
                               ICommandLineRunner commandLineRunner,
                               IScriptEngine scriptEngine,
-                              IDeploymentJournalWriter deploymentJournalWriter)
+                              IDeploymentJournalWriter deploymentJournalWriter,
+                              DeploymentConfigFactory configFactory)
     {
         Options.Add("package=", "Path to the package to extract that contains the script.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
@@ -68,28 +74,25 @@ public class CommitToGitCommand : Command
         this.commandLineRunner = commandLineRunner;
         this.scriptEngine = scriptEngine;
         this.deploymentJournalWriter = deploymentJournalWriter;
+        this.configFactory = configFactory;
     }
 
     public override int Execute(string[] commandLineArguments)
     {
         Options.Parse(commandLineArguments);
-        string baseWorkingDirectory = "";
-        string transformsDirectory = "";
-        string inputsDirectory = "";
-        
-        
-        var deployment = new RunningDeployment(pathToPackage, variables);
+        RepositoryWrapper? clonedRepository = null;
+        CommitToGitRepositorySettings? repositoryConfig = null;
+        var clock = new SystemClock();
 
-        var conventions = new List<IConvention>
-        {
-            new DelegateInstallConvention(d => baseWorkingDirectory = d.CurrentDirectory),
-        };
+        var deployment = new RunningDeployment(pathToPackage, variables);
+        var baseWorkingDirectory = deployment.CurrentDirectory;
+        var transformsDirectory = Path.Combine(baseWorkingDirectory, TransformsDirectoryName);
+        var inputsDirectory = Path.Combine(baseWorkingDirectory, InputsDirectoryName);
         
         var stageTransformScriptAndSubstitute = new List<IConvention>
         {
             new DelegateInstallConvention(d =>
                                           {
-                                              transformsDirectory = Path.Combine(baseWorkingDirectory, TransformsDirectoryName);
                                               fileSystem.EnsureDirectoryExists(transformsDirectory);
                                               d.StagingDirectory = transformsDirectory;
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -105,7 +108,6 @@ public class CommitToGitCommand : Command
         {
             new DelegateInstallConvention(d =>
                                           {
-                                              inputsDirectory = Path.Combine(baseWorkingDirectory, InputsDirectoryName);
                                               fileSystem.EnsureDirectoryExists(inputsDirectory);
                                               d.StagingDirectory = inputsDirectory;
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -118,10 +120,28 @@ public class CommitToGitCommand : Command
             new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(nonSensitiveSubstituteInFiles)),
         };
         
-        // Create a repository and copy the inputs into the repository
+        // Clone the target git repository, then copy staged input files into it
         var repositoryOperations = new List<IConvention>
         {
-
+            new DelegateInstallConvention(d =>
+            {
+                repositoryConfig = configFactory.CreateCommitToGitRepositoryConfig(d);
+                var repositoryFactory = new RepositoryFactory(log, fileSystem, baseWorkingDirectory, gitVendorPullRequestClientResolver, clock);
+                clonedRepository = repositoryFactory.CloneRepository("git_repository", repositoryConfig.gitConnection);
+            }),
+            new DelegateInstallConvention(d =>
+            {
+                var destinationPath = repositoryConfig!.DestinationPath ?? string.Empty;
+                var destBase = Path.Combine(clonedRepository!.WorkingDirectory, destinationPath);
+                foreach (var sourceFile in fileSystem.EnumerateFilesRecursively(inputsDirectory))
+                {
+                    var relativePath = Path.GetRelativePath(inputsDirectory, sourceFile);
+                    var destFile = Path.Combine(destBase, relativePath);
+                    fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
+                    fileSystem.CopyFile(sourceFile, destFile);
+                }
+                log.Verbose($"Copied staged files to repository at {destBase}");
+            }),
         };
         
         // Execute the transform script over the repository from its 'base directory'
@@ -131,6 +151,7 @@ public class CommitToGitCommand : Command
                                           {
                                               d.StagingDirectory = transformsDirectory;
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                                              d.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository!.WorkingDirectory);
                                               WriteVariableScriptToFile(d);
                                           }),
             new ExecuteScriptConvention(scriptEngine, commandLineRunner, log)
@@ -138,19 +159,46 @@ public class CommitToGitCommand : Command
 
         var commitToRemote = new List<IConvention>
         {
+            new DelegateInstallConvention(d =>
+            {
+                var commitParams = repositoryConfig!.CommitParameters;
 
+                // Stage all changes — handles files added, modified, or deleted by the transform script
+                clonedRepository!.StageAllChanges();
+
+                // Commit — returns false if the working tree is clean
+                if (!clonedRepository.CommitChanges(commitParams.Summary, commitParams.Description))
+                {
+                    log.Info("No changes to commit.");
+                    return;
+                }
+
+                clonedRepository.PushChanges(
+                    commitParams.RequiresPr,
+                    commitParams.Summary,
+                    commitParams.Description,
+                    repositoryConfig.gitConnection.GitReference,
+                    CancellationToken.None).GetAwaiter().GetResult();
+            })
         };
         
-        
+        var conventions = new List<IConvention>();
         conventions.AddRange(stageTransformScriptAndSubstitute);
         conventions.AddRange(stagePackagesToIncludeInRepository);
         conventions.AddRange(repositoryOperations);
         conventions.AddRange(transformRepository);
-        conventions.AddRange(stagePackagesToIncludeInRepository);
         conventions.AddRange(commitToRemote);
-        
-        var conventionRunner = new ConventionProcessor(deployment, conventions, log);
-        conventionRunner.RunConventions();
+
+        try
+        {
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
+            conventionRunner.RunConventions();
+        }
+        finally
+        {
+            clonedRepository?.Dispose();
+        }
+
         var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
         deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
         return exitCode.Value;
