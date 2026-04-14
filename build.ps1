@@ -95,5 +95,14 @@ else {
 
 Write-Output "Microsoft (R) .NET Core SDK version $(& $env:DOTNET_EXE --version)"
 
+Write-Output "=== NuGet Diagnostics ==="
+Write-Output "--- NuGet Config Files ---"
+& $env:DOTNET_EXE nuget config paths
+Write-Output "--- Package Sources ---"
+& $env:DOTNET_EXE nuget list source
+Write-Output "--- Restore with detailed verbosity ---"
+& $env:DOTNET_EXE restore $BuildProjectFile --verbosity detailed 2>&1 | Select-String -Pattern "source|mapping|feedz|Octopus.Nuke|NU1" | ForEach-Object { Write-Output $_ }
+Write-Output "=== End NuGet Diagnostics ==="
+
 ExecSafe { & $env:DOTNET_EXE build $BuildProjectFile /nodeReuse:false /p:UseSharedCompilation=false -nologo -clp:NoSummary --verbosity quiet }
 ExecSafe { & $env:DOTNET_EXE run --project $BuildProjectFile --no-build -- $BuildArguments }
