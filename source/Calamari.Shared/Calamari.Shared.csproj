@@ -28,7 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.19" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.21.1" />
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />

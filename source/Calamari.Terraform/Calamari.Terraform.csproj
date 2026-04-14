@@ -11,7 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NuGet.Versioning" Version="7.4.0-octopus-release.17001" />
-    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.12" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.20" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
