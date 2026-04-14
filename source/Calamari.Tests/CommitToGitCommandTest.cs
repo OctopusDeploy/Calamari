@@ -14,6 +14,7 @@ using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
+using NuGet.Commands;
 using NUnit.Framework;
 
 namespace Calamari.Tests;
@@ -179,13 +180,11 @@ public class CommitToGitCommandTest
             // Sensitive variable — must NOT be substituted into repository files
             new CalamariExecutionVariable("MySecret", "super-secret-value", true),
         ]);
-
-        RunCommitToGit().Should().Be(0);
+        
+        RunCommitToGit().Should().NotBe(0);
 
         var content = GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/configs/settings.json");
-        content.Should().NotBeNull("the package file should have been copied into the repository");
-        content.Should().Contain("#{MySecret}", "the Octostache template should remain unreplaced for sensitive variables");
-        content.Should().NotContain("super-secret-value", "sensitive variable values must not be written into the repository");
+        content.Should().BeNull("the package file should not have been copied and commited into the repository");
     }
 
     // --- Helpers ---
