@@ -14,8 +14,6 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
         public static readonly string ShouldFailDeploymentOnSubstitutionFails = "OctopusShouldFailDeploymentOnSubstitutionFails";
 
-        public static readonly string NugetHttpTimeout = "OctopusNugetHttpTimeout";
-
         public const string EnabledFeatureToggles = "OctopusEnabledFeatureToggles";
 
         public static class Action
