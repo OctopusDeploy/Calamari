@@ -10,17 +10,7 @@ using Octopus.Calamari.ConsolidatedPackage.Api;
 
 namespace Calamari.ConsolidateCalamariPackages.Tests
 {
-    struct PackagePropertiesToTest
-    {
-        public string[] Architectures { get; }
-        public bool IsNupkg { get; }
-
-        public PackagePropertiesToTest(string[] architectures, bool isNupkg)
-        {
-            Architectures = architectures;
-            IsNupkg = isNupkg;
-        }
-    }
+    record PackagePropertiesToTest(string[] Architectures, bool IsNupkg);
 
     [TestFixture]
     public class ConsolidationVerificationTests
@@ -32,67 +22,64 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         const string WindowsX64Arch = "win-x64";
 
         static readonly string[] NetCoreArchitectures =
-        {
+        [
             "linux-arm",
             "linux-arm64",
             "linux-x64",
             "osx-x64",
             WindowsX64Arch
-        };
+        ];
 
         static Dictionary<string, PackagePropertiesToTest> PackagesWithDetails()
         {
             return new Dictionary<string, PackagePropertiesToTest>
             {
                 { "Calamari", new PackagePropertiesToTest(NetCoreArchitectures, false /* this is no longer a nuget package */) },
-                { "Calamari.AzureServiceFabric", new PackagePropertiesToTest(new[] { WindowsX64Arch }, false) },
+                { "Calamari.AzureServiceFabric", new PackagePropertiesToTest([WindowsX64Arch], false) },
                 { "Calamari.AzureAppService", new PackagePropertiesToTest(NetCoreArchitectures, false) },
                 { "Calamari.AzureResourceGroup", new PackagePropertiesToTest(NetCoreArchitectures, false) },
                 { "Calamari.GoogleCloudScripting", new PackagePropertiesToTest(NetCoreArchitectures, false) },
                 { "Calamari.AzureScripting", new PackagePropertiesToTest(NetCoreArchitectures, false) },
-                { "Calamari.AzureWebApp", new PackagePropertiesToTest(new[] { WindowsX64Arch }, false) },
+                { "Calamari.AzureWebApp", new PackagePropertiesToTest([WindowsX64Arch], false) },
                 { "Calamari.Terraform", new PackagePropertiesToTest(NetCoreArchitectures, false) }
             };
         }
 
-        static bool PackageSupported(string packageId, bool isWindows)
+        static readonly HashSet<string> PackagesWithDotnetScript =
+        [
+            "Calamari",
+            "Calamari.AzureScripting",
+            "Calamari.AzureResourceGroup",
+            "Calamari.AzureAppService",
+            "Calamari.GoogleCloudScripting",
+            "Calamari.AzureWebApp"
+        ];
+
+        static IEnumerable<KeyValuePair<string, PackagePropertiesToTest>> SupportedPackages()
         {
-            var packages = BuildableCalamariProjects.GetCalamariProjectsToBuild(isWindows);
-            return packages.Contains(packageId);
+            var isWindowsEnvValue = Environment.GetEnvironmentVariable("IS_WINDOWS");
+            var isWindows = isWindowsEnvValue == null ? RuntimeInformation.IsOSPlatform(OSPlatform.Windows) : bool.Parse(isWindowsEnvValue);
+            var buildable = BuildableCalamariProjects.GetCalamariProjectsToBuild(isWindows);
+
+            return PackagesWithDetails()
+                   .Where(kvp => buildable.Contains(kvp.Key));
         }
 
         static IEnumerable<string> ExpectedPackages()
-        {
-            var isWindowsEnvValue = Environment.GetEnvironmentVariable("IS_WINDOWS");
-
-            var isWindows = isWindowsEnvValue == null ? RuntimeInformation.IsOSPlatform(OSPlatform.Windows) : bool.Parse(isWindowsEnvValue);
-
-            return PackagesWithDetails()
-                   .Where(kvp => PackageSupported(kvp.Key, isWindows))
-                   .Select(kvp => kvp.Key);
-        }
+            => SupportedPackages().Select(kvp => kvp.Key);
 
         static IEnumerable<TestCaseData> ExpectedPackageArchitectureMappings()
-        {
-            var isWindowsEnvValue = Environment.GetEnvironmentVariable("IS_WINDOWS");
+            => SupportedPackages()
+               .Select(kvp => new TestCaseData(kvp.Key, kvp.Value.Architectures).SetName($"Package_{kvp.Key}_HasExpectedArchitectures"));
 
-            var isWindows = isWindowsEnvValue == null ? RuntimeInformation.IsOSPlatform(OSPlatform.Windows) : bool.Parse(isWindowsEnvValue);
-
-            return PackagesWithDetails()
-                   .Where(kvp => PackageSupported(kvp.Key, isWindows))
-                   .Select(kvp => new TestCaseData(kvp.Key, kvp.Value.Architectures).SetName($"Package_{kvp.Key}_HasExpectedArchitectures"));
-        }
+        static IEnumerable<TestCaseData> ExpectedPackagesWithDotnetScript()
+            => SupportedPackages()
+               .Where(kvp => PackagesWithDotnetScript.Contains(kvp.Key))
+               .Select(kvp => new TestCaseData(kvp.Key).SetName($"Package_{kvp.Key}_ContainsDotnetScript"));
 
         static IEnumerable<TestCaseData> ExpectedPackageNugetStatus()
-        {
-            var isWindowsEnvValue = Environment.GetEnvironmentVariable("IS_WINDOWS");
-
-            var isWindows = isWindowsEnvValue == null ? RuntimeInformation.IsOSPlatform(OSPlatform.Windows) : bool.Parse(isWindowsEnvValue);
-
-            return PackagesWithDetails()
-                   .Where(kvp => PackageSupported(kvp.Key, isWindows))
-                   .Select(kvp => new TestCaseData(kvp.Key, kvp.Value.IsNupkg).SetName($"Package {kvp.Key} Has Expected Nuget PackageFlag"));
-        }
+            => SupportedPackages()
+               .Select(kvp => new TestCaseData(kvp.Key, kvp.Value.IsNupkg).SetName($"Package {kvp.Key} Has Expected Nuget PackageFlag"));
 
         [SetUp]
         public void SetUp()
@@ -101,10 +88,8 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             expectedVersion = Environment.GetEnvironmentVariable("EXPECTED_VERSION") ?? "";
 
             var indexLoader = new ConsolidatedPackageIndexLoader();
-            using (var fileStream = File.OpenRead(consolidatedFilePath))
-            {
-                consolidatedPackageIndex = indexLoader.Load(fileStream);
-            }
+            using var fileStream = File.OpenRead(consolidatedFilePath);
+            consolidatedPackageIndex = indexLoader.Load(fileStream);
         }
 
         [TestCaseSource(nameof(ExpectedPackageArchitectureMappings))]
@@ -127,5 +112,18 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             var package = consolidatedPackageIndex.GetPackage(packageName);
             package.IsNupkg.Should().Be(isNugetPackage);
         }
+
+        [TestCaseSource(nameof(ExpectedPackagesWithDotnetScript))]
+        public void ConsolidatedPackageIndex_ContainsDotnetScriptForScriptingFlavours(string packageName)
+        {
+            var package = consolidatedPackageIndex.GetPackage(packageName);
+            foreach (var (platform, fileTransfers) in package.PlatformFiles)
+            {
+                fileTransfers.Should().Contain(
+                    ft => ft.Destination.Contains("dotnet-script/"),
+                    $"{packageName} on {platform} should contain dotnet-script");
+            }
+        }
     }
 }
+
