@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using Calamari.ArgoCD.Git;
@@ -14,10 +13,8 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
-using Google.Protobuf.Reflection;
 using LibGit2Sharp;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 
 namespace Calamari.Tests;
 
@@ -31,7 +28,6 @@ public class CommitToGitCommandTest
     string executionDirectory;
 
     string OriginPath => Path.Combine(executionDirectory, "origin");
-    string RepoUrl => OriginPath;
     Repository originRepo;
     const string targetBranchFriendlyName = "devBranch";
     readonly GitBranchName targetBranchName = GitBranchName.CreateFromFriendlyName(targetBranchFriendlyName);
@@ -71,11 +67,7 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
         ]);
 
-        var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
-        File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
-
-        var result = Program.Main(["commit-to-git", "--variables", $"{absPathToVariables}", "--variablesPassword", $"{variablePassword}"]);
-        result.Should().Be(0);
+        RunCommitToGit().Should().Be(0);
         File.Exists(proofFile).Should().BeTrue("the transform script should have run");
     }
 
@@ -84,16 +76,9 @@ public class CommitToGitCommandTest
     public void CommitToGitRunsInlineScriptWithPackageDependency()
     {
         var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
-
         const string packageReferenceName = "my-scripts";
-        var zipPath = Path.Combine(executionDirectory, $"{packageReferenceName}.1.0.0.zip");
-        using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-        {
-            var entry = archive.CreateEntry("helper.sh");
-            using var writer = new StreamWriter(entry.Open());
-            // The dependency creates the proof file, proving it was extracted and invoked
-            writer.Write($"touch {proofFile}");
-        }
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "helper.sh", $"touch {proofFile}");
 
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptBody, $"bash {packageReferenceName}/helper.sh", false),
@@ -101,11 +86,8 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
         ]);
-        var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
-        File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
 
-        var result = Program.Main(["commit-to-git", "--variables", absPathToVariables, "--variablesPassword", variablePassword]);
-        result.Should().Be(0);
+        RunCommitToGit().Should().Be(0);
         File.Exists(proofFile).Should().BeTrue("the transform script should have invoked the package dependency");
     }
 
@@ -114,24 +96,13 @@ public class CommitToGitCommandTest
     public void CommitToGitRunsPackageBasedScriptWithNoDependencies()
     {
         var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
-
-        var zipPath = Path.Combine(executionDirectory, "transform-script.1.0.0.zip");
-        using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-        {
-            var entry = archive.CreateEntry("script.sh");
-            using var writer = new StreamWriter(entry.Open());
-            writer.Write($"touch {proofFile}");
-        }
+        var zipPath = CreateZipWithEntry("transform-script", "script.sh", $"touch {proofFile}");
 
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptFileName, "script.sh", false),
         ]);
 
-        var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
-        File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
-
-        var result = Program.Main(["commit-to-git", "--package", zipPath, "--variables", absPathToVariables, "--variablesPassword", variablePassword]);
-        result.Should().Be(0);
+        RunCommitToGit("--package", zipPath).Should().Be(0);
         File.Exists(proofFile).Should().BeTrue("the transform script should have run");
     }
 
@@ -140,25 +111,14 @@ public class CommitToGitCommandTest
     public void CommitToGitRunsPackageBasedScriptWithScriptParameters()
     {
         var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
-
-        var zipPath = Path.Combine(executionDirectory, "transform-script.1.0.0.zip");
-        using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-        {
-            var entry = archive.CreateEntry("script.sh");
-            using var writer = new StreamWriter(entry.Open());
-            // Exits non-zero if the expected argument was not received, otherwise creates proof
-            writer.Write($"if [ \"$1\" != \"expected-arg\" ]; then exit 1; fi{Environment.NewLine}touch {proofFile}");
-        }
+        var zipPath = CreateZipWithEntry("transform-script", "script.sh",
+            $"if [ \"$1\" != \"expected-arg\" ]; then exit 1; fi{Environment.NewLine}touch {proofFile}");
 
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptFileName, "script.sh", false),
         ]);
 
-        var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
-        File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
-
-        var result = Program.Main(["commit-to-git", "--package", zipPath, "--scriptParameters", "expected-arg", "--variables", absPathToVariables, "--variablesPassword", variablePassword]);
-        result.Should().Be(0);
+        RunCommitToGit("--package", zipPath, "--scriptParameters", "expected-arg").Should().Be(0);
         File.Exists(proofFile).Should().BeTrue("the transform script should have run with the expected argument");
     }
 
@@ -169,16 +129,89 @@ public class CommitToGitCommandTest
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
 
-        var zipPath = Path.Combine(executionDirectory, $"{packageReferenceName}.1.0.0.zip");
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
+        AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/configs/settings.json")
+            .Should().NotBeNull("the package files should have been copied into the repository under the destination path");
+    }
+
+    [Test]
+    [Category("Nix")]
+    public void SubstitutesNonSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"#{MyVar}\"}");
+        AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
+
+        variables.AddRange([
+            new CalamariExecutionVariable(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles, false),
+            new CalamariExecutionVariable(PackageVariables.SubstituteInFilesTargets, $"{packageReferenceName}/configs/settings.json", false),
+            // Non-sensitive variable to be substituted into the package file
+            new CalamariExecutionVariable("MyVar", "production-value", false),
+        ]);
+
+        RunCommitToGit().Should().Be(0);
+
+        var content = GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/configs/settings.json");
+        content.Should().NotBeNull("the package file should have been copied into the repository");
+        content.Should().Contain("production-value", "the non-sensitive variable should have been substituted");
+        content.Should().NotContain("#{MyVar}", "the Octostache template should have been replaced");
+    }
+
+    [Test]
+    [Category("Nix")]
+    public void DoesNotSubstituteSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"#{MySecret}\"}");
+        AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
+
+        variables.AddRange([
+            new CalamariExecutionVariable(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles, false),
+            new CalamariExecutionVariable(PackageVariables.SubstituteInFilesTargets, $"{packageReferenceName}/configs/settings.json", false),
+            // Sensitive variable — must NOT be substituted into repository files
+            new CalamariExecutionVariable("MySecret", "super-secret-value", true),
+        ]);
+
+        RunCommitToGit().Should().Be(0);
+
+        var content = GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/configs/settings.json");
+        content.Should().NotBeNull("the package file should have been copied into the repository");
+        content.Should().Contain("#{MySecret}", "the Octostache template should remain unreplaced for sensitive variables");
+        content.Should().NotContain("super-secret-value", "sensitive variable values must not be written into the repository");
+    }
+
+    // --- Helpers ---
+
+    int RunCommitToGit(params string[] extraArgs)
+    {
+        var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
+        File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
+        return Program.Main(["commit-to-git", "--variables", absPathToVariables, "--variablesPassword", variablePassword, ..extraArgs]);
+    }
+
+    string CreateZipWithEntry(string packageName, string entryPath, string content)
+    {
+        var zipPath = Path.Combine(executionDirectory, $"{packageName}.1.0.0.zip");
         using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
         {
-            var entry = archive.CreateEntry("configs/settings.json");
+            var entry = archive.CreateEntry(entryPath);
             using var writer = new StreamWriter(entry.Open());
-            writer.Write("{\"setting\": \"value\"}");
+            writer.Write(content);
         }
+        return zipPath;
+    }
 
+    void AddInputPackageVariables(string packageReferenceName, string zipPath, string destinationPath)
+    {
         var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**\"],\"DestinationSubFolder\":\"\"}}]";
-
         variables.AddRange([
             // No-op transform script — required for the command to execute successfully
             new CalamariExecutionVariable(ScriptVariables.ScriptBody, "exit 0", false),
@@ -190,21 +223,12 @@ public class CommitToGitCommandTest
             // Override the destination path set in setUp
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
-
-        var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
-        File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
-
-        var result = Program.Main(["commit-to-git", "--variables", absPathToVariables, "--variablesPassword", variablePassword]);
-        result.Should().Be(0);
-
-        using var repo = new Repository(OriginPath);
-        var tip = repo.Branches[targetBranchFriendlyName].Tip;
-        tip.Tree[$"{destinationPath}/{packageReferenceName}/configs/settings.json"]
-           .Should().NotBeNull("the package files should have been copied into the repository under the destination path");
     }
 
-    [Test]
-    public void SubstitutesNonSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitReposiotory()
+    string GetCommittedFileContent(string repoFilePath)
     {
+        using var repo = new Repository(OriginPath);
+        var entry = repo.Branches[targetBranchFriendlyName].Tip.Tree[repoFilePath];
+        return entry != null ? ((Blob)entry.Target).GetContentText() : null;
     }
 }
