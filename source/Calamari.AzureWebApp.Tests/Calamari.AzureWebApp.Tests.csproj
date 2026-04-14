@@ -31,7 +31,7 @@
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
-    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutputPath)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" />
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutputPath)/netcoreshim" SkipUnchangedFiles="true" Condition="'$([MSBuild]::IsOSPlatform(`Windows`))' == 'true'" />
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" />
   </Target>
 

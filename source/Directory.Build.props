@@ -1,6 +1,0 @@
-<Project>
-  <PropertyGroup>
-    <IsWindowsNetCoreBuild Condition="'$([MSBuild]::IsOSPlatform(`Windows`))' == 'true' AND '$(TargetFramework)' == 'net8.0'">true</IsWindowsNetCoreBuild>
-    <IsWindowsNetCoreBuild Condition="'$(IsWindowsNetCoreBuild)' == ''">false</IsWindowsNetCoreBuild>
-  </PropertyGroup>
-</Project>
