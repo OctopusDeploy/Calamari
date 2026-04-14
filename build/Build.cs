@@ -117,15 +117,16 @@ partial class Build : NukeBuild
             d.DependsOn(Clean)
              .Executes(() =>
                        {
-                           //Do one big, default restore
-                           DotNetRestore(s => s.SetProjectFile(Solution));
-
-                           var allRuntimeIds = ListAllRuntimeIdentifiersInSolution();
-                           //we restore for all individual runtimes
-                           foreach (var runtimeId in allRuntimeIds)
-                           {
-                               DotNetRestore(s => s.SetProjectFile(Solution).SetRuntime(runtimeId));
-                           }
+                           // A single restore generates asset targets for all RIDs declared
+                           // in each project's RuntimeIdentifiers property.
+                           // When TargetRuntime is set, restore only for that RID.
+                           DotNetRestore(s =>
+                                         {
+                                             s = s.SetProjectFile(Solution);
+                                             if (!string.IsNullOrWhiteSpace(TargetRuntime))
+                                                 s = s.SetRuntime(TargetRuntime);
+                                             return s;
+                                         });
                        });
 
 
@@ -190,17 +191,4 @@ partial class Build : NukeBuild
         return BuildableCalamariProjects.GetCalamariProjectsToBuild(OperatingSystem.IsWindows());
     }
 
-    HashSet<string> ListAllRuntimeIdentifiersInSolution()
-    {
-        var allRuntimes = Solution.AllProjects
-                                  .SelectMany(p => p.GetRuntimeIdentifiers() ?? Array.Empty<string>())
-                                  .Distinct()
-                                  .Where(rid => rid != "win7-x86") //I have no idea where this is coming from, but let's ignore it. My theory is it's coming from the netstandard libs
-                                  .ToHashSet();
-
-        if (!string.IsNullOrWhiteSpace(TargetRuntime))
-            allRuntimes = allRuntimes.Where(x => x == TargetRuntime).ToHashSet();
-
-        return allRuntimes;
-    }
 }
