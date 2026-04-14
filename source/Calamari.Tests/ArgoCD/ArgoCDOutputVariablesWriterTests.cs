@@ -1,5 +1,6 @@
 using System;
 using Calamari.ArgoCD;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
@@ -14,7 +15,6 @@ namespace Calamari.Tests.ArgoCD
     public class ArgoCDOutputVariablesWriterTests
     {
         InMemoryLog log;
-        IVariables variables;
         ArgoCDOutputVariablesWriter writer;
 
         const string GatewayName = "TestGateway";
@@ -32,19 +32,37 @@ namespace Calamari.Tests.ArgoCD
         public void SetUp()
         {
             log = new InMemoryLog();
-            variables = new CalamariVariables();
-            writer = new ArgoCDOutputVariablesWriter(log, variables);
+            writer = new ArgoCDOutputVariablesWriter(log);
         }
-
+        
         [Test]
-        public void WritePushResultOutput_WithoutPullRequest_WritesCommitOutputVariables()
+        public void WriteSourceUpdateResultOutputWhenPushResultExists_NoPushResult_NoOutputVariablesAreWritten()
         {
             // Arrange
             const int sourceIndex = 0;
-            var pushResult = new PushResult(CommitSha, ShortSha, Timestamp);
+            var sourceUpdateResult = new SourceUpdateResult([], null, [], []);
 
             // Act
-            writer.WritePushResultOutput(GatewayName, ApplicationName, sourceIndex, pushResult);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, sourceIndex, sourceUpdateResult);
+
+            // Assert
+            using var _ = new AssertionScope();
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+
+            AssertZeroCommitVariables(serviceMessages, sourceIndex);
+            AssertNoPullRequestVariables(serviceMessages, sourceIndex);
+        }
+
+        [Test]
+        public void WriteSourceUpdateResultOutputWhenPushResultExists_WithoutPullRequest_WritesCommitOutputVariables()
+        {
+            // Arrange
+            const int sourceIndex = 0;
+            var pullResult = new PushResult(CommitSha, ShortSha, Timestamp);
+            var sourceUpdateResult = new SourceUpdateResult([], pullResult, [], []);
+
+            // Act
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, sourceIndex, sourceUpdateResult);
 
             // Assert
             using var _ = new AssertionScope();
@@ -60,9 +78,10 @@ namespace Calamari.Tests.ArgoCD
             // Arrange
             const int sourceIndex = 1;
             var pullRequestPushResult = new PullRequestPushResult(CommitSha, ShortSha, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber);
+            var sourceUpdateResult = new SourceUpdateResult([], pullRequestPushResult, [], []);
 
             // Act
-            writer.WritePushResultOutput(GatewayName, ApplicationName, sourceIndex, pullRequestPushResult);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, sourceIndex, sourceUpdateResult);
 
             // Assert
             using var _ = new AssertionScope();
@@ -80,11 +99,14 @@ namespace Calamari.Tests.ArgoCD
             const string shortSha2 = "abcdef1";
 
             var pushResult1 = new PushResult(CommitSha, ShortSha, Timestamp);
+            var sourceUpdateResult1 = new SourceUpdateResult([], pushResult1, [], []);
+            
             var pushResult2 = new PullRequestPushResult(commitSha2, shortSha2, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber);
+            var sourceUpdateResult2 = new SourceUpdateResult([], pushResult2, [], []);
 
             // Act
-            writer.WritePushResultOutput(GatewayName, ApplicationName, 0, pushResult1);
-            writer.WritePushResultOutput(GatewayName, ApplicationName, 1, pushResult2);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, 0, sourceUpdateResult1);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, 1, sourceUpdateResult2);
 
             // Assert
             using var _ = new AssertionScope();
@@ -97,6 +119,14 @@ namespace Calamari.Tests.ArgoCD
             // Source 1
             AssertCommitVariables(serviceMessages, 1, commitSha2, shortSha2);
             AssertPullRequestVariables(serviceMessages, 1);
+        }
+        
+        //Zero = No (but NOCOMMIT is part of the forbidden words list)
+        static void AssertZeroCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex)
+        {
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitSha").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].ShortSha").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitTimestamp").Should().BeNull();
         }
 
         static void AssertCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex, string commitSha = CommitSha, string shortSha = ShortSha)

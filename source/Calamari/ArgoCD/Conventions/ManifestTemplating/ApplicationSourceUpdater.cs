@@ -60,14 +60,14 @@ public class ApplicationSourceUpdater
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory, pathOverrideFromAnnotation);
 
         var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        
+        outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
+                                                            applicationFromYaml.Metadata.Name,
+                                                            sourceWithMetadata.Index,
+                                                            sourceUpdateResult);
 
         if (sourceUpdateResult.PushResult is not null)
         {
-            outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                                                        applicationFromYaml.Metadata.Name,
-                                                        sourceWithMetadata.Index,
-                                                        sourceUpdateResult.PushResult);
-
             return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.PushResult.CommitTimestamp, sourceUpdateResult.ReplacedFiles);
         }
 

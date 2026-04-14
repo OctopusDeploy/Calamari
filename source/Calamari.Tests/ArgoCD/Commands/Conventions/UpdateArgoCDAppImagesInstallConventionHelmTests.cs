@@ -68,7 +68,7 @@ image:
                 Substitute.For<IGitVendorPullRequestClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
-                new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));
+                new ArgoCDOutputVariablesWriter(log));
         }
 
         [SetUp]
@@ -1198,7 +1198,7 @@ autoscaling:
                                            .Returns(argoCDAppWithHelmSource);
 
             IReadOnlyList<ProcessApplicationResult> capturedResults = null;
-            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+            deploymentReporter.ReportFilesUpdated(Arg.Any<GitCommitParameters>(), Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
 
             // Act
             updater.Install(runningDeployment);
@@ -1384,7 +1384,7 @@ service:
             runningDeployment.StagingDirectory = tempDirectory;
 
             IReadOnlyList<ProcessApplicationResult> capturedResults = null;
-            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+            deploymentReporter.ReportFilesUpdated(Arg.Any<GitCommitParameters>(),Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
 
             updater.Install(runningDeployment);
 
@@ -1636,7 +1636,7 @@ image:
             runningDeployment.StagingDirectory = tempDirectory;
 
             IReadOnlyList<ProcessApplicationResult> capturedResults = null;
-            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+            deploymentReporter.ReportFilesUpdated(Arg.Any<GitCommitParameters>(),Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
 
             // Act
             updater.Install(runningDeployment);
