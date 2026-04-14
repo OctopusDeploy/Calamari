@@ -99,19 +99,7 @@ namespace Calamari.Integration.Packages.NuGet
             }
             
 
-                WarnIfHttpTimeoutHasBeenSet();
                 NuGetV3LibDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
-        }
-        
-        void WarnIfHttpTimeoutHasBeenSet()
-        {
-            if (variables.IsSet(KnownVariables.NugetHttpTimeout))
-            {
-                Log.Warn(
-                    $"A Nuget HTTP timeout was set via the '{KnownVariables.NugetHttpTimeout}' variable. "
-                    + "This variable is only supported when running on .NET Framework."
-                );
-            }
         }
 
         bool IsHttp(string uri)

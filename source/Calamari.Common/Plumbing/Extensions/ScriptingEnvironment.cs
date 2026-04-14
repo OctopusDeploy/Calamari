@@ -9,12 +9,6 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public class ScriptingEnvironment
     {
-        public static bool IsNet45OrNewer()
-        {
-            // Class "ReflectionContext" exists from .NET 4.5 onwards.
-            return Type.GetType("System.Reflection.ReflectionContext", false) != null;
-        }
-
         public static bool IsRunningOnMono()
         {
             var monoRuntime = Type.GetType("Mono.Runtime");

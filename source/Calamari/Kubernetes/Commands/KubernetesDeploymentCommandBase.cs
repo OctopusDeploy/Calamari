@@ -68,13 +68,8 @@ namespace Calamari.Kubernetes.Commands
         protected virtual IEnumerable<IInstallConvention> CommandSpecificInstallConventions() =>
             Enumerable.Empty<IInstallConvention>();
 
-        /// <remarks>
-        /// This empty implementation uses Task.FromResult(new object()); instead of
-        /// Task.CompletedTask because Task.CompletedTask was only added in .NET 4.6.1
-        /// so it is not compatible with Calamari.
-        /// </remarks>
-        protected virtual async Task<bool> ExecuteCommand(RunningDeployment runningDeployment) =>
-            await Task.FromResult(true);
+        protected virtual Task<bool> ExecuteCommand(RunningDeployment runningDeployment) =>
+            Task.FromResult(true);
 
         public override int Execute(string[] commandLineArguments)
         {
