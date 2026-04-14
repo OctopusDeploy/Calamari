@@ -4,6 +4,7 @@ global using System.Linq;
 global using System.Threading.Tasks;
 global using Nuke.Common;
 global using Nuke.Common.IO;
+global using Nuke.Common.ProjectModel;
 global using Nuke.Common.Tools.DotNet;
 global using Nuke.Common.CI.TeamCity;
 global using Serilog;
