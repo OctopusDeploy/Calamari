@@ -146,7 +146,17 @@ public class CommitToGitCommand : Command
                                               d.StagingDirectory = transformsDirectory;
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                           }),
-            new ExecuteScriptConvention(scriptEngine, commandLineRunner, log)
+            new DelegateInstallConvention(d =>
+            {
+                var scriptFileName = d.Variables.Get(ScriptVariables.ScriptFileName);
+                if (!WasProvided(scriptFileName))
+                {
+                    log.Verbose("No transform script configured, skipping script execution.");
+                    log.SetOutputVariable(SpecialVariables.Action.Script.ExitCode, "0", d.Variables);
+                    return;
+                }
+                new ExecuteScriptConvention(scriptEngine, commandLineRunner, log).Install(d);
+            }),
         };
 
         var commitToRemote = new List<IConvention>
@@ -273,6 +283,9 @@ public class CommitToGitCommand : Command
         }
 
         var scriptFile = deployment.Variables.Get(ScriptVariables.ScriptFileName);
+        if (!WasProvided(scriptFile))
+            yield break;
+
         yield return Path.Combine(deployment.CurrentDirectory, scriptFile);
     }
 

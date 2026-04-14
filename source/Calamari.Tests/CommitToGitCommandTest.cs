@@ -123,7 +123,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
+    [Category("PlatformAgnostic")]
     public void CanCopyPackageFilesIntoGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -139,7 +139,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
+    [Category("PlatformAgnostic")]
     public void SubstitutesNonSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -164,7 +164,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
+    [Category("PlatformAgnostic")]
     public void DoesNotSubstituteSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -213,9 +213,6 @@ public class CommitToGitCommandTest
     {
         var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**\"],\"DestinationSubFolder\":\"\"}}]";
         variables.AddRange([
-            // No-op transform script — required for the command to execute successfully
-            new CalamariExecutionVariable(ScriptVariables.ScriptBody, "exit 0", false),
-            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
             // Package to copy into the repository, declared via TemplateValuesSources
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
