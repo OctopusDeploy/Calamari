@@ -97,39 +97,9 @@ git commit -m "feat: add StageAllChanges to RepositoryWrapper"
 
 ---
 
-## Task 3: Make `CommitParameters` public in `DeploymentConfigFactory`
+## ~~Task 3: Make `CommitParameters` public~~ — REMOVED
 
-**Files:**
-- Modify: `source/Calamari/ArgoCD/Conventions/DeploymentConfigFactory.cs`
-
-The `commitToRemote` delegate in `CommitToGitCommand` needs to read the commit message summary, description, and PR flag. These come from `DeploymentConfigFactory.CommitParameters`, which is currently `private`.
-
-- [ ] **Change the access modifier on `CommitParameters`**
-
-In `source/Calamari/ArgoCD/Conventions/DeploymentConfigFactory.cs`, change line 51:
-
-```csharp
-// Before:
-GitCommitParameters CommitParameters(RunningDeployment deployment)
-
-// After:
-public GitCommitParameters CommitParameters(RunningDeployment deployment)
-```
-
-- [ ] **Build to confirm**
-
-```bash
-dotnet build source/Calamari/Calamari.csproj
-```
-
-Expected: build succeeds.
-
-- [ ] **Commit**
-
-```bash
-git add source/Calamari/ArgoCD/Conventions/DeploymentConfigFactory.cs
-git commit -m "refactor: make CommitParameters public on DeploymentConfigFactory"
-```
+`CommitToGitRepositorySettings` (returned by `CreateCommitToGitRepositoryConfig`) already exposes `CommitParameters` as a property. The commit delegate uses `repositoryConfig.CommitParameters` instead of calling `configFactory.CommitParameters` separately. No change to `DeploymentConfigFactory` needed.
 
 ---
 
@@ -203,13 +173,14 @@ this.configFactory = configFactory;
 
 - [ ] **Add `clonedRepository` and `clock` to `Execute()`**
 
-In `Execute()`, add two declarations alongside the existing `baseWorkingDirectory`, `transformsDirectory`, `inputsDirectory`:
+In `Execute()`, add declarations alongside the existing `baseWorkingDirectory`, `transformsDirectory`, `inputsDirectory`:
 
 ```csharp
 string baseWorkingDirectory = "";
 string transformsDirectory = "";
 string inputsDirectory = "";
 RepositoryWrapper? clonedRepository = null;
+CommitToGitRepositorySettings? repositoryConfig = null;
 var clock = new SystemClock();
 ```
 
@@ -235,9 +206,9 @@ var repositoryOperations = new List<IConvention>
 {
     new DelegateInstallConvention(d =>
     {
+        repositoryConfig = configFactory.CreateCommitToGitRepositoryConfig(d);
         var repositoryFactory = new RepositoryFactory(log, fileSystem, baseWorkingDirectory, gitVendorPullRequestClientResolver, clock);
-        var config = configFactory.CreateCommitToGitRepositoryConfig(d);
-        clonedRepository = repositoryFactory.CloneRepository("git_repository", config.gitConnection);
+        clonedRepository = repositoryFactory.CloneRepository("git_repository", repositoryConfig.gitConnection);
     }),
     new DelegateInstallConvention(d =>
     {
@@ -306,7 +277,7 @@ var commitToRemote = new List<IConvention>
 {
     new DelegateInstallConvention(d =>
     {
-        var commitParams = configFactory.CommitParameters(d);
+        var commitParams = repositoryConfig!.CommitParameters;
 
         // Stage all changes — handles files added, modified, or deleted by the transform script
         clonedRepository!.StageAllChanges();
@@ -318,12 +289,11 @@ var commitToRemote = new List<IConvention>
             return;
         }
 
-        var config = configFactory.CreateCommitToGitRepositoryConfig(d);
         clonedRepository.PushChanges(
             commitParams.RequiresPr,
             commitParams.Summary,
             commitParams.Description,
-            config.gitConnection.GitReference,
+            repositoryConfig.gitConnection.GitReference,
             CancellationToken.None).GetAwaiter().GetResult();
     })
 };

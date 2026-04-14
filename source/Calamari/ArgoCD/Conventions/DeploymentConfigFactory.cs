@@ -75,18 +75,18 @@ namespace Calamari.ArgoCD.Conventions
         {
             var variables = deployment.Variables;
 
-            var uriAsString = variables.Get(Deployment.SpecialVariables.Git.Url);
+            var uriAsString = variables.Get(Deployment.SpecialVariables.Action.Git.Url);
             
-            var gitReferenceAsString = variables.Get(Deployment.SpecialVariables.Git.Reference);
+            var gitReferenceAsString = variables.Get(Deployment.SpecialVariables.Action.Git.Reference);
         
             return new CommitToGitRepositorySettings(
                                                      new GitConnection(
-                                                                       variables.Get(Deployment.SpecialVariables.Git.Username),
-                                                                       variables.Get(Deployment.SpecialVariables.Git.Password),
+                                                                       variables.Get(Deployment.SpecialVariables.Action.Git.Username),
+                                                                       variables.Get(Deployment.SpecialVariables.Action.Git.Password),
                                                                        new Uri(uriAsString),
                                                                        GitReference.CreateFromString(gitReferenceAsString)),
             CommitParameters(deployment),
-            variables.Get(Deployment.SpecialVariables.Git.DestinationPath));
+            variables.Get(Deployment.SpecialVariables.Action.Git.DestinationPath));
 
         } 
     }

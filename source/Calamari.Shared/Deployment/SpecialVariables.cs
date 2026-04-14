@@ -89,6 +89,16 @@ namespace Calamari.Deployment
             static string GetIndexedName(string name, string property) => $"Octopus.Action.GitResource[{name}].{property}";
         }
 
+        public static class GitRepositoryTarget
+        {
+            public const string TargetRepositoryUrl = "Octopus.Action.Git.TargetRepositoryUrl";
+            public const string TargetRepositoryUsername = "Octopus.Action.Git.TargetRepositoryUsername";
+            public const string TargetRepositoryPassword = "Octopus.Action.Git.TargetRepositoryPassword";
+            public const string TargetRepositoryBranch = "Octopus.Action.Git.TargetRepositoryBranch";
+            public const string DestinationPath = "Octopus.Action.Git.DestinationPath";            
+        }
+
+
         public static class Packages
         {
             public static string ExtractedPath(string key)
@@ -353,15 +363,15 @@ namespace Calamari.Deployment
                     public static readonly string ConfigName = "Octopus.Action.Nginx.Server.ConfigName";
                 }
             }
-        }
-
-        public static class Git
-        {
-            public const string Url = "Octopus.Action.Git.TargetRepositoryUrl";
-            public const string Username = "Octopus.Action.Git.TargetRepositoryUsername";
-            public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
-            public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
-            public const string DestinationPath = "Octopus.Action.Git.DestinationPath";
+            
+            public static class Git
+            {
+                public const string Url = "Octopus.Action.Git.TargetRepositoryUrl";
+                public const string Username = "Octopus.Action.Git.TargetRepositoryUsername";
+                public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
+                public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
+                public const string DestinationPath = "Octopus.Action.Git.DestinationPath";
+            }
         }
 
         public static class Account
