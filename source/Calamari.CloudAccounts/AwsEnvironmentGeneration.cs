@@ -22,7 +22,7 @@ namespace Calamari.CloudAccounts
         const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
         const string MetadataHeaderToken = "X-aws-ec2-metadata-token";
         const string MetadataHeaderTTL = "X-aws-ec2-metadata-token-ttl-seconds";
-        private const string DefaultSessionName = "OctopusAwsAuthentication";
+        const string DefaultSessionName = "OctopusAwsAuthentication";
 
         readonly ILog log;
         readonly Func<Task<bool>> verifyLogin;
@@ -82,7 +82,7 @@ namespace Calamari.CloudAccounts
                    || await PopulateKeysFromInstanceRole();
         }
 
-        public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
+        public Dictionary<string, string> EnvironmentVars { get; } = new();
 
         internal AwsEnvironmentGeneration(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
         {
@@ -98,14 +98,11 @@ namespace Calamari.CloudAccounts
                         variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
             secretKey = variables.Get(account + ".SecretKey")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
             accountType = variables.Get("Octopus.Account.AccountType")?.Trim();
-            
-            roleArn = variables.Get($"{account}.RoleArn")?.Trim() ??
-                      variables.Get("Octopus.Action.Amazon.RoleArn")?.Trim();
-            sessionDuration = variables.Get($"{account}.SessionDuration")?.Trim() ??
-                              variables.Get("Octopus.Action.Amazon.SessionDuration")?.Trim();
-            oidcJwt = variables.Get($"{account}.OpenIdConnect.Jwt")?.Trim() ??
-                      variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
-            
+
+            roleArn = variables.Get($"{account}.RoleArn")?.Trim() ?? variables.Get("Octopus.Action.Amazon.RoleArn")?.Trim();
+            sessionDuration = variables.Get($"{account}.SessionDuration")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SessionDuration")?.Trim();
+            oidcJwt = variables.Get($"{account}.OpenIdConnect.Jwt")?.Trim() ?? variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
+
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleExternalId = variables.Get("Octopus.Action.Aws.AssumeRoleExternalId")?.Trim();
@@ -121,12 +118,12 @@ namespace Calamari.CloudAccounts
         {
             get
             {
-                if (EnvironmentVars.ContainsKey("AWS_SESSION_TOKEN"))
+                if (EnvironmentVars.TryGetValue("AWS_SESSION_TOKEN", out var sessionToken))
                 {
                     return new SessionAWSCredentials(
                                                      EnvironmentVars["AWS_ACCESS_KEY_ID"],
                                                      EnvironmentVars["AWS_SECRET_ACCESS_KEY"],
-                                                     EnvironmentVars["AWS_SESSION_TOKEN"]);
+                                                     sessionToken);
                 }
 
                 return new BasicAWSCredentials(
@@ -135,7 +132,20 @@ namespace Calamari.CloudAccounts
             }
         }
 
-        public RegionEndpoint AwsRegion => RegionEndpoint.GetBySystemName(EnvironmentVars["AWS_REGION"]);
+        public RegionEndpoint AwsRegion
+        {
+            get
+            {
+                // "aws-global" routes to the global STS endpoint (sts.amazonaws.com), preserving SDK v3 behaviour.
+                // See: https://docs.aws.amazon.com/sdkref/latest/guide/feature-region.html
+                if (!EnvironmentVars.TryGetValue("AWS_REGION", out var awsRegion) || string.IsNullOrWhiteSpace(awsRegion))
+                {
+                    return RegionEndpoint.GetBySystemName("aws-global");
+                }
+
+                return RegionEndpoint.GetBySystemName(awsRegion);
+            }
+        }
 
         /// <summary>
         /// Verify that we can login with the supplied credentials
@@ -145,9 +155,7 @@ namespace Calamari.CloudAccounts
         {
             try
             {
-                var client = string.IsNullOrWhiteSpace(region)
-                    ? new AmazonSecurityTokenServiceClient(AwsCredentials)
-                    : new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
+                var client = new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
                 await client.GetCallerIdentityAsync(new GetCallerIdentityRequest());
                 return true;
             }
@@ -168,7 +176,7 @@ namespace Calamari.CloudAccounts
         {
             EnvironmentVars["AWS_DEFAULT_REGION"] = region;
             EnvironmentVars["AWS_REGION"] = region;
-        } 
+        }
 
         /// <summary>
         /// If the keys were explicitly supplied, use them directly
@@ -181,7 +189,7 @@ namespace Calamari.CloudAccounts
                 // Prioritise auth flows based on account type
                 case "AmazonWebServicesAccount" when await TryPopulateKeysDirectly():
                 case "AmazonWebServicesOidcAccount" when await TryPopulateKeysUsingOidc():
-                    return true; 
+                    return true;
                 default:
                     // Default priority if no matching account type
                     return await TryPopulateKeysDirectly() || await TryPopulateKeysUsingOidc();
@@ -190,7 +198,7 @@ namespace Calamari.CloudAccounts
 
         async Task<bool> TryPopulateKeysDirectly()
         {
-            if(string.IsNullOrEmpty(accessKey)) return false;
+            if (string.IsNullOrEmpty(accessKey)) return false;
             EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
             EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
             if (!await verifyLogin())
@@ -205,12 +213,10 @@ namespace Calamari.CloudAccounts
 
         async Task<bool> TryPopulateKeysUsingOidc()
         {
-            if(string.IsNullOrEmpty(oidcJwt)) return false;
+            if (string.IsNullOrEmpty(oidcJwt)) return false;
             try
             {
-                var client = string.IsNullOrWhiteSpace(region)
-                    ? new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials())
-                    : new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), AwsRegion);
+                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), AwsRegion);
                 var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                 {
                     RoleArn = roleArn,
@@ -251,7 +257,7 @@ namespace Calamari.CloudAccounts
                     string payload;
                     using (var client = new HttpClient())
                     {
-                        log.Verbose("Fetching IMDSv2 token from instance metadata service");    
+                        log.Verbose("Fetching IMDSv2 token from instance metadata service");
                         client.DefaultRequestHeaders.Add(MetadataHeaderToken, await GetIMDSv2Token());
                         log.Verbose("Fetching instance role from instance metadata service");
                         var instanceRole = await client.GetStringAsync(RoleUri);
@@ -277,7 +283,6 @@ namespace Calamari.CloudAccounts
 
             return false;
         }
-
 
         class InstanceRoleKeys
         {
@@ -330,7 +335,7 @@ namespace Calamari.CloudAccounts
                 return await body.Content.ReadAsStringAsync();
             }
         }
-        
+
         /// <summary>
         /// This method reads the AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE environment variable, loads the token
         /// from the associated file, and then assumes the role using the credentials provided by the pod identity
@@ -360,7 +365,6 @@ namespace Calamari.CloudAccounts
             return false;
         }
 
-
         /// <summary>
         /// If we assume a secondary role, do it here
         /// </summary>
@@ -368,7 +372,7 @@ namespace Calamari.CloudAccounts
         {
             if ("True".Equals(assumeRole, StringComparison.OrdinalIgnoreCase))
             {
-                var client = string.IsNullOrWhiteSpace(region) ? new AmazonSecurityTokenServiceClient(AwsCredentials) : new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
+                var client = new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
                 var credentials = (await client.AssumeRoleAsync(GetAssumeRoleRequest())).Credentials;
 
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
@@ -381,7 +385,7 @@ namespace Calamari.CloudAccounts
         {
             // RoleSessionName is required in .NET; if not provided, generate a random one like the JavaScript SDK.
             var roleSessionName = String.IsNullOrEmpty(assumeRoleSession) ? $"aws-sdk-dotnet-{Guid.NewGuid()}" : assumeRoleSession;
-            
+
             var request = new AssumeRoleRequest
             {
                 RoleArn = assumeRoleArn,

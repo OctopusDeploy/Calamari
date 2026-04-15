@@ -54,6 +54,11 @@ public abstract class BaseUpdater : ISourceUpdater
             var allTargetedImages = new HashSet<string>(imageReplacementResult.UpdatedImageReferences);
             allTargetedImages.UnionWith(imageReplacementResult.AlreadyUpToDateImages);
 
+            foreach (var unrecognisedKind in imageReplacementResult.UnrecognisedKinds)
+            {
+                log.WarnFormat("Type '{0}' is not recognised by the Image Update step. Images on this type will not be updated.", unrecognisedKind);
+            }
+
             if (imageReplacementResult.UpdatedImageReferences.Count > 0)
             {
                 fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);

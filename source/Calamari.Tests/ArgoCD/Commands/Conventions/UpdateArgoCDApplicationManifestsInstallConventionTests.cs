@@ -549,6 +549,59 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             AssertOutputVariables();
         }
 
+        [Test]
+        public void PathAnnotationOverridesTheOutputPath()
+        {
+            // Arrange - create app with a path-override in the annotation
+            var overriddenSubPath = Path.Combine("sub1", "sub2");
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("App1")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                                [ArgoCDConstants.Annotations.OctopusPathAnnotationKey(null)] = overriddenSubPath,
+                                            })
+                                            .WithSource(new ApplicationSource()
+                                                        {
+                                                            OriginalRepoUrl = RepoUrl,
+                                                            Path = Path.Combine("this", "will", "be", "overriden"),
+                                                            TargetRevision = ArgoCDBranchFriendlyName,
+                                                        },
+                                                        SourceTypeConstants.Directory)
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);  
+            
+            
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+            
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
+            convention.Install(runningDeployment);
+
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, overriddenSubPath, firstFilename));
+            resultFirstContent.Should().Be(firstFilename);
+        }
+
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
         {
             using var _ = new AssertionScope();

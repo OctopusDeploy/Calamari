@@ -17,7 +17,7 @@ namespace Calamari.Tests.ArgoCD
         {
             // We know this won't be null after parse
             new (ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry)),
-            new (ContainerImageReference.FromReferenceString("busybox:stable", "my-registry.com")),
+            new (ContainerImageReference.FromReferenceString("my-registry.com/busybox:stable", ArgoCDConstants.DefaultContainerRegistry)),
         };
 
         ILog log = new InMemoryLog();

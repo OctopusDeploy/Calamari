@@ -8,23 +8,21 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ScriptIsolation
 {
     [TestFixture]
-    public abstract class FileLockFixture
+    public class FileLockFixture
     {
-        FileInfo lockFilePath = null!;
+        LockFile lockFilePath = null!;
 
         [SetUp]
         public void SetUp()
         {
-            lockFilePath = new(Path.Combine(Path.GetTempPath(), $"ScriptIsolation.FileLockFixture.{Guid.NewGuid()}.lock"));
+            lockFilePath = new LockDirectory(new DirectoryInfo(Path.GetTempPath()), LockCapability.Supported)
+                .GetLockFile($"ScriptIsolation.FileLockFixture.{Guid.NewGuid():N}.lock");
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (lockFilePath.Exists)
-            {
-                lockFilePath.Delete();
-            }
+            lockFilePath?.Delete();
         }
 
         LockOptions MakeLockOptions(LockType lockType) => new(lockType, "TestMutex", lockFilePath, TimeSpan.FromSeconds(5));

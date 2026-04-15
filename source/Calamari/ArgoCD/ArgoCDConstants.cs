@@ -37,6 +37,11 @@ namespace Calamari.ArgoCD
             public static string OctopusTenantAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusTenantAnnotationKeyPrefix 
                 : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
+            
+            static readonly string OctopusPathAnnotationKeyPrefix = $"{Prefix}/path";
+            public static string OctopusPathAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusPathAnnotationKeyPrefix 
+                : $"{OctopusPathAnnotationKeyPrefix}.{sourceName}";
 
             public static IReadOnlyCollection<string> GetUnnamedAnnotationKeys()
             {

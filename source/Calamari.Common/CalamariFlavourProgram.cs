@@ -14,7 +14,6 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
@@ -63,11 +62,8 @@ namespace Calamari.Common
 
                 using var container = builder.Build();
                 container.Resolve<VariableLogger>().LogVariables();
-
 #if DEBUG
-                var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
-
-                if (string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase))
+                if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
                 {
                     using var proc = Process.GetCurrentProcess();
                     log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
@@ -78,8 +74,8 @@ namespace Calamari.Common
                     }
                 }
 #endif
-
-                using var _ = Isolation.Enforce(options.ScriptIsolation);
+                var isolation = container.Resolve<IScriptIsolationEnforcer>();
+                using var _ = isolation.Enforce(options.ScriptIsolation);
                 return ResolveAndExecuteCommand(container, options);
             }
             catch (Exception ex)
@@ -121,6 +117,7 @@ namespace Calamari.Common
             
             builder.RegisterModule<VariablesModule>();
             builder.RegisterModule<SubstitutionsModule>();
+            builder.RegisterModule<ScriptIsolationModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
