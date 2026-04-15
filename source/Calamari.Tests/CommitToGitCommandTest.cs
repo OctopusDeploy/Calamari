@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -14,7 +13,6 @@ using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
-using NuGet.Commands;
 using NUnit.Framework;
 
 namespace Calamari.Tests;
@@ -22,25 +20,23 @@ namespace Calamari.Tests;
 [TestFixture]
 public class CommitToGitCommandTest
 {
-    readonly ILog log = new InMemoryLog();
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
     readonly string variablePassword = "password";
     readonly string variableFileName = "variables.json";
     string executionDirectory;
 
     string OriginPath => Path.Combine(executionDirectory, "origin");
-    Repository originRepo;
     const string targetBranchFriendlyName = "devBranch";
     readonly GitBranchName targetBranchName = GitBranchName.CreateFromFriendlyName(targetBranchFriendlyName);
 
-    CalamariExecutionVariableCollection variables = new CalamariExecutionVariableCollection();
+    CalamariExecutionVariableCollection variables = new();
 
     [SetUp]
     public void setUp()
     {
         executionDirectory = fileSystem.CreateTemporaryDirectory();
 
-        originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
+        RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(targetBranchName, OriginPath);
 
         // Add git-repository data to the variables.
@@ -59,27 +55,24 @@ public class CommitToGitCommandTest
 
     [Test]
     [Category("Nix")]
-    public void CommitToGitRunsScriptWithNoDependencies()
+    public void CommitToGitRunsScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
     {
-        var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
-
         variables.AddRange([
-            new CalamariExecutionVariable(ScriptVariables.ScriptBody, $"touch {proofFile}", false),
+            new CalamariExecutionVariable(ScriptVariables.ScriptBody, "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"", false),
             new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
         ]);
 
         RunCommitToGit().Should().Be(0);
-        File.Exists(proofFile).Should().BeTrue("the transform script should have run");
+        GetCommittedFileContent("proof.txt").Should().NotBeNull("the transform script should have created and committed the file to the repository");
     }
 
     [Test]
     [Category("Nix")]
-    public void CommitToGitRunsInlineScriptWithPackageDependency()
+    public void CommitToGitRunsInlineScriptWithPackageDependencyToCreateFileWhichIsCommitedToRepository()
     {
-        var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
         const string packageReferenceName = "my-scripts";
 
-        var zipPath = CreateZipWithEntry(packageReferenceName, "helper.sh", $"touch {proofFile}");
+        var zipPath = CreateZipWithEntry(packageReferenceName, "helper.sh", "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"");
 
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptBody, $"bash {packageReferenceName}/helper.sh", false),
@@ -89,22 +82,21 @@ public class CommitToGitCommandTest
         ]);
 
         RunCommitToGit().Should().Be(0);
-        File.Exists(proofFile).Should().BeTrue("the transform script should have invoked the package dependency");
+        GetCommittedFileContent("proof.txt").Should().NotBeNull("the helper script should have created and committed the file to the repository");
     }
 
     [Test]
     [Category("Nix")]
-    public void CommitToGitRunsPackageBasedScriptWithNoDependencies()
+    public void CommitToGitRunsPackageBasedScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
     {
-        var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
-        var zipPath = CreateZipWithEntry("transform-script", "script.sh", $"touch {proofFile}");
+        var zipPath = CreateZipWithEntry("transform-script", "script.sh", "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"");
 
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptFileName, "script.sh", false),
         ]);
 
         RunCommitToGit("--package", zipPath).Should().Be(0);
-        File.Exists(proofFile).Should().BeTrue("the transform script should have run");
+        GetCommittedFileContent("proof.txt").Should().NotBeNull("the package-based script should have created and committed the file to the repository");
     }
 
     [Test]
