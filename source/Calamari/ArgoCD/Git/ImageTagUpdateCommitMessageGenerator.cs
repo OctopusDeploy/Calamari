@@ -15,18 +15,18 @@ namespace Calamari.ArgoCD.Git
 
     public class ImageTagUpdateCommitMessageGenerator : ICommitMessageGenerator
     {
-        readonly GitCommitParameters gitCommitParameters;
+        readonly string userDefinedCommitMessage;
 
-        public ImageTagUpdateCommitMessageGenerator(GitCommitParameters gitCommitParameters)
+        public ImageTagUpdateCommitMessageGenerator(string userDefinedCommitMessage)
         {
-            this.gitCommitParameters = gitCommitParameters;
+            this.userDefinedCommitMessage = userDefinedCommitMessage;
         }
         public string GenerateDescription(FileUpdateResult result)
         {
             var updatedImagesList = GenerateUpdatedImagesListCommitBody(result.UpdatedImages);
-            return string.IsNullOrEmpty(gitCommitParameters.Description)
+            return string.IsNullOrEmpty(userDefinedCommitMessage)
                 ? updatedImagesList
-                : $"{gitCommitParameters.Description}\n\n{updatedImagesList}";
+                : $"{userDefinedCommitMessage}\n\n{updatedImagesList}";
         }
         
         public static string GenerateUpdatedImagesListCommitBody(HashSet<string> updatedImages)
@@ -45,16 +45,16 @@ namespace Calamari.ArgoCD.Git
     
     public class UserDefinedCommitMessageGenerator : ICommitMessageGenerator
     {
-        readonly GitCommitParameters gitCommitParameters;
+        readonly string userDefinedCommitMessage;
 
-        public UserDefinedCommitMessageGenerator(GitCommitParameters gitCommitParameters)
+        public UserDefinedCommitMessageGenerator(string userDefinedCommitMessage)
         {
-            this.gitCommitParameters = gitCommitParameters;
+            this.userDefinedCommitMessage = userDefinedCommitMessage;
         }
 
         public string GenerateDescription(FileUpdateResult result)
         {
-            return gitCommitParameters.Description;
+            return userDefinedCommitMessage;
         }
     }
 }

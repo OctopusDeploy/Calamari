@@ -57,7 +57,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 log,
                 fileSystem,
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                new ImageTagUpdateCommitMessageGenerator(),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorPullRequestClientResolver>(),
