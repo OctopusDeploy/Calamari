@@ -83,7 +83,7 @@ namespace Calamari.ArgoCD.Conventions
                                                             argoCdApplicationManifestParser,
                                                             outputVariablesWriter,
                                                             packageFiles,
-                                                            new ImageTagUpdateCommitMessageGenerator(deploymentConfig.CommitParameters.Description));
+                                                            new UserDefinedCommitMessageGenerator(deploymentConfig.CommitParameters.Description));
 
             var applicationResults = argoProperties.Applications
                                                    .Select(application =>
