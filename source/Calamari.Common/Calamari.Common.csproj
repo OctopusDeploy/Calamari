@@ -14,7 +14,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="NuGet.Commands" Version="7.0.1" />
+        <PackageReference Include="NuGet.Commands" Version="7.0.3" />
         <PackageReference Include="NuGet.Packaging" Version="7.4.0-octopus-release.17001" />
         <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
         <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
