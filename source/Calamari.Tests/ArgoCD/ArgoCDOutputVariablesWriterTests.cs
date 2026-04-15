@@ -121,7 +121,7 @@ namespace Calamari.Tests.ArgoCD
             AssertPullRequestVariables(serviceMessages, 1);
         }
         
-        //Zero = No (but NOCOMMIT is part of the forbidden words list)
+        //Zero = No (but NO COMMIT is part of the forbidden words list)
         static void AssertZeroCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitSha").Should().BeNull();
