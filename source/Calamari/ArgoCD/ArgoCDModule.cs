@@ -1,4 +1,4 @@
-using Autofac;
+﻿using Autofac;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;

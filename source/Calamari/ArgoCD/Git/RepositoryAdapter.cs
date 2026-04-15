@@ -1,9 +1,7 @@
 using System;
-using System.Linq;
-using System.Threading;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
-using Calamari.Common.Plumbing.Logging;
+using Calamari.ArgoCD.Domain;
 
 namespace Calamari.ArgoCD.Git;
 
@@ -12,31 +10,25 @@ public class RepositoryAdapter
 {
     readonly AuthenticatingRepositoryFactory repositoryFactory;
     readonly RepositoryUpdater  repositoryUpdater;
-    readonly ICommitMessageGenerator commitMessageGenerator;
 
     public RepositoryAdapter(AuthenticatingRepositoryFactory repositoryFactory,
-                             ICommitMessageGenerator commitMessageGenerator,
                              RepositoryUpdater repositoryUpdater)
     {
         this.repositoryFactory = repositoryFactory;
-        this.commitMessageGenerator = commitMessageGenerator;
         this.repositoryUpdater = repositoryUpdater;
     }
 
-    public delegate FileUpdateResult RepositoryMutator(string workingDir);
-
-    // New generic overload — used by CommitToGitConvention and (after Task 3) ArgoCD callers
-    public RepositoryUpdates Process(string repoUrl, string targetRevision, RepositoryMutator mutator)
+    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
     {
-        using var repository = repositoryFactory.CloneRepository(repoUrl, targetRevision);
-        var result = mutator(repository.WorkingDirectory);
+        using var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision);
+        var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
         
-        if (result.HasChanges())
+        if (filesUpdated.HasChanges())
         {
-            var pushResult = repositoryUpdater.PushToRemote(repository, GitReference.CreateFromString(targetRevision), result);
-            return new RepositoryUpdates(result.UpdatedImages, pushResult, result.ReplacedFiles, result.PatchedFiles);
+            var pushResult = repositoryUpdater.PushToRemote(repository, GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision), filesUpdated);
+            return new SourceUpdateResult(filesUpdated.UpdatedImages, pushResult, filesUpdated.ReplacedFiles, filesUpdated.PatchedFiles);
         }
 
-        return new RepositoryUpdates([], null, result.ReplacedFiles, result.PatchedFiles);
+        return new SourceUpdateResult([], null, filesUpdated.ReplacedFiles, filesUpdated.PatchedFiles);
     }
 }
