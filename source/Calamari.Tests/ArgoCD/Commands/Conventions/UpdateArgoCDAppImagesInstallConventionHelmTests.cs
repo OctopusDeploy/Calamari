@@ -62,7 +62,7 @@ image:
                 log,
                 fileSystem,
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                new CommitMessageGenerator(),
+                new ImageTagUpdateCommitMessageGenerator(),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorPullRequestClientResolver>(),

@@ -20,13 +20,15 @@ public class ApplicationUpdater
     readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
     readonly IPackageRelativeFile[] packageFiles;
+    readonly ICommitMessageGenerator commitMessageGenerator;
     
 
     public ApplicationUpdater(AuthenticatingRepositoryFactory repositoryFactory, DeploymentScope deploymentScope, ArgoCommitToGitConfig deploymentConfig, ILog log,
                               ICalamariFileSystem fileSystem,
                               IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
                               ArgoCDOutputVariablesWriter outputVariablesWriter,
-                              IPackageRelativeFile[] packageFiles)
+                              IPackageRelativeFile[] packageFiles,
+                              ICommitMessageGenerator commitMessageGenerator)
     {
         this.repositoryFactory = repositoryFactory;
         this.deploymentScope = deploymentScope;
@@ -36,6 +38,7 @@ public class ApplicationUpdater
         this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
         this.outputVariablesWriter = outputVariablesWriter;
         this.packageFiles = packageFiles;
+        this.commitMessageGenerator = commitMessageGenerator;
     }
     
     public ProcessApplicationResult ProcessApplication(
@@ -53,7 +56,7 @@ public class ApplicationUpdater
         
         ValidateApplication(applicationFromYaml);
 
-        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, new CommitMessageGenerator());
+        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, commitMessageGenerator, new RepositoryUpdater(deploymentConfig.CommitParameters, log));
         var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml,
                                                          gateway,
                                                          deploymentScope,

@@ -82,6 +82,11 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
+        public void StageAllChanges()
+        {
+            LibGit2Sharp.Commands.Stage(repository, "*");
+        }
+
         static string NormalizePath(string path)
         {
             var normalized = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);

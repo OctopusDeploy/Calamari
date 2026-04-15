@@ -13,7 +13,7 @@ namespace Calamari.ArgoCD
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<DeploymentConfigFactory>().AsSelf().InstancePerLifetimeScope();
-            builder.RegisterType<CommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
+            builder.RegisterType<ImageTagUpdateCommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
             
             builder.RegisterAssemblyTypes(GetType().Assembly)
                    .AssignableTo<IGitVendorPullRequestClientFactory>()
