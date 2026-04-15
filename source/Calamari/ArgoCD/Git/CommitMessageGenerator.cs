@@ -2,27 +2,34 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Git
 {
     public interface ICommitMessageGenerator
     {
-        string GenerateDescription(HashSet<string> updatedImages, string? userDescription);
+        string GenerateDescription(FileUpdateResult result);
     }
-
-    public class CommitMessageGenerator : ICommitMessageGenerator
+    
+    public class ImageTagUpdateCommitMessageGenerator : ICommitMessageGenerator
     {
-        // TODO: This is a leaky abstraction - figure out how to remove
-        public string GenerateDescription(HashSet<string> updatedImages, string? userDescription)
-        {
-            var updatedImagesList = GenerateUpdatedImagesListCommitBody(updatedImages);
-            return string.IsNullOrEmpty(userDescription)
-                ? updatedImagesList
-                : $"{userDescription}\n\n{updatedImagesList}";
-        }
+        readonly string userDefinedCommitMessage;
 
-        string GenerateUpdatedImagesListCommitBody(HashSet<string> updatedImages)
+        public ImageTagUpdateCommitMessageGenerator(string userDefinedCommitMessage)
+        {
+            this.userDefinedCommitMessage = userDefinedCommitMessage;
+        }
+        public string GenerateDescription(FileUpdateResult result)
+        {
+            var updatedImagesList = GenerateUpdatedImagesListCommitBody(result.UpdatedImages);
+            return string.IsNullOrEmpty(userDefinedCommitMessage)
+                ? updatedImagesList
+                : $"{userDefinedCommitMessage}\n\n{updatedImagesList}";
+        }
+        
+        public static string GenerateUpdatedImagesListCommitBody(HashSet<string> updatedImages)
         {
             if (updatedImages.Any())
             {
@@ -33,6 +40,21 @@ namespace Calamari.ArgoCD.Git
             }
 
             return "---\nNo images updated";
+        }
+    }
+    
+    public class UserDefinedCommitMessageGenerator : ICommitMessageGenerator
+    {
+        readonly string userDefinedCommitMessage;
+
+        public UserDefinedCommitMessageGenerator(string userDefinedCommitMessage)
+        {
+            this.userDefinedCommitMessage = userDefinedCommitMessage;
+        }
+
+        public string GenerateDescription(FileUpdateResult result)
+        {
+            return userDefinedCommitMessage;
         }
     }
 }

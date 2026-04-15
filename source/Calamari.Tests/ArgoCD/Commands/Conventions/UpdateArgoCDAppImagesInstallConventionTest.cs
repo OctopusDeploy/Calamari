@@ -57,7 +57,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 log,
                 fileSystem,
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                new CommitMessageGenerator(),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorPullRequestClientResolver>(),
@@ -252,6 +251,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
 
+            using var resultRepo = new Repository(clonedRepoPath);
+            resultRepo.Head.Tip.Message.TrimEnd().Should().Contain("---\nImages updated:");
+            
             AssertOutputVariables();
         }
 

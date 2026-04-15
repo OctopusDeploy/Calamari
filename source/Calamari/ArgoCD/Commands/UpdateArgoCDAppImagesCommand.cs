@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
-using Calamari.ArgoCD.GitHub;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -25,21 +23,18 @@ namespace Calamari.ArgoCD.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly DeploymentConfigFactory configFactory;
         readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
-        readonly ICommitMessageGenerator commitMessageGenerator;
         string customPropertiesFile;
         string customPropertiesPassword;
 
         public UpdateArgoCDAppImagesCommand(ILog log,
                                             IVariables variables,
                                             ICalamariFileSystem fileSystem,
-                                            ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
                                             IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.commitMessageGenerator = commitMessageGenerator;
             this.configFactory = configFactory;
             this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             Options.Add("customPropertiesFile=",
@@ -61,7 +56,6 @@ namespace Calamari.ArgoCD.Commands
                 new UpdateArgoCDAppImagesInstallConvention(log,
                                                            fileSystem,
                                                            configFactory,
-                                                           commitMessageGenerator,
                                                            new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                            new ArgoCdApplicationManifestParser(),
                                                            gitVendorPullRequestClientResolver,
