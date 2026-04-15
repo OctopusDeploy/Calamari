@@ -13,12 +13,10 @@ namespace Calamari.Tests.ArgoCD.Git
     [TestFixture]
     public class ImageTagUpdateCommitMessageGeneratorTests
     {
-        
-
         [Test]
         public void SummaryWithNoImages_SummaryAndNoImage()
         {
-            var imageTagUpdateCommitMessageGenerator = new ImageTagUpdateCommitMessageGenerator("foo");
+            var imageTagUpdateCommitMessageGenerator = new ImageTagUpdateCommitMessageGenerator("Foo");
             var result = imageTagUpdateCommitMessageGenerator.GenerateDescription(CreateFileUpdateResult(new HashSet<string>()));
             var expected = @"Foo
 
@@ -30,7 +28,7 @@ No images updated".ReplaceLineEndings("\n");
         [Test]
         public void SummaryWithOneImage_SummaryAndImage()
         {
-            var imageTagUpdateCommitMessageGenerator = new ImageTagUpdateCommitMessageGenerator("foo");
+            var imageTagUpdateCommitMessageGenerator = new ImageTagUpdateCommitMessageGenerator("Foo");
             var result = imageTagUpdateCommitMessageGenerator.GenerateDescription( CreateFileUpdateResult(new HashSet<string>() { "nginx" }));
 
             var expected = @"Foo
@@ -44,7 +42,7 @@ Images updated:
         [Test]
         public void SummaryWithThreeImages_SummaryAndImagesSorted()
         {
-            var imageTagUpdateCommitMessageGenerator = new ImageTagUpdateCommitMessageGenerator("foo");
+            var imageTagUpdateCommitMessageGenerator = new ImageTagUpdateCommitMessageGenerator("Foo");
             var result = imageTagUpdateCommitMessageGenerator.GenerateDescription(CreateFileUpdateResult(new HashSet<string>() {"nginx", "alpine", "ubuntu"}));
 
             var expected = @"Foo

@@ -5,7 +5,6 @@ using Calamari.ArgoCD.Domain;
 
 namespace Calamari.ArgoCD.Git;
 
-
 public class RepositoryAdapter
 {
     readonly AuthenticatingRepositoryFactory repositoryFactory;
