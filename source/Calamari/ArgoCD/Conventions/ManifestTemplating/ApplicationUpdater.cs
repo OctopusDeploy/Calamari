@@ -18,6 +18,7 @@ public class ApplicationUpdater
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
     readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
+    readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
     readonly IPackageRelativeFile[] packageFiles;
     
@@ -26,7 +27,8 @@ public class ApplicationUpdater
                               ICalamariFileSystem fileSystem,
                               IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
                               ArgoCDOutputVariablesWriter outputVariablesWriter,
-                              IPackageRelativeFile[] packageFiles)
+                              IPackageRelativeFile[] packageFiles,
+                              ICommitMessageGenerator commitMessageGenerator)
     {
         this.repositoryFactory = repositoryFactory;
         this.deploymentScope = deploymentScope;
@@ -36,6 +38,7 @@ public class ApplicationUpdater
         this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
         this.outputVariablesWriter = outputVariablesWriter;
         this.packageFiles = packageFiles;
+        this.commitMessageGenerator = commitMessageGenerator;
     }
     
     public ProcessApplicationResult ProcessApplication(
@@ -53,7 +56,7 @@ public class ApplicationUpdater
         
         ValidateApplication(applicationFromYaml);
 
-        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, new CommitMessageGenerator());
+        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, commitMessageGenerator);
         var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml,
                                                          gateway,
                                                          deploymentScope,

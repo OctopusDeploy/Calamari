@@ -158,6 +158,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             fileSystem.FileExists(Path.Combine(resultPath, thirdFilename)).Should().BeTrue();
             fileSystem.FileExists(Path.Combine(resultPath, fourthFilename)).Should().BeTrue();
 
+            using var resultRepo = new Repository(resultPath);
+            resultRepo.Head.Tip.Message.TrimEnd().Should().Be(nonSensitiveCalamariVariables[SpecialVariables.Git.CommitMessageSummary]);
+
             AssertOutputVariables();
         }
 
