@@ -25,7 +25,6 @@ namespace Calamari.ArgoCD.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly DeploymentConfigFactory configFactory;
         readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
-        readonly ICommitMessageGenerator commitMessageGenerator;
         string customPropertiesFile;
         string customPropertiesPassword;
 
@@ -39,7 +38,6 @@ namespace Calamari.ArgoCD.Commands
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.commitMessageGenerator = commitMessageGenerator;
             this.configFactory = configFactory;
             this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             Options.Add("customPropertiesFile=",
@@ -61,7 +59,6 @@ namespace Calamari.ArgoCD.Commands
                 new UpdateArgoCDAppImagesInstallConvention(log,
                                                            fileSystem,
                                                            configFactory,
-                                                           commitMessageGenerator,
                                                            new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                            new ArgoCdApplicationManifestParser(),
                                                            gitVendorPullRequestClientResolver,
