@@ -100,7 +100,7 @@ public abstract class BaseUpdater : ISourceUpdater
     /// Running the image replacer on this temporary content produces the correct content, and the diff
     /// between the two gives a meaningful patch that only targets the specific image tag fields.
     /// </summary>
-    protected static string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
+    protected virtual string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
     {
         var temporaryBefore = content;
         foreach (var imageRef in targetedImages)
