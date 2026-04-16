@@ -142,6 +142,31 @@ public class BicepToArmParameterMapperFixture
     }
 
     [Test]
+    public void Map_WithLowercaseKeyValueProperties_ReturnsParameterString()
+    {
+      var lowercaseParameters = """
+                                [{"key":"storageAccountName","value":"teststorageaccount"},{"key":"location","value":"Australia South East"},{"key":"myStuff","value":"testvalue"}]
+                                """;
+      var expectedParameterString = """
+                                    {
+                                      "storageAccountName": {
+                                        "value": "teststorageaccount"
+                                      },
+                                      "location": {
+                                        "value": "Australia South East"
+                                      },
+                                      "myStuff": {
+                                        "value": "testvalue"
+                                      }
+                                    }
+                                    """.ReplaceLineEndings();
+
+      var result = BicepToArmParameterMapper.Map(lowercaseParameters, SimpleArmTemplate, variables).ReplaceLineEndings();
+
+      Assert.That(result.ToJson(), Is.EqualTo(expectedParameterString.ToJson()));
+    }
+
+    [Test]
     public void Map_WithOctopusVariableDefinedWithNonDelimitedJsonObject_IsResolvedInParametersStringWithProperDelimiting()
     {
       variables.Add("Octopus.TestValue",
