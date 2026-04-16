@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Calamari.ArgoCD.Git;
 
@@ -26,8 +27,14 @@ public static class GitCloneSafeUrl
     /// <returns>A URI that, if is SSH, is well formed<see cref="Uri"/> object</returns>
     public static Uri FromString(string uri)
     {
+        var validProtocols = new[] { "http://", "https://", "oci://" };
         if (!uri.StartsWith(StandardSshScpPrefix))
         {
+            // argo does not (always?) add a protocol to helm chart sources.
+            if (!validProtocols.Any(prefix => uri.StartsWith(prefix)))
+            {
+                uri = $"oci://{uri}";
+            }
             return new Uri(uri);
         }
 
