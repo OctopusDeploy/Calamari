@@ -1038,11 +1038,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().BeNull("no commit was made");
-            // The placeholder-substitution technique locates the tag value in the YAML and produces a patch entry,
-            // but because the before/after content is identical the resulting patch has zero operations.
             sourceDetails.PatchedFiles.Should().HaveCount(1);
             sourceDetails.PatchedFiles.Single().FilePath.Should().Be("kustomization.yaml");
-            sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be("[]");
+            sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(("/0/images/0/newTag", "1.27.1")));
         }
 
         [Test]
