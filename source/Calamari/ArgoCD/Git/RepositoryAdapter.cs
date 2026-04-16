@@ -58,8 +58,8 @@ public class RepositoryAdapter
         FileUpdateResult result)
     {
         log.Info("Staging files in repository");
-        repository.AddFiles(result.ReplacedFiles.Select(f => f.FilePath).Concat(result.PatchedFiles.Select(f => f.FilePath)).Distinct().ToArray());
         repository.RemoveFiles(result.FilesRemoved ?? []);
+        repository.AddFiles(result.ReplacedFiles.Select(f => f.FilePath).Concat(result.PatchedFiles.Select(f => f.FilePath)).Distinct().ToArray());
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result);
 
