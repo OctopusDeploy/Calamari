@@ -43,6 +43,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string RepoUrl => OriginPath;
+        string OriginUrl => RepositoryHelpers.ToFileUri(OriginPath);
         Repository originRepo;
 
         const string ArgoCDBranchFriendlyName = "devBranch";
@@ -73,7 +74,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                         "http://my-argo.com")
                 ],
                 [
-                    new GitCredentialDto(new Uri(RepoUrl).AbsoluteUri, "", "")
+                    new GitCredentialDto(OriginUrl, "", "")
                 ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
@@ -86,7 +87,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = $"file://{RepoUrl}",
+                                                    OriginalRepoUrl = OriginUrl,
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -238,7 +239,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource()
                                               {
-                                                  OriginalRepoUrl = $"file://{RepoUrl}",
+                                                  OriginalRepoUrl = OriginUrl,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -318,7 +319,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                   Name = "refSourceName",
                                                   Ref = "values",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = $"file://{RepoUrl}",
+                                                  OriginalRepoUrl = OriginUrl,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -388,7 +389,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                   Ref = "valuesFiles",
                                                   Path = "otherPath/values1.yaml", //this should cause an error
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = $"file://{RepoUrl}",
+                                                  OriginalRepoUrl = OriginUrl,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -524,7 +525,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource()
                                           {
-                                              OriginalRepoUrl = $"file://{RepoUrl}",
+                                              OriginalRepoUrl = OriginUrl,
                                               Path = "",
                                               TargetRevision = ArgoCDBranchFriendlyName,
                                               Helm = new HelmConfig()
@@ -567,7 +568,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                         {
-                                                            OriginalRepoUrl = $"file://{RepoUrl}",
+                                                            OriginalRepoUrl = OriginUrl,
                                                             Path = Path.Combine("this", "will", "be", "overriden"),
                                                             TargetRevision = ArgoCDBranchFriendlyName,
                                                         },
@@ -610,7 +611,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
-            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? $"file://{RepoUrl}" : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginUrl : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("1");
