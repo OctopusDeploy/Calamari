@@ -14,13 +14,43 @@ namespace Calamari.Tests.ArgoCD
     [TestFixture]
     public class ArgoCDFilesUpdatedReporterTests
     {
-        GitCommitParameters gitParams = new(string.Empty, string.Empty, false);
+        readonly GitCommitParameters gitParams = new(string.Empty, string.Empty, false);
+        
+        [Test]
+        public void ReportDeployments_WhenGitParamsRequirePullRequest_WritesNoServiceMessages()
+        {
+            var log = new InMemoryLog();
+            var prGitParams = new GitCommitParameters(string.Empty, string.Empty, true);
+            var timestamp = DateTimeOffset.UtcNow;
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
+            
+            var applicationResults = new List<ProcessApplicationResult>
+            {
+                new("gateway1",
+                    new ApplicationName("app1"),
+                    2,
+                    2,
+                    [
+                        new TrackedSourceDetail("abc123",
+                                                timestamp,
+                                                0,
+                                                [],
+                                                [])
+                    ],
+                    [],
+                    [])
+            };
+
+            reporter.ReportFilesUpdated(prGitParams, applicationResults);
+
+            var messages = log.ServiceMessages;
+            messages.Should().BeEmpty();
+        }
 
         [Test]
         public void ReportDeployments_WithNoUpdatedApplications_WritesNoServiceMessages()
         {
             var log = new InMemoryLog();
-            var gitParams = new GitCommitParameters(string.Empty, string.Empty, false);
             var reporter = new ArgoCDFilesUpdatedReporter(log);
 
             var applicationResults = new List<ProcessApplicationResult>
