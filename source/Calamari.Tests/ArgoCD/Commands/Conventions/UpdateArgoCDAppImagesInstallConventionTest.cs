@@ -533,8 +533,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().BeNull("no commit was made");
-            sourceDetails.PatchedFiles.Should().HaveCount(1, "a patch should be generated even when no commit is needed");
-            sourceDetails.PatchedFiles.First().FilePath.Should().Be(yamlFilename);
+            sourceDetails.PatchedFiles.Should()
+                         .BeEquivalentTo([
+                             new FileJsonPatch(yamlFilename, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                         ]);
         }
 
         [TestCase(false, TestName = "DirectorySource_SameImage_OneOutdated_OneUpToDate_SameFile")]
@@ -585,26 +587,26 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             if (useSeparateFiles)
             {
                 // Each file is processed independently — one patch entry per file, one operation each.
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, singleContainerPatch),
+                                 new FileJsonPatch(file2, singleContainerPatch),
+                             ]);
             }
             else
             {
                 // Both containers are in one file — one patch entry with two replace operations.
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1"))),
+                             ]);
             }
         }
 
@@ -661,22 +663,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             if (useSeparateFiles)
             {
                 // Each file is processed independently — one patch entry per file, one operation each.
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1")));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                                 new FileJsonPatch(file2, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0"))),
+                             ]);
             }
             else
             {
                 // Both containers are in one file — one patch entry with two replace operations.
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "redis:7.0"))),
+                             ]);
             }
         }
 
@@ -727,24 +728,24 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, singleContainerPatch),
+                                 new FileJsonPatch(file2, singleContainerPatch),
+                             ]);
             }
             else
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1"))),
+                             ]);
             }
         }
 
@@ -799,21 +800,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1")));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                                 new FileJsonPatch(file2, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0"))),
+                             ]);
             }
             else
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "redis:7.0"))),
+                             ]);
             }
         }
 
@@ -865,26 +865,26 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             sourceDetails.CommitSha.Should().BeNull();
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, singleContainerPatch),
+                                 new FileJsonPatch(file2, singleContainerPatch),
+                             ]);
             }
             else
             {
                 // AlreadyUpToDateImages = {"nginx:1.27.1"} — both occurrences get the placeholder,
                 // producing two replace operations in the no-op patch.
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1"))),
+                             ]);
             }
         }
 
@@ -940,21 +940,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1")));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                                 new FileJsonPatch(file2, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0"))),
+                             ]);
             }
             else
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "redis:7.0"))),
+                             ]);
             }
         }
 
@@ -1038,9 +1037,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().BeNull("no commit was made");
-            sourceDetails.PatchedFiles.Should().HaveCount(1);
-            sourceDetails.PatchedFiles.Single().FilePath.Should().Be("kustomization.yaml");
-            sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(("/0/images/0/newTag", "1.27.1")));
+            sourceDetails.PatchedFiles.Should()
+                         .BeEquivalentTo([
+                             new FileJsonPatch("kustomization.yaml", SerializeReplacePatch(("/0/images/0/newTag", "1.27.1"))),
+                         ]);
         }
 
         [Test]
@@ -1085,15 +1085,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
             actual.TrackedSourceDetails.Should().HaveCount(2, "both sources should be tracked regardless of whether they made a commit");
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             var source0 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 0);
             source0.CommitSha.Should().HaveLength(40, "source 0 had an outdated image and was committed");
-            source0.PatchedFiles.Should().HaveCount(1);
-            source0.PatchedFiles.Single().FilePath.Should().Be(file0);
+            source0.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file0, singleContainerPatch),
+                   ]);
 
             var source1 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 1);
             source1.CommitSha.Should().BeNull("source 1 was already at the target tag so no commit was made");
-            source1.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated for source 1");
-            source1.PatchedFiles.Single().FilePath.Should().Be(file1);
+            source1.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file1, singleContainerPatch),
+                   ]);
         }
 
         [Test]
@@ -1139,15 +1145,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.UpdatedImages.Should().BeEmpty();
             actual.TrackedSourceDetails.Should().HaveCount(2, "both in-scope sources should be tracked regardless of commit status");
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             var source0 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 0);
             source0.CommitSha.Should().BeNull("source 0 was already at the target tag");
-            source0.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated");
-            source0.PatchedFiles.Single().FilePath.Should().Be(file0);
+            source0.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file0, singleContainerPatch),
+                   ]);
 
             var source1 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 1);
             source1.CommitSha.Should().BeNull("source 1 was already at the target tag");
-            source1.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated");
-            source1.PatchedFiles.Single().FilePath.Should().Be(file1);
+            source1.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file1, singleContainerPatch),
+                   ]);
         }
 
         [Test]
