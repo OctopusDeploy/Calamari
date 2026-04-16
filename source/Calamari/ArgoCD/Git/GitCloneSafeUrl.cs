@@ -31,11 +31,11 @@ public static class GitCloneSafeUrl
     /// </remarks>
     public static Uri FromString(string uri)
     {
-        var validProtocols = new[] { "http://", "https://", "oci://" };
+        var me = Uri.SchemeDelimiter;
         if (!uri.StartsWith(StandardSshScpPrefix))
         {
             // argo does not (always?) add a protocol to helm chart sources.
-            if (!validProtocols.Any(prefix => uri.StartsWith(prefix)))
+            if (!uri.Contains(Uri.SchemeDelimiter))
             {
                 uri = $"oci://{uri}";
             }
