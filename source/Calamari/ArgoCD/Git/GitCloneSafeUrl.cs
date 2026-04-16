@@ -25,6 +25,10 @@ public static class GitCloneSafeUrl
     /// </summary>
     /// <param name="uri">A, potentially invalid <see cref="Uri"/> object</param>
     /// <returns>A URI that, if is SSH, is well formed<see cref="Uri"/> object</returns>
+    /// <remarks>
+    /// This is invoked during yaml deserialisation, and may be applied to repoURLs which will never actually be cloned
+    /// during step execution (eg sources which have not been scoped to the step).
+    /// </remarks>
     public static Uri FromString(string uri)
     {
         var validProtocols = new[] { "http://", "https://", "oci://" };
