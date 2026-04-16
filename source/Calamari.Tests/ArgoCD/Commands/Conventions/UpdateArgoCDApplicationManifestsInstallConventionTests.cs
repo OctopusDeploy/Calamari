@@ -86,7 +86,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = RepoUrl,
+                                                    OriginalRepoUrl = $"file://{RepoUrl}",
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -238,7 +238,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource()
                                               {
-                                                  OriginalRepoUrl = RepoUrl,
+                                                  OriginalRepoUrl = $"file://{RepoUrl}",
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -318,7 +318,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                   Name = "refSourceName",
                                                   Ref = "values",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = RepoUrl,
+                                                  OriginalRepoUrl = $"file://{RepoUrl}",
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -388,7 +388,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                   Ref = "valuesFiles",
                                                   Path = "otherPath/values1.yaml", //this should cause an error
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = RepoUrl,
+                                                  OriginalRepoUrl = $"file://{RepoUrl}",
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -524,7 +524,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource()
                                           {
-                                              OriginalRepoUrl = RepoUrl,
+                                              OriginalRepoUrl = $"file://{RepoUrl}",
                                               Path = "",
                                               TargetRevision = ArgoCDBranchFriendlyName,
                                               Helm = new HelmConfig()
@@ -567,7 +567,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                         {
-                                                            OriginalRepoUrl = RepoUrl,
+                                                            OriginalRepoUrl = $"file://{RepoUrl}",
                                                             Path = Path.Combine("this", "will", "be", "overriden"),
                                                             TargetRevision = ArgoCDBranchFriendlyName,
                                                         },
@@ -610,7 +610,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
-            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? RepoUrl : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? $"file://{RepoUrl}" : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("1");
