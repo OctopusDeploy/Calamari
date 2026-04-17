@@ -41,12 +41,12 @@ public class HelmContainerImageReplacer : IContainerImageReplacer
             {
                 if (valueToUpdate == newImageTag.ContainerReference.Tag)
                 {
-                    alreadyUpToDate.Add(newImageTag.ContainerReference.Tag);
+                    alreadyUpToDate.Add(newImageTag.ContainerReference.FriendlyName());
                 }
                 else
                 {
                     updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newImageTag.ContainerReference.Tag);
-                    imagesUpdated.Add(newImageTag.ContainerReference.Tag);
+                    imagesUpdated.Add(newImageTag.ContainerReference.FriendlyName());
                 }
             }
             else
