@@ -605,6 +605,45 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             resultFirstContent.Should().Be(firstFilename);
         }
 
+        [Test]
+        public void PurgeDoesNotRemoveFilesThatExistInBothRepoAndTemplates()
+        {
+            // Arrange
+            const string sharedFilename = "shared.yaml";
+            CreateFileUnderPackageDirectory(sharedFilename);
+
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [SpecialVariables.Git.PurgeOutput] = "True",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+
+            // Add the same file to the origin repo
+            originRepo.AddFilesToBranch(argoCDBranchName, (sharedFilename, "original content"));
+
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+
+            // Act
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
+            convention.Install(runningDeployment);
+
+            // Assert - the file from the package should survive the purge and be present in the repo
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            File.Exists(Path.Combine(resultPath, sharedFilename)).Should().BeTrue();
+
+            AssertOutputVariables();
+        }
+
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
         {
             using var _ = new AssertionScope();
