@@ -9,7 +9,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-public class RefUpdater : BaseHelmUpdater
+public class RefUpdater : AbstractHelmUpdater
 {
     readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;

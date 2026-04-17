@@ -11,7 +11,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-public class HelmUpdater : BaseHelmUpdater
+public class HelmUpdater : AbstractHelmUpdater
 {
     readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;

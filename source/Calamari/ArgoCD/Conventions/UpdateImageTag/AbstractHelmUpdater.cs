@@ -11,14 +11,14 @@ using Calamari.Kubernetes.Patching.JsonPatch;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-public abstract class BaseHelmUpdater : ISourceUpdater
+public abstract class AbstractHelmUpdater : ISourceUpdater
 {
     protected readonly ILog log;
     protected readonly ICalamariFileSystem fileSystem;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
 
-    protected BaseHelmUpdater(ILog log,
+    protected AbstractHelmUpdater(ILog log,
                               ICalamariFileSystem fileSystem,
                               UpdateArgoCDAppDeploymentConfig deploymentConfig,
                               string defaultRegistry)
