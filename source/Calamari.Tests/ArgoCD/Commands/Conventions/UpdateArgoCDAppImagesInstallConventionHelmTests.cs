@@ -1522,7 +1522,7 @@ image:
             updater.Install(runningDeployment);
 
             // Assert
-            AssertNoCommitWithExpectedPatch(getCapturedResults,
+            AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/image/tag",
                 expectedPatchValue: "1.27.1",
                 expectedPatchedFilePath: "./otherRepoPath/values.yaml");
@@ -1554,7 +1554,7 @@ image:
             updater.Install(runningDeployment);
 
             // Assert
-            AssertNoCommitWithExpectedPatch(getCapturedResults,
+            AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/image/tag",
                 expectedPatchValue: "1.27.1",
                 expectedPatchedFilePath: "otherRepoPath/values.yaml");
@@ -1697,7 +1697,7 @@ image:
             updater.Install(runningDeployment);
 
             // Assert
-            AssertNoCommitWithExpectedPatch(getCapturedResults,
+            AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/image/name",
                 expectedPatchValue: "nginx:1.27.1",
                 expectedPatchedFilePath: Path.Combine("files", "values.yml"));
@@ -1726,7 +1726,7 @@ image:
             updater.Install(runningDeployment);
 
             // Assert
-            AssertNoCommitWithExpectedPatch(getCapturedResults,
+            AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/image/tag",
                 expectedPatchValue: "1.27.1",
                 expectedPatchedFilePath: Path.Combine("files", "values.yml"));
@@ -1756,7 +1756,7 @@ image:
             updater.Install(runningDeployment);
 
             // Assert
-            AssertNoCommitWithExpectedPatch(getCapturedResults,
+            AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/image/tag",
                 expectedPatchValue: "1.27.1",
                 expectedPatchedFilePath: Path.Combine("files", "values.yml"));
@@ -1787,7 +1787,7 @@ redis:
             updater.Install(runningDeployment);
 
             // Assert — patch should only target nginx.tag, not redis.tag
-            AssertNoCommitWithExpectedPatch(getCapturedResults,
+            AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/nginx/tag",
                 expectedPatchValue: "1.27.1",
                 expectedPatchedFilePath: Path.Combine("files", "values.yml"));
@@ -1850,7 +1850,7 @@ redis:
             return (updater, runningDeployment, () => capturedResults);
         }
 
-        void AssertNoCommitWithExpectedPatch(
+        void AssertNotUpdatedWithExpectedPatch(
             Func<IReadOnlyList<ProcessApplicationResult>> getCapturedResults,
             string expectedPatchPointer,
             string expectedPatchValue,
