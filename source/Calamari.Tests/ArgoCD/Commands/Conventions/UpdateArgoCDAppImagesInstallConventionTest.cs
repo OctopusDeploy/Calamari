@@ -310,7 +310,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
 
             var committedContent = fileSystem.ReadFile(Path.Combine(clonedRepoPath, yamlFilename));
-            committedContent.Should().NotContain(":__CALAMARI_PLACEHOLDER__",
+            committedContent.Should().NotContain("__CALAMARI_PLACEHOLDER__",
                 "the internal placeholder used for JSON-patch generation must never be written to the repository");
 
             using var resultRepo = new Repository(clonedRepoPath);
