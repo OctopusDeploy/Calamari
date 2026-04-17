@@ -1,0 +1,27 @@
+source/Calamari/ArgoCD/HelmValuesImageReplaceStepVariables.cs
+  75abd7777830689a 4,8
+source/Calamari/ArgoCD/Helm/HelmAnnotationToReferenceConverter.cs
+  75abd7777830689a 27
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/AbstractHelmUpdater.cs
+  75abd7777830689a 105,135,140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "002cad1d7a3ee60f3ee4af43e256ac7848f5aa70",
+  "prompts": {
+    "75abd7777830689a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7238d6ef-3312-464c-aac4-ea64d571c4dc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 16,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    }
+  }
+}
