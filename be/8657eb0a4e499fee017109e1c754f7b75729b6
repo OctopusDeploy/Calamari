@@ -1,0 +1,25 @@
+source/Calamari.Tests/ArgoCD/Helm/HelmAnnotationToReferenceConverterTests.cs
+  75abd7777830689a 1-112
+source/Calamari.Tests/ArgoCD/Helm/HelmContainerImageReplacerTests.cs
+  75abd7777830689a 1-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "be8657eb0a4e499fee017109e1c754f7b75729b6",
+  "prompts": {
+    "75abd7777830689a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7238d6ef-3312-464c-aac4-ea64d571c4dc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 294,
+      "total_deletions": 3,
+      "accepted_lines": 320,
+      "overriden_lines": 0
+    }
+  }
+}
