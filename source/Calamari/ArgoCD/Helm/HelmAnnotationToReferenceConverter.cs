@@ -24,7 +24,7 @@ public class HelmAnnotationToReferenceConverter
     /// <summary>
     /// Resolves annotation templates against the given YAML content and matches them to
     /// the incoming images. Returns image references with HelmReference set to the resolved
-    /// YAML dot-notation path, suitable for use with HelmContainerImageReplacer.
+    /// YAML dot-notation path, suitable for use with HelmValuesImageReplaceStepVariables.
     /// </summary>
     public IReadOnlyCollection<ContainerImageReferenceAndHelmReference> Resolve(
         string yamlContent,

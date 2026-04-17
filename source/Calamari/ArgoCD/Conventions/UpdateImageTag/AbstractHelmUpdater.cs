@@ -102,7 +102,7 @@ public abstract class AbstractHelmUpdater : ISourceUpdater
     {
         log.Info($"Processing file at {filepath}.");
 
-        var replacer = new HelmContainerImageReplacer(fileContent, defaultRegistry, log);
+        var replacer = new HelmValuesImageReplaceStepVariables(fileContent, defaultRegistry, log);
         var result = replacer.UpdateImages(imageReferences);
 
         if (result.UpdatedImageReferences.Count > 0)
@@ -128,12 +128,12 @@ public abstract class AbstractHelmUpdater : ISourceUpdater
             })
             .ToList();
 
-        var placeholderResult = new HelmContainerImageReplacer(content, defaultRegistry, log).UpdateImages(placeholderImages);
+        var placeholderResult = new HelmValuesImageReplaceStepVariables(content, defaultRegistry, log).UpdateImages(placeholderImages);
         if (placeholderResult.UpdatedImageReferences.Count == 0)
             return null;
 
         var temporaryBefore = placeholderResult.UpdatedContents;
-        var actualResult = new HelmContainerImageReplacer(temporaryBefore, defaultRegistry, log).UpdateImages(imageReferences);
+        var actualResult = new HelmValuesImageReplaceStepVariables(temporaryBefore, defaultRegistry, log).UpdateImages(imageReferences);
 
         return actualResult.UpdatedImageReferences.Count > 0
             ? JsonPatchUtils.CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)

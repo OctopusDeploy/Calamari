@@ -1,18 +1,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.ArgoCD.Helm;
+namespace Calamari.ArgoCD;
 
-public class HelmContainerImageReplacer : IContainerImageReplacer
+public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
 {
     readonly string yamlContent;
     readonly string defaultRegistry;
     readonly ILog log;
 
-    public HelmContainerImageReplacer(string yamlContent, string defaultRegistry, ILog log)
+    public HelmValuesImageReplaceStepVariables(string yamlContent, string defaultRegistry, ILog log)
     {
         this.yamlContent = yamlContent;
         this.defaultRegistry = defaultRegistry;
