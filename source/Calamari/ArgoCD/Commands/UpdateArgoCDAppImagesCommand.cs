@@ -61,7 +61,7 @@ namespace Calamari.ArgoCD.Commands
                                                            gitVendorPullRequestClientResolver,
                                                            clock,
                                                            new ArgoCDFilesUpdatedReporter(log),
-                                                           new ArgoCDOutputVariablesWriter(log, variables)),
+                                                           new ArgoCDOutputVariablesWriter(log)),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);

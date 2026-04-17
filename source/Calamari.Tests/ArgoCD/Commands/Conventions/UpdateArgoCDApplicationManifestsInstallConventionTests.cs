@@ -116,7 +116,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 Substitute.For<IGitVendorPullRequestClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
-                new ArgoCDOutputVariablesWriter(log, variables));
+                new ArgoCDOutputVariablesWriter(log));
         }
 
         [Test]
@@ -430,7 +430,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = WorkingDirectory;
 
             IReadOnlyList<ProcessApplicationResult> capturedResults = null;
-            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+            deploymentReporter.ReportFilesUpdated(Arg.Any<GitCommitParameters>(), Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
 
             var convention = CreateConvention(nonSensitiveCalamariVariables);
             convention.Install(runningDeployment);
@@ -477,7 +477,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             // Install again with the same files — this is the no-op case
             IReadOnlyList<ProcessApplicationResult> capturedResults = null;
             deploymentReporter = Substitute.For<IArgoCDFilesUpdatedReporter>();
-            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+            deploymentReporter.ReportFilesUpdated(Arg.Any<GitCommitParameters>(), Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
 
             var noOpConvention = CreateConvention(nonSensitiveCalamariVariables);
             noOpConvention.Install(runningDeployment);
