@@ -40,18 +40,15 @@ public class HelmUpdater : AbstractHelmUpdater
     protected override IReadOnlyCollection<HelmValuesFileTarget> GetStepVariableFileTargets(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
     {
         var extractor = new HelmValuesFileExtractor(applicationFromYaml);
-        var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
+        var relativePaths = new HashSet<string>(extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata));
 
-        var filesToUpdate = valuesFilesInHelmSource.Select(file => Path.Combine(workingDirectory, file)).ToList();
         var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, Path.Combine(workingDirectory, sourceWithMetadata.Source.Path!));
         if (implicitValuesFile != null)
         {
-            implicitValuesFile = Path.Combine(workingDirectory, sourceWithMetadata.Source.Path!, implicitValuesFile);
-            filesToUpdate.Add(implicitValuesFile);
+            relativePaths.Add(Path.Combine(sourceWithMetadata.Source.Path!, implicitValuesFile));
         }
 
-        filesToUpdate = filesToUpdate.Select(file => Path.Combine(workingDirectory, file)).ToList();
-        return filesToUpdate.Select(f => new HelmValuesFileTarget(Path.GetRelativePath(workingDirectory, f))).ToList();
+        return relativePaths.Select(f => new HelmValuesFileTarget(f)).ToList();
     }
 
     protected override (IReadOnlyCollection<HelmValuesFileTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetAnnotationFileTargets(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
