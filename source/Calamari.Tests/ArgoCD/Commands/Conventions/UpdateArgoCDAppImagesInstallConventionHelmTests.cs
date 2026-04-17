@@ -1702,7 +1702,7 @@ image:
             sourceDetails.CommitSha.Should().BeNull("no commit was made");
 
             var expectedPatch = new JsonPatchDocument([
-                JsonPatchOperation.Replace(new JsonPointer("/0/image/name"), "nginx:1.27.1"),
+                JsonPatchOperation.Replace(new JsonPointer("/0/image/tag"), "1.27.1"),
             ]);
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
