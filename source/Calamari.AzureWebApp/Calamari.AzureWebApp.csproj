@@ -63,8 +63,7 @@
   </Target>
 
   <!-- Extract dotnet-script zip files to support C# script execution -->
-  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
-  <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
+  <Target Name="GetToolFiles">
     <ItemGroup>
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
     </ItemGroup>

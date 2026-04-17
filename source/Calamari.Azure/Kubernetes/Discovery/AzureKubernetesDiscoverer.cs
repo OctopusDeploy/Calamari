@@ -44,7 +44,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
             var discoveredClusters = new List<KubernetesCluster>();
 
             // There appears to be an issue where the azure client returns stale data
-            // We need to upgrade this to use the newer SDK, but we need to upgrade to .NET 4.6.2 to support that.
+            // TODO: Upgrade from Microsoft.Azure.Management.Fluent to Azure.ResourceManager SDK
             var resourceGroups = azureClient.ResourceGroups.List();
             //we don't care about resource groups that are being deleted 
             foreach (var resourceGroup in resourceGroups.Where(rg => rg.ProvisioningState != "Deleting"))

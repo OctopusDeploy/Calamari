@@ -153,7 +153,7 @@ namespace Calamari.Terraform.Tests
                                                              .FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
                         Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
 
-                        AddExecutePermission(customTerraformExecutable!);
+                        ExecutableHelper.AddExecutePermission(customTerraformExecutable!);
                         break;
                     }
                     catch
@@ -863,21 +863,5 @@ output ""config-map-aws-auth"" {{
             }
         }
 
-        //TODO: This is ported over from the ExecutableHelper in Sashimi.Tests.Shared. This project doesn't have a valid nuget package for net452
-        static void AddExecutePermission(string exePath)
-        {
-            if (CalamariEnvironment.IsRunningOnWindows)
-                return;
-            StringBuilder stdOut = new StringBuilder();
-            StringBuilder stdError = new StringBuilder();
-            if (SilentProcessRunner.ExecuteCommand("chmod",
-                                                   "+x " + exePath,
-                                                   Path.GetDirectoryName(exePath) ?? string.Empty,
-                                                   (Action<string>)(s => stdOut.AppendLine(s)),
-                                                   (Action<string>)(s => stdError.AppendLine(s)))
-                                   .ExitCode
-                != 0)
-                throw new Exception(stdOut.ToString() + stdError?.ToString());
-        }
     }
 }

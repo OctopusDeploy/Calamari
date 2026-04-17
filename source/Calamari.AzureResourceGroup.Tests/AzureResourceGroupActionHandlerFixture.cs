@@ -18,8 +18,6 @@ using Calamari.Testing.Requirements;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
-// ReSharper disable MethodHasAsyncOverload - File.ReadAllTextAsync does not exist for .net framework targets
-
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
@@ -138,8 +136,8 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
-            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
-            var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
+            var templateFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_template.json"));
+            var paramsFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
 
             await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
@@ -148,7 +146,7 @@ namespace Calamari.AzureResourceGroup.Tests
                                                      AddDefaults(context);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
                                                      context.Variables.Add("Octopus.Action.Azure.TemplateSource", "Inline");
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json")));
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, templateFileContent);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, parameters);
 
                                                      context.WithFilesToCopy(packagePath);
@@ -164,8 +162,8 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
-            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
-            var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
+            var templateFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_template.json"));
+            var paramsFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
             const string psScript = @"
 $ErrorActionPreference = 'Continue'
@@ -179,7 +177,7 @@ az group list";
                                                      AddDefaults(context);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
                                                      context.Variables.Add("Octopus.Action.Azure.TemplateSource", "Inline");
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json")));
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, templateFileContent);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, parameters);
                                                      context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
                                                      context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), psScript);

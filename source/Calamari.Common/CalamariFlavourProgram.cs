@@ -41,7 +41,6 @@ namespace Calamari.Common
             {
                 AppDomainConfiguration.SetDefaultRegexMatchTimeout();
 
-                SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
                 log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
