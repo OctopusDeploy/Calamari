@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,11 +31,6 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
     }
 
-    protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages)
-    {
-        return CreateJsonPatchWithPlaceholders(content, deploymentConfig.ImageReferences);
-    }
-
     /// <summary>
     /// Processes helm values files using annotation-based image replacement paths.
     /// Converts annotation templates into HelmReference entries, then uses the same
@@ -54,35 +48,62 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         {
             var filepath = Path.Combine(workingDirectory, target.Path, target.FileName);
             var relativePath = Path.Combine(target.Path, target.FileName);
-            log.Info($"Processing file at {filepath}.");
-            var fileContent = fileSystem.ReadFile(filepath);
 
+            var fileContent = fileSystem.ReadFile(filepath);
             var resolvedReferences = converter.Resolve(fileContent, target.ImagePathDefinitions, deploymentConfig.ImageReferences);
             if (resolvedReferences.Count == 0)
                 continue;
 
-            var replacer = new HelmContainerImageReplacer(fileContent, defaultRegistry, log);
-            var result = replacer.UpdateImages(resolvedReferences);
-
-            if (result.UpdatedImageReferences.Count > 0)
-                fileSystem.OverwriteFile(filepath, result.UpdatedContents);
-
-            updatedImages.UnionWith(result.UpdatedImageReferences);
-
-            var patch = CreateJsonPatchWithPlaceholders(fileContent, resolvedReferences);
-            if (patch != null)
-                jsonPatches.Add(new FileJsonPatch(relativePath, JsonSerializer.Serialize(patch)));
+            ProcessHelmValuesFile(filepath, relativePath, fileContent, resolvedReferences, updatedImages, jsonPatches);
         }
 
         return new FileUpdateResult(updatedImages, [], jsonPatches, []);
     }
 
-    //NOTE: this is common with Helm Sources
+    /// <summary>
+    /// Processes helm values files using step-variable-based image replacement paths.
+    /// </summary>
     protected FileUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
                                                       string workingDirectory)
     {
         log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
-        return Update(workingDirectory, filesToUpdate.ToHashSet());
+
+        var updatedImages = new HashSet<string>();
+        var jsonPatches = new List<FileJsonPatch>();
+
+        foreach (var file in filesToUpdate)
+        {
+            var relativePath = Path.GetRelativePath(workingDirectory, file);
+            var fileContent = fileSystem.ReadFile(file);
+
+            ProcessHelmValuesFile(file, relativePath, fileContent, deploymentConfig.ImageReferences, updatedImages, jsonPatches);
+        }
+
+        return new FileUpdateResult(updatedImages, [], jsonPatches, []);
+    }
+
+    void ProcessHelmValuesFile(
+        string filepath,
+        string relativePath,
+        string fileContent,
+        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imageReferences,
+        HashSet<string> updatedImages,
+        List<FileJsonPatch> jsonPatches)
+    {
+        log.Info($"Processing file at {filepath}.");
+
+        var replacer = new HelmContainerImageReplacer(fileContent, defaultRegistry, log);
+        var result = replacer.UpdateImages(imageReferences);
+
+        if (result.UpdatedImageReferences.Count > 0)
+        {
+            fileSystem.OverwriteFile(filepath, result.UpdatedContents);
+            updatedImages.UnionWith(result.UpdatedImageReferences);
+        }
+
+        var patch = CreateJsonPatchWithPlaceholders(fileContent, imageReferences);
+        if (patch != null)
+            jsonPatches.Add(new FileJsonPatch(relativePath, JsonSerializer.Serialize(patch)));
     }
 
     /// <summary>
