@@ -118,7 +118,7 @@ public abstract class BaseUpdater : ISourceUpdater
     /// Generates a JSON patch targeting all specified images, representing the desired state for
     /// each image tag whether or not it was actually updated. Returns null if no patch could be produced.
     /// </summary>
-    protected JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
+    protected virtual JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
     {
         var temporaryBefore = CreateTemporaryBeforeContent(content, targetedImages);
         var temporaryResult = replacer(temporaryBefore);

@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Kubernetes.Patching.JsonPatch;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
@@ -32,36 +33,10 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
     }
 
-    protected override string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
+    protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
     {
-        // Bare tags (no colon) come from the step-variable path where only the tag
-        // portion is tracked. A naive string replace could match unrelated values,
-        // so we run the replacer with placeholder tags to target the correct YAML paths.
-        var hasBareTags = targetedImages.Any(t => t.LastIndexOf(':') < 0);
-        if (!hasBareTags)
-        {
-            return base.CreateTemporaryBeforeContent(content, targetedImages);
-        }
-
-        var placeholderImages = deploymentConfig.ImageReferences
-            .Where(reference => reference.HelmReference is not null)
-            .Select(reference =>
-            {
-                var friendlyName = reference.ContainerReference.FriendlyName();
-                var colonIdx = friendlyName.LastIndexOf(':');
-                var placeholderRef = colonIdx >= 0
-                    ? friendlyName[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
-                    : friendlyName + ":__CALAMARI_PLACEHOLDER__";
-                return reference with
-                {
-                    ContainerReference = ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry)
-                };
-            })
-            .ToList();
-
-        var replacer = new HelmValuesImageReplaceStepVariables(content, defaultRegistry, log);
-        var result = replacer.UpdateImages(placeholderImages);
-        return result.UpdatedContents;
+        return CreateJsonPatchWithPlaceholders(deploymentConfig.ImageReferences,
+            images => new HelmValuesImageReplaceStepVariables(content, defaultRegistry, log).UpdateImages(images));
     }
 
     //NOTE: this is common with Helm Sources
@@ -108,10 +83,43 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
 
-        var jsonPatch = CreateJsonPatch(fileContent,
-                                        imagesToUpdate.Select(i => i.ContainerReference.FriendlyName()).ToHashSet(),
-                                        tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
+        var jsonPatch = CreateJsonPatchWithPlaceholders(imagesToUpdate,
+            images => new HelmContainerImageReplacer(fileContent, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(images));
 
         return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
+    }
+
+    /// <summary>
+    /// Creates a JSON patch by running a replacer with placeholder tags to produce a "before",
+    /// then running with real tags to produce an "after", and diffing the two.
+    /// This avoids naive string replacement which fails when helm values split image and tag
+    /// across separate YAML fields (e.g. image.repository + image.tag).
+    /// </summary>
+    JsonPatchDocument? CreateJsonPatchWithPlaceholders(
+        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
+        Func<IReadOnlyCollection<ContainerImageReferenceAndHelmReference>, ImageReplacementResult> replacer)
+    {
+        var placeholderImages = imagesToUpdate
+            .Select(ir =>
+            {
+                var friendlyName = ir.ContainerReference.FriendlyName();
+                var colonIdx = friendlyName.LastIndexOf(':');
+                var placeholderRef = colonIdx >= 0
+                    ? friendlyName[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
+                    : friendlyName + ":__CALAMARI_PLACEHOLDER__";
+                return ir with { ContainerReference = ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry) };
+            })
+            .ToList();
+
+        var placeholderResult = replacer(placeholderImages);
+        if (placeholderResult.UpdatedImageReferences.Count == 0)
+            return null;
+
+        var temporaryBefore = placeholderResult.UpdatedContents;
+        var actualResult = replacer(imagesToUpdate);
+
+        return actualResult.UpdatedImageReferences.Count > 0
+            ? CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
+            : null;
     }
 }
