@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
@@ -10,26 +11,25 @@ using Calamari.Kubernetes.Patching.JsonPatch;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-public abstract class AbstractHelmUpdater : BaseUpdater
+public abstract class BaseHelmUpdater : ISourceUpdater
 {
+    protected readonly ILog log;
+    protected readonly ICalamariFileSystem fileSystem;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
 
-    protected AbstractHelmUpdater(ILog log,
-                                  ICalamariFileSystem fileSystem,
-                                  UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                  string defaultRegistry) : base(log,
-                                                                 fileSystem)
+    protected BaseHelmUpdater(ILog log,
+                              ICalamariFileSystem fileSystem,
+                              UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                              string defaultRegistry)
     {
+        this.log = log;
+        this.fileSystem = fileSystem;
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
     }
 
-    public override ImageReplacementResult ReplaceImages(string input)
-    {
-        var imageReplacer = new HelmContainerImageReplacer(input, defaultRegistry, log);
-        return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
-    }
+    public abstract FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory);
 
     /// <summary>
     /// Processes helm values files using annotation-based image replacement paths.
@@ -130,7 +130,7 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         var actualResult = new HelmContainerImageReplacer(temporaryBefore, defaultRegistry, log).UpdateImages(imageReferences);
 
         return actualResult.UpdatedImageReferences.Count > 0
-            ? CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
+            ? JsonPatchUtils.CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
             : null;
     }
 }

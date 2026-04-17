@@ -48,7 +48,7 @@ public class KustomizeUpdater : BaseUpdater
         var placeholderImages = targetedImages
                                 .Select(imageRef =>
                                 {
-                                    var placeholderRef = MakePlaceholderRef(imageRef);
+                                    var placeholderRef = JsonPatchUtils.MakePlaceholderRef(imageRef);
                                     return new ContainerImageReferenceAndHelmReference(
                                         ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry));
                                 })
@@ -63,7 +63,7 @@ public class KustomizeUpdater : BaseUpdater
         var actualResult = ReplaceImages(temporaryBefore);
 
         return actualResult.UpdatedImageReferences.Count > 0
-            ? CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
+            ? JsonPatchUtils.CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
             : null;
     }
 
