@@ -1558,7 +1558,7 @@ image:
             AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/image/tag",
                 expectedPatchValue: "1.27.1",
-                expectedPatchedFilePath: Path.Combine("otherRepoPath", "values.yaml"));
+                expectedPatchedFilePath: "otherRepoPath/values.yaml");
         }
 
         [Test]
