@@ -258,6 +258,68 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
+        public void DirectorySource_ImageMatches_Update_TargetImageInCommentDoesNotAppearInPatch()
+        {
+            // Arrange: the target image reference (nginx:1.27.1) appears in an inline YAML comment alongside
+            // the old image field. CreateTemporaryBeforeContent uses a naive string.Replace, so the comment
+            // would receive the placeholder during JSON-patch generation. The committed file must come from
+            // ReplaceImages(originalContent) whose regex ignores comments — so CALAMARI_PLACEHOLDER must
+            // never appear in the repo.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var yamlFilename = "include/file1.yaml";
+            originRepo.AddFilesToBranch(argoCDBranchName,
+            [
+                (
+                    yamlFilename,
+                    """
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                      name: sample
+                    spec:
+                      template:
+                        spec:
+                          containers:
+                            - name: nginx
+                              image: nginx:1.19 # update to nginx:1.27.1
+                    """
+                )
+            ]);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert: the image field is updated; the comment retains the original text; no placeholder leaks
+            const string updatedYamlContent =
+                """
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: sample
+                spec:
+                  template:
+                    spec:
+                      containers:
+                        - name: nginx
+                          image: nginx:1.27.1 # update to nginx:1.27.1
+                """;
+
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
+
+            var committedContent = fileSystem.ReadFile(Path.Combine(clonedRepoPath, yamlFilename));
+            committedContent.Should().NotContain(":__CALAMARI_PLACEHOLDER__",
+                "the internal placeholder used for JSON-patch generation must never be written to the repository");
+
+            using var resultRepo = new Repository(clonedRepoPath);
+            resultRepo.Head.Tip.Message.TrimEnd().Should().Contain("---\nImages updated:");
+
+            AssertOutputVariables();
+        }
+
+        [Test]
         public void DirectorySource_UnknownCrd_LogsWarning()
         {
             // Arrange
