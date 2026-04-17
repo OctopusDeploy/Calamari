@@ -92,8 +92,6 @@ public abstract class AbstractHelmUpdater : BaseUpdater
     /// <summary>
     /// Creates a JSON patch by running a replacer factory with placeholder tags to produce a "before",
     /// then running with real tags against the "before" to produce an "after", and diffing the two.
-    /// This avoids naive string replacement which fails when helm values split image and tag
-    /// across separate YAML fields (e.g. image.repository + image.tag).
     /// </summary>
     JsonPatchDocument? CreateJsonPatchWithPlaceholders(
         string content,
