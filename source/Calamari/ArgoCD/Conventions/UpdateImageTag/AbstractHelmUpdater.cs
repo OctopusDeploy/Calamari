@@ -32,6 +32,38 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
     }
 
+    protected override string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
+    {
+        // Bare tags (no colon) come from the step-variable path where only the tag
+        // portion is tracked. A naive string replace could match unrelated values,
+        // so we run the replacer with placeholder tags to target the correct YAML paths.
+        var hasBareTags = targetedImages.Any(t => t.LastIndexOf(':') < 0);
+        if (!hasBareTags)
+        {
+            return base.CreateTemporaryBeforeContent(content, targetedImages);
+        }
+
+        var placeholderImages = deploymentConfig.ImageReferences
+            .Where(reference => reference.HelmReference is not null)
+            .Select(reference =>
+            {
+                var friendlyName = reference.ContainerReference.FriendlyName();
+                var colonIdx = friendlyName.LastIndexOf(':');
+                var placeholderRef = colonIdx >= 0
+                    ? friendlyName[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
+                    : friendlyName + ":__CALAMARI_PLACEHOLDER__";
+                return reference with
+                {
+                    ContainerReference = ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry)
+                };
+            })
+            .ToList();
+
+        var replacer = new HelmValuesImageReplaceStepVariables(content, defaultRegistry, log);
+        var result = replacer.UpdateImages(placeholderImages);
+        return result.UpdatedContents;
+    }
+
     //NOTE: this is common with Helm Sources
     protected FileUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
                                                       string workingDirectory,
@@ -48,20 +80,18 @@ public abstract class AbstractHelmUpdater : BaseUpdater
     {
         var results =
             targets.Select(t => UpdateHelmImageValues(workingDirectory, t, deploymentConfig.ImageReferences))
-                   .Where(r => r.Updated)
                    .ToList();
 
-        if (results.Any())
-        {
-            var patchedFiles = results
-                .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
-                .ToList();
-            var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
+        var patchedFiles = results
+            .Where(r => r.JsonPatch != null)
+            .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
+            .ToList();
+        var updatedImages = results
+            .Where(r => r.Updated)
+            .SelectMany(r => r.ImagesUpdated)
+            .ToHashSet();
 
-            return new FileUpdateResult(updatedImages, [], patchedFiles, []);
-        }
-
-        return new FileUpdateResult([], [], [], []);
+        return new FileUpdateResult(updatedImages, [], patchedFiles, []);
     }
 
     HelmRefUpdatedResult UpdateHelmImageValues(
