@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,74 +16,83 @@ public abstract class AbstractHelmUpdater : ISourceUpdater
 {
     protected readonly ILog log;
     protected readonly ICalamariFileSystem fileSystem;
+    protected readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
 
     protected AbstractHelmUpdater(ILog log,
                               ICalamariFileSystem fileSystem,
+                              Application applicationFromYaml,
                               UpdateArgoCDAppDeploymentConfig deploymentConfig,
                               string defaultRegistry)
     {
         this.log = log;
         this.fileSystem = fileSystem;
+        this.applicationFromYaml = applicationFromYaml;
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
     }
 
-    public abstract FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory);
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
+    {
+        if (!ValidateSource(sourceWithMetadata))
+            return new FileUpdateResult([], [], [], []);
 
-    /// <summary>
-    /// Processes helm values files using annotation-based image replacement paths.
-    /// Converts annotation templates into HelmReference entries, then uses the same
-    /// replacement logic as the step-variable path.
-    /// </summary>
-    protected FileUpdateResult ProcessHelmUpdateTargets(
+        IReadOnlyCollection<HelmValuesFileTarget> targets;
+        if (deploymentConfig.HasStepBasedHelmValueReferences())
+        {
+            WarnIfAnnotationsSuperseded(sourceWithMetadata);
+            targets = GetStepVariableFileTargets(sourceWithMetadata, workingDirectory);
+        }
+        else
+        {
+            (targets, var problems) = GetAnnotationFileTargets(sourceWithMetadata, workingDirectory);
+            LogHelmSourceConfigurationProblems(log, problems);
+        }
+        
+        return ProcessHelmValuesFiles(workingDirectory, targets);
+    }
+
+    protected abstract bool ValidateSource(ApplicationSourceWithMetadata sourceWithMetadata);
+    protected abstract IReadOnlyCollection<HelmValuesFileTarget> GetStepVariableFileTargets(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory);
+    protected abstract (IReadOnlyCollection<HelmValuesFileTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetAnnotationFileTargets(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory);
+
+    void WarnIfAnnotationsSuperseded(ApplicationSourceWithMetadata sourceWithMetadata)
+    {
+        var appName = string.IsNullOrEmpty(sourceWithMetadata.Source.Name) ? null : new ApplicationSourceName(sourceWithMetadata.Source.Name);
+        if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(appName)))
+        {
+            log.Warn($"Application '{applicationFromYaml.Metadata.Name}' specifies helm-value annotations which have been superseded by values specified in the step's configuration");
+        }
+    }
+
+    FileUpdateResult ProcessHelmValuesFiles(
         string workingDirectory,
-        IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets)
+        IReadOnlyCollection<HelmValuesFileTarget> files)
     {
         var converter = new HelmAnnotationToReferenceConverter(defaultRegistry, log);
         var updatedImages = new HashSet<string>();
         var jsonPatches = new List<FileJsonPatch>();
 
-        foreach (var target in targets)
+        foreach (var file in files)
         {
-            var filepath = Path.Combine(workingDirectory, target.Path, target.FileName);
-            var relativePath = Path.Combine(target.Path, target.FileName);
-
+            var filepath = Path.Combine(workingDirectory, file.RelativePath);
             var fileContent = fileSystem.ReadFile(filepath);
-            var resolvedReferences = converter.Resolve(fileContent, target.ImagePathDefinitions, deploymentConfig.ImageReferences);
-            if (resolvedReferences.Count == 0)
+
+            var imageReferences = file.AnnotationTemplates != null
+                ? converter.Resolve(fileContent, file.AnnotationTemplates, deploymentConfig.ImageReferences)
+                : deploymentConfig.ImageReferences;
+
+            if (imageReferences.Count == 0)
                 continue;
 
-            ProcessHelmValuesFile(filepath, relativePath, fileContent, resolvedReferences, updatedImages, jsonPatches);
+            ProcessFile(filepath, file.RelativePath, fileContent, imageReferences, updatedImages, jsonPatches);
         }
 
         return new FileUpdateResult(updatedImages, [], jsonPatches, []);
     }
 
-    /// <summary>
-    /// Processes helm values files using step-variable-based image replacement paths.
-    /// </summary>
-    protected FileUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
-                                                      string workingDirectory)
-    {
-        log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
-
-        var updatedImages = new HashSet<string>();
-        var jsonPatches = new List<FileJsonPatch>();
-
-        foreach (var file in filesToUpdate)
-        {
-            var relativePath = Path.GetRelativePath(workingDirectory, file);
-            var fileContent = fileSystem.ReadFile(file);
-
-            ProcessHelmValuesFile(file, relativePath, fileContent, deploymentConfig.ImageReferences, updatedImages, jsonPatches);
-        }
-
-        return new FileUpdateResult(updatedImages, [], jsonPatches, []);
-    }
-
-    void ProcessHelmValuesFile(
+    void ProcessFile(
         string filepath,
         string relativePath,
         string fileContent,
@@ -106,10 +116,6 @@ public abstract class AbstractHelmUpdater : ISourceUpdater
             jsonPatches.Add(new FileJsonPatch(relativePath, JsonSerializer.Serialize(patch)));
     }
 
-    /// <summary>
-    /// Creates a JSON patch by running the replacer with placeholder tags to produce a "before",
-    /// then running with real tags against the "before" to produce an "after", and diffing the two.
-    /// </summary>
     JsonPatchDocument? CreateJsonPatchWithPlaceholders(
         string content,
         IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imageReferences)
@@ -133,4 +139,45 @@ public abstract class AbstractHelmUpdater : ISourceUpdater
             ? JsonPatchUtils.CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
             : null;
     }
+    
+    static void LogHelmSourceConfigurationProblems(ILog log, IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
+    {
+        foreach (var helmSourceConfigurationProblem in helmSourceConfigurationProblems)
+        {
+            LogProblem(helmSourceConfigurationProblem);
+        }
+
+        void LogProblem(HelmSourceConfigurationProblem helmSourceConfigurationProblem)
+        {
+            switch (helmSourceConfigurationProblem)
+            {
+                case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
+                {
+                    if (helmSourceIsMissingImagePathAnnotation.RefSourceIdentity == null)
+                    {
+                        log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
+                                       helmSourceIsMissingImagePathAnnotation.SourceIdentity);
+                    }
+                    else
+                    {
+                        log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. The source '{1}' will not be updated.",
+                                       helmSourceIsMissingImagePathAnnotation.SourceIdentity,
+                                       helmSourceIsMissingImagePathAnnotation.RefSourceIdentity);
+                    }
+
+                    log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
+
+                    return;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(helmSourceConfigurationProblem));
+            }
+        }
+    }
+}
+
+public record HelmValuesFileTarget(string RelativePath, IReadOnlyCollection<string>? AnnotationTemplates = null)
+{
+    public static HelmValuesFileTarget FromAnnotationTarget(HelmValuesFileImageUpdateTarget target)
+        => new(Path.Combine(target.Path, target.FileName), target.ImagePathDefinitions);
 }
