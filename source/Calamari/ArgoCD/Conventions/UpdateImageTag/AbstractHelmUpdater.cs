@@ -33,7 +33,7 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
     }
 
-    protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
+    protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages)
     {
         return CreateJsonPatchWithPlaceholders(deploymentConfig.ImageReferences,
             images => new HelmValuesImageReplaceStepVariables(content, defaultRegistry, log).UpdateImages(images));

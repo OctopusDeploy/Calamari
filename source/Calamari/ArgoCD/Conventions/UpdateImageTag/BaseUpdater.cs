@@ -84,7 +84,7 @@ public abstract class BaseUpdater : ISourceUpdater
 
             if (allTargetedImages.Count > 0)
             {
-                var patch = CreateJsonPatch(content, allTargetedImages, ReplaceImages);
+                var patch = CreateJsonPatch(content, allTargetedImages);
                 if (patch != null)
                 {
                     jsonPatches.Add(new(relativePath, Serialize(patch)));
@@ -96,11 +96,10 @@ public abstract class BaseUpdater : ISourceUpdater
     }
 
     /// <summary>
-    /// Creates a version of the content with the already-correct image tags replaced by a placeholder.
-    /// Running the image replacer on this temporary content produces the correct content, and the diff
-    /// between the two gives a meaningful patch that only targets the specific image tag fields.
+    /// Generates a JSON patch representing the desired state for each targeted image,
+    /// whether or not it was actually updated. Returns null if no patch could be produced.
     /// </summary>
-    protected virtual string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
+    protected virtual JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages)
     {
         var temporaryBefore = content;
         foreach (var imageRef in targetedImages)
@@ -111,17 +110,8 @@ public abstract class BaseUpdater : ISourceUpdater
                 temporaryBefore = temporaryBefore.Replace(imageRef, imageRef[..colonIdx] + ":__CALAMARI_PLACEHOLDER__");
             }
         }
-        return temporaryBefore;
-    }
 
-    /// <summary>
-    /// Generates a JSON patch targeting all specified images, representing the desired state for
-    /// each image tag whether or not it was actually updated. Returns null if no patch could be produced.
-    /// </summary>
-    protected virtual JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages, Func<string, ImageReplacementResult> replacer)
-    {
-        var temporaryBefore = CreateTemporaryBeforeContent(content, targetedImages);
-        var temporaryResult = replacer(temporaryBefore);
+        var temporaryResult = ReplaceImages(temporaryBefore);
         return temporaryResult.UpdatedImageReferences.Count > 0
             ? CreateJsonPatchFromDiff(temporaryBefore, temporaryResult.UpdatedContents)
             : null;

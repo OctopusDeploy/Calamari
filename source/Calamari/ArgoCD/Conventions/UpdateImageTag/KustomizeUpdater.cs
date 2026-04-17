@@ -6,6 +6,7 @@ using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Kubernetes.Patching.JsonPatch;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
@@ -32,16 +33,18 @@ public class KustomizeUpdater : BaseUpdater
         return imageReplacer.UpdateImages(imagesToUpdate);
     }
 
-    protected override string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
+    protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages)
     {
-        // For kustomization resources, name and tag are separate YAML fields (name + newTag),
-        // so the base class's string replacement of "name:tag" won't find a match.
-        // Instead, run the existing replacer with placeholder tags to produce the "before" content.
+        // For non-kustomization resources (e.g. patch files), the base class's string
+        // replacement works fine since image:tag appears literally in the content.
         if (!KustomizationValidator.IsKustomizationResource(content))
         {
-            return base.CreateTemporaryBeforeContent(content, targetedImages);
+            return base.CreateJsonPatch(content, targetedImages);
         }
 
+        // For kustomization resources, name and tag are separate YAML fields (name + newTag),
+        // so naive string replacement of "name:tag" won't find a match.
+        // Instead, run the replacer with placeholder tags to produce the "before" content.
         var placeholderImages = targetedImages
                                 .Select(imageRef =>
                                 {
@@ -54,10 +57,17 @@ public class KustomizeUpdater : BaseUpdater
                                 })
                                 .ToList();
 
-        var replacer = new KustomizeContainerImageReplacer(content, defaultRegistry, updateKustomizePatches, log);
-        var result = replacer.UpdateImages(placeholderImages);
+        var placeholderReplacer = new KustomizeContainerImageReplacer(content, defaultRegistry, updateKustomizePatches, log);
+        var placeholderResult = placeholderReplacer.UpdateImages(placeholderImages);
+        if (placeholderResult.UpdatedImageReferences.Count == 0)
+            return null;
 
-        return result.UpdatedContents;
+        var temporaryBefore = placeholderResult.UpdatedContents;
+        var actualResult = ReplaceImages(temporaryBefore);
+
+        return actualResult.UpdatedImageReferences.Count > 0
+            ? CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
+            : null;
     }
 
     public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
