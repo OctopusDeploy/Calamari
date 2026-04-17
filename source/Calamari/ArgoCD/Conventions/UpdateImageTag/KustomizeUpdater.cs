@@ -32,6 +32,34 @@ public class KustomizeUpdater : BaseUpdater
         return imageReplacer.UpdateImages(imagesToUpdate);
     }
 
+    protected override string CreateTemporaryBeforeContent(string content, HashSet<string> targetedImages)
+    {
+        // For kustomization resources, name and tag are separate YAML fields (name + newTag),
+        // so the base class's string replacement of "name:tag" won't find a match.
+        // Instead, run the existing replacer with placeholder tags to produce the "before" content.
+        if (!KustomizationValidator.IsKustomizationResource(content))
+        {
+            return base.CreateTemporaryBeforeContent(content, targetedImages);
+        }
+
+        var placeholderImages = targetedImages
+                                .Select(imageRef =>
+                                {
+                                    var colonIdx = imageRef.LastIndexOf(':');
+                                    var placeholderRef = colonIdx >= 0
+                                        ? imageRef[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
+                                        : imageRef;
+                                    return new ContainerImageReferenceAndHelmReference(
+                                        ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry));
+                                })
+                                .ToList();
+
+        var replacer = new KustomizeContainerImageReplacer(content, defaultRegistry, updateKustomizePatches, log);
+        var result = replacer.UpdateImages(placeholderImages);
+
+        return result.UpdatedContents;
+    }
+
     public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
     {
         var applicationSource = sourceWithMetadata.Source;
