@@ -1762,6 +1762,37 @@ image:
                 expectedPatchedFilePath: Path.Combine("files", "values.yml"));
         }
 
+        [Test]
+        public void HelmSource_ImageAlreadyAtTargetTag_UsingStepVariable_OnlyPatchesConfiguredPath_WhenOtherImageHasSameTag()
+        {
+            // Arrange — two images share the same tag value, but only nginx has a HelmReplacementPath
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", @"
+nginx:
+  tag: 1.27.1
+redis:
+  tag: 1.27.1
+"));
+
+            var (updater, runningDeployment, getCapturedResults) = ArrangeImageAlreadyAtTargetTag(new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [PackageVariables.HelmReplacementPath("nginx")] = "nginx.tag",
+                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
+            });
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert — patch should only target nginx.tag, not redis.tag
+            AssertNoCommitWithExpectedPatch(getCapturedResults,
+                expectedPatchPointer: "/0/nginx/tag",
+                expectedPatchValue: "1.27.1",
+                expectedPatchedFilePath: Path.Combine("files", "values.yml"));
+        }
+
         void SetupRefSourceAppManifest(
             string imageReplacementPathsAnnotation = null,
             List<string> valuesFiles = null)
