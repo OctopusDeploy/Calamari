@@ -35,8 +35,8 @@ public abstract class AbstractHelmUpdater : BaseUpdater
 
     protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages)
     {
-        return CreateJsonPatchWithPlaceholders(deploymentConfig.ImageReferences,
-            images => new HelmValuesImageReplaceStepVariables(content, defaultRegistry, log).UpdateImages(images));
+        return CreateJsonPatchWithPlaceholders(content, deploymentConfig.ImageReferences,
+            (c, images) => new HelmValuesImageReplaceStepVariables(c, defaultRegistry, log).UpdateImages(images));
     }
 
     //NOTE: this is common with Helm Sources
@@ -83,21 +83,22 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
 
-        var jsonPatch = CreateJsonPatchWithPlaceholders(imagesToUpdate,
-            images => new HelmContainerImageReplacer(fileContent, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(images));
+        var jsonPatch = CreateJsonPatchWithPlaceholders(fileContent, imagesToUpdate,
+            (c, images) => new HelmContainerImageReplacer(c, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(images));
 
         return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
     }
 
     /// <summary>
-    /// Creates a JSON patch by running a replacer with placeholder tags to produce a "before",
-    /// then running with real tags to produce an "after", and diffing the two.
+    /// Creates a JSON patch by running a replacer factory with placeholder tags to produce a "before",
+    /// then running with real tags against the "before" to produce an "after", and diffing the two.
     /// This avoids naive string replacement which fails when helm values split image and tag
     /// across separate YAML fields (e.g. image.repository + image.tag).
     /// </summary>
     JsonPatchDocument? CreateJsonPatchWithPlaceholders(
+        string content,
         IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-        Func<IReadOnlyCollection<ContainerImageReferenceAndHelmReference>, ImageReplacementResult> replacer)
+        Func<string, IReadOnlyCollection<ContainerImageReferenceAndHelmReference>, ImageReplacementResult> replacerFactory)
     {
         var placeholderImages = imagesToUpdate
             .Select(ir =>
@@ -111,12 +112,12 @@ public abstract class AbstractHelmUpdater : BaseUpdater
             })
             .ToList();
 
-        var placeholderResult = replacer(placeholderImages);
+        var placeholderResult = replacerFactory(content, placeholderImages);
         if (placeholderResult.UpdatedImageReferences.Count == 0)
             return null;
 
         var temporaryBefore = placeholderResult.UpdatedContents;
-        var actualResult = replacer(imagesToUpdate);
+        var actualResult = replacerFactory(temporaryBefore, imagesToUpdate);
 
         return actualResult.UpdatedImageReferences.Count > 0
             ? CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
