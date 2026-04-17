@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
-using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -11,6 +10,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Time;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions
 {
