@@ -65,7 +65,6 @@ public class RefUpdater : AbstractHelmUpdater
                                    .Select(file => Path.Combine(workingDirectory, file));
 
         return ProcessHelmValuesFiles(valuesFiles.ToHashSet(),
-                                      workingDirectory,
-                                      sourceWithMetadata);
+                                      workingDirectory);
     }
 }

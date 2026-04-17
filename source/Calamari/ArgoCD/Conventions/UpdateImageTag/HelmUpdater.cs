@@ -117,8 +117,7 @@ public class HelmUpdater : AbstractHelmUpdater
 
         filesToUpdate = filesToUpdate.Select(file => Path.Combine(workingDirectory, file)).ToList();
         var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
-                                            workingDirectory,
-                                            sourceWithMetadata);
+                                            workingDirectory);
         return result;
     }
 }

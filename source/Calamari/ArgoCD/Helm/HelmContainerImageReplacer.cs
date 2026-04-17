@@ -1,81 +1,85 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.ArgoCD.Helm
+namespace Calamari.ArgoCD.Helm;
+
+public class HelmContainerImageReplacer : IContainerImageReplacer
 {
-    public class HelmContainerImageReplacer
+    readonly string yamlContent;
+    readonly string defaultRegistry;
+    readonly ILog log;
+
+    public HelmContainerImageReplacer(string yamlContent, string defaultRegistry, ILog log)
     {
-        readonly string yamlContent;
-        readonly string defaultClusterRegistry;
-        readonly IReadOnlyCollection<string> imagePathAnnotations;
-        readonly ILog log;
+        this.yamlContent = yamlContent;
+        this.defaultRegistry = defaultRegistry;
+        this.log = log;
+    }
 
-        public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, IReadOnlyCollection<string> imagePathAnnotations, ILog log)
+    public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    {
+        var imagesUpdated = new HashSet<string>();
+        var alreadyUpToDate = new HashSet<string>();
+        var updatedYaml = yamlContent;
+        var originalYamlParser = new HelmYamlParser(yamlContent); // Parse and track the original yaml so that content can be read from it.
+        var flattenedYamlPathDictionary = HelmValuesEditor.GenerateVariableDictionary(originalYamlParser);
+
+        foreach (var newImageTag in imagesToUpdate.Where(c => c.HelmReference is not null))
         {
-            this.yamlContent = yamlContent;
-            this.defaultClusterRegistry = defaultClusterRegistry;
-            this.imagePathAnnotations = imagePathAnnotations;
-            this.log = log;
-        }
-
-        // TODO: Add testing for multiple instances of the same image
-        public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
-        {
-            var updatedImages = new HashSet<string>();
-            var alreadyUpToDateImages = new HashSet<string>();
-
-            var originalYamlParser = new HelmYamlParser(yamlContent); // Parse and track the original yaml so that content can be read from it.
-
-            var imagePathDictionary = HelmValuesEditor.GenerateVariableDictionary(originalYamlParser);
-            var existingImageReferences = imagePathAnnotations.Select(p => TemplatedImagePath.Parse(p, imagePathDictionary, defaultClusterRegistry)).ToList();
-
-            var fileContent = yamlContent;
-            foreach (var existingImageReference in existingImageReferences)
+            var helmReference = newImageTag.HelmReference!;
+            var valueToUpdate = flattenedYamlPathDictionary.GetRaw(helmReference);
+            if (valueToUpdate == null)
             {
-                log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.ToString()}");
-                var imagesString = imagesToUpdate.Select(i => i.ContainerReference.ToString()).ToList();
-                log.Verbose($"Images to Update = {string.Join(",", imagesString)}");
+                log.Verbose($"{helmReference} for image {newImageTag.ContainerReference.FriendlyName()} was not found in your values file.");
+                continue;
+            }
 
-                var matchedUpdate = imagesToUpdate.Select(i => new
-                                                  {
-                                                      Reference = i.ContainerReference,
-                                                      Comparison = i.ContainerReference.CompareWith(existingImageReference.ImageReference)
-
-                                                  })
-                                                  .FirstOrDefault(i => i.Comparison.MatchesImage());
-
-                if (matchedUpdate != null)
+            if (IsUnstructuredText(valueToUpdate))
+            {
+                if (valueToUpdate == newImageTag.ContainerReference.Tag)
                 {
-                    if (!matchedUpdate.Comparison.TagMatch)
+                    alreadyUpToDate.Add(newImageTag.ContainerReference.Tag);
+                }
+                else
+                {
+                    updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newImageTag.ContainerReference.Tag);
+                    imagesUpdated.Add(newImageTag.ContainerReference.Tag);
+                }
+            }
+            else
+            {
+                var cir = ContainerImageReference.FromReferenceString(valueToUpdate, defaultRegistry);
+                var comparison = newImageTag.ContainerReference.CompareWith(cir);
+                if (comparison.MatchesImage())
+                {
+                    if (!comparison.TagMatch)
                     {
-                        if (existingImageReference.TagIsTemplateToken)
-                        {
-                            // If the tag is specified separately in its own node
-                            fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, matchedUpdate.Reference.Tag);
-                        }
-                        else
-                        {
-                            // We re-read the node value with the image details so we can ensure we only write out the image ref components expected
-                            var imageTagNodeValue = originalYamlParser.GetValueAtPath(existingImageReference.TagPath);
-                            var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry).WithTag(matchedUpdate.Reference.Tag);
-                            fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, replacementImageRef);
-                        }
-
-                        updatedImages.Add(matchedUpdate.Reference.FriendlyName());
+                        var newValue = cir.WithTag(newImageTag.ContainerReference.Tag);
+                        updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newValue);
+                        imagesUpdated.Add(newValue);
                     }
                     else
                     {
-                        alreadyUpToDateImages.Add(matchedUpdate.Reference.FriendlyName());
+                        alreadyUpToDate.Add(cir.FriendlyName());
                     }
                 }
+                else
+                {
+                    log.Warn($"Attempted to update value entry '{helmReference}', however it contains a mismatched image name and registry.");
+                }
             }
-
-            return new ImageReplacementResult(fileContent, updatedImages, alreadyUpToDateImages);
         }
+        return new ImageReplacementResult(updatedYaml, imagesUpdated, alreadyUpToDate);
     }
-}
 
+    bool IsUnstructuredText(string content)
+        {
+            var lastColonIndex = content.LastIndexOf(':');
+            var lastSlashIndex = content.LastIndexOf('/');
+
+            return lastColonIndex == -1 && lastSlashIndex == -1;
+        }
+}
