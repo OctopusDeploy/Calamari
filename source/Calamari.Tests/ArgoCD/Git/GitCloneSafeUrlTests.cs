@@ -30,5 +30,13 @@ public class GitCloneSafeUrlTests
         var uri = "git@ihavenopath.com";
         var func = () => GitCloneSafeUrl.FromString(uri);
         func.Should().Throw<FormatException>();
-    } 
+    }
+
+    [Test]
+    public void ANonProtocoledString_AutomaticallyAddsOci()
+    {
+        var uri = "registry-1.docker.io/bitnamicharts";
+        var result = GitCloneSafeUrl.FromString(uri);
+        result.AbsoluteUri.Should().Be($"oci://{uri}");
+    }
 }

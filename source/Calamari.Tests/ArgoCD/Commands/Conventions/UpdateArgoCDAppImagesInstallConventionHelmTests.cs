@@ -38,6 +38,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         InMemoryLog log;
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
+        string OriginUrl => RepositoryHelpers.ToFileUri(OriginPath);
         Repository originRepo;
         const string ArgoCDBranchFriendlyName = "devBranch";
         readonly GitBranchName argoCDBranchName = GitBranchName.CreateFromFriendlyName(ArgoCDBranchFriendlyName);
@@ -96,7 +97,7 @@ image:
                         null)
                 ],
                 [
-                    new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
+                    new GitCredentialDto(OriginUrl, "", "")
                 ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
@@ -117,7 +118,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            OriginalRepoUrl = OriginUrl,
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
                             Helm = new HelmConfig()
@@ -181,7 +182,7 @@ service:
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                                   TargetRevision = ArgoCDBranchFriendlyName
                                               },
                                               SourceTypeConstants.Helm)
@@ -344,7 +345,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            OriginalRepoUrl = OriginUrl,
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
                             Name = "wrong-scoping",
@@ -428,7 +429,7 @@ image:
                         },
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            OriginalRepoUrl = OriginUrl,
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                         }
@@ -497,7 +498,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            OriginalRepoUrl = OriginUrl,
                             TargetRevision = argoCDBranchName.Value,
                             Path = "files",
                             Helm = new HelmConfig()
@@ -576,7 +577,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            OriginalRepoUrl = OriginUrl,
                             TargetRevision = argoCDBranchName.Value,
                             Path = "files",
                             Name = "helm-source",
@@ -660,7 +661,7 @@ image:
                         },
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            OriginalRepoUrl = OriginUrl,
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                             Name = "ref-source",
@@ -744,7 +745,7 @@ image:
                         },
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            OriginalRepoUrl = OriginUrl,
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                         }
@@ -835,7 +836,7 @@ containerPort: 8070
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -918,7 +919,7 @@ containerPort: 8070
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -1002,7 +1003,7 @@ containerPort: 8070
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -1088,7 +1089,7 @@ service:
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName
                                               },
@@ -1188,7 +1189,7 @@ autoscaling:
                                                   Name = "ref-source",
                                                   Ref = "values",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -1319,7 +1320,7 @@ service:
                                                   Ref = "values",
                                                   Path = "include/",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -1472,7 +1473,7 @@ service:
                                                   Name = "ref-source",
                                                   Ref = "values",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -1542,7 +1543,7 @@ service:
                                           .WithSource(new ApplicationSource
                                               {
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  OriginalRepoUrl = OriginUrl,
                                                   Path = "",
                                                   Helm = new HelmConfig
                                                   {
@@ -1674,7 +1675,7 @@ image:
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
-            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginPath : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginUrl : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? updatedImages.ToString() : "0");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
