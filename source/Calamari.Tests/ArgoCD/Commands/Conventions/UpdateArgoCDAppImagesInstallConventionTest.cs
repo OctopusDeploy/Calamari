@@ -62,7 +62,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 Substitute.For<IGitVendorPullRequestClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
-                new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));
+                new ArgoCDOutputVariablesWriter(log));
         }
 
         [SetUp]
@@ -310,7 +310,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
 
             var committedContent = fileSystem.ReadFile(Path.Combine(clonedRepoPath, yamlFilename));
-            committedContent.Should().NotContain(":__CALAMARI_PLACEHOLDER__",
+            committedContent.Should().NotContain("__CALAMARI_PLACEHOLDER__",
                 "the internal placeholder used for JSON-patch generation must never be written to the repository");
 
             using var resultRepo = new Repository(clonedRepoPath);
@@ -1040,7 +1040,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         Func<IReadOnlyList<ProcessApplicationResult>> CaptureReporterResults()
         {
             IReadOnlyList<ProcessApplicationResult> captured = null;
-            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => captured = x));
+            deploymentReporter.ReportFilesUpdated(Arg.Any<GitCommitParameters>(), Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => captured = x));
             return () => captured;
         }
 
