@@ -5,14 +5,14 @@
         <OutputType>Library</OutputType>
         <Authors>Octopus Deploy</Authors>
         <Copyright>Octopus Deploy Pty Ltd</Copyright>
-        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <TargetFramework>net8.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.13.1" />
-        <PackageReference Include="Azure.ResourceManager" Version="1.11.0" />
+        <PackageReference Include="Azure.ResourceManager" Version="1.13.0" />
         <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.2" />
+        <PackageReference Include="Azure.ResourceManager.ContainerService" Version="1.2.3" />
         
     </ItemGroup>
     <ItemGroup>

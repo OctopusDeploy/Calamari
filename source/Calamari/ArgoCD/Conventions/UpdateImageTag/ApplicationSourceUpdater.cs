@@ -59,13 +59,10 @@ public class ApplicationSourceUpdater
 
         var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
 
-        if (sourceUpdateResult.PushResult is not null)
-        {
-            outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                                                        applicationFromYaml.Metadata.Name,
-                                                        sourceWithMetadata.Index,
-                                                        sourceUpdateResult.PushResult);
-        }
+        outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
+                                                            applicationFromYaml.Metadata.Name,
+                                                            sourceWithMetadata.Index,
+                                                            sourceUpdateResult);
 
         return sourceUpdateResult;
     }

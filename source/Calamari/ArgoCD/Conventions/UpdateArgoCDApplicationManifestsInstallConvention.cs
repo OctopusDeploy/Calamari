@@ -62,10 +62,10 @@ namespace Calamari.ArgoCD.Conventions
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
             var repositoryFactory = new RepositoryFactory(log,
-                fileSystem,
-                deployment.CurrentDirectory,
-                gitVendorPullRequestClientResolver,
-                clock);
+                                                          fileSystem,
+                                                          deployment.CurrentDirectory,
+                                                          gitVendorPullRequestClientResolver,
+                                                          clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -82,7 +82,8 @@ namespace Calamari.ArgoCD.Conventions
                                                             fileSystem,
                                                             argoCdApplicationManifestParser,
                                                             outputVariablesWriter,
-                                                            packageFiles);
+                                                            packageFiles,
+                                                            new UserDefinedCommitMessageGenerator(deploymentConfig.CommitParameters.Description));
 
             var applicationResults = argoProperties.Applications
                                                    .Select(application =>
@@ -92,7 +93,7 @@ namespace Calamari.ArgoCD.Conventions
                                                            })
                                                    .ToList();
 
-            reporter.ReportFilesUpdated(applicationResults);
+            reporter.ReportFilesUpdated(deploymentConfig.CommitParameters, applicationResults);
 
             var gitReposUpdated = applicationResults.SelectMany(r => r.GitReposUpdated).ToHashSet();
             var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
@@ -100,10 +101,10 @@ namespace Calamari.ArgoCD.Conventions
 
             var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
             outputVariablesWriter.WriteManifestUpdateOutput(gatewayIds,
-                gitReposUpdated,
-                totalApplicationsWithSourceCounts,
-                updatedApplicationsWithSources
-            );
+                                                            gitReposUpdated,
+                                                            totalApplicationsWithSourceCounts,
+                                                            updatedApplicationsWithSources
+                                                           );
         }
 
         IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitConfig config)

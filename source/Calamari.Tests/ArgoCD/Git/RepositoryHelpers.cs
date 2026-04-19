@@ -40,6 +40,8 @@ namespace Calamari.Tests.ArgoCD.Git
             repository.CreateBranch(branchName.ToFriendlyName(), emptyCommit);
         }
 
+        public static string ToFileUri(string path) => new Uri(path).AbsoluteUri;
+
         public static string CloneOrigin(string tempDirectory, string originPath, GitBranchName branchName)
         {
             var subPath = Guid.NewGuid().ToString();

@@ -114,7 +114,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
                                                                async () =>
                                                                {
-                                                                   string requiredVersion = "v0.5.9";
+                                                                   string requiredVersion = "v0.7.10";
                                                                    client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
                                                                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", await ExternalVariables.Get(ExternalVariable.GitHubRateLimitingPersonalAccessToken, CancellationToken.None));
                                                                    var json = await client.GetAsync(

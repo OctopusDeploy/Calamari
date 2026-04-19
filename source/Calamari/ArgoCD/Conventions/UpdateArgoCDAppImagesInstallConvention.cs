@@ -19,7 +19,6 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly DeploymentConfigFactory deploymentConfigFactory;
-        readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
@@ -31,7 +30,6 @@ namespace Calamari.ArgoCD.Conventions
             ILog log,
             ICalamariFileSystem fileSystem,
             DeploymentConfigFactory deploymentConfigFactory,
-            ICommitMessageGenerator commitMessageGenerator,
             ICustomPropertiesLoader customPropertiesLoader,
             IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
             IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
@@ -42,7 +40,6 @@ namespace Calamari.ArgoCD.Conventions
             this.log = log;
             this.fileSystem = fileSystem;
             this.deploymentConfigFactory = deploymentConfigFactory;
-            this.commitMessageGenerator = commitMessageGenerator;
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
@@ -75,7 +72,7 @@ namespace Calamari.ArgoCD.Conventions
                                                     log,
                                                     fileSystem,
                                                     argoCdApplicationManifestParser,
-                                                    commitMessageGenerator,
+                                                    new ImageTagUpdateCommitMessageGenerator(deploymentConfig.CommitParameters.Description),
                                                     outputVariablesWriter);
 
             var applicationResults = argoProperties.Applications
@@ -86,7 +83,9 @@ namespace Calamari.ArgoCD.Conventions
                                                            })
                                                    .ToList();
 
-            reporter.ReportFilesUpdated(applicationResults);
+            //if we are creating a pull request, we don't want to report files updated (as this will be passed down as output variables _with_ the PR info)
+
+                reporter.ReportFilesUpdated(deploymentConfig.CommitParameters, applicationResults);
 
             var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
             var updatedApplications = applicationResults.Where(r => r.Updated).ToList();
