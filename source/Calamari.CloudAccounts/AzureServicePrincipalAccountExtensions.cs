@@ -1,19 +1,11 @@
-﻿using System;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Identity.Client;
-using Microsoft.Rest;
-using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
 namespace Calamari.CloudAccounts
 {
     public static class AzureServicePrincipalAccountExtensions
     {
-        public static async Task<ServiceClientCredentials> Credentials(this AzureServicePrincipalAccount account)
-        {
-            return new TokenCredentials(await GetAuthorizationToken(account));
-        }
-
         public static Task<string> GetAuthorizationToken(this AzureServicePrincipalAccount account)
         {
             return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
