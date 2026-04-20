@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Commands.Support;
@@ -121,7 +122,7 @@ public class CommitToGitCommand : Command
             new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(nonSensitiveSubstituteInFiles)),
         };
         
-        var repositoryOperations = new List<IConvention>
+        var copyInputFilesToRepository = new List<IConvention>
         {
             new DelegateInstallConvention(d =>
             {
@@ -162,32 +163,19 @@ public class CommitToGitCommand : Command
         var commitToRemote = new List<IConvention>
         {
             new DelegateInstallConvention(d =>
-            {
-                var commitParams = repositoryConfig!.CommitParameters;
+                                          {
+                                              var commitParams = repositoryConfig!.CommitParameters;
+                                              var updater = new RepositoryUpdater(commitParams, log, new UserDefinedCommitMessageGenerator(commitParams.Description));
 
-                // Stage all changes — handles files added, modified, or deleted by the transform script
-                clonedRepository!.StageAllChanges();
-
-                // Commit — returns false if the working tree is clean
-                if (!clonedRepository.CommitChanges(commitParams.Summary, commitParams.Description))
-                {
-                    log.Info("No changes to commit.");
-                    return;
-                }
-
-                clonedRepository.PushChanges(
-                    commitParams.RequiresPr,
-                    commitParams.Summary,
-                    commitParams.Description,
-                    repositoryConfig.gitConnection.GitReference,
-                    CancellationToken.None).GetAwaiter().GetResult();
-            })
+                                              //TODO(tmm): This is a smell, shouldn't need the FileUpdateResult here :/
+                                              var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.gitConnection.GitReference, new FileUpdateResult([], [], [], []));
+                                          })
         };
         
         var conventions = new List<IConvention>();
         conventions.AddRange(stageTransformScriptAndSubstitute);
         conventions.AddRange(stagePackagesToIncludeInRepository);
-        conventions.AddRange(repositoryOperations);
+        conventions.AddRange(copyInputFilesToRepository);
         conventions.AddRange(transformRepository);
         conventions.AddRange(commitToRemote);
 
@@ -198,7 +186,7 @@ public class CommitToGitCommand : Command
         }
         finally
         {
-            clonedRepository?.Dispose();
+            clonedRepository.Dispose();
         }
 
         var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
