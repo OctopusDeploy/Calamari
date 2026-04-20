@@ -128,13 +128,52 @@ public class CommitToGitCommand : Command
             {
                 var destinationPath = repositoryConfig!.DestinationPath ?? string.Empty;
                 var destBase = Path.Combine(clonedRepository.WorkingDirectory, destinationPath);
-                foreach (var sourceFile in fileSystem.EnumerateFilesRecursively(inputsDirectory))
+                var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem, log);
+
+                foreach (var package in metadataParser.GetPackageDependenciesForCopying(d))
                 {
-                    var relativePath = Path.GetRelativePath(inputsDirectory, sourceFile);
-                    var destFile = Path.Combine(destBase, relativePath);
-                    fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
-                    fileSystem.CopyFile(sourceFile, destFile);
+                    var sanitizedName = fileSystem.RemoveInvalidFileNameChars(package.PackageName);
+                    var packageSourceDir = Path.Combine(inputsDirectory, sanitizedName);
+                    if (!fileSystem.DirectoryExists(packageSourceDir))
+                    {
+                        log.Verbose($"Package source directory '{packageSourceDir}' not found, skipping");
+                        continue;
+                    }
+
+                    var inputFilePaths = package.InputFilePaths;
+                    var filesToCopy = inputFilePaths?.Length > 0
+                        ? fileSystem.EnumerateFilesWithGlob(packageSourceDir, inputFilePaths)
+                        : fileSystem.EnumerateFilesRecursively(packageSourceDir);
+
+                    filesToCopy = filesToCopy.ToList();
+                    foreach (var sourceFile in filesToCopy)
+                    {
+                        var relativePath = Path.GetRelativePath(packageSourceDir, sourceFile);
+                        var destFile = Path.Combine(destBase, relativePath);
+                        fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
+                        fileSystem.CopyFile(sourceFile, destFile);
+                    }
                 }
+
+                foreach (var gitDep in metadataParser.GetGitRepositoryDependenciesForCopying(d))
+                {
+                    var sanitizedName = fileSystem.RemoveInvalidFileNameChars(gitDep.GitDependencyName);
+                    var gitSourceDir = Path.Combine(inputsDirectory, sanitizedName);
+                    if (!fileSystem.DirectoryExists(gitSourceDir))
+                    {
+                        log.Verbose($"Git dependency source directory '{gitSourceDir}' not found, skipping");
+                        continue;
+                    }
+
+                    foreach (var sourceFile in fileSystem.EnumerateFilesRecursively(gitSourceDir))
+                    {
+                        var relativePath = Path.GetRelativePath(inputsDirectory, sourceFile);
+                        var destFile = Path.Combine(destBase, relativePath);
+                        fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
+                        fileSystem.CopyFile(sourceFile, destFile);
+                    }
+                }
+
                 log.Verbose($"Copied staged files to repository at {destBase}");
             }),
         };

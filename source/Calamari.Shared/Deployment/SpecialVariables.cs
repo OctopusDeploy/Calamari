@@ -371,6 +371,8 @@ namespace Calamari.Deployment
                 public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
                 public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
                 public const string DestinationPath = "Octopus.Action.Git.DestinationPath";
+                
+                public const string TemplateFileSources = "Octopus.Action.Git.TemplateFileSources";
             }
         }
 

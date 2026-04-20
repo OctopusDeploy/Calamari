@@ -5,7 +5,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes;
 using Calamari.Kubernetes.Helm;
 using Newtonsoft.Json.Linq;
 
@@ -24,7 +23,7 @@ namespace Calamari.CommitToGit
 
         public IEnumerable<string> ParseInputFilesFromDependencies(RunningDeployment deployment, bool logIncludedFiles = true)
         {
-            var templateValueSources = deployment.Variables.GetRaw(SpecialVariables.Helm.TemplateValuesSources);
+            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.TemplateFileSources);
 
             if (string.IsNullOrWhiteSpace(templateValueSources))
                 return Enumerable.Empty<string>();
@@ -102,7 +101,7 @@ namespace Calamari.CommitToGit
 
         public IEnumerable<string> ReferencedDependencyNames(RunningDeployment deployment)
         {
-            var templateValueSources = deployment.Variables.GetRaw(SpecialVariables.Helm.TemplateValuesSources);
+            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.TemplateFileSources);
 
             if (string.IsNullOrWhiteSpace(templateValueSources))
                 return Enumerable.Empty<string>();
@@ -142,6 +141,31 @@ namespace Calamari.CommitToGit
             }
 
             return dependencyNames;
+        }
+
+        internal IEnumerable<PackageDependency> GetPackageDependenciesForCopying(RunningDeployment deployment)
+        {
+            return GetDependenciesOfType<PackageDependency>(deployment, CommitToGitDependencyType.Package,
+                jToken => PackageDependency.FromJTokenWithEvaluation(jToken, deployment.Variables));
+        }
+
+        internal IEnumerable<GitRepositoryDependency> GetGitRepositoryDependenciesForCopying(RunningDeployment deployment)
+        {
+            return GetDependenciesOfType<GitRepositoryDependency>(deployment, CommitToGitDependencyType.GitRepository,
+                jToken => GitRepositoryDependency.FromJTokenWithEvaluation(jToken, deployment.Variables));
+        }
+
+        IEnumerable<T> GetDependenciesOfType<T>(RunningDeployment deployment, CommitToGitDependencyType dependencyType, Func<JToken, T> factory)
+        {
+            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.TemplateFileSources);
+            if (string.IsNullOrWhiteSpace(templateValueSources))
+                return Enumerable.Empty<T>();
+
+            var parsedJsonArray = JArray.Parse(templateValueSources);
+            return parsedJsonArray
+                .Where(t => (CommitToGitDependencyType)Enum.Parse(typeof(CommitToGitDependencyType), t.Value<string>(nameof(CommitToGitDependency.Type))) == dependencyType)
+                .Select(factory)
+                .ToList();
         }
 
         static void AddIfNotNull(List<string> filenames, string filename)
