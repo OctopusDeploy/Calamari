@@ -1,8 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.Management.Fluent;
-
 namespace Calamari.CloudAccounts
 {
     public interface IAzureAccount
@@ -16,7 +11,6 @@ namespace Calamari.CloudAccounts
 
         AccountType AccountType { get; }
         string GetCredentials { get; }
-        IAzure CreateAzureClient();
     }
 
     public enum AccountType

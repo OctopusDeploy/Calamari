@@ -40,6 +40,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         InMemoryLog log;
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
+        string OriginUrl => RepositoryHelpers.ToFileUri(OriginPath);
         Repository originRepo;
 
         const string ArgoCDBranchFriendlyName = "devBranch";
@@ -91,7 +92,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                         "http://my-argo.com")
                 ],
                 [
-                    new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
+                    new GitCredentialDto(OriginUrl, "", "")
                 ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
@@ -104,7 +105,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = OriginPath,
+                                                    OriginalRepoUrl = OriginUrl,
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -254,6 +255,68 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             using var resultRepo = new Repository(clonedRepoPath);
             resultRepo.Head.Tip.Message.TrimEnd().Should().Contain("---\nImages updated:");
             
+            AssertOutputVariables();
+        }
+
+        [Test]
+        public void DirectorySource_ImageMatches_Update_TargetImageInCommentDoesNotAppearInPatch()
+        {
+            // Arrange: the target image reference (nginx:1.27.1) appears in an inline YAML comment alongside
+            // the old image field. CreateTemporaryBeforeContent uses a naive string.Replace, so the comment
+            // would receive the placeholder during JSON-patch generation. The committed file must come from
+            // ReplaceImages(originalContent) whose regex ignores comments — so CALAMARI_PLACEHOLDER must
+            // never appear in the repo.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var yamlFilename = "include/file1.yaml";
+            originRepo.AddFilesToBranch(argoCDBranchName,
+            [
+                (
+                    yamlFilename,
+                    """
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                      name: sample
+                    spec:
+                      template:
+                        spec:
+                          containers:
+                            - name: nginx
+                              image: nginx:1.19 # update to nginx:1.27.1
+                    """
+                )
+            ]);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert: the image field is updated; the comment retains the original text; no placeholder leaks
+            const string updatedYamlContent =
+                """
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: sample
+                spec:
+                  template:
+                    spec:
+                      containers:
+                        - name: nginx
+                          image: nginx:1.27.1 # update to nginx:1.27.1
+                """;
+
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
+
+            var committedContent = fileSystem.ReadFile(Path.Combine(clonedRepoPath, yamlFilename));
+            committedContent.Should().NotContain("__CALAMARI_PLACEHOLDER__",
+                "the internal placeholder used for JSON-patch generation must never be written to the repository");
+
+            using var resultRepo = new Repository(clonedRepoPath);
+            resultRepo.Head.Tip.Message.TrimEnd().Should().Contain("---\nImages updated:");
+
             AssertOutputVariables();
         }
 
@@ -533,8 +596,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().BeNull("no commit was made");
-            sourceDetails.PatchedFiles.Should().HaveCount(1, "a patch should be generated even when no commit is needed");
-            sourceDetails.PatchedFiles.First().FilePath.Should().Be(yamlFilename);
+            sourceDetails.PatchedFiles.Should()
+                         .BeEquivalentTo([
+                             new FileJsonPatch(yamlFilename, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                         ]);
         }
 
         [TestCase(false, TestName = "DirectorySource_SameImage_OneOutdated_OneUpToDate_SameFile")]
@@ -585,26 +650,26 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             if (useSeparateFiles)
             {
                 // Each file is processed independently — one patch entry per file, one operation each.
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, singleContainerPatch),
+                                 new FileJsonPatch(file2, singleContainerPatch),
+                             ]);
             }
             else
             {
                 // Both containers are in one file — one patch entry with two replace operations.
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1"))),
+                             ]);
             }
         }
 
@@ -661,22 +726,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             if (useSeparateFiles)
             {
                 // Each file is processed independently — one patch entry per file, one operation each.
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1")));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                                 new FileJsonPatch(file2, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0"))),
+                             ]);
             }
             else
             {
                 // Both containers are in one file — one patch entry with two replace operations.
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "redis:7.0"))),
+                             ]);
             }
         }
 
@@ -727,24 +791,24 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, singleContainerPatch),
+                                 new FileJsonPatch(file2, singleContainerPatch),
+                             ]);
             }
             else
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1"))),
+                             ]);
             }
         }
 
@@ -799,21 +863,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1")));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                                 new FileJsonPatch(file2, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0"))),
+                             ]);
             }
             else
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "redis:7.0"))),
+                             ]);
             }
         }
 
@@ -865,26 +928,26 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             sourceDetails.CommitSha.Should().BeNull();
             sourceDetails.ReplacedFiles.Should().BeEmpty();
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(singleContainerPatch);
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, singleContainerPatch),
+                                 new FileJsonPatch(file2, singleContainerPatch),
+                             ]);
             }
             else
             {
                 // AlreadyUpToDateImages = {"nginx:1.27.1"} — both occurrences get the placeholder,
                 // producing two replace operations in the no-op patch.
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "nginx:1.27.1"))),
+                             ]);
             }
         }
 
@@ -940,21 +1003,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             if (useSeparateFiles)
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(2);
-
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file1)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1")));
-                sourceDetails.PatchedFiles.Should().ContainSingle(p => p.FilePath == file2)
-                             .Which.JsonPatch.Should().Be(SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"))),
+                                 new FileJsonPatch(file2, SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "redis:7.0"))),
+                             ]);
             }
             else
             {
-                sourceDetails.PatchedFiles.Should().HaveCount(1);
-                sourceDetails.PatchedFiles.Single().FilePath.Should().Be(file1);
-
-                sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be(SerializeReplacePatch(
-                    ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
-                    ("/0/spec/template/spec/containers/1/image", "redis:7.0")));
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch(file1, SerializeReplacePatch(
+                                     ("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"),
+                                     ("/0/spec/template/spec/containers/1/image", "redis:7.0"))),
+                             ]);
             }
         }
 
@@ -997,7 +1059,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                         })
                                                         .WithSource(new ApplicationSource
                                                         {
-                                                            OriginalRepoUrl = OriginPath,
+                                                            OriginalRepoUrl = OriginUrl,
                                                             Path = path,
                                                             TargetRevision = ArgoCDBranchFriendlyName,
                                                         }, sourceType)
@@ -1038,11 +1100,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var sourceDetails = actual.TrackedSourceDetails.First();
             sourceDetails.CommitSha.Should().BeNull("no commit was made");
-            // The placeholder-substitution technique locates the tag value in the YAML and produces a patch entry,
-            // but because the before/after content is identical the resulting patch has zero operations.
-            sourceDetails.PatchedFiles.Should().HaveCount(1);
-            sourceDetails.PatchedFiles.Single().FilePath.Should().Be("kustomization.yaml");
-            sourceDetails.PatchedFiles.Single().JsonPatch.Should().Be("[]");
+            sourceDetails.PatchedFiles.Should()
+                         .BeEquivalentTo([
+                             new FileJsonPatch("kustomization.yaml", SerializeReplacePatch(("/0/images/0/newTag", "1.27.1"))),
+                         ]);
         }
 
         [Test]
@@ -1069,8 +1130,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
                                                             [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
                                                         })
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
                                                         .Build());
 
             var getResults = CaptureReporterResults();
@@ -1087,15 +1148,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
             actual.TrackedSourceDetails.Should().HaveCount(2, "both sources should be tracked regardless of whether they made a commit");
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             var source0 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 0);
             source0.CommitSha.Should().HaveLength(40, "source 0 had an outdated image and was committed");
-            source0.PatchedFiles.Should().HaveCount(1);
-            source0.PatchedFiles.Single().FilePath.Should().Be(file0);
+            source0.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file0, singleContainerPatch),
+                   ]);
 
             var source1 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 1);
             source1.CommitSha.Should().BeNull("source 1 was already at the target tag so no commit was made");
-            source1.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated for source 1");
-            source1.PatchedFiles.Single().FilePath.Should().Be(file1);
+            source1.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file1, singleContainerPatch),
+                   ]);
         }
 
         [Test]
@@ -1122,8 +1189,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
                                                             [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
                                                         })
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
                                                         .Build());
 
             var getResults = CaptureReporterResults();
@@ -1141,15 +1208,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             actual.UpdatedImages.Should().BeEmpty();
             actual.TrackedSourceDetails.Should().HaveCount(2, "both in-scope sources should be tracked regardless of commit status");
 
+            var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
+
             var source0 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 0);
             source0.CommitSha.Should().BeNull("source 0 was already at the target tag");
-            source0.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated");
-            source0.PatchedFiles.Single().FilePath.Should().Be(file0);
+            source0.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file0, singleContainerPatch),
+                   ]);
 
             var source1 = actual.TrackedSourceDetails.First(d => d.SourceIndex == 1);
             source1.CommitSha.Should().BeNull("source 1 was already at the target tag");
-            source1.PatchedFiles.Should().HaveCount(1, "a no-op patch should still be generated");
-            source1.PatchedFiles.Single().FilePath.Should().Be(file1);
+            source1.PatchedFiles.Should()
+                   .BeEquivalentTo([
+                       new FileJsonPatch(file1, singleContainerPatch),
+                   ]);
         }
 
         [Test]
@@ -1178,8 +1251,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
                                                             [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
                                                         })
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
-                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginPath, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
                                                         .Build());
 
             var getResults = CaptureReporterResults();
@@ -1226,7 +1299,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
-            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginPath : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginUrl : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? "1" : "0");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
