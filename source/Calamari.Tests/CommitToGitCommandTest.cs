@@ -216,6 +216,121 @@ public class CommitToGitCommandTest
         content.Should().BeNull("the package file should not have been copied and commited into the repository");
     }
 
+    [Test]
+    [Category("PlatformAgnostic")]
+    public void CommitMessageSummaryIsUsedAsCommitMessage()
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{}");
+        AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
+
+        RunCommitToGit().Should().Be(0);
+
+        using var repo = new Repository(OriginPath);
+        repo.Branches[targetBranchFriendlyName].Tip.Message.Should().StartWith("Git Commit Summary");
+    }
+
+    [Test]
+    [Category("Nix")]
+    public void FailingScriptResultsInNonZeroExitCode()
+    {
+        variables.AddRange([
+            new CalamariExecutionVariable(ScriptVariables.ScriptBody, "exit 1", false),
+            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
+        ]);
+
+        RunCommitToGit().Should().NotBe(0);
+    }
+
+    [Test]
+    [Category("Nix")]
+    public void BothPackageCopyAndScriptTransformProduceFilesInRepository()
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{}");
+        AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
+
+        variables.AddRange([
+            new CalamariExecutionVariable(ScriptVariables.ScriptBody, "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/script-output.txt\"", false),
+            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
+        ]);
+
+        RunCommitToGit().Should().Be(0);
+        GetCommittedFileContent($"{destinationPath}/configs/settings.json").Should().NotBeNull("package files should be copied to the repository");
+        GetCommittedFileContent("script-output.txt").Should().NotBeNull("the script should have created and committed the file");
+    }
+
+    [Test]
+    [Category("PlatformAgnostic")]
+    public void MultiplePackagesAreAllCopiedToGitRepository()
+    {
+        const string package1Name = "configs-package";
+        const string package2Name = "templates-package";
+        const string destinationPath = "output-dir";
+
+        var zip1Path = CreateZipWithEntry(package1Name, "configs/settings.json", "{}");
+        var zip2Path = CreateZipWithEntry(package2Name, "configs/template.yaml", "apiVersion: apps/v1");
+
+        var templateValueSources =
+            $"[" +
+            $"{{\"Type\":\"Package\",\"PackageId\":\"{package1Name}\",\"PackageName\":\"{package1Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}," +
+            $"{{\"Type\":\"Package\",\"PackageId\":\"{package2Name}\",\"PackageName\":\"{package2Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}" +
+            $"]";
+
+        variables.AddRange([
+            new CalamariExecutionVariable(PackageVariables.IndexedPackageId(package1Name), package1Name, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(package1Name), zip1Path, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedPackageId(package2Name), package2Name, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(package2Name), zip2Path, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.TemplateFileSources, templateValueSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
+        ]);
+
+        RunCommitToGit().Should().Be(0);
+        GetCommittedFileContent($"{destinationPath}/configs/settings.json").Should().NotBeNull("files from the first package should be copied");
+        GetCommittedFileContent($"{destinationPath}/configs/template.yaml").Should().NotBeNull("files from the second package should be copied");
+    }
+
+    [Test]
+    [Category("Nix")]
+    public void CommitToGitRunsScriptProvidedViaScriptBodyBySyntaxVariable()
+    {
+        variables.AddRange([
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"", false),
+        ]);
+
+        RunCommitToGit().Should().Be(0);
+        GetCommittedFileContent("proof.txt").Should().NotBeNull("script provided via syntax-specific variable should run and commit the file");
+    }
+
+    [Test]
+    [Category("PlatformAgnostic")]
+    public void WhenNoScriptAndNoPackagesCommandSucceedsWithZeroExitCode()
+    {
+        RunCommitToGit().Should().Be(0);
+    }
+
+    [Test]
+    [Category("Nix")]
+    public void WhenBothScriptParametersArgAndVariableAreSetVariableTakesPrecedence()
+    {
+        var proofFile = Path.Combine(executionDirectory, "arg_check.txt");
+        var zipPath = CreateZipWithEntry("transform-script", "script.sh",
+            $"if [ \"$1\" = \"from-variable\" ]; then touch {proofFile}; fi");
+
+        variables.AddRange([
+            new CalamariExecutionVariable(ScriptVariables.ScriptFileName, "script.sh", false),
+            new CalamariExecutionVariable(ScriptVariables.ScriptParameters, "from-variable", false),
+        ]);
+
+        RunCommitToGit("--package", zipPath, "--scriptParameters", "from-arg").Should().Be(0);
+        File.Exists(proofFile).Should().BeTrue("the variable value should take precedence over the --scriptParameters arg");
+    }
+
     // --- Helpers ---
 
     int RunCommitToGit(params string[] extraArgs)
