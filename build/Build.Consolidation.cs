@@ -9,16 +9,17 @@ using Octopus.Calamari.ConsolidatedPackage;
 namespace Calamari.Build;
 
 public partial class Build
-{    
+{
     static readonly List<string> NuGetPackagesToExcludeFromConsolidation =
     [
         "Octopus.Calamari.CloudAccounts",
-        "Octopus.Calamari.Common", 
+        "Octopus.Calamari.Common",
         "Octopus.Calamari.ConsolidateCalamariPackages",
         "Octopus.Calamari.ConsolidatedPackage",
-        "Octopus.Calamari.ConsolidatedPackage.Api"
+        "Octopus.Calamari.ConsolidatedPackage.Api",
+        "Octopus.Calamari.Contracts"
     ];
-    
+
     static AbsolutePath ConsolidateCalamariPackagesProject => KnownPaths.SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
     static AbsolutePath ConsolidatedPackageDirectory => KnownPaths.ArtifactsDirectory / "consolidated";
 
@@ -95,13 +96,13 @@ public partial class Build
                            foreach (var project in consolidationLibraryProjects)
                            {
                                Log.Information("Packaging {ProjectName}", project.Name);
-                               
+
                                var buildDirectory = KnownPaths.SourceDirectory / project.Name / "bin" / Configuration;
 
                                //Build the consolidated package libraries
                                DotNetBuild(s =>
-                                                 s.SetConfiguration(Configuration)
-                                                  .SetProjectFile(project));
+                                               s.SetConfiguration(Configuration)
+                                                .SetProjectFile(project));
 
                                File.Copy(KnownPaths.RootDirectory / "global.json", buildDirectory / "global.json");
 

@@ -1,8 +1,9 @@
 #nullable enable
 using System;
 using Calamari.ArgoCD.Models;
+using Octopus.Calamari.Contracts.ArgoCD;
 
-namespace Calamari.ArgoCD.Dtos;
+namespace Calamari.ArgoCD;
 
 public record DeploymentScope(ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant)
 {

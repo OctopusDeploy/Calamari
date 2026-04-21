@@ -1,6 +1,6 @@
-#nullable enable
+using System;
 
-namespace Calamari.ArgoCD.Dtos;
+namespace Octopus.Calamari.Contracts.ArgoCD;
 
 public record ArgoCDCustomPropertiesDto(ArgoCDGatewayDto[] Gateways, ArgoCDApplicationDto[] Applications, GitCredentialDto[] Credentials);
 

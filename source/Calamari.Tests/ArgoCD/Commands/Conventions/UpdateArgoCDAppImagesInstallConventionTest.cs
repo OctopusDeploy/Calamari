@@ -6,7 +6,6 @@ using System.Text.Json;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Models;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
@@ -25,6 +24,7 @@ using FluentAssertions.Execution;
 using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {
