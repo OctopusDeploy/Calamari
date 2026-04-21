@@ -143,13 +143,13 @@ namespace Calamari.CommitToGit
             return dependencyNames;
         }
 
-        internal IEnumerable<PackageDependency> GetPackageDependenciesForCopying(RunningDeployment deployment)
+        public IEnumerable<PackageDependency> GetPackageDependenciesForCopying(RunningDeployment deployment)
         {
             return GetDependenciesOfType<PackageDependency>(deployment, CommitToGitDependencyType.Package,
                 jToken => PackageDependency.FromJTokenWithEvaluation(jToken, deployment.Variables));
         }
 
-        internal IEnumerable<GitRepositoryDependency> GetGitRepositoryDependenciesForCopying(RunningDeployment deployment)
+        public IEnumerable<GitRepositoryDependency> GetGitRepositoryDependenciesForCopying(RunningDeployment deployment)
         {
             return GetDependenciesOfType<GitRepositoryDependency>(deployment, CommitToGitDependencyType.GitRepository,
                 jToken => GitRepositoryDependency.FromJTokenWithEvaluation(jToken, deployment.Variables));
@@ -177,19 +177,19 @@ namespace Calamari.CommitToGit
         }
     }
 
-    internal enum CommitToGitDependencyType
+    public enum CommitToGitDependencyType
     {
         Package,
         Inline,
         GitRepository
     }
 
-    internal class CommitToGitDependency
+    public class CommitToGitDependency
     {
         public CommitToGitDependencyType Type { get; set; }
     }
 
-    internal class InlineDependency : CommitToGitDependency
+    class InlineDependency : CommitToGitDependency
     {
         public string FileContent { get; set; }
         public string DestinationFilename { get; set; }
@@ -211,12 +211,12 @@ namespace Calamari.CommitToGit
         }
     }
 
-    internal abstract class NamedDependency : CommitToGitDependency
+    public abstract class NamedDependency : CommitToGitDependency
     {
         public abstract string GetName();
     }
 
-    internal class PackageDependency : NamedDependency
+    public class PackageDependency : NamedDependency
     {
         public string PackageId { get; set; }
         public string PackageName { get; set; }
@@ -247,7 +247,7 @@ namespace Calamari.CommitToGit
         }
     }
 
-    internal class GitRepositoryDependency : NamedDependency
+    public class GitRepositoryDependency : NamedDependency
     {
         public string GitDependencyName { get; set; }
         public string DestinationSubFolder { get; set; }
