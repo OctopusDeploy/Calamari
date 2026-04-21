@@ -74,7 +74,7 @@ public class CommitToGitCommandTest
         var zipPath = CreateZipWithEntry(packageReferenceName, "helper.sh", "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"");
 
         variables.AddRange([
-            new CalamariExecutionVariable(ScriptVariables.ScriptBody, $"bash {packageReferenceName}/helper.sh", false),
+            new CalamariExecutionVariable(ScriptVariables.ScriptBody, $". {packageReferenceName}/helper.sh", false),
             new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
@@ -149,7 +149,7 @@ public class CommitToGitCommandTest
 
         RunCommitToGit().Should().Be(0);
 
-        var content = GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/configs/settings.json");
+        var content = GetCommittedFileContent($"{destinationPath}/configs/settings.json");
         content.Should().NotBeNull("the package file should have been copied into the repository");
         content.Should().Contain("production-value", "the non-sensitive variable should have been substituted");
         content.Should().NotContain("#{MyVar}", "the Octostache template should have been replaced");
@@ -171,9 +171,9 @@ public class CommitToGitCommandTest
 
         RunCommitToGit().Should().Be(0);
 
-        GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/configs/settings.json")
+        GetCommittedFileContent($"{destinationPath}/configs/settings.json")
             .Should().NotBeNull("files matching the InputFilePaths glob should be copied");
-        GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/scripts/setup.sh")
+        GetCommittedFileContent($"{destinationPath}/scripts/setup.sh")
             .Should().BeNull("files not matching the InputFilePaths glob should not be copied");
     }
 
@@ -267,11 +267,11 @@ public class CommitToGitCommandTest
 
     void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath)
     {
-        var templateValueSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"\"}}]";
+        var templateValueSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationPath}\"}}]";
         variables.AddRange([
-            new CalamariExecutionVariable(PackageVariables.IndexedPackageId(gitDependencyName), gitDependencyName, false),
-            new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(gitDependencyName), zipPath, false),
-            new CalamariExecutionVariable(SpecialVariables.Helm.TemplateValuesSources, templateValueSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.Extract(gitDependencyName), "true", false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.OriginalPath(gitDependencyName), zipPath, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.TemplateFileSources, templateValueSources, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
     }

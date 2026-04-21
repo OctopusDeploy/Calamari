@@ -78,6 +78,20 @@ public class CommitToGitCommand : Command
     public override int Execute(string[] commandLineArguments)
     {
         Options.Parse(commandLineArguments);
+
+        if (WasProvided(scriptParametersArg))
+        {
+            if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptParameters)))
+            {
+                log.Warn($"The `--scriptParameters` parameter and `{SpecialVariables.Action.Script.ScriptParameters}` variable are both set.\r\n" +
+                         $"Please provide just the `{SpecialVariables.Action.Script.ScriptParameters}` variable instead.");
+            }
+            else
+            {
+                variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
+            }
+        }
+
         var clock = new SystemClock();
 
         var deployment = new RunningDeployment(pathToPackage, variables);
@@ -118,6 +132,11 @@ public class CommitToGitCommand : Command
                                                      fileSystem,
                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
                                                      new PackageVariablesFactory(),
+                                                     new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
+            new SelectiveDependencyStagingConvention(pathToPackage,
+                                                     fileSystem,
+                                                     new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
+                                                     new GitDependencyVariablesFactory(),
                                                      new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
             new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(nonSensitiveSubstituteInFiles)),
         };

@@ -37,7 +37,10 @@ namespace Calamari.Tests.ArgoCD.Git
             repository.Refs.UpdateTarget("HEAD", MainBranchName.Value);
 
             //create our branch
-            repository.CreateBranch(branchName.ToFriendlyName(), emptyCommit);
+            if (branchName != GitBranchName.CreateFromFriendlyName("main"))
+            {
+                repository.CreateBranch(branchName.ToFriendlyName(), emptyCommit);
+            }
         }
 
         public static string ToFileUri(string path) => new Uri(path).AbsoluteUri;
