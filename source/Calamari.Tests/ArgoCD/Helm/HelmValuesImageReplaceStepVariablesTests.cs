@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
@@ -103,6 +104,14 @@ nginx:
 redis:
   tag: 1.0
 ";
+        
+        const string updatedYaml = @"
+nginx:
+  tag: 1.27.1
+redis:
+  tag: 1.0
+";
+
         var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
         var images = new List<ContainerImageReferenceAndHelmReference>
         {
@@ -113,8 +122,7 @@ redis:
 
         using var scope = new AssertionScope();
         result.UpdatedImageReferences.Should().BeEquivalentTo(["nginx:1.27.1"]);
-        result.UpdatedContents.Should().Contain("nginx:\n  tag: 1.27.1");
-        result.UpdatedContents.Should().Contain("redis:\n  tag: 1.0");
+        result.UpdatedContents.Should().Be(updatedYaml);
     }
 
     [Test]
