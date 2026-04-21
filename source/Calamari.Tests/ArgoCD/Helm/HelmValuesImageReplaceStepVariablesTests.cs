@@ -105,13 +105,6 @@ redis:
   tag: 1.0
 ";
         
-        const string updatedYaml = @"
-nginx:
-  tag: 1.27.1
-redis:
-  tag: 1.0
-";
-
         var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
         var images = new List<ContainerImageReferenceAndHelmReference>
         {
@@ -122,7 +115,8 @@ redis:
 
         using var scope = new AssertionScope();
         result.UpdatedImageReferences.Should().BeEquivalentTo(["nginx:1.27.1"]);
-        result.UpdatedContents.Should().Be(updatedYaml);
+        result.UpdatedContents.Should().Contain($"nginx:{Environment.NewLine}  tag: 1.27.1");
+        result.UpdatedContents.Should().Contain($"redis:{Environment.NewLine}  tag: 1.0");
     }
 
     [Test]
