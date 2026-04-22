@@ -1703,14 +1703,20 @@ image:
                 expectedPatchedFilePath: Path.Combine("files", "values.yml"));
         }
 
-        [Test]
-        public void HelmSource_ImageAlreadyAtTargetTag_SeparateTagAnnotation_TracksSourceWithNullCommitSha()
+        [TestCase("repository", "nginx", "nginx:1.27.1", TestName = "HelmSource_ImageAlreadyAtTargetTag_Annotation_NameTagSplit_DockerRegistry_RepositoryField")]
+        [TestCase("repository", "ghcr.io/owner/nginx", "ghcr.io/owner/nginx:1.27.1", TestName = "HelmSource_ImageAlreadyAtTargetTag_Annotation_NameTagSplit_NonDockerRegistry_RepositoryField")]
+        [TestCase("name", "nginx", "nginx:1.27.1", TestName = "HelmSource_ImageAlreadyAtTargetTag_Annotation_NameTagSplit_DockerRegistry_NameField")]
+        public void HelmSource_ImageAlreadyAtTargetTag_Annotation_NameAndTagSplitAcrossProperties_TracksSourceWithNullCommitSha(
+            string nameField,
+            string nameFieldValue,
+            string imagePackageValue)
         {
             // Arrange
-            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}";
-            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", @"
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] =
+                $"{{{{ .Values.image.{nameField} }}}}:{{{{ .Values.image.tag }}}}";
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", $@"
 image:
-  repository: nginx
+  {nameField}: {nameFieldValue}
   tag: 1.27.1
 "));
 
@@ -1718,14 +1724,14 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedImage("nginx")] = imagePackageValue,
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             });
 
             // Act
             updater.Install(runningDeployment);
 
-            // Assert
+            // Assert — patch targets only the tag field; name/repository field preserves the original value (including any registry)
             AssertNotUpdatedWithExpectedPatch(getCapturedResults,
                 expectedPatchPointer: "/0/image/tag",
                 expectedPatchValue: "1.27.1",
