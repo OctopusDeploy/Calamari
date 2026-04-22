@@ -82,7 +82,6 @@ namespace Calamari.Aws.Commands
                                                       TemplateFactory,
                                                       stackEventLogger,
                                                       StackProvider,
-                                                      _ => null,
                                                       true,
                                                       stackName,
                                                       environment,
