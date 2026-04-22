@@ -13,10 +13,12 @@ public partial class Build
 
                            var buildDirectory = KnownPaths.SourceDirectory / project.Name / "bin" / Configuration;
 
-                           //Build the consolidated package libraries
+                           //Build the contracts library
                            DotNetBuild(s =>
                                            s.SetConfiguration(Configuration)
-                                            .SetProjectFile(project));
+                                            .SetProjectFile(project)
+                                            .SetVersion(NugetVersion.Value)
+                                            .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion));
 
                            File.Copy(KnownPaths.RootDirectory / "global.json", buildDirectory / "global.json");
 
