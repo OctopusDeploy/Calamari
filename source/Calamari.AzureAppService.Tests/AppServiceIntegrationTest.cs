@@ -18,6 +18,7 @@ using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using FluentAssertions;
+using JetBrains.TeamCity.ServiceMessages.Write.Special.Impl.Writer;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -63,7 +64,8 @@ namespace Calamari.AzureAppService.Tests
             TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
             SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
-
+            
+            Console.WriteLine($"Resource group location: {ResourceGroupLocation}");
             TestContext.Progress.WriteLine($"Resource group location: {ResourceGroupLocation}");
 
             var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
