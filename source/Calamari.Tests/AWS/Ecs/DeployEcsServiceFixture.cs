@@ -166,7 +166,8 @@ public class DeployEcsServiceFixture
         // ECS-specific vars for post-deploy diagnostics
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
         variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "dontWait");
+        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "waitWithTimeout");
+        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Timeout, ((int)TimeSpan.FromMinutes(3).TotalMilliseconds).ToString());
 
         return variables;
     }

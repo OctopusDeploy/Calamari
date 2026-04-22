@@ -58,5 +58,5 @@ public class InlineCloudFormationTemplate : ICloudFormationRequestBuilder
     };
 
     public Task<CreateChangeSetRequest> BuildChangesetRequest() =>
-        throw new NotImplementedException();
+        throw new NotSupportedException();
 }

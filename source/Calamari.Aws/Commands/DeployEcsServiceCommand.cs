@@ -40,22 +40,37 @@ public class DeployEcsServiceCommand : Command
         var running = new RunningDeployment(variables);
 
         new ConventionProcessor(running,
-        [
-            new LogAwsUserInfoConvention(environment),
-            new CheckEcsStackNotInProgressConvention(environment, inputs.StackName),
-            new DeployAwsCloudFormationConvention(
-                () => ClientHelpers.CreateCloudFormationClient(environment),
-                () => new InlineCloudFormationTemplate(inputs.TemplateBody, inputs.Parameters, inputs.StackName, inputs.Tags, ["CAPABILITY_NAMED_IAM"], inputs.RoleArn),
-                new StackEventLogger(log),
-                _ => stackArn,
-                inputs.WaitForComplete,
-                inputs.StackName,
-                environment,
-                log,
-                inputs.WaitTimeout),
-            new LogEcsTaskFailuresConvention(environment, inputs.ServiceName, inputs.ClusterName, log),
-            new SetEcsOutputVariablesConvention(environment, inputs.StackName, inputs.ClusterName, inputs.ServiceName, log)
-        ], log).RunConventions();
+                                [
+                                    new LogAwsUserInfoConvention(environment),
+                                    new DeployAwsCloudFormationConvention(
+                                                                          () => ClientHelpers.CreateCloudFormationClient(environment),
+                                                                          () => new InlineCloudFormationTemplate(inputs.TemplateBody,
+                                                                                                                 inputs.Parameters,
+                                                                                                                 inputs.StackName,
+                                                                                                                 inputs.Tags,
+                                                                                                                 ["CAPABILITY_NAMED_IAM"],
+                                                                                                                 inputs.RoleArn),
+                                                                          new StackEventLogger(log),
+                                                                          _ => stackArn,
+                                                                          inputs.WaitForComplete,
+                                                                          inputs.StackName,
+                                                                          environment,
+                                                                          log,
+                                                                          inputs.WaitTimeout),
+                                    new LogEcsTaskFailuresConvention(() => ClientHelpers.CreateEcsClient(environment),
+                                                                     inputs.ServiceName,
+                                                                     inputs.ClusterName,
+                                                                     inputs.WaitForComplete,
+                                                                     inputs.WaitTimeout,
+                                                                     TimeSpan.FromSeconds(10),
+                                                                     log),
+                                    new SetEcsOutputVariablesConvention(environment,
+                                                                        inputs.StackName,
+                                                                        inputs.ClusterName,
+                                                                        inputs.ServiceName,
+                                                                        log)
+                                ],
+                                log).RunConventions();
 
         return 0;
     }
@@ -75,10 +90,12 @@ public class DeployEcsServiceCommand : Command
         Guard.NotNullOrWhiteSpace(serviceName, $"The ECS service name variable '{AwsSpecialVariables.Ecs.ServiceName}' is not set.");
 
         var parameters = JsonConvert.DeserializeObject<List<Parameter>>(
-            variables.Get(AwsSpecialVariables.CloudFormation.TemplateParameters) ?? "[]") ?? [];
+                                                                        variables.Get(AwsSpecialVariables.CloudFormation.TemplateParameters) ?? "[]")
+                         ?? [];
 
         var tags = JsonConvert.DeserializeObject<List<Tag>>(
-            variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]") ?? [];
+                                                            variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]")
+                   ?? [];
 
         var roleArn = variables.Get(AwsSpecialVariables.CloudFormation.RoleArn);
 
@@ -92,15 +109,15 @@ public class DeployEcsServiceCommand : Command
             throw new CommandException($"Wait option '{AwsSpecialVariables.Ecs.WaitOption.Type}' is 'waitWithTimeout' but '{AwsSpecialVariables.Ecs.WaitOption.Timeout}' is not set.");
 
         return new EcsCommandInputs(
-            TemplateBody: templateBody,
-            StackName: stackName,
-            ClusterName: clusterName,
-            ServiceName: serviceName,
-            Parameters: parameters,
-            Tags: tags,
-            RoleArn: roleArn,
-            WaitForComplete: waitOptionType != "dontWait",
-            WaitTimeout: waitOptionType == "waitWithTimeout" ? TimeSpan.FromMilliseconds(waitOptionTimeoutMs!.Value) : null);
+                                    TemplateBody: templateBody,
+                                    StackName: stackName,
+                                    ClusterName: clusterName,
+                                    ServiceName: serviceName,
+                                    Parameters: parameters,
+                                    Tags: tags,
+                                    RoleArn: roleArn,
+                                    WaitForComplete: waitOptionType != "dontWait",
+                                    WaitTimeout: waitOptionType == "waitWithTimeout" ? TimeSpan.FromMilliseconds(waitOptionTimeoutMs!.Value) : null);
     }
 
     record EcsCommandInputs(
