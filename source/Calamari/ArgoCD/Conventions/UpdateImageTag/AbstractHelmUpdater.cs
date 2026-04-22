@@ -123,7 +123,7 @@ public abstract class AbstractHelmUpdater : ISourceUpdater
         var placeholderImages = imageReferences
             .Select(ir =>
             {
-                var placeholderRef = MakePlaceholderRef(ir.ContainerReference.FriendlyName());
+                var placeholderRef = JsonPatchUtils.MakePlaceholderRef(ir.ContainerReference.FriendlyName());
                 return ir with { ContainerReference = ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry) };
             })
             .ToList();
