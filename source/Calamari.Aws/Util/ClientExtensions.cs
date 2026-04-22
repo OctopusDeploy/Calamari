@@ -1,4 +1,5 @@
 ﻿using Amazon.CloudFormation;
+using Amazon.ECS;
 using Amazon.IdentityManagement;
 using Amazon.Runtime;
 using Amazon.S3;
@@ -42,6 +43,12 @@ namespace Calamari.Aws.Util
         {
             return new AmazonCloudFormationClient(environment.AwsCredentials,
                 environment.AsClientConfig<AmazonCloudFormationConfig>());
+        }
+
+        public static IAmazonECS CreateEcsClient(AwsEnvironmentGeneration environment)
+        {
+            return new AmazonECSClient(environment.AwsCredentials,
+                environment.AsClientConfig<AmazonECSConfig>());
         }
     }
 }
