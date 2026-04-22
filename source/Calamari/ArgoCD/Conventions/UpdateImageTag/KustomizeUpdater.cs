@@ -48,10 +48,7 @@ public class KustomizeUpdater : BaseUpdater
         var placeholderImages = targetedImages
                                 .Select(imageRef =>
                                 {
-                                    var colonIdx = imageRef.LastIndexOf(':');
-                                    var placeholderRef = colonIdx >= 0
-                                        ? imageRef[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
-                                        : imageRef;
+                                    var placeholderRef = MakePlaceholderRef(imageRef);
                                     return new ContainerImageReferenceAndHelmReference(
                                         ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry));
                                 })

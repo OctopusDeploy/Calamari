@@ -107,7 +107,7 @@ public abstract class BaseUpdater : ISourceUpdater
             var colonIdx = imageRef.LastIndexOf(':');
             if (colonIdx >= 0)
             {
-                temporaryBefore = temporaryBefore.Replace(imageRef, imageRef[..colonIdx] + ":__CALAMARI_PLACEHOLDER__");
+                temporaryBefore = temporaryBefore.Replace(imageRef, MakePlaceholderRef(imageRef));
             }
         }
 
@@ -115,6 +115,17 @@ public abstract class BaseUpdater : ISourceUpdater
         return temporaryResult.UpdatedImageReferences.Count > 0
             ? CreateJsonPatchFromDiff(temporaryBefore, temporaryResult.UpdatedContents)
             : null;
+    }
+
+    // The tag should always be present — ContainerImageReference objects are created by
+    // DeploymentConfigFactory which ensures a tag is set. The no-tag fallback appends the
+    // placeholder anyway so the replacer can still match.
+    protected static string MakePlaceholderRef(string imageRef)
+    {
+        var colonIdx = imageRef.LastIndexOf(':');
+        return colonIdx >= 0
+            ? imageRef[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
+            : imageRef + ":__CALAMARI_PLACEHOLDER__";
     }
 
     protected static JsonPatchDocument CreateJsonPatchFromDiff(string originalContent, string updatedContent)

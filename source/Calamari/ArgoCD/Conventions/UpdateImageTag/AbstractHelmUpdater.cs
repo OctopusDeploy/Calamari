@@ -101,11 +101,7 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         var placeholderImages = imagesToUpdate
             .Select(ir =>
             {
-                var friendlyName = ir.ContainerReference.FriendlyName();
-                var colonIdx = friendlyName.LastIndexOf(':');
-                var placeholderRef = colonIdx >= 0
-                    ? friendlyName[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
-                    : friendlyName + ":__CALAMARI_PLACEHOLDER__";
+                var placeholderRef = MakePlaceholderRef(ir.ContainerReference.FriendlyName());
                 return ir with { ContainerReference = ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry) };
             })
             .ToList();
