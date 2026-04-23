@@ -225,11 +225,7 @@ public partial class Build
     {
         // CDN's
         "https://builds.dotnet.microsoft.com/dotnet",
-        "https://ci.dot.net/public",
-
-        // direct
-        "https://dotnetcli.blob.core.windows.net/dotnet",
-        "https://dotnetbuilds.blob.core.windows.net/public"
+        "https://ci.dot.net/public"
     };
 
     static async Task<T> PerformOperationWithFeedAndRetries<T>(Func<string, Task<T>> performOperation)
