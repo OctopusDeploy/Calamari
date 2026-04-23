@@ -17,22 +17,19 @@ public class InlineCloudFormationTemplate : ICloudFormationRequestBuilder
     readonly string stackName;
     readonly List<Tag> tags;
     readonly List<string> capabilities;
-    readonly string roleArn;
 
     public InlineCloudFormationTemplate(
         string templateBody,
         IEnumerable<Parameter> parameters,
         string stackName,
         List<Tag> tags,
-        List<string> capabilities,
-        string roleArn)
+        List<string> capabilities)
     {
         this.templateBody = templateBody;
         this.parameters = parameters?.ToList() ?? [];
         this.stackName = stackName;
         this.tags = tags;
         this.capabilities = capabilities;
-        this.roleArn = roleArn;
     }
 
     public IEnumerable<Parameter> Inputs => parameters;
@@ -43,8 +40,7 @@ public class InlineCloudFormationTemplate : ICloudFormationRequestBuilder
         TemplateBody = templateBody,
         Parameters = parameters,
         Tags = tags,
-        Capabilities = capabilities,
-        RoleARN = roleArn
+        Capabilities = capabilities
     };
 
     public UpdateStackRequest BuildUpdateStackRequest() => new()
@@ -53,8 +49,7 @@ public class InlineCloudFormationTemplate : ICloudFormationRequestBuilder
         TemplateBody = templateBody,
         Parameters = parameters,
         Tags = tags,
-        Capabilities = capabilities,
-        RoleARN = roleArn
+        Capabilities = capabilities
     };
 
     public Task<CreateChangeSetRequest> BuildChangesetRequest() =>

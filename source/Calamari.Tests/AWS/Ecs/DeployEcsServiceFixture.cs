@@ -167,7 +167,7 @@ public class DeployEcsServiceFixture
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
         variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
         variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "waitWithTimeout");
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Timeout, ((int)TimeSpan.FromMinutes(3).TotalMilliseconds).ToString());
+        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Timeout, ((int)TimeSpan.FromMinutes(5).TotalMilliseconds).ToString());
 
         return variables;
     }

@@ -5,6 +5,7 @@ using Calamari.Aws.Deployment;
 using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
+using Calamari.Aws.Integration.Ecs;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
@@ -48,8 +49,7 @@ public class DeployEcsServiceCommand : Command
                                                                                                                  inputs.Parameters,
                                                                                                                  inputs.StackName,
                                                                                                                  inputs.Tags,
-                                                                                                                 ["CAPABILITY_NAMED_IAM"],
-                                                                                                                 inputs.RoleArn),
+                                                                                                                 ["CAPABILITY_NAMED_IAM"]),
                                                                           new StackEventLogger(log),
                                                                           _ => stackArn,
                                                                           inputs.WaitForComplete,
@@ -93,11 +93,10 @@ public class DeployEcsServiceCommand : Command
                                                                         variables.Get(AwsSpecialVariables.CloudFormation.TemplateParameters) ?? "[]")
                          ?? [];
 
-        var tags = JsonConvert.DeserializeObject<List<Tag>>(
-                                                            variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]")
-                   ?? [];
-
-        var roleArn = variables.Get(AwsSpecialVariables.CloudFormation.RoleArn);
+        var userTags = JsonConvert.DeserializeObject<List<Tag>>(
+                                                                variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]")
+                       ?? [];
+        var tags = EcsTagBuilder.Build(variables, userTags);
 
         var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
         Guard.NotNullOrWhiteSpace(waitOptionType, $"The wait option type variable '{AwsSpecialVariables.Ecs.WaitOption.Type}' is not set.");
@@ -115,7 +114,6 @@ public class DeployEcsServiceCommand : Command
                                     ServiceName: serviceName,
                                     Parameters: parameters,
                                     Tags: tags,
-                                    RoleArn: roleArn,
                                     WaitForComplete: waitOptionType != "dontWait",
                                     WaitTimeout: waitOptionType == "waitWithTimeout" ? TimeSpan.FromMilliseconds(waitOptionTimeoutMs!.Value) : null);
     }
@@ -127,7 +125,6 @@ public class DeployEcsServiceCommand : Command
         string ServiceName,
         List<Parameter> Parameters,
         List<Tag> Tags,
-        string RoleArn,
         bool WaitForComplete,
         TimeSpan? WaitTimeout);
 }
