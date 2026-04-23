@@ -1835,7 +1835,7 @@ redis:
                                Name = "ref-source",
                                Ref = "values",
                                TargetRevision = ArgoCDBranchFriendlyName,
-                               OriginalRepoUrl = OriginPath,
+                               OriginalRepoUrl = OriginUrl,
                            },
                            SourceTypeConstants.Directory)
                        .Build();
