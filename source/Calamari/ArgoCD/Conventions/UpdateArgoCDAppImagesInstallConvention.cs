@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Git;
@@ -61,7 +62,7 @@ namespace Calamari.ArgoCD.Conventions
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
-            var sshCredentials = argoProperties.SshCredentials.ToDictionary(c => c.Url);
+            var sshCredentials = argoProperties.SshCredentials?.ToDictionary(c => c.Url) ?? new Dictionary<string, GitCredentialSshKeyDto>();
             var authenticatingRepositoryFactory = new AuthenticatingRepositoryFactory(gitCredentials, sshCredentials, repositoryFactory, log);
             var deploymentScope = deployment.Variables.GetDeploymentScope();
 

@@ -6,7 +6,8 @@ public record ArgoCDCustomPropertiesDto(
     ArgoCDGatewayDto[] Gateways,
     ArgoCDApplicationDto[] Applications,
     GitCredentialDto[] Credentials,
-    GitCredentialSshKeyDto[] SshCredentials);
+    // Nullable for backwards compatibility
+    GitCredentialSshKeyDto[]? SshCredentials);
 
 public record ArgoCDGatewayDto(string Id, string Name);
 
