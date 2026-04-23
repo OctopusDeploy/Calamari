@@ -75,7 +75,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 ],
                 [
                     new GitCredentialDto(OriginUrl, "", "")
-                ]);
+                ],
+                []);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
@@ -643,6 +644,83 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             File.Exists(Path.Combine(resultPath, sharedFilename)).Should().BeTrue();
 
             AssertOutputVariables();
+        }
+
+        [Test]
+        public void ExecuteCopiesFilesWhenUsingSshCredentials()
+        {
+            // Arrange — reconfigure the custom properties to use SSH credentials
+            // instead of HTTPS, using the raw local path as the URL (mimicking an SCP-style
+            // URL that bypasses GitCloneSafeUrl)
+            var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(
+                [
+                    new ArgoCDGatewayDto(GatewayId, "Gateway1")
+                ],
+                [
+                    new ArgoCDApplicationDto(GatewayId,
+                        "App1",
+                        "argocd",
+                        "yaml",
+                        "docker.io",
+                        "http://my-argo.com")
+                ],
+                [],
+                [
+                    new GitCredentialSshKeyDto(RepoUrl, "git", "private-key", "public-key", "passphrase")
+                ]);
+            customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
+
+            // The application source URL must match the SSH credential URL
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("App1")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new ApplicationSource()
+                                                {
+                                                    OriginalRepoUrl = RepoUrl,
+                                                    Path = "",
+                                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                                },
+                                                SourceTypeConstants.Directory)
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this via SSH",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+
+            // Act
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
+            convention.Install(runningDeployment);
+
+            // Assert
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
+            var resultContent = File.ReadAllText(Path.Combine(resultPath, firstFilename));
+            resultContent.Should().Be(firstFilename);
+
+            using var resultRepo = new Repository(resultPath);
+            resultRepo.Head.Tip.Message.TrimEnd().Should().Be("Octopus did this via SSH");
         }
 
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")

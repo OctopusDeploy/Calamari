@@ -93,7 +93,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 ],
                 [
                     new GitCredentialDto(OriginUrl, "", "")
-                ]);
+                ],
+                []);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()

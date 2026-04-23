@@ -64,7 +64,19 @@ namespace Calamari.ArgoCD.Git
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
-            if (gitConnection.Username != null && gitConnection.Password != null)
+            if (gitConnection is SshGitConnection ssh)
+            {
+                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new SshUserKeyMemoryCredentials
+                {
+                    Username = ssh.Username,
+                    PublicKey = ssh.PublicKey,
+                    PrivateKey = ssh.PrivateKey,
+                    Passphrase = ssh.Passphrase
+                };
+                // TODO(eddy): Implement proper host key verification
+                options.FetchOptions.CertificateCheck = (cert, valid, host) => true;
+            }
+            else if (gitConnection.Username != null && gitConnection.Password != null)
             {
                 options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                 {
@@ -79,7 +91,7 @@ namespace Calamari.ArgoCD.Git
             {
                 try
                 {
-                    repoPath = Repository.Clone(gitConnection.Url.AbsoluteUri, checkoutPath, options);
+                    repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
                     timedOp.Complete();
                 }
                 catch (Exception e)

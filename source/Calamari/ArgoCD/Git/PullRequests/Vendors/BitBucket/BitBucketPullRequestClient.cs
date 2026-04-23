@@ -21,7 +21,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
             this.repositoryConnection = repositoryConnection;
             this.baseUrl = baseUrl;
 
-            var parts = repositoryConnection.Url.ExtractPropertiesFromUrlPath();
+            var parts = repositoryConnection.Url.ParseAsHttpsUri().ExtractPropertiesFromUrlPath();
             workspace = parts[0];
             repositorySlug = parts[1];
         }

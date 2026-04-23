@@ -54,7 +54,7 @@ namespace Calamari.Tests.ArgoCD.Git
             gitVendorAgnosticPullRequestClientFactory.TryResolve(Arg.Any<IRepositoryConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
             
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
-            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
+            gitConnection = new GitConnection(null, null, OriginPath, branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
 
@@ -177,7 +177,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin.AddFilesToBranch(branchName, ("file.yaml", ""));
             bareOrigin.ApplyTag("1.0.0", bareOrigin.Head.Tip.Sha);
 
-            gitConnection = new GitConnection(null, null, new Uri(OriginPath), GitReference.CreateFromString("1.0.0"));
+            gitConnection = new GitConnection(null, null, OriginPath, GitReference.CreateFromString("1.0.0"));
             
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
             var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);

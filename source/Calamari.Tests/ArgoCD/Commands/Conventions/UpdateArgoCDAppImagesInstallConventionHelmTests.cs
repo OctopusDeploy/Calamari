@@ -98,7 +98,8 @@ image:
                 ],
                 [
                     new GitCredentialDto(OriginUrl, "", "")
-                ]);
+                ],
+                []);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             argoCdApplicationFromYaml = new Application()

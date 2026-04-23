@@ -54,7 +54,7 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task GitHubUrl_ResolvesToGitHubClient()
     {
-        connection.Url.Returns(new Uri("https://github.com/org/repo"));
+        connection.Url.Returns("https://github.com/org/repo");
         var resolver = CreateResolverWithAllRealFactories();
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
@@ -65,7 +65,7 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task GitLabCloudUrl_ResolvesToGitLabClient()
     {
-        connection.Url.Returns(new Uri("https://gitlab.com/org/repo"));
+        connection.Url.Returns("https://gitlab.com/org/repo");
         var resolver = CreateResolverWithAllRealFactories();
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
@@ -76,7 +76,7 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task AzureDevOpsUrl_ResolvesToAzureDevOpsClient()
     {
-        connection.Url.Returns(new Uri("https://dev.azure.com/org/project/_git/repo"));
+        connection.Url.Returns("https://dev.azure.com/org/project/_git/repo");
         var resolver = CreateResolverWithAllRealFactories();
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
@@ -87,7 +87,7 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task BitBucketUrl_ResolvesToBitBucketClient()
     {
-        connection.Url.Returns(new Uri("https://bitbucket.org/org/repo"));
+        connection.Url.Returns("https://bitbucket.org/org/repo");
         var resolver = CreateResolverWithAllRealFactories();
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
@@ -98,7 +98,7 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task UnrecognisedUrl_ReturnsNull()
     {
-        connection.Url.Returns(new Uri("https://someunknown.example/org/repo"));
+        connection.Url.Returns("https://someunknown.example/org/repo");
         var resolver = new GitVendorPullRequestClientResolver(new IGitVendorPullRequestClientFactory[]
         {
             new NeverMatchesFactory()
@@ -112,7 +112,7 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task SelfHostedUrl_WithMatchingSelfHostedFactory_ReturnsExpectedClient()
     {
-        connection.Url.Returns(new Uri("https://mygitlab.company.com/org/repo"));
+        connection.Url.Returns("https://mygitlab.company.com/org/repo");
         var expectedClient = Substitute.For<IGitVendorPullRequestClient>();
         var factory = Substitute.For<IGitVendorPullRequestClientFactory>();
         factory.CanHandleAsCloudHosted(Arg.Any<Uri>()).Returns(false);

@@ -18,7 +18,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
             this.gitLabClient = gitLabClient;
             this.baseUrl = baseUrl;
             
-            var parts = repositoryConnection.Url.ExtractPropertiesFromUrlPath();
+            var parts = repositoryConnection.Url.ParseAsHttpsUri().ExtractPropertiesFromUrlPath();
             projectPath = $"{parts[^2]}/{parts[^1]}";
         }
         

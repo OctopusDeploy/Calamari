@@ -25,15 +25,21 @@ namespace Calamari.ArgoCD.Git.PullRequests
         public async Task<IGitVendorPullRequestClient?> TryResolve(IRepositoryConnection repositoryConnection, ILog log,
                                                                        CancellationToken cancellationToken)
         {
+            if (!Uri.TryCreate(repositoryConnection.Url, UriKind.Absolute, out var repositoryUri))
+            {
+                log.Verbose($"Git vendor: Unknown (URL is not a valid URI: '{repositoryConnection.Url}')");
+                return null;
+            }
+
             //first try getting a handling factory by checking if it can be handled as a cloud hosted repo
-            var handlingFactory = clientFactories.SingleOrDefault(f => f.CanHandleAsCloudHosted(repositoryConnection.Url));
+            var handlingFactory = clientFactories.SingleOrDefault(f => f.CanHandleAsCloudHosted(repositoryUri));
 
             //if we still don't have a handling factory, try the self-hosted checks.
             if (handlingFactory is null)
             {
                 foreach (var clientFactory in clientFactories)
                 {
-                    if (!await clientFactory.CanHandleAsSelfHosted(repositoryConnection.Url, cancellationToken))
+                    if (!await clientFactory.CanHandleAsSelfHosted(repositoryUri, cancellationToken))
                     {
                         continue;
                     }

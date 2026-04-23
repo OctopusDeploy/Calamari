@@ -119,7 +119,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
             repository.Network.Push(newBranch, new PushOptions() { CredentialsProvider = credentialsHandler });
 
             var conn = Substitute.For<IRepositoryConnection>();
-            conn.Url.Returns(new Uri(repositoryUrl));
+            conn.Url.Returns(repositoryUrl);
             conn.Username.Returns(cloneUsername);
             conn.Password.Returns(clonePassword);
             try

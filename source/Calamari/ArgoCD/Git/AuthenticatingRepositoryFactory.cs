@@ -7,19 +7,37 @@ namespace Calamari.ArgoCD.Git;
 public class AuthenticatingRepositoryFactory
 {
     readonly Dictionary<string, GitCredentialDto> gitCredentials;
+    readonly Dictionary<string, GitCredentialSshKeyDto> sshCredentials;
     readonly RepositoryFactory repositoryFactory;
     readonly ILog log;
-    
 
-    public AuthenticatingRepositoryFactory(Dictionary<string, GitCredentialDto> gitCredentials, RepositoryFactory repositoryFactory, ILog log)
+    public AuthenticatingRepositoryFactory(
+        Dictionary<string, GitCredentialDto> gitCredentials,
+        Dictionary<string, GitCredentialSshKeyDto> sshCredentials,
+        RepositoryFactory repositoryFactory,
+        ILog log)
     {
         this.gitCredentials = gitCredentials;
+        this.sshCredentials = sshCredentials;
         this.repositoryFactory = repositoryFactory;
         this.log = log;
     }
-    
+
     public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
     {
+        var sshCredential = sshCredentials.GetValueOrDefault(requestedUrl);
+        if (sshCredential is not null)
+        {
+            var sshConnection = new SshGitConnection(
+                sshCredential.Username,
+                requestedUrl,
+                GitReference.CreateFromString(targetRevision),
+                sshCredential.PrivateKey,
+                sshCredential.PublicKey,
+                sshCredential.Passphrase);
+            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
+        }
+
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
         if (gitCredential == null)
         {
