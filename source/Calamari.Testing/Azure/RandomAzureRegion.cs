@@ -14,7 +14,7 @@ namespace Calamari.Testing.Azure
             "eastus",
             "eastus2",
             "westus",
-            "westus2",
+            //"westus2", - 2026-04-23   westus2 is low in capacity now
             "australiaeast"
         };
 
