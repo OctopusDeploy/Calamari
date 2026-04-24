@@ -44,7 +44,7 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly ISubstituteInFiles substituteInFiles;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly bool md5HashSupported;
-        readonly bool includeOutputVariables;
+        readonly S3OutputVariablesStrategy s3OutputVariablesStrategy;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
 
@@ -58,7 +58,7 @@ namespace Calamari.Aws.Deployment.Conventions
             IBucketKeyProvider bucketKeyProvider,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            bool includeOutputVariables
+            S3OutputVariablesStrategy s3OutputVariablesStrategy
         )
         {
             this.log = log;
@@ -71,7 +71,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
-            this.includeOutputVariables = includeOutputVariables;
+            this.s3OutputVariablesStrategy = s3OutputVariablesStrategy;
         }
 
         private static string ExceptionMessageWithFilePath(PutObjectRequest request, Exception exception)
@@ -125,7 +125,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     var results = responses.Where(z => z.IsSuccess()).ToArray();
 
-                    if (!includeOutputVariables)
+                    if (s3OutputVariablesStrategy == S3OutputVariablesStrategy.NoFiles)
                     {
                         return;
                     }

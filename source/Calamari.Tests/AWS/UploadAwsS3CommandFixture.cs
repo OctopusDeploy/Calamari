@@ -97,7 +97,7 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        public async Task UploadPackageWithIncludeOutputVariablesEnabled()
+        public async Task UploadPackageWithS3OutputVariablesStrategySetToAllFiles()
         {
             var packageOptions = new List<S3TargetPropertiesBase>
             {
@@ -109,7 +109,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, true);
+            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, S3OutputVariablesStrategy.AllFiles);
             var outputVariables = GetOutputVariables(log);
 
             outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
@@ -127,7 +127,7 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        public async Task UploadPackageWithIncludeOutputVariablesDisabled()
+        public async Task UploadPackageWithS3OutputVariablesStrategyNotSet()
         {
             var packageOptions = new List<S3TargetPropertiesBase>
             {
@@ -139,7 +139,37 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, false);
+            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage);
+            var outputVariables = GetOutputVariables(log);
+
+            outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().ContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().ContainKey("Package.S3Uri");
+            outputVariables.Should().ContainKey("Package.Uri");
+            outputVariables.Should().ContainKey("Package.Arn");
+            outputVariables.Should().ContainKey("Package.ObjectVersion");
+            outputVariables.Should().ContainKey("Package.FileName");
+
+            await Validate(async client =>
+                           {
+                               await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
+                           });
+        }
+
+        [Test]
+        public async Task UploadPackageWithS3OutputVariablesStrategySetToNoFiles()
+        {
+            var packageOptions = new List<S3TargetPropertiesBase>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, S3OutputVariablesStrategy.NoFiles);
             var outputVariables = GetOutputVariables(log);
 
             outputVariables.Should().NotContainKey(PackageVariables.Output.FileName);
@@ -735,7 +765,7 @@ namespace Calamari.Tests.AWS
             }
         }
 
-        protected async Task<(string bucketKeyPrefix, InMemoryLog log)> Upload(string packageName, List<S3TargetPropertiesBase> propertiesList, VariableDictionary customVariables = null, S3TargetMode s3TargetMode = S3TargetMode.FileSelections, bool? includeOutputVariables = null)
+        protected async Task<(string bucketKeyPrefix, InMemoryLog log)> Upload(string packageName, List<S3TargetPropertiesBase> propertiesList, VariableDictionary customVariables = null, S3TargetMode s3TargetMode = S3TargetMode.FileSelections, S3OutputVariablesStrategy? s3OutputVariablesStrategy = null)
         {
             const string packageVersion = "1.0.0";
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
@@ -807,10 +837,10 @@ namespace Calamari.Tests.AWS
                     "--targetMode", s3TargetMode.ToString()
                 };
 
-                if (includeOutputVariables.HasValue)
+                if (s3OutputVariablesStrategy.HasValue)
                 {
-                    args.Add("--includeOutputVariables");
-                    args.Add(includeOutputVariables.Value.ToString());
+                    args.Add("--s3OutputVariablesStrategy");
+                    args.Add(s3OutputVariablesStrategy.Value.ToString());
                 }
 
                 var result = command.Execute(args.ToArray());
