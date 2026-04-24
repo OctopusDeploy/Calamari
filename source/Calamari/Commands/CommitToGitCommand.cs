@@ -138,7 +138,7 @@ public class CommitToGitCommand : Command
                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
                                                      new GitDependencyVariablesFactory(),
                                                      new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
-            new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(nonSensitiveSubstituteInFiles)),
+            new DelegateInstallConvention(d => nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, fileSystem.EnumerateFilesRecursively(inputsDirectory).ToList())),
         };
         
         var copyInputFilesToRepository = new List<IConvention>
