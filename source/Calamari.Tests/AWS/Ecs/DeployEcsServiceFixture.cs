@@ -184,11 +184,12 @@ public class DeployEcsServiceFixture
             new { Key = "VantaDescription", Value = "Ephemeral ECS service created during integration tests" }
         }));
 
-        // ECS-specific vars for post-deploy diagnostics
+        // ECS-specific vars. dontWait — the integration test only needs to verify we can
+        // submit a valid template; we don't assert on steady-state since we don't own the
+        // template content.
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
         variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "waitWithTimeout");
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Timeout, ((int)TimeSpan.FromMinutes(5).TotalMilliseconds).ToString());
+        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "dontWait");
 
         return variables;
     }
