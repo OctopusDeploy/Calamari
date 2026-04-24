@@ -1,8 +1,6 @@
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using Calamari.ArgoCD;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -24,8 +22,7 @@ public class GitHttpSmartSubTransportTests
     static GitHttpSmartSubTransportTests()
     {
         // Ensure the custom HTTP smart sub-transport is registered with libgit2.
-        // ArgoCDModule's static constructor handles this; RunClassConstructor is idempotent.
-        RuntimeHelpers.RunClassConstructor(typeof(ArgoCDModule).TypeHandle);
+        LibGit2SharpTransportRegistration.EnsureRegistered();
     }
 
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
