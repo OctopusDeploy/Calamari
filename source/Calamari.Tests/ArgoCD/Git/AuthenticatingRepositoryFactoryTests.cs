@@ -13,16 +13,15 @@ using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.Tests.ArgoCD.Git;
 
-[TestFixture]
-public class AuthenticatingRepositoryFactoryTests
+public abstract class AuthenticatingRepositoryFactoryTestBase
 {
-    readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
-    readonly GitBranchName branchName = GitBranchName.CreateFromFriendlyName("devBranch");
+    protected readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
+    protected readonly GitBranchName branchName = GitBranchName.CreateFromFriendlyName("devBranch");
 
-    InMemoryLog log;
-    string tempDirectory;
-    string OriginPath => Path.Combine(tempDirectory, "origin");
-    RepositoryFactory repositoryFactory;
+    protected InMemoryLog log;
+    protected string tempDirectory;
+    protected string OriginPath => Path.Combine(tempDirectory, "origin");
+    protected RepositoryFactory repositoryFactory;
 
     [SetUp]
     public void Init()
@@ -46,6 +45,9 @@ public class AuthenticatingRepositoryFactoryTests
         RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
     }
 
+[TestFixture]
+public class SshUrlTests : AuthenticatingRepositoryFactoryTestBase
+{
     [Test]
     public void SshCredentialIsSelectedWhenUrlMatchesSshCredential()
     {
@@ -60,23 +62,6 @@ public class AuthenticatingRepositoryFactoryTests
             log);
 
         using var wrapper = factory.CloneRepository(OriginPath, branchName.ToFriendlyName());
-        wrapper.Should().NotBeNull();
-    }
-
-    [Test]
-    public void HttpsCredentialIsSelectedWhenUrlMatchesHttpsCredential()
-    {
-        var httpsUrl = RepositoryHelpers.ToFileUri(OriginPath);
-        var factory = new AuthenticatingRepositoryFactory(
-            new Dictionary<string, GitCredentialDto>
-            {
-                [httpsUrl] = new GitCredentialDto(httpsUrl, "", "")
-            },
-            new Dictionary<string, GitCredentialSshKeyDto>(),
-            repositoryFactory,
-            log);
-
-        using var wrapper = factory.CloneRepository(httpsUrl, branchName.ToFriendlyName());
         wrapper.Should().NotBeNull();
     }
 
@@ -99,6 +84,27 @@ public class AuthenticatingRepositoryFactoryTests
         using var wrapper = factory.CloneRepository(url, branchName.ToFriendlyName());
         wrapper.Should().NotBeNull();
     }
+}
+
+[TestFixture]
+public class HttpsUrlTests : AuthenticatingRepositoryFactoryTestBase
+{
+    [Test]
+    public void HttpsCredentialIsSelectedWhenUrlMatchesHttpsCredential()
+    {
+        var httpsUrl = RepositoryHelpers.ToFileUri(OriginPath);
+        var factory = new AuthenticatingRepositoryFactory(
+            new Dictionary<string, GitCredentialDto>
+            {
+                [httpsUrl] = new GitCredentialDto(httpsUrl, "", "")
+            },
+            new Dictionary<string, GitCredentialSshKeyDto>(),
+            repositoryFactory,
+            log);
+
+        using var wrapper = factory.CloneRepository(httpsUrl, branchName.ToFriendlyName());
+        wrapper.Should().NotBeNull();
+    }
 
     [Test]
     public void AnonymousCloneWhenNoCredentialsMatch()
@@ -114,7 +120,11 @@ public class AuthenticatingRepositoryFactoryTests
         wrapper.Should().NotBeNull();
         log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
     }
+}
 
+[TestFixture]
+public class ScpStyleUrlTests : AuthenticatingRepositoryFactoryTestBase
+{
     [Test]
     public void ScpStyleUrlDoesNotMatchHttpsCredential()
     {
@@ -137,4 +147,6 @@ public class AuthenticatingRepositoryFactoryTests
         act.Should().Throw<Exception>(); // clone failure expected
         log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
     }
+}
+
 }
