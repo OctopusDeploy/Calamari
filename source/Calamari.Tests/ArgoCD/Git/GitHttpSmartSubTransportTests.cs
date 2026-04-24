@@ -19,12 +19,6 @@ namespace Calamari.Tests.ArgoCD.Git;
 [TestFixture]
 public class GitHttpSmartSubTransportTests
 {
-    static GitHttpSmartSubTransportTests()
-    {
-        // Ensure the custom HTTP smart sub-transport is registered with libgit2.
-        LibGit2SharpTransportRegistration.EnsureRegistered();
-    }
-
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
     InMemoryLog log;
