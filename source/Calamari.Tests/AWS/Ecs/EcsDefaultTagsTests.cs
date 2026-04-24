@@ -10,7 +10,7 @@ namespace Calamari.Tests.AWS.Ecs;
 public class EcsDefaultTagsTests
 {
     [Test]
-    public void Build_EmitsDefaultTag_WhenOctopusVariableHasValue()
+    public void EmitsDefaultTag_WhenOctopusVariableHasValue()
     {
         var variables = new CalamariVariables();
         variables.Set("Octopus.Project.Name", "MyProject");
@@ -22,7 +22,7 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void Build_OmitsDefaultTag_WhenOctopusVariableIsUnset()
+    public void OmitsDefaultTag_WhenOctopusVariableIsUnset()
     {
         var tags = EcsDefaultTags.Merge(new CalamariVariables(), []);
 
@@ -30,7 +30,7 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void Build_TruncatesKeyLongerThan128Chars()
+    public void TruncatesKeyLongerThan128Chars()
     {
         var userTags = new[] { new KeyValuePair<string, string>(new string('k', 200), "v") };
 
@@ -40,7 +40,7 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void Build_TruncatesValueLongerThan256Chars()
+    public void TruncatesValueLongerThan256Chars()
     {
         var userTags = new[] { new KeyValuePair<string, string>("k", new string('v', 300)) };
 
@@ -50,7 +50,7 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void Build_StripsInvalidCharactersFromKeyAndValue()
+    public void StripsInvalidCharactersFromKeyAndValue()
     {
         var userTags = new[] { new KeyValuePair<string, string>("my!@#$key", "val!ue%") };
 
@@ -61,7 +61,7 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void Build_MergesDefaultsThenUserTags_PreservingOrder()
+    public void MergesDefaultsThenUserTags_PreservingOrder()
     {
         var variables = new CalamariVariables();
         // Environment.Name is declared before Project.Name in OctopusVariableNames,
@@ -83,7 +83,7 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void Build_DropsTag_WhenSanitizeProducesEmptyKey()
+    public void DropsTag_WhenSanitizeProducesEmptyKey()
     {
         // All-invalid-chars key sanitizes to "", which the final Where() filter drops
         // so AWS isn't sent a tag with an empty key.

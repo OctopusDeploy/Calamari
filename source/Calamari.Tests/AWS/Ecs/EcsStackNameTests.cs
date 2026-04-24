@@ -9,7 +9,7 @@ namespace Calamari.Tests.AWS.Ecs;
 public class EcsStackNameTests
 {
     [Test]
-    public void Generate_UntenantedDefault_WhenTenantIdMissing()
+    public void UntenantedDefault_WhenTenantIdMissing()
     {
         var variables = new CalamariVariables();
         variables.Set("Octopus.Environment.Id", "env1");
@@ -20,7 +20,7 @@ public class EcsStackNameTests
     }
 
     [Test]
-    public void Generate_UsesTenantId_WhenPresent()
+    public void UsesTenantId_WhenPresent()
     {
         var variables = new CalamariVariables();
         variables.Set("Octopus.Environment.Id", "env1");
@@ -32,7 +32,7 @@ public class EcsStackNameTests
     }
 
     [Test]
-    public void Generate_TruncatesTo128Chars()
+    public void TruncatesTo128Chars()
     {
         var variables = new CalamariVariables();
         variables.Set("Octopus.Environment.Id", "env1");

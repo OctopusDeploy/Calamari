@@ -40,7 +40,7 @@ public class SetEcsOutputVariablesConvention : IInstallConvention
     {
         var serviceName = await LookupServiceLogicalId();
 
-        SetOutputVariable(deployment.Variables, "ServiceName", serviceName ?? "");
+        SetOutputVariable(deployment.Variables, "ServiceName", serviceName ?? string.Empty);
         SetOutputVariable(deployment.Variables, "ClusterName", clusterName);
         SetOutputVariable(deployment.Variables, "CloudFormationStackName", stackName);
         SetOutputVariable(deployment.Variables, "TaskDefinitionFamily", taskFamily);
@@ -71,6 +71,6 @@ public class SetEcsOutputVariablesConvention : IInstallConvention
     void SetOutputVariable(IVariables variables, string name, string value)
     {
         log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.{name}\"");
-        log.SetOutputVariable(name, value ?? "", variables);
+        log.SetOutputVariable(name, value, variables);
     }
 }
