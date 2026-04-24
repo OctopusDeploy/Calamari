@@ -29,7 +29,6 @@ public class LogEcsTaskFailuresConventionTests
     {
         var ecsClient = Substitute.For<IAmazonECS>();
         ConfigureTaskDefinition(ecsClient);
-        ConfigureDesiredCount(ecsClient, 1);
         ConfigureTasks(ecsClient, new EcsTask
         {
             TaskArn = TaskArn,
@@ -55,7 +54,6 @@ public class LogEcsTaskFailuresConventionTests
     {
         var ecsClient = Substitute.For<IAmazonECS>();
         ConfigureTaskDefinition(ecsClient);
-        ConfigureDesiredCount(ecsClient, 1);
         ecsClient.ListTasksAsync(Arg.Any<ListTasksRequest>())
                  .Returns(Task.FromResult(new ListTasksResponse { TaskArns = [TaskArn] }));
 
@@ -87,11 +85,61 @@ public class LogEcsTaskFailuresConventionTests
     }
 
     [Test]
+    public void LogsStoppedReason_DuringPoll_DedupedAcrossIterations()
+    {
+        // Covers the SPF-parity in-loop diagnostic: stopped-desired tasks for the latest
+        // revision are surfaced at Info during the wait, deduped by ARN so the same task
+        // isn't re-logged on every poll iteration.
+        var ecsClient = Substitute.For<IAmazonECS>();
+        ConfigureTaskDefinition(ecsClient);
+
+        // Main poll (desiredStatus=null): a task that never finalises, so we keep polling.
+        ecsClient.ListTasksAsync(Arg.Is<ListTasksRequest>(r => r.DesiredStatus == null))
+                 .Returns(Task.FromResult(new ListTasksResponse { TaskArns = [TaskArn] }));
+        ecsClient.DescribeTasksAsync(Arg.Is<DescribeTasksRequest>(r => r.Tasks.Contains(TaskArn)))
+                 .Returns(Task.FromResult(new DescribeTasksResponse
+                 {
+                     Tasks = [new EcsTask
+                     {
+                         TaskArn = TaskArn,
+                         TaskDefinitionArn = TaskDefinitionArn,
+                         LastStatus = "PENDING"
+                     }]
+                 }));
+
+        // Stopped diagnostic (desiredStatus=STOPPED): returns the failed task with reason.
+        const string stoppedArn = "arn:aws:ecs:us-east-1:123:task/stopped-xyz";
+        ecsClient.ListTasksAsync(Arg.Is<ListTasksRequest>(r => r.DesiredStatus == DesiredStatus.STOPPED))
+                 .Returns(Task.FromResult(new ListTasksResponse { TaskArns = [stoppedArn] }));
+        ecsClient.DescribeTasksAsync(Arg.Is<DescribeTasksRequest>(r => r.Tasks.Contains(stoppedArn)))
+                 .Returns(Task.FromResult(new DescribeTasksResponse
+                 {
+                     Tasks = [new EcsTask
+                     {
+                         TaskArn = stoppedArn,
+                         TaskDefinitionArn = TaskDefinitionArn,
+                         LastStatus = "STOPPED",
+                         StopCode = new TaskStopCode("TaskFailedToStart"),
+                         StoppedReason = "boom"
+                     }]
+                 }));
+
+        var log = new InMemoryLog();
+        var convention = Create(ecsClient, log, waitTimeout: TimeSpan.FromMilliseconds(150), pollInterval: TimeSpan.FromMilliseconds(25));
+
+        Assert.Throws<TimeoutException>(() => convention.Install(new RunningDeployment(new CalamariVariables())));
+
+        log.MessagesInfoFormatted
+           .Where(m => m.Contains(stoppedArn))
+           .Should().ContainSingle("stopped task should be logged once, deduped across polls")
+           .Which.Should().Contain("TaskFailedToStart").And.Contain("boom");
+    }
+
+    [Test]
     public void ThrowsTimeoutException_WhenTasksStayPendingPastTimeout()
     {
         var ecsClient = Substitute.For<IAmazonECS>();
         ConfigureTaskDefinition(ecsClient);
-        ConfigureDesiredCount(ecsClient, 1);
         ConfigureTasks(ecsClient, new EcsTask
         {
             TaskArn = TaskArn,
@@ -104,22 +152,6 @@ public class LogEcsTaskFailuresConventionTests
 
         var ex = Assert.Throws<TimeoutException>(() => convention.Install(new RunningDeployment(new CalamariVariables())));
         ex!.Message.Should().Contain(TaskFamily);
-    }
-
-    [Test]
-    public void SkipsTaskPolling_WhenServiceDesiredCountIsZero()
-    {
-        var ecsClient = Substitute.For<IAmazonECS>();
-        ConfigureTaskDefinition(ecsClient);
-        ConfigureDesiredCount(ecsClient, 0);
-
-        var log = new InMemoryLog();
-        var convention = Create(ecsClient, log, waitTimeout: null);
-
-        convention.Install(new RunningDeployment(new CalamariVariables()));
-
-        ecsClient.DidNotReceive().ListTasksAsync(Arg.Any<ListTasksRequest>());
-        ecsClient.DidNotReceive().DescribeTasksAsync(Arg.Any<DescribeTasksRequest>());
     }
 
     static LogEcsTaskFailuresConvention Create(
@@ -140,13 +172,6 @@ public class LogEcsTaskFailuresConventionTests
                  .Returns(Task.FromResult(new DescribeTaskDefinitionResponse
                  {
                      TaskDefinition = new TaskDefinition { TaskDefinitionArn = TaskDefinitionArn }
-                 }));
-
-    static void ConfigureDesiredCount(IAmazonECS ecsClient, int desiredCount) =>
-        ecsClient.DescribeServicesAsync(Arg.Any<DescribeServicesRequest>())
-                 .Returns(Task.FromResult(new DescribeServicesResponse
-                 {
-                     Services = [new Service { DesiredCount = desiredCount }]
                  }));
 
     static void ConfigureTasks(IAmazonECS ecsClient, params EcsTask[] tasks)

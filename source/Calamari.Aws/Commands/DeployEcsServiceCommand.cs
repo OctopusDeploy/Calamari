@@ -100,31 +100,32 @@ public class DeployEcsServiceCommand : Command
     EcsCommandInputs ReadAndValidateInputs()
     {
         var clusterName = variables.Get(AwsSpecialVariables.Ecs.ClusterName);
-        Guard.NotNullOrWhiteSpace(clusterName, $"The ECS cluster name variable '{AwsSpecialVariables.Ecs.ClusterName}' is not set.");
+        Guard.NotNullOrWhiteSpace(clusterName, $"Cluster name is required");
 
         var serviceName = variables.Get(AwsSpecialVariables.Ecs.ServiceName);
-        Guard.NotNullOrWhiteSpace(serviceName, $"The ECS service name variable '{AwsSpecialVariables.Ecs.ServiceName}' is not set.");
+        Guard.NotNullOrWhiteSpace(serviceName, $"Service name is required");
 
         var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
         if (string.IsNullOrWhiteSpace(stackName))
         {
             stackName = EcsStackNameBuilder.Build(variables, clusterName, serviceName);
+            log.Verbose($"No stack name supplied; generated \"{stackName}\".");
         }
 
         var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]") ?? [];
         var tags = EcsTagBuilder.Build(variables, userTags);
 
         var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
-        Guard.NotNullOrWhiteSpace(waitOptionType, $"The wait option type variable '{AwsSpecialVariables.Ecs.WaitOption.Type}' is not set.");
+        Guard.NotNullOrWhiteSpace(waitOptionType, $"The wait option is required");
         if (waitOptionType != "waitUntilCompleted" && waitOptionType != "waitWithTimeout" && waitOptionType != "dontWait")
         {
-            throw new CommandException($"The wait option type variable '{AwsSpecialVariables.Ecs.WaitOption.Type}' has an invalid value '{waitOptionType}'. Expected one of: 'waitUntilCompleted', 'waitWithTimeout', 'dontWait'.");
+            throw new CommandException($"The wait option has an invalid value '{waitOptionType}'. Expected one of: 'waitUntilCompleted', 'waitWithTimeout', 'dontWait'.");
         }
 
         var waitOptionTimeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOption.Timeout);
         if (waitOptionType == "waitWithTimeout" && !waitOptionTimeoutMs.HasValue)
         {
-            throw new CommandException($"Wait option '{AwsSpecialVariables.Ecs.WaitOption.Type}' is 'waitWithTimeout' but '{AwsSpecialVariables.Ecs.WaitOption.Timeout}' is not set.");
+            throw new CommandException($"Wait option is 'waitWithTimeout' but timeout value is not set.");
         }
 
         return new EcsCommandInputs(

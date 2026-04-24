@@ -61,12 +61,16 @@ public class SetEcsOutputVariablesConvention : IInstallConvention
                            ?.FirstOrDefault(r => r.ResourceType == "AWS::ECS::Service")
                            ?.LogicalResourceId;
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Failed to look up ECS::Service logical ID in stack \"{stackName}\": {ex.Message}");
             return null;
         }
     }
 
-    void SetOutputVariable(IVariables variables, string name, string value) =>
+    void SetOutputVariable(IVariables variables, string name, string value)
+    {
+        log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.{name}\"");
         log.SetOutputVariable(name, value ?? "", variables);
+    }
 }

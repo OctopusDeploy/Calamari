@@ -48,7 +48,7 @@ public class LogEcsTaskFailuresConvention : IInstallConvention
     {
         if (!waitForComplete)
         {
-            log.Verbose("WaitOption is dontWait; skipping ECS task diagnostics.");
+            log.Verbose("Wait option set to don't wait so skip ECS task checks.");
             return;
         }
 
@@ -61,14 +61,7 @@ public class LogEcsTaskFailuresConvention : IInstallConvention
             return;
         }
 
-        var desiredCount = await GetServiceDesiredCount(ecsClient);
-        if (desiredCount == 0)
-        {
-            log.Verbose($"Service \"{taskFamily}\" has DesiredCount=0; skipping task-level diagnostics.");
-            return;
-        }
-
-        var tasks = await PollUntilFinal(ecsClient, taskDefinitionArn, desiredCount);
+        var tasks = await PollUntilFinal(ecsClient, taskDefinitionArn);
 
         if (tasks.All(t => t.LastStatus == "RUNNING"))
         {
@@ -76,48 +69,63 @@ public class LogEcsTaskFailuresConvention : IInstallConvention
             return;
         }
 
-        foreach (var task in tasks.Where(t => t.LastStatus == "STOPPED"))
+        var stoppedTasks = tasks.Where(t => t.LastStatus == "STOPPED").ToList();
+        if (stoppedTasks.Count > 0)
         {
-            log.Warn($"- Task \"{task.TaskArn}\" fails to run. StoppedCode: {task.StopCode?.Value}. Reason: \"{task.StoppedReason}\".");
+            log.Warn(string.Join("\n", stoppedTasks.Select(FormatStoppedTask)));
         }
     }
 
-    async Task<List<EcsTask>> PollUntilFinal(IAmazonECS ecsClient, string taskDefinitionArn, int? desiredCount)
+    async Task<List<EcsTask>> PollUntilFinal(IAmazonECS ecsClient, string taskDefinitionArn)
     {
         var startedAt = DateTime.UtcNow;
+        (int pending, int running, int stopped)? lastObserved = null;
+        var loggedStoppedArns = new HashSet<string>();
         while (true)
         {
             if (waitTimeout.HasValue && DateTime.UtcNow - startedAt > waitTimeout.Value)
+            {
                 throw new TimeoutException($"Timed out after {waitTimeout.Value} waiting for ECS tasks in family \"{taskFamily}\" to reach a final state.");
+            }
 
-            var tasks = await GetLatestRevisionTasks(ecsClient, taskDefinitionArn);
-            if (tasks.Count > 0 && tasks.All(IsFinalState) && (!desiredCount.HasValue || tasks.Count == desiredCount.Value))
+            var tasks = await DescribeTasksForRevision(ecsClient, taskDefinitionArn);
+            if (tasks.Count > 0 && tasks.All(IsFinalState))
+            {
                 return tasks;
+            }
 
-            log.Info("One or more ECS tasks are still pending.");
+            var observed = (
+                pending: tasks.Count(t => !IsFinalState(t)),
+                running: tasks.Count(t => t.LastStatus == "RUNNING"),
+                stopped: tasks.Count(t => t.LastStatus == "STOPPED"));
+            if (observed != lastObserved)
+            {
+                log.Info($"ECS tasks for \"{taskFamily}\": {observed.pending} pending, {observed.running} running, {observed.stopped} stopped.");
+                lastObserved = observed;
+            }
+
+            await LogNewStoppedTasks(ecsClient, taskDefinitionArn, loggedStoppedArns);
+
             await Task.Delay(pollInterval);
+        }
+    }
+
+    async Task LogNewStoppedTasks(IAmazonECS ecsClient, string taskDefinitionArn, HashSet<string> loggedArns)
+    {
+        foreach (var task in await DescribeTasksForRevision(ecsClient, taskDefinitionArn, DesiredStatus.STOPPED))
+        {
+            if (loggedArns.Add(task.TaskArn))
+            {
+                log.Info(FormatStoppedTask(task));
+            }
         }
     }
 
     static bool IsFinalState(EcsTask task) =>
         task.LastStatus is "RUNNING" or "STOPPED";
 
-    async Task<int?> GetServiceDesiredCount(IAmazonECS ecsClient)
-    {
-        try
-        {
-            var response = await ecsClient.DescribeServicesAsync(new DescribeServicesRequest
-            {
-                Cluster = clusterName,
-                Services = [taskFamily]
-            });
-            return response.Services?.FirstOrDefault()?.DesiredCount;
-        }
-        catch
-        {
-            return null;
-        }
-    }
+    static string FormatStoppedTask(EcsTask task) =>
+        $"- Task \"{task.TaskArn}\" failed to run. StoppedCode: {task.StopCode?.Value}. Reason: \"{task.StoppedReason}\".";
 
     async Task<string> GetLatestTaskDefinitionArn(IAmazonECS ecsClient)
     {
@@ -126,20 +134,22 @@ public class LogEcsTaskFailuresConvention : IInstallConvention
             var response = await ecsClient.DescribeTaskDefinitionAsync(new DescribeTaskDefinitionRequest { TaskDefinition = taskFamily });
             return response.TaskDefinition?.TaskDefinitionArn;
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Failed to describe task definition \"{taskFamily}\": {ex.Message}");
             return null;
         }
     }
 
-    async Task<List<EcsTask>> GetLatestRevisionTasks(IAmazonECS ecsClient, string taskDefinitionArn)
+    async Task<List<EcsTask>> DescribeTasksForRevision(IAmazonECS ecsClient, string taskDefinitionArn, DesiredStatus desiredStatus = null)
     {
         try
         {
             var listResponse = await ecsClient.ListTasksAsync(new ListTasksRequest
             {
                 Cluster = clusterName,
-                Family = taskFamily
+                Family = taskFamily,
+                DesiredStatus = desiredStatus
             });
 
             if (listResponse.TaskArns == null || listResponse.TaskArns.Count == 0)
@@ -155,8 +165,9 @@ public class LogEcsTaskFailuresConvention : IInstallConvention
 
             return describeResponse.Tasks?.Where(t => t.TaskDefinitionArn == taskDefinitionArn).ToList() ?? [];
         }
-        catch
+        catch (Exception ex)
         {
+            log.Verbose($"Failed to list/describe tasks for family \"{taskFamily}\" in cluster \"{clusterName}\": {ex.Message}");
             return [];
         }
     }
