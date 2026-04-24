@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Calamari.Aws.Integration.CloudFormation;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using InvalidOperationException = System.InvalidOperationException;
 
 namespace Calamari.Tests.AWS.CloudFormation;
 
@@ -45,7 +47,7 @@ public class WaitForStackToCompleteTests
         client.DescribeStacksAsync(Arg.Any<DescribeStacksRequest>())
               .Returns(StackResponse("CREATE_IN_PROGRESS"));
         client.DescribeStackEventsAsync(Arg.Any<DescribeStackEventsRequest>())
-              .Returns(new DescribeStackEventsResponse { StackEvents = new List<StackEvent>() });
+              .Returns(new DescribeStackEventsResponse { StackEvents = [] });
 
         Assert.ThrowsAsync<TimeoutException>(() =>
                                                  Factory(client)
@@ -53,6 +55,41 @@ public class WaitForStackToCompleteTests
                                                                              pollPeriod: TimeSpan.FromMilliseconds(25),
                                                                              stack: Stack,
                                                                              timeout: TimeSpan.FromMilliseconds(150)));
+    }
+
+    [Test]
+    public void PropagatesExceptionFromAction_WhenStackEntersRollbackState()
+    {
+        // Protects the fail-on-rollback contract. DeployAwsCloudFormationConvention
+        // passes LogAndThrowRollbacks as the action, which throws on rollback events.
+        // If WaitForStackToComplete ever starts swallowing action exceptions, rollback
+        // deploys would silently succeed — this is the sole source of failure signal
+        // after LogEcsTaskFailuresConvention was dropped.
+        var client = Substitute.For<IAmazonCloudFormation>();
+        var callCount = 0;
+        client.DescribeStacksAsync(Arg.Any<DescribeStacksRequest>())
+              .Returns(_ =>
+                       {
+                           callCount++;
+                           // First call reports in-progress so we enter the poll loop where
+                           // the action fires; subsequent calls report the rollback terminal
+                           // state so the wait would otherwise exit cleanly.
+                           return StackResponse(callCount == 1 ? "UPDATE_IN_PROGRESS" : "UPDATE_ROLLBACK_COMPLETE");
+                       });
+        client.DescribeStackEventsAsync(Arg.Any<DescribeStackEventsRequest>())
+              .Returns(new DescribeStackEventsResponse
+              {
+                  StackEvents = [new StackEvent { ResourceStatus = new ResourceStatus("UPDATE_ROLLBACK_COMPLETE") }]
+              });
+
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                                                                   Factory(client)
+                                                                       .WaitForStackToComplete(
+                                                                                               pollPeriod: TimeSpan.FromMilliseconds(25),
+                                                                                               stack: Stack,
+                                                                                               action: _ => throw new InvalidOperationException("rollback detected"),
+                                                                                               timeout: TimeSpan.FromSeconds(5)));
+        ex!.Message.Should().Be("rollback detected");
     }
 
     [Test]
@@ -69,7 +106,7 @@ public class WaitForStackToCompleteTests
                            return StackResponse(status);
                        });
         client.DescribeStackEventsAsync(Arg.Any<DescribeStackEventsRequest>())
-              .Returns(new DescribeStackEventsResponse { StackEvents = new List<StackEvent>() });
+              .Returns(new DescribeStackEventsResponse { StackEvents = [] });
 
         await Factory(client)
             .WaitForStackToComplete(

@@ -59,4 +59,42 @@ public class EcsTagBuilderTests
         tags[0].Key.Should().Be("my@key");
         tags[0].Value.Should().Be("value");
     }
+
+    [Test]
+    public void Build_MergesDefaultsThenUserTags_PreservingOrder()
+    {
+        var variables = new CalamariVariables();
+        // Environment.Name is declared before Project.Name in OctopusVariableNames,
+        // so it appears first in the output.
+        variables.Set("Octopus.Environment.Name", "Production");
+        variables.Set("Octopus.Project.Name", "MyProject");
+
+        var userTags = new[]
+        {
+            new KeyValuePair<string, string>("Owner", "team@example.com")
+        };
+
+        var tags = EcsTagBuilder.Build(variables, userTags);
+
+        tags.Should().HaveCount(3);
+        tags[0].Key.Should().Be("Octopus.Environment.Name");
+        tags[1].Key.Should().Be("Octopus.Project.Name");
+        tags[2].Key.Should().Be("Owner");
+    }
+
+    [Test]
+    public void Build_DropsTag_WhenSanitizeProducesEmptyKey()
+    {
+        // All-invalid-chars key sanitizes to "", which the final Where() filter drops
+        // so AWS isn't sent a tag with an empty key.
+        var userTags = new[]
+        {
+            new KeyValuePair<string, string>("!!!", "value"),
+            new KeyValuePair<string, string>("validKey", "validValue")
+        };
+
+        var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
+
+        tags.Should().ContainSingle().Which.Key.Should().Be("validKey");
+    }
 }
