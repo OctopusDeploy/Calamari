@@ -101,12 +101,12 @@ public class DeployEcsServiceCommand : Command
         var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
         if (string.IsNullOrWhiteSpace(stackName))
         {
-            stackName = EcsStackNameBuilder.Build(variables, clusterName, serviceName);
+            stackName = EcsStackName.Generate(variables, clusterName, serviceName);
             log.Verbose($"No stack name supplied; generated \"{stackName}\".");
         }
 
         var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]") ?? [];
-        var tags = EcsTagBuilder.Build(variables, userTags);
+        var tags = EcsDefaultTags.Merge(variables, userTags);
 
         var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
         Guard.NotNullOrWhiteSpace(waitOptionType, "The wait option is required");

@@ -51,7 +51,7 @@ public class DeployEcsServiceFixture
     public async Task DeployEcsService_CreatesCloudFormationStack()
     {
         stackName = GenerateStackName();
-        var serviceName = "test-svc";
+        const string serviceName = "test-svc";
 
         var variables = await CreateVariables(serviceName, stackName);
         var log = new InMemoryLog();
@@ -154,7 +154,6 @@ public class DeployEcsServiceFixture
 
         var variables = new CalamariVariables();
 
-        // AWS authentication
         variables.Set("Octopus.Account.AccountType", "AmazonWebServicesAccount");
         variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
         variables.Set("AWSAccount.AccessKey", accessKey);
@@ -163,14 +162,11 @@ public class DeployEcsServiceFixture
         variables.Set("Octopus.Action.Aws.AssumeRole", "False");
         variables.Set("Octopus.Action.AwsAccount.UseInstanceRole", "False");
 
-        // Deployment context (consumed by surviving conventions + log output)
         variables.Set("Octopus.Environment.Id", "Environments-1");
         variables.Set("Octopus.Environment.Name", "Test");
         variables.Set("Octopus.Project.Name", "ECS Integration Test");
         variables.Set("Octopus.Action.Name", "Deploy ECS");
 
-        // CFN inputs (what the server mapper will emit). Template and parameters now arrive as file paths
-        // via --template / --templateParameters args; only the stack name stays as a variable.
         variables.Set(AwsSpecialVariables.CloudFormation.StackName, cfStackName);
 
         // Stack-level tags (Vanta compliance tags that integration infra requires)
@@ -184,11 +180,10 @@ public class DeployEcsServiceFixture
             new { Key = "VantaDescription", Value = "Ephemeral ECS service created during integration tests" }
         }));
 
-        // ECS-specific vars. dontWait — the integration test only needs to verify we can
-        // submit a valid template; we don't assert on steady-state since we don't own the
-        // template content.
+
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
         variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
+        //the integration test only needs to verify we can submit a valid template so don't wait for stack to be ready
         variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "dontWait");
 
         return variables;
@@ -232,7 +227,6 @@ public class DeployEcsServiceFixture
         using var client = new AmazonCloudFormationClient(credentials, config);
         await client.DeleteStackAsync(new DeleteStackRequest { StackName = stackName });
 
-        // Wait for deletion
         for (var i = 0; i < 30; i++)
         {
             await Task.Delay(TimeSpan.FromSeconds(10));

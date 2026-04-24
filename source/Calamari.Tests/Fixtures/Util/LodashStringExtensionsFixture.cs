@@ -1,4 +1,3 @@
-#nullable enable
 using Calamari.Common.Plumbing.Extensions;
 using FluentAssertions;
 using NUnit.Framework;
@@ -114,7 +113,7 @@ public class LodashStringExtensionsFixture
     [Test]
     public void CamelCase_OnNullReturnsEmpty()
     {
-        ((string?)null).CamelCase().Should().Be(string.Empty);
+        ((string)null).CamelCase().Should().Be(string.Empty);
     }
 
     [Test]

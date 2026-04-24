@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.AWS.Ecs;
 
 [TestFixture]
-public class EcsTagBuilderTests
+public class EcsDefaultTagsTests
 {
     [Test]
     public void Build_EmitsDefaultTag_WhenOctopusVariableHasValue()
@@ -15,7 +15,7 @@ public class EcsTagBuilderTests
         var variables = new CalamariVariables();
         variables.Set("Octopus.Project.Name", "MyProject");
 
-        var tags = EcsTagBuilder.Build(variables, []);
+        var tags = EcsDefaultTags.Merge(variables, []);
 
         tags.Should().ContainSingle()
             .Which.Should().BeEquivalentTo(new KeyValuePair<string, string>("Octopus.Project.Name", "MyProject"));
@@ -24,7 +24,7 @@ public class EcsTagBuilderTests
     [Test]
     public void Build_OmitsDefaultTag_WhenOctopusVariableIsUnset()
     {
-        var tags = EcsTagBuilder.Build(new CalamariVariables(), []);
+        var tags = EcsDefaultTags.Merge(new CalamariVariables(), []);
 
         tags.Should().BeEmpty();
     }
@@ -34,7 +34,7 @@ public class EcsTagBuilderTests
     {
         var userTags = new[] { new KeyValuePair<string, string>(new string('k', 200), "v") };
 
-        var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
+        var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
 
         tags[0].Key.Length.Should().Be(128);
     }
@@ -44,7 +44,7 @@ public class EcsTagBuilderTests
     {
         var userTags = new[] { new KeyValuePair<string, string>("k", new string('v', 300)) };
 
-        var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
+        var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
 
         tags[0].Value.Length.Should().Be(256);
     }
@@ -54,7 +54,7 @@ public class EcsTagBuilderTests
     {
         var userTags = new[] { new KeyValuePair<string, string>("my!@#$key", "val!ue%") };
 
-        var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
+        var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
 
         tags[0].Key.Should().Be("my@key");
         tags[0].Value.Should().Be("value");
@@ -74,7 +74,7 @@ public class EcsTagBuilderTests
             new KeyValuePair<string, string>("Owner", "team@example.com")
         };
 
-        var tags = EcsTagBuilder.Build(variables, userTags);
+        var tags = EcsDefaultTags.Merge(variables, userTags);
 
         tags.Should().HaveCount(3);
         tags[0].Key.Should().Be("Octopus.Environment.Name");
@@ -93,7 +93,7 @@ public class EcsTagBuilderTests
             new KeyValuePair<string, string>("validKey", "validValue")
         };
 
-        var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
+        var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
 
         tags.Should().ContainSingle().Which.Key.Should().Be("validKey");
     }

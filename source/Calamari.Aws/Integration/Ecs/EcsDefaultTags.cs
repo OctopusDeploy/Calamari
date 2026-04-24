@@ -7,7 +7,7 @@ namespace Calamari.Aws.Integration.Ecs;
 
 // Merges 19 default Octopus tags with user tags, sanitizes, and truncates to AWS limits (128/256).
 // Mirrors SPF's generateDefaultOctopusTags + sanitizeAwsTagString.
-public static partial class EcsTagBuilder
+public static partial class EcsDefaultTags
 {
     const int KeyMaxLength = 128;
     const int ValueMaxLength = 256;
@@ -35,7 +35,7 @@ public static partial class EcsTagBuilder
         "Octopus.Machine.Name"
     ];
 
-    public static List<KeyValuePair<string, string>> Build(IVariables variables, IEnumerable<KeyValuePair<string, string>> userTags)
+    public static List<KeyValuePair<string, string>> Merge(IVariables variables, IEnumerable<KeyValuePair<string, string>> userTags)
     {
         var defaultTags = OctopusVariableNames
                           .Select(name => new KeyValuePair<string, string>(name, variables.Get(name)))
