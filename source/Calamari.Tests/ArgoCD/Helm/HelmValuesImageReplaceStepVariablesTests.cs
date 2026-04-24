@@ -104,6 +104,7 @@ nginx:
 redis:
   tag: 1.0
 ";
+        
         var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
         var images = new List<ContainerImageReferenceAndHelmReference>
         {
