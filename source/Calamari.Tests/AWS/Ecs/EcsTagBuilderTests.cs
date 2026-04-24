@@ -1,4 +1,4 @@
-using Amazon.CloudFormation.Model;
+using System.Collections.Generic;
 using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
@@ -18,7 +18,7 @@ public class EcsTagBuilderTests
         var tags = EcsTagBuilder.Build(variables, []);
 
         tags.Should().ContainSingle()
-            .Which.Should().BeEquivalentTo(new Tag { Key = "Octopus.Project.Name", Value = "MyProject" });
+            .Which.Should().BeEquivalentTo(new KeyValuePair<string, string>("Octopus.Project.Name", "MyProject"));
     }
 
     [Test]
@@ -32,7 +32,7 @@ public class EcsTagBuilderTests
     [Test]
     public void Build_TruncatesKeyLongerThan128Chars()
     {
-        var userTags = new[] { new Tag { Key = new string('k', 200), Value = "v" } };
+        var userTags = new[] { new KeyValuePair<string, string>(new string('k', 200), "v") };
 
         var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
 
@@ -42,7 +42,7 @@ public class EcsTagBuilderTests
     [Test]
     public void Build_TruncatesValueLongerThan256Chars()
     {
-        var userTags = new[] { new Tag { Key = "k", Value = new string('v', 300) } };
+        var userTags = new[] { new KeyValuePair<string, string>("k", new string('v', 300)) };
 
         var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
 
@@ -52,7 +52,7 @@ public class EcsTagBuilderTests
     [Test]
     public void Build_StripsInvalidCharactersFromKeyAndValue()
     {
-        var userTags = new[] { new Tag { Key = "my!@#$key", Value = "val!ue%" } };
+        var userTags = new[] { new KeyValuePair<string, string>("my!@#$key", "val!ue%") };
 
         var tags = EcsTagBuilder.Build(new CalamariVariables(), userTags);
 

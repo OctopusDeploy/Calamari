@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using Calamari.Aws.Deployment;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -53,12 +55,32 @@ public class DeployEcsServiceFixture
 
         var variables = await CreateVariables(serviceName, stackName);
         var log = new InMemoryLog();
-        var command = new DeployEcsServiceCommand(log, variables);
+        var fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-        var result = command.Execute(Array.Empty<string>());
+        var tempDir = Path.Combine(Path.GetTempPath(), $"calamari-ecs-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var templatePath = Path.Combine(tempDir, "template.json");
+            var parametersPath = Path.Combine(tempDir, "parameters.json");
+            await File.WriteAllTextAsync(templatePath, BuildTemplate(serviceName));
+            await File.WriteAllTextAsync(parametersPath, "[]");
 
-        result.Should().Be(0);
-        await ValidateStackExists(stackName, true);
+            var command = new DeployEcsServiceCommand(log, variables, fileSystem);
+
+            var result = command.Execute(["--template", templatePath, "--templateParameters", parametersPath]);
+
+            result.Should().Be(0);
+            await ValidateStackExists(stackName, true);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); }
+            catch
+            {
+                // ignored
+            }
+        }
     }
 
     static string GenerateStackName() =>
@@ -147,9 +169,8 @@ public class DeployEcsServiceFixture
         variables.Set("Octopus.Project.Name", "ECS Integration Test");
         variables.Set("Octopus.Action.Name", "Deploy ECS");
 
-        // CFN inputs (what the server mapper will emit)
-        variables.Set(AwsSpecialVariables.CloudFormation.Template, BuildTemplate(serviceName));
-        variables.Set(AwsSpecialVariables.CloudFormation.TemplateParameters, "[]");
+        // CFN inputs (what the server mapper will emit). Template and parameters now arrive as file paths
+        // via --template / --templateParameters args; only the stack name stays as a variable.
         variables.Set(AwsSpecialVariables.CloudFormation.StackName, cfStackName);
 
         // Stack-level tags (Vanta compliance tags that integration infra requires)
@@ -196,7 +217,9 @@ public class DeployEcsServiceFixture
         catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ValidationError")
         {
             if (shouldExist)
+            {
                 Assert.Fail($"Stack {stackName} does not exist but was expected to.");
+            }
         }
     }
 
@@ -217,7 +240,9 @@ public class DeployEcsServiceFixture
                 var response = await client.DescribeStacksAsync(new DescribeStacksRequest { StackName = stackName });
                 var stack = response.Stacks.FirstOrDefault();
                 if (stack == null || stack.StackStatus.Value == "DELETE_COMPLETE")
+                {
                     return;
+                }
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ValidationError")
             {

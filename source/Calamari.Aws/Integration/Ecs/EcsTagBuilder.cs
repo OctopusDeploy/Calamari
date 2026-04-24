@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Amazon.CloudFormation.Model;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Aws.Integration.Ecs;
 
-// Merges 19 default Octopus tags with user tags, sanitises, and truncates to AWS limits (128/256).
+// Merges 19 default Octopus tags with user tags, sanitizes, and truncates to AWS limits (128/256).
 // Mirrors SPF's generateDefaultOctopusTags + sanitizeAwsTagString.
 public static partial class EcsTagBuilder
 {
@@ -36,18 +35,14 @@ public static partial class EcsTagBuilder
         "Octopus.Machine.Name"
     ];
 
-    public static List<Tag> Build(IVariables variables, IEnumerable<Tag> userTags)
+    public static List<KeyValuePair<string, string>> Build(IVariables variables, IEnumerable<KeyValuePair<string, string>> userTags)
     {
         var defaultTags = OctopusVariableNames
-                          .Select(name => new Tag { Key = name, Value = variables.Get(name) })
+                          .Select(name => new KeyValuePair<string, string>(name, variables.Get(name)))
                           .Where(p => !string.IsNullOrEmpty(p.Value));
 
         return defaultTags.Concat(userTags)
-                          .Select(t => new Tag
-                          {
-                              Key = Truncate(SanitizeAwsTag(t.Key), KeyMaxLength),
-                              Value = Truncate(SanitizeAwsTag(t.Value), ValueMaxLength)
-                          })
+                          .Select(t => new KeyValuePair<string, string>(Truncate(SanitizeAwsTag(t.Key), KeyMaxLength), Truncate(SanitizeAwsTag(t.Value), ValueMaxLength)))
                           .Where(t => !string.IsNullOrEmpty(t.Key) && !string.IsNullOrEmpty(t.Value))
                           .ToList();
     }

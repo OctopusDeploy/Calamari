@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Amazon.CloudFormation.Model;
+using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration.CloudFormation;
@@ -11,8 +11,10 @@ using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 using Calamari.Deployment;
 using Newtonsoft.Json;
 
@@ -23,33 +25,36 @@ public class DeployEcsServiceCommand : Command
 {
     readonly ILog log;
     readonly IVariables variables;
+    readonly ICalamariFileSystem fileSystem;
+    string templateFile;
+    string templateParameterFile;
 
-    public DeployEcsServiceCommand(ILog log, IVariables variables)
+    public DeployEcsServiceCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
     {
         this.log = log;
         this.variables = variables;
+        this.fileSystem = fileSystem;
+        Options.Add("template=", "Path to the CloudFormation template file.", v => templateFile = v);
+        Options.Add("templateParameters=", "Path to the CloudFormation template parameters JSON file.", v => templateParameterFile = v);
     }
 
     public override int Execute(string[] commandLineArguments)
     {
         Options.Parse(commandLineArguments);
 
+        Guard.NotNullOrWhiteSpace(templateFile, "The --template argument is required.");
+
         var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
         var inputs = ReadAndValidateInputs();
 
         var stackArn = new StackArn(inputs.StackName);
-        var running = new RunningDeployment(variables);
+        var templateResolver = new TemplateResolver(fileSystem);
 
-        new ConventionProcessor(running,
+        new ConventionProcessor(new RunningDeployment(variables),
                                 [
                                     new LogAwsUserInfoConvention(environment),
-                                    new DeployAwsCloudFormationConvention(
-                                                                          () => ClientHelpers.CreateCloudFormationClient(environment),
-                                                                          () => new InlineCloudFormationTemplate(inputs.TemplateBody,
-                                                                                                                 inputs.Parameters,
-                                                                                                                 inputs.StackName,
-                                                                                                                 inputs.Tags,
-                                                                                                                 ["CAPABILITY_NAMED_IAM"]),
+                                    new DeployAwsCloudFormationConvention(ClientFactory,
+                                                                          TemplateFactory,
                                                                           new StackEventLogger(log),
                                                                           _ => stackArn,
                                                                           inputs.WaitForComplete,
@@ -73,58 +78,69 @@ public class DeployEcsServiceCommand : Command
                                 log).RunConventions();
 
         return 0;
+
+        IAmazonCloudFormation ClientFactory() => ClientHelpers.CreateCloudFormationClient(environment);
+
+        ICloudFormationRequestBuilder TemplateFactory() =>
+            CloudFormationTemplate.Create(templateResolver,
+                                          templateFile,
+                                          templateParameterFile,
+                                          filesInPackage: false,
+                                          fileSystem,
+                                          variables,
+                                          inputs.StackName,
+                                          capabilities: ["CAPABILITY_NAMED_IAM"],
+                                          disableRollback: false,
+                                          roleArn: null,
+                                          tags: inputs.Tags,
+                                          stackArn,
+                                          ClientFactory);
     }
 
     EcsCommandInputs ReadAndValidateInputs()
     {
-        var templateBody = variables.Get(AwsSpecialVariables.CloudFormation.Template);
-        Guard.NotNullOrWhiteSpace(templateBody, $"The CloudFormation template variable '{AwsSpecialVariables.CloudFormation.Template}' is not set.");
-
-        var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
-        Guard.NotNullOrWhiteSpace(stackName, $"The CloudFormation stack name variable '{AwsSpecialVariables.CloudFormation.StackName}' is not set.");
-
         var clusterName = variables.Get(AwsSpecialVariables.Ecs.ClusterName);
         Guard.NotNullOrWhiteSpace(clusterName, $"The ECS cluster name variable '{AwsSpecialVariables.Ecs.ClusterName}' is not set.");
 
         var serviceName = variables.Get(AwsSpecialVariables.Ecs.ServiceName);
         Guard.NotNullOrWhiteSpace(serviceName, $"The ECS service name variable '{AwsSpecialVariables.Ecs.ServiceName}' is not set.");
 
-        var parameters = JsonConvert.DeserializeObject<List<Parameter>>(
-                                                                        variables.Get(AwsSpecialVariables.CloudFormation.TemplateParameters) ?? "[]")
-                         ?? [];
+        var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
+        if (string.IsNullOrWhiteSpace(stackName))
+        {
+            stackName = EcsStackNameBuilder.Build(variables, clusterName, serviceName);
+        }
 
-        var userTags = JsonConvert.DeserializeObject<List<Tag>>(
-                                                                variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]")
-                       ?? [];
+        var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]") ?? [];
         var tags = EcsTagBuilder.Build(variables, userTags);
 
         var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
         Guard.NotNullOrWhiteSpace(waitOptionType, $"The wait option type variable '{AwsSpecialVariables.Ecs.WaitOption.Type}' is not set.");
         if (waitOptionType != "waitUntilCompleted" && waitOptionType != "waitWithTimeout" && waitOptionType != "dontWait")
+        {
             throw new CommandException($"The wait option type variable '{AwsSpecialVariables.Ecs.WaitOption.Type}' has an invalid value '{waitOptionType}'. Expected one of: 'waitUntilCompleted', 'waitWithTimeout', 'dontWait'.");
+        }
 
         var waitOptionTimeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOption.Timeout);
         if (waitOptionType == "waitWithTimeout" && !waitOptionTimeoutMs.HasValue)
+        {
             throw new CommandException($"Wait option '{AwsSpecialVariables.Ecs.WaitOption.Type}' is 'waitWithTimeout' but '{AwsSpecialVariables.Ecs.WaitOption.Timeout}' is not set.");
+        }
 
         return new EcsCommandInputs(
-                                    TemplateBody: templateBody,
                                     StackName: stackName,
                                     ClusterName: clusterName,
                                     ServiceName: serviceName,
-                                    Parameters: parameters,
                                     Tags: tags,
                                     WaitForComplete: waitOptionType != "dontWait",
                                     WaitTimeout: waitOptionType == "waitWithTimeout" ? TimeSpan.FromMilliseconds(waitOptionTimeoutMs!.Value) : null);
     }
 
     record EcsCommandInputs(
-        string TemplateBody,
         string StackName,
         string ClusterName,
         string ServiceName,
-        List<Parameter> Parameters,
-        List<Tag> Tags,
+        List<KeyValuePair<string, string>> Tags,
         bool WaitForComplete,
         TimeSpan? WaitTimeout);
 }
