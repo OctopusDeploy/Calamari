@@ -44,7 +44,7 @@ public class SetEcsOutputVariablesConvention : IInstallConvention
         SetOutputVariable(deployment.Variables, "ClusterName", clusterName);
         SetOutputVariable(deployment.Variables, "CloudFormationStackName", stackName);
         SetOutputVariable(deployment.Variables, "TaskDefinitionFamily", taskFamily);
-        SetOutputVariable(deployment.Variables, "Region", environment?.AwsRegion?.SystemName ?? "");
+        SetOutputVariable(deployment.Variables, "Region", environment.AwsRegion.SystemName);
     }
 
     protected virtual async Task<string> LookupServiceLogicalId()

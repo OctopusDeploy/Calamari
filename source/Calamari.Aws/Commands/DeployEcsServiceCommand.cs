@@ -62,13 +62,6 @@ public class DeployEcsServiceCommand : Command
                                                                           environment,
                                                                           log,
                                                                           inputs.WaitTimeout),
-                                    new LogEcsTaskFailuresConvention(() => ClientHelpers.CreateEcsClient(environment),
-                                                                     inputs.ServiceName,
-                                                                     inputs.ClusterName,
-                                                                     inputs.WaitForComplete,
-                                                                     inputs.WaitTimeout,
-                                                                     TimeSpan.FromSeconds(10),
-                                                                     log),
                                     new SetEcsOutputVariablesConvention(environment,
                                                                         inputs.StackName,
                                                                         inputs.ClusterName,
@@ -100,10 +93,10 @@ public class DeployEcsServiceCommand : Command
     EcsCommandInputs ReadAndValidateInputs()
     {
         var clusterName = variables.Get(AwsSpecialVariables.Ecs.ClusterName);
-        Guard.NotNullOrWhiteSpace(clusterName, $"Cluster name is required");
+        Guard.NotNullOrWhiteSpace(clusterName, "Cluster name is required");
 
         var serviceName = variables.Get(AwsSpecialVariables.Ecs.ServiceName);
-        Guard.NotNullOrWhiteSpace(serviceName, $"Service name is required");
+        Guard.NotNullOrWhiteSpace(serviceName, "Service name is required");
 
         var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
         if (string.IsNullOrWhiteSpace(stackName))
@@ -116,7 +109,7 @@ public class DeployEcsServiceCommand : Command
         var tags = EcsTagBuilder.Build(variables, userTags);
 
         var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
-        Guard.NotNullOrWhiteSpace(waitOptionType, $"The wait option is required");
+        Guard.NotNullOrWhiteSpace(waitOptionType, "The wait option is required");
         if (waitOptionType != "waitUntilCompleted" && waitOptionType != "waitWithTimeout" && waitOptionType != "dontWait")
         {
             throw new CommandException($"The wait option has an invalid value '{waitOptionType}'. Expected one of: 'waitUntilCompleted', 'waitWithTimeout', 'dontWait'.");
@@ -125,7 +118,7 @@ public class DeployEcsServiceCommand : Command
         var waitOptionTimeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOption.Timeout);
         if (waitOptionType == "waitWithTimeout" && !waitOptionTimeoutMs.HasValue)
         {
-            throw new CommandException($"Wait option is 'waitWithTimeout' but timeout value is not set.");
+            throw new CommandException("Wait option is 'waitWithTimeout' but timeout value is not set.");
         }
 
         return new EcsCommandInputs(

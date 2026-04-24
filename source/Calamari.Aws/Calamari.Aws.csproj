@@ -22,7 +22,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.ECS" Version="4.0.19" />
     <PackageReference Include="AWSSDK.EKS" Version="4.0.15.1" />
     <PackageReference Include="AWSSDK.CloudFormation" Version="4.0.8.19" />
     <PackageReference Include="AWSSDK.Core" Version="4.0.3.29" />
