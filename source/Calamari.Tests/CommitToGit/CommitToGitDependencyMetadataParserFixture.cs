@@ -31,6 +31,17 @@ namespace Calamari.Tests.CommitToGit
             log = new InMemoryLog();
             sut = new CommitToGitDependencyMetadataParser(fileSystem, log);
         }
+
+        [Test]
+        public void blah()
+        {
+            var value = """[{"Type":"Package","PackageId":"first-1","PackageName":"first-1","InputFilePaths":"","DestinationSubfolder":"./"}]""";
+            deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.TemplateFileSources, value);
+
+            var result = sut.ParseInputFilesFromDependencies(deployment);
+
+            result.Should().BeEmpty();
+        }
         
         #region ParseInputFilesFromDependencies
 
@@ -216,7 +227,7 @@ namespace Calamari.Tests.CommitToGit
             result.Should().HaveCount(1);
             result[0].PackageId.Should().Be("pkg-id");
             result[0].PackageName.Should().Be("MyPackage");
-            result[0].InputFilePaths.Should().BeEquivalentTo(new[] { "**/*" });
+            result[0].InputFilePaths.Should().BeEquivalentTo("**/*" );
             result[0].DestinationSubFolder.Should().Be("output");
         }
 

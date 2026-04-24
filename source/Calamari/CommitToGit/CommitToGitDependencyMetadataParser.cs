@@ -220,7 +220,7 @@ namespace Calamari.CommitToGit
     {
         public string PackageId { get; set; }
         public string PackageName { get; set; }
-        public string[] InputFilePaths { get; set; }
+        public string InputFilePaths { get; set; }
         public string DestinationSubFolder { get; set; }
 
         public override string GetName()
@@ -241,7 +241,7 @@ namespace Calamari.CommitToGit
             {
                 PackageId = variables.Evaluate(packageDependency.PackageId),
                 PackageName = variables.Evaluate(packageDependency.PackageName),
-                InputFilePaths = packageDependency.InputFilePaths.Select(variables.Evaluate).ToArray(),
+                InputFilePaths =  variables.Evaluate(packageDependency.InputFilePaths),
                 DestinationSubFolder = variables.Evaluate(packageDependency.DestinationSubFolder),
             };
         }

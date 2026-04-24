@@ -28,7 +28,7 @@ public class CommitToGitCommandTest
     const string targetBranchFriendlyName = "devBranch";
     readonly GitBranchName targetBranchName = GitBranchName.CreateFromFriendlyName(targetBranchFriendlyName);
 
-    CalamariExecutionVariableCollection variables = new();
+    CalamariExecutionVariableCollection variables;
 
     [SetUp]
     public void setUp()
@@ -38,6 +38,7 @@ public class CommitToGitCommandTest
         RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(targetBranchName, OriginPath);
 
+        variables = new();
         // Add git-repository data to the variables.
         variables.AddRange([
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.Url, OriginPath, false),
@@ -53,7 +54,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
     public void CommitToGitRunsScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
     {
         variables.AddRange([
@@ -66,7 +66,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
     public void CommitToGitRunsInlineScriptWithPackageDependencyToCreateFileWhichIsCommitedToRepository()
     {
         const string packageReferenceName = "my-scripts";
@@ -85,7 +84,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
     public void CommitToGitRunsPackageBasedScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
     {
         var zipPath = CreateZipWithEntry("transform-script", "script.sh", "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"");
@@ -99,7 +97,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
     public void CommitToGitRunsPackageBasedScriptWithScriptParameters()
     {
         var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
@@ -115,7 +112,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void CanCopyPackageFilesIntoGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -131,7 +127,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void SubstitutesNonSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -156,7 +151,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void OnlyCopiesFilesMatchingInputPathsFromPackageIntoGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -178,7 +172,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void CopiesAllGitReferenceFilesIntoGitRepository()
     {
         const string gitDependencyName = "my-git-dep";
@@ -194,7 +187,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void DoesNotSubstituteSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -217,7 +209,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void CommitMessageSummaryIsUsedAsCommitMessage()
     {
         const string packageReferenceName = "my-configs";
@@ -233,7 +224,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
     public void FailingScriptResultsInNonZeroExitCode()
     {
         variables.AddRange([
@@ -245,7 +235,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
     public void BothPackageCopyAndScriptTransformProduceFilesInRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -265,7 +254,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void MultiplePackagesAreAllCopiedToGitRepository()
     {
         const string package1Name = "configs-package";
@@ -277,8 +265,8 @@ public class CommitToGitCommandTest
 
         var templateValueSources =
             $"[" +
-            $"{{\"Type\":\"Package\",\"PackageId\":\"{package1Name}\",\"PackageName\":\"{package1Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}," +
-            $"{{\"Type\":\"Package\",\"PackageId\":\"{package2Name}\",\"PackageName\":\"{package2Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}" +
+            $"{{\"Type\":\"Package\",\"PackageId\":\"{package1Name}\",\"PackageName\":\"{package1Name}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"\"}}," +
+            $"{{\"Type\":\"Package\",\"PackageId\":\"{package2Name}\",\"PackageName\":\"{package2Name}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"\"}}" +
             $"]";
 
         variables.AddRange([
@@ -296,7 +284,6 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("Nix")]
     public void CommitToGitRunsScriptProvidedViaScriptBodyBySyntaxVariable()
     {
         variables.AddRange([
@@ -308,14 +295,12 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void WhenNoScriptAndNoPackagesCommandSucceedsWithZeroExitCode()
     {
         RunCommitToGit().Should().Be(0);
     }
 
     [Test]
-    [Category("Nix")]
     public void WhenBothScriptParametersArgAndVariableAreSetVariableTakesPrecedence()
     {
         var proofFile = Path.Combine(executionDirectory, "arg_check.txt");
@@ -369,7 +354,7 @@ public class CommitToGitCommandTest
 
     void AddInputPackageVariables(string packageReferenceName, string zipPath, string destinationPath)
     {
-        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}]";
+        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"\"}}]";
         variables.AddRange([
             // Package to copy into the repository, declared via TemplateValuesSources
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
