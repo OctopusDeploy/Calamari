@@ -35,6 +35,8 @@ namespace Calamari.ArgoCD.Git
             this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             this.clock = clock;
 
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             // Calamari runs as a single-purpose process per deployment step and always receives
             // explicit credentials. Clear the search paths for all global config levels so libgit2
             // cannot load ~/.gitconfig or /etc/gitconfig and pick up a credential helper (e.g.
