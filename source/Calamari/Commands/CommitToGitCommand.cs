@@ -138,6 +138,8 @@ public class CommitToGitCommand : Command
                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
                                                      new GitDependencyVariablesFactory(),
                                                      new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
+            
+            //This is a bit of a hack as it will literally replace everything in every package, which COULD be very slow
             new DelegateInstallConvention(d => nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, fileSystem.EnumerateFilesRecursively(inputsDirectory).ToList())),
         };
         
