@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Calamari.ArgoCD.Dtos;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Git;
 
@@ -9,6 +9,7 @@ public class AuthenticatingRepositoryFactory
     readonly Dictionary<string, GitCredentialDto> gitCredentials;
     readonly RepositoryFactory repositoryFactory;
     readonly ILog log;
+    
 
     public AuthenticatingRepositoryFactory(Dictionary<string, GitCredentialDto> gitCredentials, RepositoryFactory repositoryFactory, ILog log)
     {

@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Kubernetes.Patching.JsonPatch;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
@@ -32,6 +33,12 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
     }
 
+    protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages)
+    {
+        return CreateJsonPatchWithPlaceholders(content, deploymentConfig.ImageReferences,
+            (c, images) => new HelmValuesImageReplaceStepVariables(c, defaultRegistry, log).UpdateImages(images));
+    }
+
     //NOTE: this is common with Helm Sources
     protected FileUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
                                                       string workingDirectory,
@@ -48,20 +55,18 @@ public abstract class AbstractHelmUpdater : BaseUpdater
     {
         var results =
             targets.Select(t => UpdateHelmImageValues(workingDirectory, t, deploymentConfig.ImageReferences))
-                   .Where(r => r.Updated)
                    .ToList();
 
-        if (results.Any())
-        {
-            var patchedFiles = results
-                .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
-                .ToList();
-            var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
+        var patchedFiles = results
+            .Where(r => r.JsonPatch != null)
+            .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
+            .ToList();
+        var updatedImages = results
+            .Where(r => r.Updated)
+            .SelectMany(r => r.ImagesUpdated)
+            .ToHashSet();
 
-            return new FileUpdateResult(updatedImages, [], patchedFiles, []);
-        }
-
-        return new FileUpdateResult([], [], [], []);
+        return new FileUpdateResult(updatedImages, [], patchedFiles, []);
     }
 
     HelmRefUpdatedResult UpdateHelmImageValues(
@@ -78,10 +83,38 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
 
-        var jsonPatch = CreateJsonPatch(fileContent,
-                                        imagesToUpdate.Select(i => i.ContainerReference.FriendlyName()).ToHashSet(),
-                                        tmp => new HelmContainerImageReplacer(tmp, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(imagesToUpdate));
+        var jsonPatch = CreateJsonPatchWithPlaceholders(fileContent, imagesToUpdate,
+            (c, images) => new HelmContainerImageReplacer(c, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(images));
 
         return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
+    }
+
+    /// <summary>
+    /// Creates a JSON patch by running a replacer factory with placeholder tags to produce a "before",
+    /// then running with real tags against the "before" to produce an "after", and diffing the two.
+    /// </summary>
+    JsonPatchDocument? CreateJsonPatchWithPlaceholders(
+        string content,
+        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
+        Func<string, IReadOnlyCollection<ContainerImageReferenceAndHelmReference>, ImageReplacementResult> replacerFactory)
+    {
+        var placeholderImages = imagesToUpdate
+            .Select(ir =>
+            {
+                var placeholderRef = MakePlaceholderRef(ir.ContainerReference.FriendlyName());
+                return ir with { ContainerReference = ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry) };
+            })
+            .ToList();
+
+        var placeholderResult = replacerFactory(content, placeholderImages);
+        if (placeholderResult.UpdatedImageReferences.Count == 0)
+            return null;
+
+        var temporaryBefore = placeholderResult.UpdatedContents;
+        var actualResult = replacerFactory(temporaryBefore, imagesToUpdate);
+
+        return actualResult.UpdatedImageReferences.Count > 0
+            ? CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
+            : null;
     }
 }

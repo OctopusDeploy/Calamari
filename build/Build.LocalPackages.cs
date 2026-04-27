@@ -111,7 +111,8 @@ public partial class Build
                                                     new[] { 
                                                         "Octopus.Calamari.Consolidated", 
                                                         "Octopus.Calamari.ConsolidatedPackage", 
-                                                        "Octopus.Calamari.ConsolidatedPackage.Api" 
+                                                        "Octopus.Calamari.ConsolidatedPackage.Api",
+                                                        "Octopus.Calamari.Contracts"
                                                     }.Select(p => new XElement("package", new XAttribute("pattern", p))));
     
             clearElement.AddAfterSelf(localPackagesMapping);

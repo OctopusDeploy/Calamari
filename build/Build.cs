@@ -135,12 +135,14 @@ partial class Build : NukeBuild
     Target BuildLocal => d =>
                              d.DependsOn(PublishCalamariProjects)
                               .DependsOn(PackCalamariConsolidatedNugetPackage)
+                              .DependsOn(PackContractsProject)
                               .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
     Target BuildCi => d =>
                           d.DependsOn(SetTeamCityVersion)
                            .DependsOn(PublishCalamariProjects)
                            .DependsOn(PackCalamariConsolidatedNugetPackage)
+                           .DependsOn(PackContractsProject)
                            .DependsOn(PublishNukeBuild);
     
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Octopus.Calamari.Contracts</RootNamespace>
+        <AssemblyName>Octopus.Calamari.Contracts</AssemblyName>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Octopus Deploy</Authors>
+        <Copyright>Octopus Deploy Pty Ltd</Copyright>
+        <Description>
+            Octopus Deploy is an automated release management tool for modern developers and DevOps teams.
+
+            This package contains the contracts for types shared between Octopus Server and Calamari.
+        </Description>
+    </PropertyGroup>
+</Project>
