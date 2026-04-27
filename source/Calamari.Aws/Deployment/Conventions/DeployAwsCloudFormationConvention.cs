@@ -38,6 +38,7 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly Func<IAmazonCloudFormation> clientFactory;
         readonly Func<ICloudFormationRequestBuilder> templateFactory;
         readonly Func<RunningDeployment, StackArn> stackProvider;
+        readonly Func<RunningDeployment, string> roleArnProvider;
         readonly bool waitForComplete;
         readonly string stackName;
         readonly TimeSpan? waitTimeout;
@@ -50,6 +51,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Func<ICloudFormationRequestBuilder> templateFactory,
             StackEventLogger stackEventLogger,
             Func<RunningDeployment, StackArn> stackProvider,
+            Func<RunningDeployment, string> roleArnProvider,
             bool waitForComplete,
             string stackName,
             AwsEnvironmentGeneration awsEnvironmentGeneration,
@@ -59,6 +61,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;
             this.stackProvider = stackProvider;
+            this.roleArnProvider = roleArnProvider;
             this.waitForComplete = waitForComplete;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
