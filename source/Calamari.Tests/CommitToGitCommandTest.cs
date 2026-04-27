@@ -136,8 +136,6 @@ public class CommitToGitCommandTest
         AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
 
         variables.AddRange([
-            new CalamariExecutionVariable(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles, false),
-            new CalamariExecutionVariable(PackageVariables.SubstituteInFilesTargets, $"{packageReferenceName}/configs/settings.json", false),
             // Non-sensitive variable to be substituted into the package file
             new CalamariExecutionVariable("MyVar", "production-value", false),
         ]);
@@ -196,16 +194,15 @@ public class CommitToGitCommandTest
         AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
 
         variables.AddRange([
-            new CalamariExecutionVariable(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles, false),
-            new CalamariExecutionVariable(PackageVariables.SubstituteInFilesTargets, $"{packageReferenceName}/configs/settings.json", false),
             // Sensitive variable — must NOT be substituted into repository files
             new CalamariExecutionVariable("MySecret", "super-secret-value", true),
         ]);
-        
-        RunCommitToGit().Should().NotBe(0);
 
-        var content = GetCommittedFileContent($"{destinationPath}/{packageReferenceName}/configs/settings.json");
-        content.Should().BeNull("the package file should not have been copied and commited into the repository");
+        RunCommitToGit().Should().Be(0);
+
+        var content = GetCommittedFileContent($"{destinationPath}/configs/settings.json");
+        content.Should().NotBeNull("the package file should be committed to the repository");
+        content.Should().NotContain("super-secret-value", "sensitive variables must not be substituted into committed files");
     }
 
     [Test]
