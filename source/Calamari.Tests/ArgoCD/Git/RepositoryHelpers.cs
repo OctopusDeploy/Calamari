@@ -36,7 +36,7 @@ namespace Calamari.Tests.ArgoCD.Git
 
             repository.Refs.UpdateTarget("HEAD", MainBranchName.Value);
 
-            //create our branch
+            //create our branch (main already exists).
             if (branchName != GitBranchName.CreateFromFriendlyName("main"))
             {
                 repository.CreateBranch(branchName.ToFriendlyName(), emptyCommit);
