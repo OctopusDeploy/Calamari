@@ -55,7 +55,7 @@ public class ApplicationUpdater
         
         ValidateApplication(applicationFromYaml);
 
-        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, commitMessageGenerator);
+        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, new RepositoryUpdater(deploymentConfig.CommitParameters, log, commitMessageGenerator));
         var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml,
                                                          gateway,
                                                          deploymentScope,
