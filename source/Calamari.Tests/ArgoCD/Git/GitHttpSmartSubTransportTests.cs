@@ -55,7 +55,7 @@ public class GitHttpSmartSubTransportTests
         var expectedAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
 
         var repoUrl = $"{server.Url}/fake-repo.git";
-        var connection = new GitConnection(username, password, repoUrl, GitBranchName.CreateFromFriendlyName("main"));
+        var connection = new HttpsGitConnection(username, password, repoUrl, GitBranchName.CreateFromFriendlyName("main"));
         var repositoryFactory = new RepositoryFactory(
             log,
             fileSystem,
@@ -83,7 +83,7 @@ public class GitHttpSmartSubTransportTests
     public void NoAuthHeaderIsSentWhenCredentialsAreNotProvided()
     {
         var repoUrl = $"{server.Url}/fake-repo.git";
-        var connection = new GitConnection(null, null, repoUrl, GitBranchName.CreateFromFriendlyName("main"));
+        var connection = new HttpsGitConnection(null, null, repoUrl, GitBranchName.CreateFromFriendlyName("main"));
         var repositoryFactory = new RepositoryFactory(
             log,
             fileSystem,

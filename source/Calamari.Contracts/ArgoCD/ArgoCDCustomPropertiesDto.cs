@@ -22,4 +22,4 @@ public record ArgoCDApplicationDto(
 // GitUsernamePasswordCredentialDto
 public record GitCredentialDto(string Url, string Username, string Password);
 
-public record GitCredentialSshKeyDto(string Url, string Username, string PrivateKey, string PublicKey, string Passphrase);
+public record GitCredentialSshKeyDto(string Url, string Username, string PrivateKey, string PublicKey, string? Passphrase);

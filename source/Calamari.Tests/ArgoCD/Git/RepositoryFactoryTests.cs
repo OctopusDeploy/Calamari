@@ -49,7 +49,7 @@ namespace Calamari.Tests.ArgoCD.Git
         [Test]
         public void ThrowsExceptionIfUrlDoesNotExist()
         {
-            var connection = new GitConnection("username",
+            var connection = new HttpsGitConnection("username",
                                                "password",
                                                "file://doesNotExist",
                                                branchName);
@@ -66,7 +66,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(branchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, OriginPath, branchName);
+            var connection = new HttpsGitConnection(null, null, OriginPath, branchName);
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
@@ -83,7 +83,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(RepositoryHelpers.MainBranchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, OriginPath, new GitHead());
+            var connection = new HttpsGitConnection(null, null, OriginPath, new GitHead());
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();

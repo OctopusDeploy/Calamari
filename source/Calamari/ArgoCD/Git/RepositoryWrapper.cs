@@ -33,14 +33,17 @@ namespace Calamari.ArgoCD.Git
         readonly IGitVendorPullRequestClient? vendorApiAdapter = vendorApiAdapter;
         readonly IClock clock = clock;
         // ReSharper restore ReplaceWithPrimaryConstructorParameter
-        
+
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        Credentials RepositoryCredentials => connection is SshGitConnection ssh
-            ? new SshUserKeyMemoryCredentials { Username = ssh.Username, PublicKey = ssh.PublicKey, PrivateKey = ssh.PrivateKey, Passphrase = ssh.Passphrase }
-            : new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password };
+        Credentials RepositoryCredentials => connection switch
+             {
+                 SshGitConnection ssh => new SshUserKeyMemoryCredentials { Username = ssh.Username, PublicKey = ssh.PublicKey, PrivateKey = ssh.PrivateKey, Passphrase = ssh.Passphrase },
+                 HttpsGitConnection https => new UsernamePasswordCredentials { Username = https.Username, Password = https.Password },
+                 _ => null
+             };
 
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)

@@ -16,6 +16,7 @@ public partial class Build
             d.Requires(() => IsLocalBuild)
              .DependsOn(PublishCalamariProjects)
              .DependsOn(PackCalamariConsolidatedNugetPackage)
+             .DependsOn(PackContractsProject)
              .Executes(() =>
                        {
                            Directory.CreateDirectory(LocalPackagesDirectory);
@@ -34,27 +35,39 @@ public partial class Build
              .Executes(() =>
                        {
                            var serverProjectFile = KnownPaths.RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
+                           var coreProjectFile = KnownPaths.RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Core" / "Octopus.Core.csproj";
                            var serverNugetConfigFile = KnownPaths.RootDirectory / ".." / "OctopusDeploy" / "NuGet.Config";
-                           var projectFileExists = File.Exists(serverProjectFile);
+                           var serverProjectFileExists = File.Exists(serverProjectFile);
+                           var coreProjectFileExists = File.Exists(serverProjectFile);
                            var nugetFileExists = File.Exists(serverNugetConfigFile);
-                           if (projectFileExists && nugetFileExists)
+                           if (serverProjectFileExists && coreProjectFileExists && nugetFileExists)
                            {
                                Log.Information("Setting Calamari version in Octopus Server "
                                                + "project {ServerProjectFile} to {NugetVersion}",
                                                serverProjectFile, NugetVersion.Value);
                                SetOctopusServerCalamariVersion(serverProjectFile);
+                               SetOctopusServerCalamariVersion(coreProjectFile);
                                AddLocalPackagesSource(serverNugetConfigFile);
                            }
                            else
                            {
-                               if (!projectFileExists)
+                               if (!serverProjectFileExists)
                                {
                                    Log.Warning("Could not set Calamari version in Octopus Server project "
                                                + "{ServerProjectFile} to {NugetVersion} as could not find "
                                                + "project file",
                                                serverProjectFile, NugetVersion.Value);
                                }
-                               else if (!nugetFileExists)
+
+                               if (!coreProjectFileExists)
+                               {
+                                   Log.Warning("Could not set Calamari version in Octopus Server project "
+                                               + "{ServerProjectFile} to {NugetVersion} as could not find "
+                                               + "project file",
+                                       serverProjectFile, NugetVersion.Value);
+                               }
+
+                               if (!nugetFileExists)
                                {
                                    Log.Warning("Could not set Calamari version in Octopus Server project "
                                                + "{ServerProjectFile} to {NugetVersion} as could not find "

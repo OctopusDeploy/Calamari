@@ -26,6 +26,6 @@ namespace Calamari.ArgoCD.Git.PullRequests
             return false;
         }
 
-        Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
+        Task<IGitVendorPullRequestClient> Create(HttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
     }
 }
