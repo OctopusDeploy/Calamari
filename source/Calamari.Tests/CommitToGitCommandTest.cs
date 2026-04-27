@@ -185,7 +185,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    public void DoesNotSubstituteSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
+    public void FailsWhenSensitiveVariableTemplatesAreEncounteredDuringSubstitution()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -198,11 +198,10 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable("MySecret", "super-secret-value", true),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        RunCommitToGit().Should().NotBe(0);
 
         var content = GetCommittedFileContent($"{destinationPath}/configs/settings.json");
-        content.Should().NotBeNull("the package file should be committed to the repository");
-        content.Should().NotContain("super-secret-value", "sensitive variables must not be substituted into committed files");
+        content.Should().BeNull("the package file should not be committed when sensitive variable substitution throws");
     }
 
     [Test]
