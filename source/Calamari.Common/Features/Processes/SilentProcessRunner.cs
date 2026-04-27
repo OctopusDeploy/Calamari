@@ -87,7 +87,7 @@ namespace Calamari.Common.Features.Processes
             {
                 using (var process = new Process())
                 {
-                    process.StartInfo.FileName = "/bin/bash";
+                    process.StartInfo.FileName = executable;
                     process.StartInfo.Arguments = arguments;
                     process.StartInfo.WorkingDirectory = workingDirectory;
                     process.StartInfo.UseShellExecute = false;
