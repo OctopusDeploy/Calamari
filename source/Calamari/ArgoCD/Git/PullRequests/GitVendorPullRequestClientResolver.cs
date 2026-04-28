@@ -9,7 +9,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
 {
     public interface IGitVendorPullRequestClientResolver
     {
-        Task<IGitVendorPullRequestClient> TryResolve(HttpsGitConnection repositoryConnection, ILog log,
+        Task<IGitVendorPullRequestClient> TryResolve(IHttpsGitConnection repositoryConnection, ILog log,
                                                      CancellationToken cancellationToken);
     }
     
@@ -22,7 +22,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
             this.clientFactories = clientFactories;
         }
  
-        public async Task<IGitVendorPullRequestClient?> TryResolve(HttpsGitConnection repositoryConnection, ILog log,
+        public async Task<IGitVendorPullRequestClient?> TryResolve(IHttpsGitConnection repositoryConnection, ILog log,
                                                                    CancellationToken cancellationToken)
         {
             if (!Uri.TryCreate(repositoryConnection.Url, UriKind.Absolute, out var repositoryUri))

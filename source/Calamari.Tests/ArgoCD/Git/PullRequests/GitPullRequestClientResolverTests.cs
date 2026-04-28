@@ -20,14 +20,14 @@ namespace Calamari.Tests.ArgoCD.Git.PullRequests;
 public class GitPullRequestClientResolverTests
 {
     ILog log;
-    HttpsGitConnection connection;
+    IHttpsGitConnection connection;
     MemoryCache cache;
 
     [SetUp]
     public void SetUp()
     {
         log = Substitute.For<ILog>();
-        connection = Substitute.For<HttpsGitConnection>();
+        connection = Substitute.For<IHttpsGitConnection>();
         connection.Username.Returns("test-user");
         connection.Password.Returns("test-token");
         cache = new MemoryCache(new MemoryCacheOptions());
@@ -131,6 +131,6 @@ public class GitPullRequestClientResolverTests
         public string Name => "NeverMatches";
         public bool CanHandleAsCloudHosted(Uri repositoryUri) => false;
         public Task<bool> CanHandleAsSelfHosted(Uri repositoryUri, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task<IGitVendorPullRequestClient> Create(HttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public Task<IGitVendorPullRequestClient> Create(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken) => throw new NotImplementedException();
     }
 }

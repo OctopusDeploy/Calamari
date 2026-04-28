@@ -4,15 +4,21 @@ namespace Calamari.ArgoCD.Git
 {
     public interface IRepositoryConnection
     {
-        public string Url { get;  }
+        public string Url { get; }
     }
 
     public interface IGitConnection : IRepositoryConnection
     {
-        public GitReference GitReference { get;  }
+        public GitReference GitReference { get; }
     }
 
-    public class HttpsGitConnection : IGitConnection
+    public interface IHttpsGitConnection : IGitConnection
+    {
+        string? Username { get; }
+        string? Password { get; }
+    }
+
+    public class HttpsGitConnection : IHttpsGitConnection
     {
         public HttpsGitConnection(string? username, string? password, string url, GitReference gitReference)
         {
@@ -30,7 +36,13 @@ namespace Calamari.ArgoCD.Git
 
     public class SshGitConnection : IGitConnection
     {
-        public SshGitConnection(string? username, string url, GitReference gitReference, string privateKey, string publicKey, string? passphrase)
+        public SshGitConnection(
+            string? username,
+            string url,
+            GitReference gitReference,
+            string privateKey,
+            string publicKey,
+            string? passphrase)
         {
             Username = username;
             Url = url;

@@ -21,7 +21,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
             return await selfHostedGitLabInspector.IsSelfHostedGitLabInstance(repositoryUri, cancellationToken);
         }
 
-        public async Task<IGitVendorPullRequestClient> Create(HttpsGitConnection repositoryConnection, ILog taskLog,
+        public async Task<IGitVendorPullRequestClient> Create(IHttpsGitConnection repositoryConnection, ILog taskLog,
                                                               CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
