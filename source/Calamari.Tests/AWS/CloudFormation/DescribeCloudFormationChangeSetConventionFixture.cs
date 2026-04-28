@@ -42,7 +42,9 @@ namespace Calamari.Tests.AWS.CloudFormation
             client.DescribeChangeSetAsync(Arg.Any<DescribeChangeSetRequest>(), Arg.Any<CancellationToken>())
                   .Returns(new DescribeChangeSetResponse { Changes = null });
 
-            await convention.DescribeChangeset(TestStack(), TestChangeSet(), TestVariables());
+            var act = () => convention.DescribeChangeset(TestStack(), TestChangeSet(), TestVariables());
+            
+            await act.Should().NotThrowAsync();
         }
 
         [Test]
