@@ -28,6 +28,7 @@ using Octopus.Calamari.Contracts.ArgoCD;
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {
     [TestFixture]
+    [Category(TestCategory.RequiresOpenSsl3)]
     public class UpdateArgoCDApplicationManifestsInstallConventionTests
     {
         const string ProjectSlug = "TheProject";
