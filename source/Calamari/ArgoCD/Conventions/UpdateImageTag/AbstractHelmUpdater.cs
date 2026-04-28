@@ -12,109 +12,166 @@ using Calamari.Kubernetes.Patching.JsonPatch;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-public abstract class AbstractHelmUpdater : BaseUpdater
+public abstract class AbstractHelmUpdater : ISourceUpdater
 {
+    protected readonly ILog log;
+    protected readonly ICalamariFileSystem fileSystem;
+    protected readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
 
     protected AbstractHelmUpdater(ILog log,
-                                  ICalamariFileSystem fileSystem,
-                                  UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                  string defaultRegistry) : base(log,
-                                                                 fileSystem)
+                              ICalamariFileSystem fileSystem,
+                              Application applicationFromYaml,
+                              UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                              string defaultRegistry)
     {
+        this.log = log;
+        this.fileSystem = fileSystem;
+        this.applicationFromYaml = applicationFromYaml;
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
     }
-    
-    public override ImageReplacementResult ReplaceImages(string input)
+
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
     {
-        var imageReplacer = new HelmValuesImageReplaceStepVariables(input, defaultRegistry, log);
-        return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
+        if (!ValidateSource(sourceWithMetadata))
+            return new FileUpdateResult([], [], [], []);
+
+        IReadOnlyCollection<HelmValuesFileTarget> targets;
+        if (deploymentConfig.HasStepBasedHelmValueReferences())
+        {
+            WarnIfAnnotationsSuperseded(sourceWithMetadata);
+            targets = GetStepVariableFileTargets(sourceWithMetadata, workingDirectory);
+        }
+        else
+        {
+            (targets, var problems) = GetAnnotationFileTargets(sourceWithMetadata, workingDirectory);
+            LogHelmSourceConfigurationProblems(log, problems);
+        }
+        
+        return ProcessHelmValuesFiles(workingDirectory, targets);
     }
 
-    protected override JsonPatchDocument? CreateJsonPatch(string content, HashSet<string> targetedImages)
+    protected abstract bool ValidateSource(ApplicationSourceWithMetadata sourceWithMetadata);
+    protected abstract IReadOnlyCollection<HelmValuesFileTarget> GetStepVariableFileTargets(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory);
+    protected abstract (IReadOnlyCollection<HelmValuesFileTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetAnnotationFileTargets(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory);
+
+    void WarnIfAnnotationsSuperseded(ApplicationSourceWithMetadata sourceWithMetadata)
     {
-        return CreateJsonPatchWithPlaceholders(content, deploymentConfig.ImageReferences,
-            (c, images) => new HelmValuesImageReplaceStepVariables(c, defaultRegistry, log).UpdateImages(images));
+        var appName = string.IsNullOrEmpty(sourceWithMetadata.Source.Name) ? null : new ApplicationSourceName(sourceWithMetadata.Source.Name);
+        if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(appName)))
+        {
+            log.Warn($"Application '{applicationFromYaml.Metadata.Name}' specifies helm-value annotations which have been superseded by values specified in the step's configuration");
+        }
     }
 
-    //NOTE: this is common with Helm Sources
-    protected FileUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
-                                                      string workingDirectory,
-                                                      ApplicationSourceWithMetadata sourceWithMetadata)
-    {
-        log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
-        return Update(workingDirectory, filesToUpdate.ToHashSet());
-    }
-
-    /// <returns>Images that were updated</returns>
-    protected FileUpdateResult ProcessHelmUpdateTargets(
+    FileUpdateResult ProcessHelmValuesFiles(
         string workingDirectory,
-        IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets)
+        IReadOnlyCollection<HelmValuesFileTarget> files)
     {
-        var results =
-            targets.Select(t => UpdateHelmImageValues(workingDirectory, t, deploymentConfig.ImageReferences))
-                   .ToList();
+        var converter = new HelmAnnotationToReferenceConverter(defaultRegistry, log);
+        var updatedImages = new HashSet<string>();
+        var jsonPatches = new List<FileJsonPatch>();
 
-        var patchedFiles = results
-            .Where(r => r.JsonPatch != null)
-            .Select(r => new FileJsonPatch(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
-            .ToList();
-        var updatedImages = results
-            .Where(r => r.Updated)
-            .SelectMany(r => r.ImagesUpdated)
-            .ToHashSet();
+        foreach (var file in files)
+        {
+            var filepath = Path.Combine(workingDirectory, file.RelativePath);
+            var fileContent = fileSystem.ReadFile(filepath);
 
-        return new FileUpdateResult(updatedImages, [], patchedFiles, []);
+            var imageReferences = file.AnnotationTemplates != null
+                ? converter.Resolve(fileContent, file.AnnotationTemplates, deploymentConfig.ImageReferences)
+                : deploymentConfig.ImageReferences;
+
+            if (imageReferences.Count == 0)
+                continue;
+
+            ProcessFile(filepath, file.RelativePath, fileContent, imageReferences, updatedImages, jsonPatches);
+        }
+
+        return new FileUpdateResult(updatedImages, [], jsonPatches, []);
     }
 
-    HelmRefUpdatedResult UpdateHelmImageValues(
-        string rootPath,
-        HelmValuesFileImageUpdateTarget target,
-        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    void ProcessFile(
+        string filepath,
+        string relativePath,
+        string fileContent,
+        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imageReferences,
+        HashSet<string> updatedImages,
+        List<FileJsonPatch> jsonPatches)
     {
-        var filepath = Path.Combine(rootPath, target.Path, target.FileName);
         log.Info($"Processing file at {filepath}.");
-        var fileContent = fileSystem.ReadFile(filepath);
-        var helmImageReplacer = new HelmContainerImageReplacer(fileContent, target.DefaultClusterRegistry, target.ImagePathDefinitions, log);
-        var imageUpdateResult = helmImageReplacer.UpdateImages(imagesToUpdate);
 
-        if (imageUpdateResult.UpdatedImageReferences.Count > 0)
-            fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
+        var replacer = new HelmValuesImageReplaceStepVariables(fileContent, defaultRegistry, log);
+        var result = replacer.UpdateImages(imageReferences);
 
-        var jsonPatch = CreateJsonPatchWithPlaceholders(fileContent, imagesToUpdate,
-            (c, images) => new HelmContainerImageReplacer(c, target.DefaultClusterRegistry, target.ImagePathDefinitions, log).UpdateImages(images));
+        if (result.UpdatedImageReferences.Count > 0)
+        {
+            fileSystem.OverwriteFile(filepath, result.UpdatedContents);
+            updatedImages.UnionWith(result.UpdatedImageReferences);
+        }
 
-        return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
+        var patch = CreateJsonPatchWithPlaceholders(fileContent, imageReferences);
+        if (patch != null)
+            jsonPatches.Add(new FileJsonPatch(relativePath, JsonSerializer.Serialize(patch)));
     }
 
-    /// <summary>
-    /// Creates a JSON patch by running a replacer factory with placeholder tags to produce a "before",
-    /// then running with real tags against the "before" to produce an "after", and diffing the two.
-    /// </summary>
     JsonPatchDocument? CreateJsonPatchWithPlaceholders(
         string content,
-        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-        Func<string, IReadOnlyCollection<ContainerImageReferenceAndHelmReference>, ImageReplacementResult> replacerFactory)
+        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imageReferences)
     {
-        var placeholderImages = imagesToUpdate
+        var placeholderImages = imageReferences
             .Select(ir =>
             {
-                var placeholderRef = MakePlaceholderRef(ir.ContainerReference.FriendlyName());
+                var placeholderRef = JsonPatchUtils.MakePlaceholderRef(ir.ContainerReference.FriendlyName());
                 return ir with { ContainerReference = ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry) };
             })
             .ToList();
 
-        var placeholderResult = replacerFactory(content, placeholderImages);
+        var placeholderResult = new HelmValuesImageReplaceStepVariables(content, defaultRegistry, log).UpdateImages(placeholderImages);
         if (placeholderResult.UpdatedImageReferences.Count == 0)
             return null;
 
         var temporaryBefore = placeholderResult.UpdatedContents;
-        var actualResult = replacerFactory(temporaryBefore, imagesToUpdate);
+        var actualResult = new HelmValuesImageReplaceStepVariables(temporaryBefore, defaultRegistry, log).UpdateImages(imageReferences);
 
         return actualResult.UpdatedImageReferences.Count > 0
-            ? CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
+            ? JsonPatchUtils.CreateJsonPatchFromDiff(temporaryBefore, actualResult.UpdatedContents)
             : null;
+    }
+    
+    static void LogHelmSourceConfigurationProblems(ILog log, IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
+    {
+        foreach (var helmSourceConfigurationProblem in helmSourceConfigurationProblems)
+        {
+            LogProblem(helmSourceConfigurationProblem);
+        }
+
+        void LogProblem(HelmSourceConfigurationProblem helmSourceConfigurationProblem)
+        {
+            switch (helmSourceConfigurationProblem)
+            {
+                case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
+                {
+                    if (helmSourceIsMissingImagePathAnnotation.RefSourceIdentity == null)
+                    {
+                        log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
+                                       helmSourceIsMissingImagePathAnnotation.SourceIdentity);
+                    }
+                    else
+                    {
+                        log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. The source '{1}' will not be updated.",
+                                       helmSourceIsMissingImagePathAnnotation.SourceIdentity,
+                                       helmSourceIsMissingImagePathAnnotation.RefSourceIdentity);
+                    }
+
+                    log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
+
+                    return;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(helmSourceConfigurationProblem));
+            }
+        }
     }
 }

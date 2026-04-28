@@ -4,14 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Kubernetes.Patching;
 using Calamari.Kubernetes.Patching.JsonPatch;
-using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
@@ -107,38 +104,14 @@ public abstract class BaseUpdater : ISourceUpdater
             var colonIdx = imageRef.LastIndexOf(':');
             if (colonIdx >= 0)
             {
-                temporaryBefore = temporaryBefore.Replace(imageRef, MakePlaceholderRef(imageRef));
+                temporaryBefore = temporaryBefore.Replace(imageRef, JsonPatchUtils.MakePlaceholderRef(imageRef));
             }
         }
 
         var temporaryResult = ReplaceImages(temporaryBefore);
         return temporaryResult.UpdatedImageReferences.Count > 0
-            ? CreateJsonPatchFromDiff(temporaryBefore, temporaryResult.UpdatedContents)
+            ? JsonPatchUtils.CreateJsonPatchFromDiff(temporaryBefore, temporaryResult.UpdatedContents)
             : null;
-    }
-
-    // The tag should always be present — ContainerImageReference objects are created by
-    // DeploymentConfigFactory which ensures a tag is set. The no-tag fallback appends the
-    // placeholder anyway so the replacer can still match.
-    protected static string MakePlaceholderRef(string imageRef)
-    {
-        var colonIdx = imageRef.LastIndexOf(':');
-        return colonIdx >= 0
-            ? imageRef[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
-            : imageRef + ":__CALAMARI_PLACEHOLDER__";
-    }
-
-    protected static JsonPatchDocument CreateJsonPatchFromDiff(string originalContent, string updatedContent)
-    {
-        var originalStream = new YamlStream();
-        originalStream.Load(new StringReader(originalContent));
-        var original = new JsonArray(originalStream.Documents.Select(d => d.ToJsonNode()).ToArray());
-
-        var updatedStream = new YamlStream();
-        updatedStream.Load(new StringReader(updatedContent));
-        var updated = new JsonArray(updatedStream.Documents.Select(d => d.ToJsonNode()).ToArray());
-
-        return JsonPatchGenerator.Generate(original, updated);
     }
 
     static string Serialize(JsonPatchDocument patchDocument)
