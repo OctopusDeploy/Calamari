@@ -10,7 +10,6 @@ public partial class Build
     //This is a base 64 encoded message from forbidden words in the profanity checker to stop local packages from being commited to server, while still allowing Calamari builds to pass their own forbidden words check
     static string PreventCommitMessage = Encoding.UTF8.GetString(Convert.FromBase64String("Tk9DT01NSVQ="));
 
-    
     Target CopyToLocalPackages =>
         d =>
             d.Requires(() => IsLocalBuild)
@@ -44,7 +43,7 @@ public partial class Build
                            {
                                Log.Information("Setting Calamari version in Octopus Server "
                                                + "project {ServerProjectFile} to {NugetVersion}",
-                                               serverProjectFile, NugetVersion.Value);
+                                   serverProjectFile, NugetVersion.Value);
                                SetOctopusServerCalamariVersion(serverProjectFile);
                                SetOctopusServerCalamariVersion(coreProjectFile);
                                AddLocalPackagesSource(serverNugetConfigFile);
@@ -56,7 +55,7 @@ public partial class Build
                                    Log.Warning("Could not set Calamari version in Octopus Server project "
                                                + "{ServerProjectFile} to {NugetVersion} as could not find "
                                                + "project file",
-                                               serverProjectFile, NugetVersion.Value);
+                                       serverProjectFile, NugetVersion.Value);
                                }
 
                                if (!coreProjectFileExists)
@@ -72,11 +71,11 @@ public partial class Build
                                    Log.Warning("Could not set Calamari version in Octopus Server project "
                                                + "{ServerProjectFile} to {NugetVersion} as could not find "
                                                + "nuget config file",
-                                               serverNugetConfigFile, NugetVersion.Value);
+                                       serverNugetConfigFile, NugetVersion.Value);
                                }
-
                            }
                        });
+
     void SetOctopusServerCalamariVersion(string projectFile)
     {
         var text = File.ReadAllText(projectFile);
@@ -88,12 +87,12 @@ public partial class Build
     void AddLocalPackagesSource(string nugetConfigFile)
     {
         var doc = XDocument.Load(nugetConfigFile);
-        
+
         // Add LocalPackages to packageSources
         var packageSources = doc.Descendants("packageSources").FirstOrDefault();
         if (packageSources == null)
             throw new InvalidOperationException("Could not find <packageSources> element in NuGet.config");
-    
+
         var existingSource = packageSources.Elements("add")
                                            .FirstOrDefault(e => e.Attribute("key")?.Value == "LocalPackages");
         if (existingSource == null)
@@ -101,19 +100,19 @@ public partial class Build
             packageSources.Add(new XElement("add",
                                             new XAttribute("key", "LocalPackages"),
                                             new XAttribute("value", "../LocalPackages")));
-    
+
             packageSources.Add(new XComment(PreventCommitMessage));
         }
-    
+
         // Add LocalPackages to packageSourceMapping
         var packageSourceMapping = doc.Descendants("packageSourceMapping").FirstOrDefault();
         if (packageSourceMapping == null)
             throw new InvalidOperationException("Could not find <packageSourceMapping> element in NuGet.config");
-    
+
         var clearElement = packageSourceMapping.Element("clear");
         if (clearElement == null)
             throw new InvalidOperationException("Could not find <clear /> element in <packageSourceMapping>");
-        
+
         var existingMapping = packageSourceMapping.Elements("packageSource")
                                                   .FirstOrDefault(e => e.Attribute("key")?.Value == "LocalPackages");
 
@@ -121,15 +120,16 @@ public partial class Build
         {
             var localPackagesMapping = new XElement("packageSource",
                                                     new XAttribute("key", "LocalPackages"),
-                                                    new[] { 
-                                                        "Octopus.Calamari.Consolidated", 
-                                                        "Octopus.Calamari.ConsolidatedPackage", 
+                                                    new[] {
+                                                        "Octopus.Calamari.Consolidated",
+                                                        "Octopus.Calamari.ConsolidatedPackage",
                                                         "Octopus.Calamari.ConsolidatedPackage.Api",
                                                         "Octopus.Calamari.Contracts"
                                                     }.Select(p => new XElement("package", new XAttribute("pattern", p))));
-    
+
             clearElement.AddAfterSelf(localPackagesMapping);
         }
+
         doc.Save(nugetConfigFile);
     }
 }
