@@ -7,6 +7,7 @@ using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -42,6 +43,17 @@ namespace Calamari.Tests.AWS.CloudFormation
                   .Returns(new DescribeChangeSetResponse { Changes = null });
 
             await convention.DescribeChangeset(TestStack(), TestChangeSet(), TestVariables());
+        }
+
+        [Test]
+        public async Task DescribeChangeset_WithNullResponseDoesNotThrow()
+        {
+            client.DescribeChangeSetAsync(Arg.Any<DescribeChangeSetRequest>(), Arg.Any<CancellationToken>())
+                  .Returns((DescribeChangeSetResponse)null);
+
+            var act = () => convention.DescribeChangeset(TestStack(), TestChangeSet(), TestVariables());
+
+            await act.Should().NotThrowAsync();
         }
     }
 }
