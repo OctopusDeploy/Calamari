@@ -7,6 +7,7 @@ using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -14,6 +15,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.AWS.CloudFormation
 {
     [TestFixture]
+    [Category(TestCategory.PlatformAgnostic)]
     public class DescribeCloudFormationChangeSetConventionFixture
     {
         IAmazonCloudFormation client;
