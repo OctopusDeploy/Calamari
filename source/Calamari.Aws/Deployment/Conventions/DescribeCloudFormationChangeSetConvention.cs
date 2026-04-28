@@ -67,7 +67,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to describe the change set.\n" +
-                    "Please ensure the current account has permission to perfrom action 'cloudformation:DescribeChangeSet'." +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeChangeSet'." +
                     ex.Message + "\n");
             }
             catch (AmazonCloudFormationException ex)
