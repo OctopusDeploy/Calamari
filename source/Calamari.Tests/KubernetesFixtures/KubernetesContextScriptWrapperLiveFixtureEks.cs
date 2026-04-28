@@ -30,7 +30,6 @@ using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class KubernetesContextScriptWrapperLiveFixtureEks: KubernetesContextScriptWrapperLiveFixture
     {
         private const string ResourcePackageFileName = "package.1.0.0.zip";
@@ -291,7 +290,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        [WindowsTest] // We are having an issue with this test running on Linux. The test successfully executes on Windows.
         public void AuthorisingWithAmazonAccount_WithExecFeatureToggleEnabled(bool runAsScript)
         {
             SetVariablesToAuthoriseWithAmazonAccount();

@@ -14,9 +14,6 @@ namespace Calamari.Tests.KubernetesFixtures
     public class Helm3UpgradeFixture : HelmUpgradeFixture
     {
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void Upgrade_Succeeds()
         {
             var result = DeployPackage();
@@ -31,18 +28,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public async Task CustomHelmExeInPackage_RelativePath()
         {
             await TestCustomHelmExeInPackage_RelativePath("3.0.1");
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void HelmVersionNewerThanMinimumVersion_ReportsObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
@@ -76,9 +67,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public async Task HelmVersionOlderThanMinimumVersion_DoesNotRunObjectStatus()
         {
             //minimum version is helm 3.13
@@ -106,9 +94,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void HooksOnlyPackage_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
@@ -134,9 +119,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void EmptyChart_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
@@ -162,10 +144,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMac]
-        [Category(TestCategory.PlatformAgnostic)]
         public void TargetingANamespaceThatDoesNotExistAbortsTheManifestSearchingLoop()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);

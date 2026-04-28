@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     [SupportedOSPlatform("Windows")]
     public class DeployWindowsServiceFixture : DeployWindowsServiceAbstractFixture
     {

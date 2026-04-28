@@ -1,5 +1,3 @@
-using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -8,10 +6,6 @@ namespace Calamari.Tests.KubernetesFixtures
     public class HelmInstalledVersionUpgradeFixture : HelmUpgradeFixture
     {
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMac]
-        [Category(TestCategory.PlatformAgnostic)]
         public void Upgrade_Succeeds()
         {
             var result = DeployPackage();

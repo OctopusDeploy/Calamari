@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void WindowsUsesWindowsFileSystem()
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void NonWindowsUsesWindowsFileSystem()
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -358,7 +358,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void LongFilePathsShouldWork()
         {
             var paths = new Stack<string>();

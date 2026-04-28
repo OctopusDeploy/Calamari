@@ -14,7 +14,7 @@ namespace Calamari.Tests.Fixtures.Variables
     public class ContributeEnvironmentVariablesFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldAddWindowsEnvironmentVariables()
         {
             if (!CalamariEnvironment.IsRunningOnWindows)
@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Variables
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNix)]
+        [TestPlatforms(TestPlatforms.Linux)]
         public void ShouldAddLinuxEnvironmentVariables()
         {
             if (!CalamariEnvironment.IsRunningOnNix)
@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Variables
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyMac)]
+        [TestPlatforms(TestPlatforms.MacOs)]
         public void ShouldAddMacEnvironmentVariables()
         {
             // Mac running in TeamCity agent service does not contain $HOME variable

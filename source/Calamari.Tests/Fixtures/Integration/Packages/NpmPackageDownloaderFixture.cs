@@ -29,7 +29,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void DownloadNpmPackage()
         {
             var downloader = GetDownloader();
@@ -41,7 +40,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void DownloadScopedNpmPackage()
         {
             var downloader = GetDownloader();
@@ -53,7 +51,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void DownloadNpmPackageFromCache()
         {
             var downloader = GetDownloader();

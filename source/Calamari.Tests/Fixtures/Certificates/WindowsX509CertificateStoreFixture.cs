@@ -16,7 +16,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     [SupportedOSPlatform("windows")]
     public class WindowsX509CertificateStoreFixture
     {

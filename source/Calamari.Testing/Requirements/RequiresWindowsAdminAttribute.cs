@@ -5,16 +5,20 @@ using NUnit.Framework.Interfaces;
 
 namespace Calamari.Testing.Requirements
 {
-    public class RequiresAdminAttribute : TestAttribute, ITestAction
+    public class RequiresWindowsAdminAttribute : TestAttribute, ITestAction
     {
         public void BeforeTest(ITest testDetails)
         {
-            if (!OperatingSystem.IsWindows())  return;
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Fail("This can only be run on Windows");
+                return;
+            }
             
             var isAdmin = (new WindowsPrincipal(WindowsIdentity.GetCurrent())).IsInRole(WindowsBuiltInRole.Administrator);
             if (!isAdmin)
             {
-                Assert.Ignore("Requires Admin Rights");
+                Assert.Ignore("Requires Admin rights");
             }
         }
 

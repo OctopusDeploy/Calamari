@@ -12,7 +12,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class DeployVhdFixture : DeployPackageFixture
     {
         private const string ServiceName = "Acme.Vhd";
@@ -32,8 +32,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresAdmin]
-        [RequiresWindowsServer2012OrAbove]
+        [RequiresWindowsAdmin]
         [SupportedOSPlatform("windows")]
         public void ShouldDeployAVhd()
         {
@@ -75,8 +74,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresAdmin]
-        [RequiresWindowsServer2012OrAbove]
+        [RequiresWindowsAdmin]
         [SupportedOSPlatform("windows")]
         public void ShouldDeployAVhdWithTwoPartitions()
         {
@@ -126,8 +124,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresAdmin]
-        [RequiresWindowsServer2012OrAbove]
+        [RequiresWindowsAdmin]
         [SupportedOSPlatform("windows")]
         public void ShouldBlockMountAndOverrideAppPath()
         {

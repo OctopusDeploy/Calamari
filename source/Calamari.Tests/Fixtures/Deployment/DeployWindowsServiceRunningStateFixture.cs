@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class DeployWindowsServiceRunningStateFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => "RunningStateFixture";

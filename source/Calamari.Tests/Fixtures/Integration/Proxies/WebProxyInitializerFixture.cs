@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.Proxies
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class ProxyInitializerFixture
     {
         const string BadproxyUrl = "http://proxy-initializer-fixture-bad-proxy:1234";

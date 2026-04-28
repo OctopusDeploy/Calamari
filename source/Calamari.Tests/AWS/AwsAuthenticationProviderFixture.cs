@@ -13,7 +13,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.AWS
 {
    [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class AwsAuthenticationProviderFixture
     {
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();

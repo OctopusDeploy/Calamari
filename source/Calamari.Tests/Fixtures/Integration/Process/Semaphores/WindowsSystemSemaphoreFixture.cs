@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class WindowsSystemSemaphoreFixture : SemaphoreFixtureBase
     { }
 }

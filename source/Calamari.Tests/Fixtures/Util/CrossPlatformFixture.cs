@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Util
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void TildePrefixReplacedWithHome()
         {
             // This usage of Environment.GetEnvironmentVariable is fine as it's not accessing a test dependency variable
@@ -50,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Util
         [TestCase("%MARIO_BROTHER%/blah%20blah.zip", "LUIGI/blah%20blah.zip", Description = "Windows-style variable (%VAR%) is expanded, and URL-encoded space (%20) in filename is preserved")]
         [TestCase("$MARIO_BROTHER/blah%2520blah.zip", "LUIGI/blah%2520blah.zip", Description = "Linux-style variable ($VAR) is expanded, but URL-encoded space encoded twice (%2520) in filename is preserved")]
         [TestCase("%MARIO_BROTHER%/blah%2520blah.zip", "LUIGI/blah%2520blah.zip", Description = "Windows-style variable (%VAR%) is expanded, and URL-encoded space encoded twice (%2520) in filename is preserved")]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void NixEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
             var value = CrossPlatform.ExpandPathEnvironmentVariables(inputValue);
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Util
         [Test]
         [TestCase("$MARIO_BROTHER/blah", "$MARIO_BROTHER/blah", Description = "Nix variable format ignored")]
         [TestCase("IMA%MARIO_BROTHER%PLUMBER", "IMALUIGIPLUMBER", Description = "Variables demarcated by percent character")]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void WindowsEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
             var value = CrossPlatform.ExpandPathEnvironmentVariables(inputValue);
