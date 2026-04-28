@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
+using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
@@ -57,15 +59,15 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 var response = await clientFactory.DescribeChangeSetAsync(stack, changeSet);
-                SetOutputVariable(variables, "ChangeCount", response.Changes.Count.ToString());
-                SetOutputVariable(variables, "Changes",
-                    JsonConvert.SerializeObject(response.Changes, Formatting.Indented));
+                var changes = response?.Changes ?? new List<Change>();
+                SetOutputVariable(variables, "ChangeCount", changes.Count.ToString());
+                SetOutputVariable(variables, "Changes", JsonConvert.SerializeObject(changes, Formatting.Indented));
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to describe the change set.\n" +
-                    "Please ensure the current account has permission to perfrom action 'cloudformation:DescribeChangeSet'." +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeChangeSet'." +
                     ex.Message + "\n");
             }
             catch (AmazonCloudFormationException ex)
