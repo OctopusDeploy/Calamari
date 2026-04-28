@@ -13,7 +13,7 @@ partial class Build : NukeBuild
 {
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")] readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Required] readonly Solution Solution = SolutionModelTasks.ParseSolution(KnownPaths.SourceDirectory / "Calamari.sln");
+    [Solution] readonly Solution Solution = null!;
 
     [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
