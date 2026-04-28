@@ -20,6 +20,7 @@ using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Serialization;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Serialization;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using FluentAssertions;
@@ -85,13 +86,133 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = await Upload("Package1", fileSelections);
+            var (prefix, _) = await Upload("Package1", fileSelections);
 
             await Validate(async client =>
                            {
                                await client.GetObjectAsync(bucketName, $"{prefix}Resources/TextFile.txt");
                                await client.GetObjectAsync(bucketName, $"{prefix}root/Page.html");
                                await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
+                           });
+        }
+
+        [Test]
+        public async Task UploadPackageWithS3OutputVariablesStrategySetToAllFiles()
+        {
+            var packageOptions = new List<S3TargetPropertiesBase>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, S3OutputVariablesStrategy.AllFiles);
+            var outputVariables = GetOutputVariables(log);
+
+            outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().ContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().ContainKey("Package.S3Uri");
+            outputVariables.Should().ContainKey("Package.Uri");
+            outputVariables.Should().ContainKey("Package.Arn");
+            outputVariables.Should().ContainKey("Package.ObjectVersion");
+            outputVariables.Should().ContainKey("Package.FileName");
+
+            await Validate(async client =>
+                           {
+                               await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
+                           });
+        }
+
+        [Test]
+        public async Task UploadPackageWithS3OutputVariablesStrategyNotSet()
+        {
+            var packageOptions = new List<S3TargetPropertiesBase>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage);
+            var outputVariables = GetOutputVariables(log);
+
+            outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().ContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().ContainKey("Package.S3Uri");
+            outputVariables.Should().ContainKey("Package.Uri");
+            outputVariables.Should().ContainKey("Package.Arn");
+            outputVariables.Should().ContainKey("Package.ObjectVersion");
+            outputVariables.Should().ContainKey("Package.FileName");
+
+            await Validate(async client =>
+                           {
+                               await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
+                           });
+        }
+
+        [Test]
+        public async Task UploadPackageWithS3OutputVariablesStrategySetToNoFiles()
+        {
+            var packageOptions = new List<S3TargetPropertiesBase>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage, S3OutputVariablesStrategy.NoFiles);
+            var outputVariables = GetOutputVariables(log);
+
+            outputVariables.Should().NotContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().NotContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().NotContainKey("Package.S3Uri");
+            outputVariables.Should().NotContainKey("Package.Uri");
+            outputVariables.Should().NotContainKey("Package.Arn");
+            outputVariables.Should().NotContainKey("Package.ObjectVersion");
+            outputVariables.Should().NotContainKey("Package.FileName");
+
+            await Validate(async client =>
+                           {
+                               await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
+                           });
+        }
+
+        [Test]
+        public async Task UploadPackageWithIncludeOutputVariablesDefaultBehavior()
+        {
+            var packageOptions = new List<S3TargetPropertiesBase>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage);
+            var outputVariables = GetOutputVariables(log);
+
+            outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
+            outputVariables.Should().ContainKey(PackageVariables.Output.FilePath);
+            outputVariables.Should().ContainKey("Package.S3Uri");
+            outputVariables.Should().ContainKey("Package.Uri");
+            outputVariables.Should().ContainKey("Package.Arn");
+            outputVariables.Should().ContainKey("Package.ObjectVersion");
+            outputVariables.Should().ContainKey("Package.FileName");
+
+            await Validate(async client =>
+                           {
+                               await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
                            });
         }
 
@@ -109,7 +230,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = await Upload("Package2", fileSelections);
+            var (prefix, _) = await Upload("Package2", fileSelections);
 
             await Validate(async client =>
                            {
@@ -146,7 +267,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            var prefix = await Upload("Package3", fileSelections, variables);
+            var (prefix, _) = await Upload("Package3", fileSelections, variables);
 
             await Validate(async client =>
                            {
@@ -173,7 +294,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            var prefix = await Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
+            var (prefix, _) = await Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
 
             await Validate(async client =>
                            {
@@ -272,7 +393,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = await Upload("Package1", fileSelections);
+            var (prefix, _) = await Upload("Package1", fileSelections);
 
             await Validate(async client =>
                            {
@@ -540,7 +661,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = await Upload("Package1", fileSelections);
+            var (prefix, _) = await Upload("Package1", fileSelections);
 
             await DoSafelyWithRetries(async () =>
                                       {
@@ -612,6 +733,24 @@ namespace Calamari.Tests.AWS
                                          });
         }
 
+        protected static Dictionary<string, string> GetOutputVariables(InMemoryLog log)
+        {
+            var serviceMessages = new List<ServiceMessage>();
+            var parser = new ServiceMessageParser(serviceMessages.Add);
+
+            foreach (var line in log.StandardOut)
+            {
+                parser.Parse(line);
+            }
+
+            return serviceMessages
+                .Where(sm => sm.Name == ServiceMessageNames.SetVariable.Name)
+                .ToDictionary(
+                    sm => sm.GetValue(ServiceMessageNames.SetVariable.NameAttribute) ?? string.Empty,
+                    sm => sm.GetValue(ServiceMessageNames.SetVariable.ValueAttribute) ?? string.Empty
+                );
+        }
+
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
@@ -626,7 +765,7 @@ namespace Calamari.Tests.AWS
             }
         }
 
-        protected async Task<string> Upload(string packageName, List<S3TargetPropertiesBase> propertiesList, VariableDictionary customVariables = null, S3TargetMode s3TargetMode = S3TargetMode.FileSelections)
+        protected async Task<(string bucketKeyPrefix, InMemoryLog log)> Upload(string packageName, List<S3TargetPropertiesBase> propertiesList, VariableDictionary customVariables = null, S3TargetMode s3TargetMode = S3TargetMode.FileSelections, S3OutputVariablesStrategy? s3OutputVariablesStrategy = null)
         {
             const string packageVersion = "1.0.0";
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
@@ -653,6 +792,7 @@ namespace Calamari.Tests.AWS
                                        }
                                    });
 
+            var log = new InMemoryLog();
             var variablesFile = Path.GetTempFileName();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
@@ -669,7 +809,6 @@ namespace Calamari.Tests.AWS
             using (var package = new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, packageVersion, packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
-                var log = new InMemoryLog();
                 var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
                 var command = new UploadAwsS3Command(
@@ -690,18 +829,26 @@ namespace Calamari.Tests.AWS
                                                                                           log)
                                                     );
 
-                var result = command.Execute(new[]
+                var args = new List<string>
                 {
                     "--package", $"{package.FilePath}",
                     "--variables", $"{variablesFile}",
                     "--bucket", bucketName,
                     "--targetMode", s3TargetMode.ToString()
-                });
+                };
+
+                if (s3OutputVariablesStrategy.HasValue)
+                {
+                    args.Add("--s3OutputVariablesStrategy");
+                    args.Add(s3OutputVariablesStrategy.Value.ToString());
+                }
+
+                var result = command.Execute(args.ToArray());
 
                 result.Should().Be(0);
             }
 
-            return bucketKeyPrefix;
+            return (bucketKeyPrefix, log);
         }
 
         protected async Task<string> UploadEntireCompressedPackage(string packageFilePath,

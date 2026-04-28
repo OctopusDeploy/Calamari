@@ -44,6 +44,7 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly ISubstituteInFiles substituteInFiles;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly bool md5HashSupported;
+        readonly S3OutputVariablesStrategy s3OutputVariablesStrategy;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
 
@@ -56,7 +57,8 @@ namespace Calamari.Aws.Deployment.Conventions
             IProvideS3TargetOptions optionsProvider,
             IBucketKeyProvider bucketKeyProvider,
             ISubstituteInFiles substituteInFiles,
-            IStructuredConfigVariablesService structuredConfigVariablesService
+            IStructuredConfigVariablesService structuredConfigVariablesService,
+            S3OutputVariablesStrategy s3OutputVariablesStrategy
         )
         {
             this.log = log;
@@ -69,6 +71,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
+            this.s3OutputVariablesStrategy = s3OutputVariablesStrategy;
         }
 
         private static string ExceptionMessageWithFilePath(PutObjectRequest request, Exception exception)
@@ -121,9 +124,15 @@ namespace Calamari.Aws.Deployment.Conventions
                 (await UploadAll(options, Factory, deployment)).Tee(responses =>
                 {
                     var results = responses.Where(z => z.IsSuccess()).ToArray();
+
+                    if (s3OutputVariablesStrategy == S3OutputVariablesStrategy.NoFiles)
+                    {
+                        return;
+                    }
+
                     if (targetMode == S3TargetMode.EntirePackage && results.FirstOrDefault() != null)
                     {
-                        SetOutputVariables(deployment, results.FirstOrDefault());
+                        SetOutputVariables(deployment, results.FirstOrDefault(), "");
                     }
                     else if (targetMode == S3TargetMode.FileSelections)
                     {
