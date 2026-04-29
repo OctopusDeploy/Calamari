@@ -75,8 +75,7 @@ namespace Calamari.ArgoCD.Git
                     PrivateKey = ssh.PrivateKey,
                     Passphrase = ssh.Passphrase
                 };
-                // TODO(eddy): Implement proper host key verification
-                options.FetchOptions.CertificateCheck = (cert, valid, host) => true;
+                options.FetchOptions.CertificateCheck = SshHostKeyVerificationBypass.AcceptAll;
             }
             else if (gitConnection is HttpsGitConnection { Username: not null, Password: not null } https)
             {

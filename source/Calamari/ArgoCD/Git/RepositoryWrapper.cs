@@ -203,8 +203,7 @@ namespace Calamari.ArgoCD.Git
             {
                 CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
                 OnPushStatusError = errors => errorsDetected = errors,
-                // TODO(eddy): Implement proper host key verification for SSH connections
-                CertificateCheck = connection is SshGitConnection ? (cert, valid, host) => true : null
+                CertificateCheck = connection is SshGitConnection ? SshHostKeyVerificationBypass.AcceptAll : null
             };
 
             repository.Network.Push(repository.Head, pushOptions);
@@ -221,8 +220,7 @@ namespace Calamari.ArgoCD.Git
             var fetchOptions = new FetchOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
-                // TODO(eddy): Implement proper host key verification for SSH connections
-                CertificateCheck = connection is SshGitConnection ? (cert, valid, host) => true : null
+                CertificateCheck = connection is SshGitConnection ? SshHostKeyVerificationBypass.AcceptAll : null
             };
 
             try

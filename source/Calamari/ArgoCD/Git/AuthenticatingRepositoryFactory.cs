@@ -46,6 +46,8 @@ public class AuthenticatingRepositoryFactory
         }
 
         log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
+        // SCP-style URLs (git@github.com:org/repo.git) are rewritten to HTTPS by GitCloneSafeUrl.
+        // Anonymous HTTPS clone may fail with 401/404, which is confusing for SSH-only repos.
         var anonGitConnection = new HttpsGitConnection(null, null, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
         return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), anonGitConnection);
     }

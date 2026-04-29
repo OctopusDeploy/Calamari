@@ -21,6 +21,8 @@ namespace Calamari.Tests.ArgoCD.Git
         
         public static void CreateBranchIn(GitBranchName branchName, string originPath)
         {
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             var signature = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
 
             var repository = new Repository(originPath);

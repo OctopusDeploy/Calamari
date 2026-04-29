@@ -13,7 +13,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
         readonly Uri baseUrl;
         readonly string projectPath;
 
-        public GitLabPullRequestClient(GitLabClient gitLabClient, IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public GitLabPullRequestClient(GitLabClient gitLabClient, IHttpsGitConnection repositoryConnection, Uri baseUrl)
         {
             this.gitLabClient = gitLabClient;
             this.baseUrl = baseUrl;

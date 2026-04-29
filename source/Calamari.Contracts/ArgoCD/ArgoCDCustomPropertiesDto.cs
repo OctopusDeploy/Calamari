@@ -19,7 +19,7 @@ public record ArgoCDApplicationDto(
     string DefaultRegistry,
     string? InstanceWebUiUrl);
 
-// GitUsernamePasswordCredentialDto
+// GitUsernamePasswordCredentialDto - could rename, but not worth altering the API
 public record GitCredentialDto(string Url, string Username, string Password);
 
 public record GitCredentialSshKeyDto(string Url, string Username, string PrivateKey, string PublicKey, string? Passphrase);
