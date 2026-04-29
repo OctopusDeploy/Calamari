@@ -102,7 +102,9 @@ public partial class Build
                                //Build the consolidated package libraries
                                DotNetBuild(s =>
                                                s.SetConfiguration(Configuration)
-                                                .SetProjectFile(project));
+                                                .SetProjectFile(project)
+                                                .SetVersion(NugetVersion.Value)
+                                                .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion));
 
                                File.Copy(KnownPaths.RootDirectory / "global.json", buildDirectory / "global.json");
 

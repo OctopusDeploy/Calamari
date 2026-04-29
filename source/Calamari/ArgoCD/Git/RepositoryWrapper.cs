@@ -64,36 +64,16 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
-        public void AddFiles(string[] filesToStage)
+        public void StageAllChanges()
         {
             try
             {
-                foreach (var file in filesToStage)
-                    repository.Index.Add(NormalizePath(file));
+                LibGit2Sharp.Commands.Stage(repository, "*");
             }
             catch (LibGit2SharpException e)
             {
                 throw new CommandException($"Failed to stage files in git repository. Error: {e.Message}", e);
             }
-        }
-
-        public void RemoveFiles(string[] filesToRemove)
-        {
-            try
-            {
-                foreach (var file in filesToRemove)
-                    repository.Index.Remove(NormalizePath(file));
-            }
-            catch (LibGit2SharpException e)
-            {
-                throw new CommandException($"Failed to remove files from git repository. Error: {e.Message}", e);
-            }
-        }
-
-        static string NormalizePath(string path)
-        {
-            var normalized = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            return normalized.StartsWith($".{Path.AltDirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
         }
 
         public async Task<PushResult> PushChanges(bool requiresPullRequest,

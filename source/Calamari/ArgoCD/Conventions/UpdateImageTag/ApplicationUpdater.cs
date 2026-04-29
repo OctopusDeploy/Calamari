@@ -52,7 +52,7 @@ public class ApplicationUpdater
             
             LogHelmAnnotationWarning(applicationFromYaml);
 
-            var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, commitMessageGenerator);
+            var repositoryAdapter = new RepositoryAdapter(repositoryFactory, new RepositoryUpdater(deploymentConfig.CommitParameters, log, commitMessageGenerator));
             var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryAdapter, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, outputVariablesWriter, fileSystem);
             
             var appliedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
