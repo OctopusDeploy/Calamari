@@ -166,6 +166,7 @@ public static class LodashStringExtensions
         return re.Matches(text).Select(m => m.Value).ToList();
     }
 
+    [Obsolete("This is a direct port of a Step Package Framework dependency and should not be used. Future work will determine a safe way to replace any existing usages.")]
     public static string CamelCase(this string? text)
     {
         if (string.IsNullOrEmpty(text))
