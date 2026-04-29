@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // The whole fixture exists to test the obsolete CamelCase port.
 using Calamari.Common.Plumbing.Extensions;
 using FluentAssertions;
 using NUnit.Framework;

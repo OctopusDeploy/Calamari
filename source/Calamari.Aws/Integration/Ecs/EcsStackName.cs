@@ -14,10 +14,12 @@ public static class EcsStackName
         var envId = variables.Get("Octopus.Environment.Id");
         var tenantId = variables.Get("Octopus.Deployment.Tenant.Id");
 
+#pragma warning disable CS0618 // SPF parity requires the lodash camelCase port; tracked for replacement.
         var stackName = $"cf-ecs-{clusterName.CamelCase()}" +
                         $"-{serviceName.CamelCase()}" +
                         $"-{envId.CamelCase()}" +
                         $"-{(string.IsNullOrEmpty(tenantId) ? "untenanted" : tenantId.CamelCase())}";
+#pragma warning restore CS0618
 
         stackName = stackName.Trim();
         return stackName.Length <= MaxLength ? stackName : stackName[..MaxLength];
