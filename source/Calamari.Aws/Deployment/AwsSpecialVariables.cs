@@ -19,6 +19,22 @@
             public const string PackageOptions = "Octopus.Action.Aws.S3.PackageOptions";
         }
 
+        public static class Ecs
+        {
+            public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
+            public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
+            public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.TargetTaskDefinitionName";
+            public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.TemplateTaskDefinitionName";
+            public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
+            public const string Tags = "Octopus.Action.Aws.Ecs.Tags";
+
+            public static class WaitOption
+            {
+                public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";
+                public const string Timeout = "Octopus.Action.Aws.Ecs.WaitOption.Timeout";
+            }
+        }
+
         public static class CloudFormation
         {
             public const string Action = "Octopus.Action.Aws.CloudFormationAction";
