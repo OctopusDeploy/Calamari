@@ -2,7 +2,12 @@ using System;
 
 namespace Octopus.Calamari.Contracts.ArgoCD;
 
-public record ArgoCDCustomPropertiesDto(ArgoCDGatewayDto[] Gateways, ArgoCDApplicationDto[] Applications, GitCredentialDto[] Credentials);
+public record ArgoCDCustomPropertiesDto(
+    ArgoCDGatewayDto[] Gateways,
+    ArgoCDApplicationDto[] Applications,
+    GitCredentialDto[] Credentials,
+    // Nullable for backwards compatibility
+    GitCredentialSshKeyDto[]? SshCredentials);
 
 public record ArgoCDGatewayDto(string Id, string Name);
 
@@ -14,4 +19,7 @@ public record ArgoCDApplicationDto(
     string DefaultRegistry,
     string? InstanceWebUiUrl);
 
+// GitUsernamePasswordCredentialDto - could rename, but not worth altering the API
 public record GitCredentialDto(string Url, string Username, string Password);
+
+public record GitCredentialSshKeyDto(string Url, string Username, string PrivateKey, string PublicKey, string? Passphrase);

@@ -10,6 +10,8 @@ namespace Calamari.Tests.ArgoCD.Git
     {
         public static Repository CreateBareRepository(string repositoryPath)
         {
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             Directory.CreateDirectory(repositoryPath);
             Repository.Init(repositoryPath, isBare: true);
             return new Repository(repositoryPath);
@@ -19,6 +21,8 @@ namespace Calamari.Tests.ArgoCD.Git
         
         public static void CreateBranchIn(GitBranchName branchName, string originPath)
         {
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             var signature = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
 
             var repository = new Repository(originPath);
@@ -44,6 +48,8 @@ namespace Calamari.Tests.ArgoCD.Git
 
         public static string CloneOrigin(string tempDirectory, string originPath, GitBranchName branchName)
         {
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             var subPath = Guid.NewGuid().ToString();
             var resultPath = Path.Combine(tempDirectory, subPath);
             Repository.Clone(originPath, resultPath);

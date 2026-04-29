@@ -1,4 +1,5 @@
 using System;
+using Calamari.Common.Commands;
 using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Git;
@@ -14,12 +15,32 @@ namespace Calamari.ArgoCD.Git;
 /// </summary>
 static class LibGit2SharpTransportRegistration
 {
-    static readonly Lazy<bool> Registered = new(() =>
+    static readonly Lazy<bool> Registered = new(Register);
+
+    public static void EnsureRegistered() => _ = Registered.Value;
+
+    static bool Register()
+    {
+        try
         {
             GlobalSettings.RegisterSmartSubtransport<GitHttpSmartSubTransport>("http");
             GlobalSettings.RegisterSmartSubtransport<GitHttpSmartSubTransport>("https");
-            return true;
-        });
+        }
+        catch (TypeInitializationException ex) when (ex.InnerException is DllNotFoundException dllEx)
+        {
+            var message = $"""
+                           Failed to load the native libgit2 library required for Git operations.
 
-    public static void EnsureRegistered() => _ = Registered.Value;
+                           On Linux, libgit2 requires OpenSSL 3 (libcrypto.so.3) to be installed on the worker.
+                           Please install it according to your distributions guidance or update to a supported OS.
+
+                           Original exception:
+                           {dllEx.Message}
+                           """;
+
+            throw new CommandException(message, ex);
+        }
+
+        return true;
+    }
 }

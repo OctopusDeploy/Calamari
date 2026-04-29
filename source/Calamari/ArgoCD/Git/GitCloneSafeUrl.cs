@@ -29,7 +29,7 @@ public static class GitCloneSafeUrl
     /// This is invoked during yaml deserialisation, and may be applied to repoURLs which will never actually be cloned
     /// during step execution (eg sources which have not been scoped to the step).
     /// </remarks>
-    public static Uri FromString(string uri)
+    public static string FromString(string uri)
     {
         if (!uri.StartsWith(StandardSshScpPrefix))
         {
@@ -38,7 +38,7 @@ public static class GitCloneSafeUrl
             {
                 uri = $"oci://{uri}";
             }
-            return new Uri(uri);
+            return new Uri(uri).AbsoluteUri;
         }
 
         var scpAddress = uri.Substring(StandardSshScpPrefix.Length);
@@ -55,6 +55,6 @@ public static class GitCloneSafeUrl
             Host = host,
             Path = path
         };
-        return uriBuilder.Uri;
+        return uriBuilder.Uri.AbsoluteUri;
     }
 }

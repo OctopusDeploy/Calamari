@@ -33,12 +33,17 @@ namespace Calamari.ArgoCD.Git
         readonly IGitVendorPullRequestClient? vendorApiAdapter = vendorApiAdapter;
         readonly IClock clock = clock;
         // ReSharper restore ReplaceWithPrimaryConstructorParameter
-        
+
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        Credentials RepositoryCredentials => new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password };
+        Credentials RepositoryCredentials => connection switch
+             {
+                 SshGitConnection ssh => new SshUserKeyMemoryCredentials { Username = ssh.Username, PublicKey = ssh.PublicKey, PrivateKey = ssh.PrivateKey, Passphrase = ssh.Passphrase },
+                 HttpsGitConnection https => new UsernamePasswordCredentials { Username = https.Username, Password = https.Password },
+                 _ => null
+             };
 
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
@@ -140,7 +145,7 @@ namespace Calamari.ArgoCD.Git
                 commit.Sha,
                 commit.ShortSha(),
                 commit.Author.When,
-                connection.Url.AbsoluteUri,
+                connection.Url,
                 title,
                 uri,
                 number);
@@ -197,7 +202,8 @@ namespace Calamari.ArgoCD.Git
             var pushOptions = new PushOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
-                OnPushStatusError = errors => errorsDetected = errors
+                OnPushStatusError = errors => errorsDetected = errors,
+                CertificateCheck = connection is SshGitConnection ? SshHostKeyVerificationBypass.AcceptAll : null
             };
 
             repository.Network.Push(repository.Head, pushOptions);
@@ -213,7 +219,8 @@ namespace Calamari.ArgoCD.Git
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
             var fetchOptions = new FetchOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials
+                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
+                CertificateCheck = connection is SshGitConnection ? SshHostKeyVerificationBypass.AcceptAll : null
             };
 
             try
