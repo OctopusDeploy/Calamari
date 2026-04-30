@@ -41,6 +41,7 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly Func<RunningDeployment, string> roleArnProvider;
         readonly bool waitForComplete;
         readonly string stackName;
+        readonly TimeSpan? waitTimeout;
 
         readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
 
@@ -54,7 +55,8 @@ namespace Calamari.Aws.Deployment.Conventions
             bool waitForComplete,
             string stackName,
             AwsEnvironmentGeneration awsEnvironmentGeneration,
-            ILog log) : base(stackEventLogger, log)
+            ILog log,
+            TimeSpan? waitTimeout = null) : base(stackEventLogger, log)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;
@@ -63,6 +65,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.waitForComplete = waitForComplete;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
+            this.waitTimeout = waitTimeout;
         }
 
         public override void Install(RunningDeployment deployment)
@@ -87,7 +90,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             var deploymentStartTime = DateTime.Now;
 
-            await clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, false, filter: FilterStackEventsSince(deploymentStartTime)));
+            await clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, false, filter: FilterStackEventsSince(deploymentStartTime)), timeout: waitTimeout);
             await DeployStack(deployment, stack, template, deploymentStartTime);
         }
 
@@ -109,7 +112,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (waitForComplete)
             {
-                await clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)));
+                await clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)), timeout: waitTimeout);
             }
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
@@ -212,7 +215,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 // created in the first place, we can end up here. In this case we try to create
                 // the stack from scratch.
                 await DeleteCloudFormation(stack);
-                await clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, false, filter: FilterStackEventsSince(deploymentStartTime)));
+                await clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, false, filter: FilterStackEventsSince(deploymentStartTime)), timeout: waitTimeout);
                 return await CreateCloudFormation(deployment, template);
             }
             catch (AmazonServiceException ex)
