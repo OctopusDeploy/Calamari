@@ -23,6 +23,9 @@
         {
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
             public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
+            public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.TargetTaskDefinitionName";
+            public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.TemplateTaskDefinitionName";
+            public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
 
             public static class WaitOption
             {
