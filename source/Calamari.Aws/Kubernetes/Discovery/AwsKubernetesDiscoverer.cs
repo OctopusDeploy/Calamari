@@ -73,7 +73,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
 
                 var clusters = client.ListClustersAsync(new ListClustersRequest()).GetAwaiter().GetResult();
 
-                foreach (var cluster in clusters.Clusters.Select(c =>
+                foreach (var cluster in (clusters.Clusters ?? Enumerable.Empty<string>()).Select(c =>
                     client.DescribeClusterAsync(new DescribeClusterRequest { Name = c }).GetAwaiter().GetResult().Cluster))
                 {
                     var credentialsRole = authenticationDetails.Role;
@@ -90,7 +90,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
                         accountId,
                         assumedRole,
                         workerPoolId,
-                        cluster.Tags.ToTargetTags());
+                        (cluster.Tags ?? new Dictionary<string, string>()).ToTargetTags());
                 }
             }
         }

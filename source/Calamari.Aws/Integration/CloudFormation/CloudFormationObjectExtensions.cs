@@ -117,8 +117,8 @@ namespace Calamari.Aws.Integration.CloudFormation
             {
                 var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value });
 
-                return response?
-                    .StackEvents.OrderByDescending(stackEvent => stackEvent.Timestamp)
+                return (response?.StackEvents ?? Enumerable.Empty<StackEvent>())
+                    .OrderByDescending(stackEvent => stackEvent.Timestamp)
                     .FirstOrDefault(stackEvent => predicate == null || predicate(stackEvent))
                     .AsSome();
             }
@@ -159,16 +159,15 @@ namespace Calamari.Aws.Integration.CloudFormation
                 {
                     var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value, NextToken = nextToken });
 
-                    var stackEvents = response?
-                        .StackEvents.Where(stackEvent => predicate == null || predicate(stackEvent))
+                    var stackEvents = (response?.StackEvents ?? Enumerable.Empty<StackEvent>())
+                        .Where(stackEvent => predicate == null || predicate(stackEvent))
                         .ToList();
 
                     currentStackEvents.AddRange(stackEvents);
 
-                    if (!string.IsNullOrEmpty(response.NextToken))
-                        nextToken = response.NextToken; // Get the next page of results
-                    else
+                    if (response == null || string.IsNullOrEmpty(response.NextToken))
                         break;
+                    nextToken = response.NextToken;
                 }
 
                 var results = new List<Maybe<StackEvent>>();
@@ -220,7 +219,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         public static async Task<Stack> DescribeStackAsync(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
             var response = await clientFactory().DescribeStacksAsync(new DescribeStacksRequest { StackName = stack.Value });
-            return response.Stacks.FirstOrDefault();
+            return response?.Stacks?.FirstOrDefault();
         }
         
         /// <summary>
@@ -232,7 +231,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         public static async Task<List<StackResourceSummary>> ListStackResourcesAsync(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
             var response = await clientFactory().ListStackResourcesAsync(new ListStackResourcesRequest { StackName = stack.Value });
-            return response.StackResourceSummaries;
+            return response?.StackResourceSummaries ?? new List<StackResourceSummary>();
         }
 
 
@@ -295,10 +294,11 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <param name="clientFactory">The client factory method to use</param>
         /// <param name="pollPeriod">The period to wait between events</param>
         /// <param name="stack">The stack name or id to query</param>
-        /// param name="action">Callback for each event while waiting
+        /// <param name="action">Callback for each event while waiting</param>
         /// <param name="filter">The predicate for filtering the stack events</param>
+        /// <param name="timeout">Optional overall wait timeout; throws <see cref="TimeoutException"/> when exceeded. Null = wait indefinitely.</param>
         public static async Task WaitForStackToComplete(this Func<IAmazonCloudFormation> clientFactory,
-            TimeSpan pollPeriod, StackArn stack, Action<Maybe<StackEvent>> action = null, Func<StackEvent, bool> filter = null)
+            TimeSpan pollPeriod, StackArn stack, Action<Maybe<StackEvent>> action = null, Func<StackEvent, bool> filter = null, TimeSpan? timeout = null)
         {
             Guard.NotNull(stack, "Stack should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
@@ -309,8 +309,13 @@ namespace Calamari.Aws.Integration.CloudFormation
                 return;
             }
 
+            var startedAt = DateTime.UtcNow;
+
             do
             {
+                if (timeout.HasValue && DateTime.UtcNow - startedAt > timeout.Value)
+                    throw new TimeoutException($"Timed out after {timeout.Value} waiting for CloudFormation stack {stack.Value} to reach a terminal state.");
+
                 await Task.Delay(pollPeriod);
                 var @event = await clientFactory.GetLastStackEvent(stack, filter);
                 action?.Invoke(@event);

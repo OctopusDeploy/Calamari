@@ -48,6 +48,9 @@ namespace Calamari
 
         public int Execute(params string[] args)
         {
+            // Backward compatibility fix for v4 collections to ensure they are not null
+            // from https://docs.aws.amazon.com/sdk-for-net/v4/developer-guide/net-dg-v4.html#net-dg-v4-collections
+            Amazon.AWSConfigs.InitializeCollections = true;
             return Run(args);
         }
 
