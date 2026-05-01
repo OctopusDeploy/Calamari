@@ -132,7 +132,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
                     if (targetMode == S3TargetMode.EntirePackage && results.FirstOrDefault() != null)
                     {
-                        SetOutputVariables(deployment, results.FirstOrDefault(), "");
+                        SetOutputVariables(deployment, results.FirstOrDefault());
                     }
                     else if (targetMode == S3TargetMode.FileSelections)
                     {

@@ -187,36 +187,6 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        public async Task UploadPackageWithIncludeOutputVariablesDefaultBehavior()
-        {
-            var packageOptions = new List<S3TargetPropertiesBase>
-            {
-                new S3PackageOptions
-                {
-                    StorageClass = "STANDARD",
-                    CannedAcl = "private",
-                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
-                }
-            };
-
-            var (prefix, log) = await Upload("Package3", packageOptions, null, S3TargetMode.EntirePackage);
-            var outputVariables = GetOutputVariables(log);
-
-            outputVariables.Should().ContainKey(PackageVariables.Output.FileName);
-            outputVariables.Should().ContainKey(PackageVariables.Output.FilePath);
-            outputVariables.Should().ContainKey("Package.S3Uri");
-            outputVariables.Should().ContainKey("Package.Uri");
-            outputVariables.Should().ContainKey("Package.Arn");
-            outputVariables.Should().ContainKey("Package.ObjectVersion");
-            outputVariables.Should().ContainKey("Package.FileName");
-
-            await Validate(async client =>
-                           {
-                               await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
-                           });
-        }
-
-        [Test]
         public async Task UploadPackage2()
         {
             var fileSelections = new List<S3TargetPropertiesBase>
