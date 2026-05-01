@@ -128,12 +128,12 @@ public class CommitToGitCommand : Command
                                               d.StagingDirectory = inputsDirectory;
                                               d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                           }),
-            new SelectiveDependencyStagingConvention(pathToPackage,
+            new SelectiveDependencyStagingConvention(null,
                                                      fileSystem,
                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
                                                      new PackageVariablesFactory(),
                                                      new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
-            new SelectiveDependencyStagingConvention(pathToPackage,
+            new SelectiveDependencyStagingConvention(null,
                                                      fileSystem,
                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
                                                      new GitDependencyVariablesFactory(),
