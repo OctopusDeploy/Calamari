@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using Octopus.Calamari.ConsolidatedPackage.Api;
-using SharpCompress.Archives.Zip;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {
@@ -30,16 +30,16 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
             using (var sourceStream = packageStreamProvider.OpenStream())
             {
-                using (var source = ZipArchive.Open(sourceStream))
+                using (var source = new ZipArchive(sourceStream, ZipArchiveMode.Read))
                 {
                     foreach (var fileTransfer in platformFiles)
                     {
-                        var sourceEntry = source.Entries.FirstOrDefault(e => e.Key is not null && e.Key.Equals(fileTransfer.Source));
+                        var sourceEntry = source.Entries.FirstOrDefault(e => e.FullName.Equals(fileTransfer.Source));
                         if(sourceEntry is null) continue;
                     
-                        using (var sourceEntryStream = sourceEntry.OpenEntryStream())
+                        using (var sourceEntryStream = sourceEntry.Open())
                         {
-                            yield return (fileTransfer.Destination, sourceEntry.Size, sourceEntryStream);
+                            yield return (fileTransfer.Destination, sourceEntry.Length, sourceEntryStream);
                         }
                     }
                 }
