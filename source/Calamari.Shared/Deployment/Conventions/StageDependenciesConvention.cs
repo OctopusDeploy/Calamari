@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -67,10 +66,11 @@ namespace Calamari.Deployment.Conventions
                     Log.Verbose($"Dependency '{referenceName}' was not found at '{originalFullPath}', skipping extraction");
                     continue;
                 }
-                
+
+                var shouldExtract = variables.Extract(referenceName);                              
                 var sanitizedReferenceName = fileSystem.RemoveInvalidFileNameChars(referenceName);
 
-                if (forceExtract || ShouldExtractReference(deployment, sanitizedReferenceName))
+                if (forceExtract || shouldExtract)
                 {
                     var extractionPath = Path.Combine(deployment.CurrentDirectory, sanitizedReferenceName);
                     ExtractDependency(originalFullPath, extractionPath);
@@ -86,12 +86,6 @@ namespace Calamari.Deployment.Conventions
                     Log.SetOutputVariable(variables.OutputVariables.FileName(referenceName), localFileName, deployment.Variables);
                 }
             }
-        }
-
-        protected virtual bool ShouldExtractReference(RunningDeployment deployment, string referenceName)
-        {
-            var dependencyVariables = dependencyVariablesFactory.GetDependencyVariables(deployment.Variables);
-            return dependencyVariables.Extract(referenceName);
         }
 
         void ExtractDependency(string file, string extractionDirectory)

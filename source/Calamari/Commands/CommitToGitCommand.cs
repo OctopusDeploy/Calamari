@@ -96,119 +96,96 @@ public class CommitToGitCommand : Command
 
         var deployment = new RunningDeployment(pathToPackage, variables);
         var baseWorkingDirectory = deployment.CurrentDirectory;
-        var transformsDirectory = Path.Combine(baseWorkingDirectory, TransformsDirectoryName);
-        var inputsDirectory = Path.Combine(baseWorkingDirectory, InputsDirectoryName);
-        
         var repositoryConfig = configFactory.CreateCommitToGitRepositoryConfig(deployment);
         var repositoryFactory = new RepositoryFactory(log, fileSystem, baseWorkingDirectory, gitVendorPullRequestClientResolver, clock);
         var clonedRepository = repositoryFactory.CloneRepository("git_repository", repositoryConfig.gitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
+        var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem, log);
+        WriteVariableScriptToFile(deployment);
         
-        var stageTransformScriptAndSubstitute = new List<IConvention>
+        var extractAllPackages = new List<IConvention>
         {
-            new DelegateInstallConvention(d =>
-                                          {
-                                              fileSystem.EnsureDirectoryExists(transformsDirectory);
-                                              d.StagingDirectory = transformsDirectory;
-                                              d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-                                              WriteVariableScriptToFile(d);
-                                          }),
             //we only want to include files which are NOT explicitly referenced as dependencies (i.e. we have files which are to be copied into the repo (referenced in variable), and some which should just be used for script dependencies. 
-            new SelectiveDependencyStagingConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory(), new NegatingExtractionChecker(new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log)))),
-            new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
-            // Substitute in the script itself - but only if it exists!
+            new StageDependenciesConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory()),
+            new StageDependenciesConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new GitDependencyVariablesFactory()),
             new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
         };
 
-        var stagePackagesToIncludeInRepository = new List<IConvention>
+        var substituteScriptPackages = new List<IConvention>
         {
             new DelegateInstallConvention(d =>
                                           {
-                                              fileSystem.EnsureDirectoryExists(inputsDirectory);
-                                              d.StagingDirectory = inputsDirectory;
-                                              d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-                                          }),
-            new SelectiveDependencyStagingConvention(null,
-                                                     fileSystem,
-                                                     new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
-                                                     new PackageVariablesFactory(),
-                                                     new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
-            new SelectiveDependencyStagingConvention(null,
-                                                     fileSystem,
-                                                     new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
-                                                     new GitDependencyVariablesFactory(),
-                                                     new ExplicitlyReferencedDependencies(new CommitToGitDependencyMetadataParser(fileSystem, log))),
-            
-            //This is a bit of a hack as it will literally replace everything in every package, which COULD be very slow
-            new DelegateInstallConvention(d => nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, fileSystem.EnumerateFilesRecursively(inputsDirectory).ToList())),
+                                              var packageVariablesFactory = new PackageVariablesFactory();
+                                              var allPackageNames = packageVariablesFactory.GetDependencyVariables(d.Variables).GetIndexes().ToList();
+                                              var inputPackageNames = metadataParser.ReferencedDependencyNames(d).ToList();
+
+                                              var scriptPackageNames = allPackageNames.Except(inputPackageNames);
+                                              foreach (var packageName in scriptPackageNames)
+                                              {
+                                                  var packagePath = Path.Combine(d.CurrentDirectory, packageName);
+                                                  substituteInFiles.Substitute(packagePath, fileSystem.EnumerateFilesRecursively(packagePath).ToList());
+                                              }
+                                          })
         };
-        
-        var copyInputFilesToRepository = new List<IConvention>
+
+        var substituteAndCopyInputFiles = new List<IConvention>
         {
             new DelegateInstallConvention(d =>
-            {
-                var destinationPath = repositoryConfig!.DestinationPath ?? string.Empty;
-                var destBase = Path.Combine(clonedRepository.WorkingDirectory, destinationPath);
-                var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem, log);
+                                          {
+                                              var destinationPath = repositoryConfig!.DestinationPath ?? string.Empty;
+                                              var destBase = Path.Combine(clonedRepository.WorkingDirectory, destinationPath);
+                                              foreach (var package in metadataParser.GetPackageDependenciesForCopying(d))
+                                              {
+                                                  var sanitizedName = fileSystem.RemoveInvalidFileNameChars(package.PackageName);
+                                                  var packageSourceDir = Path.Combine(d.CurrentDirectory, sanitizedName);
+                                                  if (!fileSystem.DirectoryExists(packageSourceDir))
+                                                  {
+                                                      log.Verbose($"Package source directory '{packageSourceDir}' not found, skipping");
+                                                      continue;
+                                                  }
+                                                  
+                                                  var filesToTarget = fileSystem.EnumerateFilesWithGlob(packageSourceDir, package.InputFilePaths).ToList();
+                                                  nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, filesToTarget);
+                                                  
+                                                  //now copy the requisite files into the repository
+                                                  var packageDestBase = Path.Combine(destBase, package.DestinationSubFolder ?? string.Empty);
+                                                  foreach (var sourceFile in filesToTarget)
+                                                  {
+                                                      var relativePath = Path.GetRelativePath(packageSourceDir, sourceFile);
+                                                      var destFile = Path.Combine(packageDestBase, relativePath);
+                                                      fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
+                                                      fileSystem.CopyFile(sourceFile, destFile);
+                                                  }
+                                              }
 
-                foreach (var package in metadataParser.GetPackageDependenciesForCopying(d))
-                {
-                    var sanitizedName = fileSystem.RemoveInvalidFileNameChars(package.PackageName);
-                    var packageSourceDir = Path.Combine(inputsDirectory, sanitizedName);
-                    if (!fileSystem.DirectoryExists(packageSourceDir))
-                    {
-                        log.Verbose($"Package source directory '{packageSourceDir}' not found, skipping");
-                        continue;
-                    }
+                                              foreach (var gitDep in metadataParser.GetGitRepositoryDependenciesForCopying(d))
+                                              {
+                                                  var sanitizedName = fileSystem.RemoveInvalidFileNameChars(gitDep.GitDependencyName);
+                                                  var gitSourceDir = Path.Combine(d.CurrentDirectory, sanitizedName);
+                                                  //no input-globs are required as only the relevant files were transmitted to Calamari
+                                                  nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, fileSystem.EnumerateFilesRecursively(gitSourceDir).ToList());
+                                                  if (!fileSystem.DirectoryExists(gitSourceDir))
+                                                  {
+                                                      log.Verbose($"Git dependency source directory '{gitSourceDir}' not found, skipping");
+                                                      continue;
+                                                  }
 
-                    var inputFilePaths = package.InputFilePaths;
-                    var filesToCopy = inputFilePaths?.Length > 0
-                        ? fileSystem.EnumerateFilesWithGlob(packageSourceDir, inputFilePaths)
-                        : fileSystem.EnumerateFilesRecursively(packageSourceDir);
-
-                    var packageDestBase = Path.Combine(destBase, package.DestinationSubFolder ?? string.Empty);
-                    filesToCopy = filesToCopy.ToList();
-                    foreach (var sourceFile in filesToCopy)
-                    {
-                        var relativePath = Path.GetRelativePath(packageSourceDir, sourceFile);
-                        var destFile = Path.Combine(packageDestBase, relativePath);
-                        fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
-                        fileSystem.CopyFile(sourceFile, destFile);
-                    }
-                }
-
-                foreach (var gitDep in metadataParser.GetGitRepositoryDependenciesForCopying(d))
-                {
-                    var sanitizedName = fileSystem.RemoveInvalidFileNameChars(gitDep.GitDependencyName);
-                    var gitSourceDir = Path.Combine(inputsDirectory, sanitizedName);
-                    if (!fileSystem.DirectoryExists(gitSourceDir))
-                    {
-                        log.Verbose($"Git dependency source directory '{gitSourceDir}' not found, skipping");
-                        continue;
-                    }
-
-                    var gitDepDestBase = Path.Combine(destBase, gitDep.DestinationSubFolder ?? string.Empty);
-                    foreach (var sourceFile in fileSystem.EnumerateFilesRecursively(gitSourceDir))
-                    {
-                        var relativePath = Path.GetRelativePath(gitSourceDir, sourceFile);
-                        var destFile = Path.Combine(gitDepDestBase, relativePath);
-                        fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
-                        fileSystem.CopyFile(sourceFile, destFile);
-                    }
-                }
-
-                log.Verbose($"Copied staged files to repository at {destBase}");
-            }),
+                                                  var gitDepDestBase = Path.Combine(destBase, gitDep.DestinationSubFolder ?? string.Empty);
+                                                  foreach (var sourceFile in fileSystem.EnumerateFilesRecursively(gitSourceDir))
+                                                  {
+                                                      var relativePath = Path.GetRelativePath(gitSourceDir, sourceFile);
+                                                      var destFile = Path.Combine(gitDepDestBase, relativePath);
+                                                      fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
+                                                      fileSystem.CopyFile(sourceFile, destFile);
+                                                  }
+                                                  log.Verbose($"Copied staged files to repository at {destBase}");
+                                              }
+                                          })
         };
         
         // Execute the transform script over the repository from its 'base directory'
         var transformRepository = new List<IConvention>
         {
-            new DelegateInstallConvention(d =>
-                                          {
-                                              d.StagingDirectory = transformsDirectory;
-                                              d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-                                          }),
             new DelegateInstallConvention(d =>
             {
                 var scriptFileName = d.Variables.Get(ScriptVariables.ScriptFileName);
@@ -231,13 +208,14 @@ public class CommitToGitCommand : Command
 
                                               //TODO(tmm): This is a smell, shouldn't need the FileUpdateResult here :/
                                               var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.gitConnection.GitReference, new FileUpdateResult([], [], [], []));
+                                              new CommitToGitOutputVariablesWriter(log).WritePushResultOutput(pushResult);
                                           })
         };
         
         var conventions = new List<IConvention>();
-        conventions.AddRange(stageTransformScriptAndSubstitute);
-        conventions.AddRange(stagePackagesToIncludeInRepository);
-        conventions.AddRange(copyInputFilesToRepository);
+        conventions.AddRange(extractAllPackages);
+        conventions.AddRange(substituteScriptPackages);
+        conventions.AddRange(substituteAndCopyInputFiles);
         conventions.AddRange(transformRepository);
         conventions.AddRange(commitToRemote);
 

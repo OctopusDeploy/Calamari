@@ -79,6 +79,7 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
         ]);
 
         RunCommitToGit().Should().Be(0);
@@ -270,8 +271,10 @@ public class CommitToGitCommandTest
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(package1Name), package1Name, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(package1Name), zip1Path, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedExtract(package1Name), "True", false),
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(package2Name), package2Name, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(package2Name), zip2Path, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedExtract(package2Name), "True", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.TemplateFileSources, templateValueSources, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
@@ -294,6 +297,7 @@ public class CommitToGitCommandTest
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.TemplateFileSources, templateValueSources, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
@@ -400,6 +404,7 @@ public class CommitToGitCommandTest
             // Package to copy into the repository, declared via TemplateValuesSources
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.TemplateFileSources, templateValueSources, false),
             // Override the destination path set in setUp
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
