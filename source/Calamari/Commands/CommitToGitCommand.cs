@@ -166,11 +166,12 @@ public class CommitToGitCommand : Command
                         ? fileSystem.EnumerateFilesWithGlob(packageSourceDir, inputFilePaths)
                         : fileSystem.EnumerateFilesRecursively(packageSourceDir);
 
+                    var packageDestBase = Path.Combine(destBase, package.DestinationSubFolder ?? string.Empty);
                     filesToCopy = filesToCopy.ToList();
                     foreach (var sourceFile in filesToCopy)
                     {
                         var relativePath = Path.GetRelativePath(packageSourceDir, sourceFile);
-                        var destFile = Path.Combine(destBase, relativePath);
+                        var destFile = Path.Combine(packageDestBase, relativePath);
                         fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
                         fileSystem.CopyFile(sourceFile, destFile);
                     }
@@ -186,10 +187,11 @@ public class CommitToGitCommand : Command
                         continue;
                     }
 
+                    var gitDepDestBase = Path.Combine(destBase, gitDep.DestinationSubFolder ?? string.Empty);
                     foreach (var sourceFile in fileSystem.EnumerateFilesRecursively(gitSourceDir))
                     {
-                        var relativePath = Path.GetRelativePath(inputsDirectory, sourceFile);
-                        var destFile = Path.Combine(destBase, relativePath);
+                        var relativePath = Path.GetRelativePath(gitSourceDir, sourceFile);
+                        var destFile = Path.Combine(gitDepDestBase, relativePath);
                         fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
                         fileSystem.CopyFile(sourceFile, destFile);
                     }

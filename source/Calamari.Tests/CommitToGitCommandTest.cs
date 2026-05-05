@@ -180,7 +180,7 @@ public class CommitToGitCommandTest
 
         RunCommitToGit().Should().Be(0);
 
-        GetCommittedFileContent($"{destinationPath}/{gitDependencyName}/manifests/deployment.yaml")
+        GetCommittedFileContent($"{destinationPath}/manifests/deployment.yaml")
             .Should().NotBeNull("git reference files should be copied into the repository under the destination path");
     }
 
@@ -280,6 +280,49 @@ public class CommitToGitCommandTest
     }
 
     [Test]
+    public void PackageFilesAreCopiedToDestinationSubFolderDefinedInMetadata()
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "base-dir";
+        const string destinationSubFolder = "services/app";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
+
+        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
+        variables.AddRange([
+            new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.TemplateFileSources, templateValueSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
+        ]);
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/{destinationSubFolder}/configs/settings.json")
+            .Should().NotBeNull("package files should be placed under the DestinationSubFolder from the source metadata");
+        GetCommittedFileContent($"{destinationPath}/configs/settings.json")
+            .Should().BeNull("package files should not be placed directly under the top-level DestinationPath when a DestinationSubFolder is specified");
+    }
+
+    [Test]
+    public void GitDependencyFilesAreCopiedToDestinationSubFolderDefinedInMetadata()
+    {
+        const string gitDependencyName = "my-git-dep";
+        const string destinationPath = "base-dir";
+        const string destinationSubFolder = "k8s/manifests";
+
+        var zipPath = CreateZipWithEntry(gitDependencyName, "deployment.yaml", "apiVersion: apps/v1");
+        AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath, destinationSubFolder);
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/{destinationSubFolder}/deployment.yaml")
+            .Should().NotBeNull("git dependency files should be placed under the DestinationSubFolder from the source metadata");
+        GetCommittedFileContent($"{destinationPath}/{gitDependencyName}/deployment.yaml")
+            .Should().BeNull("git dependency files should not be placed under the dependency name folder");
+    }
+
+    [Test]
     public void CommitToGitRunsScriptProvidedViaScriptBodyBySyntaxVariable()
     {
         variables.AddRange([
@@ -361,9 +404,9 @@ public class CommitToGitCommandTest
         ]);
     }
 
-    void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath)
+    void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath, string destinationSubFolder = "")
     {
-        var templateValueSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationPath}\"}}]";
+        var templateValueSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
         variables.AddRange([
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.Extract(gitDependencyName), "true", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.OriginalPath(gitDependencyName), zipPath, false),
