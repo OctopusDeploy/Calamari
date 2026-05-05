@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Plumbing.FileSystem;
@@ -55,11 +56,10 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         {
             var httpsUrl = RepositoryHelpers.ToFileUri(OriginPath);
             var factory = new AuthenticatingRepositoryFactory(
-                new Dictionary<string, GitCredentialDto>
+                new Dictionary<string, IGitCredentialDto>
                 {
                     [httpsUrl] = new GitCredentialDto(httpsUrl, "", "")
                 },
-                new Dictionary<string, GitCredentialSshKeyDto>(),
                 repositoryFactory,
                 log);
 
@@ -72,8 +72,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         {
             var originUrl = RepositoryHelpers.ToFileUri(OriginPath);
             var factory = new AuthenticatingRepositoryFactory(
-                new Dictionary<string, GitCredentialDto>(),
-                new Dictionary<string, GitCredentialSshKeyDto>(),
+                new Dictionary<string, IGitCredentialDto>(),
                 repositoryFactory,
                 log);
 
@@ -90,11 +89,10 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         public void SshCredentialIsSelectedWhenUrlMatchesSshCredential()
         {
             var factory = new AuthenticatingRepositoryFactory(
-                new Dictionary<string, GitCredentialDto>(),
-                new Dictionary<string, GitCredentialSshKeyDto>
+                new Dictionary<string, IGitCredentialDto>
                 {
                     // Use the local path as the SSH credential URL so the clone actually works
-                    [OriginPath] = new GitCredentialSshKeyDto(OriginPath, "git", "private-key", "public-key", "passphrase")
+                    [OriginPath] = new SshKeyGitCredentialDto(OriginPath, "git", "private-key")
                 },
                 repositoryFactory,
                 log);
@@ -121,11 +119,10 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var httpsUrl = "https://github.com/org/repo.git";
 
             var factory = new AuthenticatingRepositoryFactory(
-                new Dictionary<string, GitCredentialDto>
+                new Dictionary<string, IGitCredentialDto>
                 {
                     [httpsUrl] = new GitCredentialDto(httpsUrl, "user", "pass")
                 },
-                new Dictionary<string, GitCredentialSshKeyDto>(),
                 repositoryFactory,
                 log);
 
@@ -147,17 +144,20 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     {
         var mockRepoFactory = Substitute.For<IRepositoryFactory>();
 
-        var factory = new AuthenticatingRepositoryFactory(
-            new Dictionary<string, GitCredentialDto>
-            {
-                [url] = new GitCredentialDto(url, "https-user", "https-pass")
-            },
-            new Dictionary<string, GitCredentialSshKeyDto>
-            {
-                [url] = new GitCredentialSshKeyDto(url, "ssh-user", "private-key", "public-key", "passphrase")
-            },
-            mockRepoFactory,
-            log);
+        // If there are HTTPS and SSH credentials for the same URL, HTTPS wins so API functionality works.
+        IGitCredentialDto[] rawCredentials =
+        [
+            new GitCredentialDto(url, "https-user", "https-pass"),
+            new SshKeyGitCredentialDto(url, "ssh-user", "private-key")
+        ];
+        var credentialDictionary = rawCredentials
+            .GroupBy(c => c.Url)
+            .ToDictionary(g => g.Key, g => g.OfType<GitCredentialDto>().FirstOrDefault<IGitCredentialDto>() ?? g.First());
+
+        // The HTTPS credential must have been selected by the GroupBy rule.
+        credentialDictionary[url].Should().BeOfType<GitCredentialDto>("HTTPS credentials take priority over SSH for the same URL");
+
+        var factory = new AuthenticatingRepositoryFactory(credentialDictionary, mockRepoFactory, log);
 
         factory.CloneRepository(url, "main");
 

@@ -40,7 +40,7 @@ namespace Calamari.ArgoCD.Git
 
         Credentials RepositoryCredentials => connection switch
              {
-                 SshGitConnection ssh => new SshUserKeyMemoryCredentials { Username = ssh.Username, PublicKey = ssh.PublicKey, PrivateKey = ssh.PrivateKey, Passphrase = ssh.Passphrase },
+                 SshGitConnection ssh => new SshKeyMemoryCredentials { Username = ssh.Username, PrivateKey = ssh.PrivateKey },
                  HttpsGitConnection https => new UsernamePasswordCredentials { Username = https.Username, Password = https.Password },
                  _ => null
              };

@@ -6,43 +6,39 @@ namespace Calamari.ArgoCD.Git;
 
 public class AuthenticatingRepositoryFactory
 {
-    readonly Dictionary<string, GitCredentialDto> httpsGitCredentials;
-    readonly Dictionary<string, GitCredentialSshKeyDto> sshGitCredentials;
+    readonly Dictionary<string, IGitCredentialDto> gitCredentials;
     readonly IRepositoryFactory repositoryFactory;
     readonly ILog log;
 
     public AuthenticatingRepositoryFactory(
-        Dictionary<string, GitCredentialDto> httpsGitCredentials,
-        Dictionary<string, GitCredentialSshKeyDto> sshGitCredentials,
+        Dictionary<string, IGitCredentialDto> gitCredentials,
         IRepositoryFactory repositoryFactory,
         ILog log)
     {
-        this.httpsGitCredentials = httpsGitCredentials;
-        this.sshGitCredentials = sshGitCredentials;
+        this.gitCredentials = gitCredentials;
         this.repositoryFactory = repositoryFactory;
         this.log = log;
     }
 
     public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
     {
-        var httpsGitCredential = httpsGitCredentials.GetValueOrDefault(requestedUrl);
-        if (httpsGitCredential is not null)
+        var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
+        switch (gitCredential)
         {
-            var gitConnection = new HttpsGitConnection(httpsGitCredential.Username, httpsGitCredential.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
-            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-        }
-
-        var sshGitCredential = sshGitCredentials.GetValueOrDefault(requestedUrl);
-        if (sshGitCredential is not null)
-        {
-            var sshConnection = new SshGitConnection(
-                sshGitCredential.Username,
-                requestedUrl,
-                GitReference.CreateFromString(targetRevision),
-                sshGitCredential.PrivateKey,
-                sshGitCredential.PublicKey,
-                sshGitCredential.Passphrase);
-            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
+            case GitCredentialDto passwordCredential:
+            {
+                var gitConnection = new HttpsGitConnection(passwordCredential.Username, passwordCredential.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
+                return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
+            }
+            case SshKeyGitCredentialDto sshCredential:
+            {
+                var sshConnection = new SshGitConnection(
+                    sshCredential.Username,
+                    requestedUrl,
+                    GitReference.CreateFromString(targetRevision),
+                    sshCredential.PrivateKey);
+                return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
+            }
         }
 
         log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");

@@ -1,6 +1,5 @@
 #nullable enable
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Conventions.ManifestTemplating;
@@ -70,9 +69,10 @@ namespace Calamari.ArgoCD.Conventions
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
-            var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
-            var sshCredentials = argoProperties.SshCredentials?.ToDictionary(c => c.Url) ?? new Dictionary<string, GitCredentialSshKeyDto>();
-            var authenticatingRepositoryFactory = new AuthenticatingRepositoryFactory(gitCredentials, sshCredentials, repositoryFactory, log);
+            var gitCredentials = argoProperties.Credentials
+                                               .GroupBy(c => c.Url)
+                                               .ToDictionary(g => g.Key, g => g.OfType<GitCredentialDto>().FirstOrDefault<IGitCredentialDto>() ?? g.First());
+            var authenticatingRepositoryFactory = new AuthenticatingRepositoryFactory(gitCredentials, repositoryFactory, log);
             var deploymentScope = deployment.Variables.GetDeploymentScope();
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);

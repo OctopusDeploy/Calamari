@@ -68,12 +68,10 @@ namespace Calamari.ArgoCD.Git
 
             if (gitConnection is SshGitConnection ssh)
             {
-                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new SshUserKeyMemoryCredentials
+                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new SshKeyMemoryCredentials
                 {
                     Username = ssh.Username,
-                    PublicKey = ssh.PublicKey,
                     PrivateKey = ssh.PrivateKey,
-                    Passphrase = ssh.Passphrase
                 };
                 options.FetchOptions.CertificateCheck = SshHostKeyVerificationBypass.AcceptAll;
             }

@@ -76,8 +76,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 ],
                 [
                     new GitCredentialDto(OriginUrl, "", "")
-                ],
-                []);
+                ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
@@ -665,9 +664,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                         "docker.io",
                         "http://my-argo.com")
                 ],
-                [],
                 [
-                    new GitCredentialSshKeyDto(RepoUrl, "git", "private-key", "public-key", "passphrase")
+                    new SshKeyGitCredentialDto(RepoUrl, "git", "private-key")
                 ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 

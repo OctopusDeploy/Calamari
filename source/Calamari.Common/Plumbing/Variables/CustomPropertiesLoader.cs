@@ -1,13 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Commands;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 
 namespace Calamari.Common.Plumbing.Variables
@@ -22,13 +17,23 @@ namespace Calamari.Common.Plumbing.Variables
         readonly ICalamariFileSystem fileSystem;
         readonly string customPropertiesFile;
         readonly string password;
+        readonly JsonSerializerSettings serializerSettings;
 
-
-        public CustomPropertiesLoader(ICalamariFileSystem fileSystem, string customPropertiesFile, string password)
+        public CustomPropertiesLoader(ICalamariFileSystem fileSystem, string customPropertiesFile, string password, params JsonConverter[] converters)
         {
             this.fileSystem = fileSystem;
             this.customPropertiesFile = customPropertiesFile;
             this.password = password;
+
+            serializerSettings = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.None,
+                DateParseHandling = DateParseHandling.None,
+            };
+            foreach (var converter in converters)
+            {
+                serializerSettings.Converters.Add(converter);
+            }
         }
 
         public T Load<T>()
@@ -37,19 +42,13 @@ namespace Calamari.Common.Plumbing.Variables
 
             try
             {
-                return JsonConvert.DeserializeObject<T>(json, SerializerSettings);
+                return JsonConvert.DeserializeObject<T>(json, serializerSettings);
             }
             catch (JsonReaderException)
             {
                 throw new CommandException("Unable to parse custom properties as valid JSON.");
             }
         }
-
-        static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.None,
-            DateParseHandling = DateParseHandling.None,
-        };
 
         static string Decrypt(byte[] encryptedJson, string encryptionPassword)
         {

@@ -40,24 +40,17 @@ namespace Calamari.ArgoCD.Git
             string? username,
             string url,
             GitReference gitReference,
-            string privateKey,
-            string publicKey,
-            string? passphrase)
+            string privateKey)
         {
             Username = username;
             Url = url;
             GitReference = gitReference;
             PrivateKey = privateKey;
-            PublicKey = publicKey;
-            Passphrase = passphrase;
         }
 
         public string? Username { get; }
-        public string? Password => null;
         public string Url { get; }
         public GitReference GitReference { get; }
         public string PrivateKey { get; }
-        public string PublicKey { get; }
-        public string? Passphrase { get; }
     }
 }
