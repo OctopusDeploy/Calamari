@@ -32,6 +32,19 @@ partial class Build
                       });
 
     [PublicAPI]
+    Target LinuxSpecificTestingWithoutOpenSsl3 =>
+        target => target
+            .Executes(async () =>
+                      {
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
+
+                          CreateTestRun("Binaries/Calamari.Tests.dll")
+                              .WithDotNetPath(dotnetPath)
+                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != RequiresOpenSsl3")
+                              .Execute();
+                      });
+
+    [PublicAPI]
     Target OncePerWindowsOrLinuxTesting =>
         target => target
             .Executes(async () =>
@@ -41,6 +54,19 @@ partial class Build
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
                               .WithFilter("(TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux")
+                              .Execute();
+                      });
+
+    [PublicAPI]
+    Target OncePerWindowsOrLinuxTestingWithoutOpenSsl3 =>
+        target => target
+            .Executes(async () =>
+                      {
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
+
+                          CreateTestRun("Binaries/Calamari.Tests.dll")
+                              .WithDotNetPath(dotnetPath)
+                              .WithFilter("((TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux) & TestCategory != RequiresOpenSsl3")
                               .Execute();
                       });
 

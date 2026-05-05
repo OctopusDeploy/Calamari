@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
@@ -58,7 +59,8 @@ namespace Calamari.Aws.Deployment.Conventions
             var deploymentStartTime = DateTime.Now;
             
             var response = await clientFactory.DescribeChangeSetAsync(stack, changeSet);
-            if (response.Changes.Count == 0)
+            var changes = response?.Changes ?? new List<Change>();
+            if (changes.Count == 0)
             {
                 await clientFactory().DeleteChangeSetAsync(new DeleteChangeSetRequest
                 {

@@ -9,6 +9,7 @@ using Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket;
 using Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub;
 using Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using LibGit2Sharp;
 using LibGit2Sharp.Handlers;
@@ -22,6 +23,7 @@ using Repository = LibGit2Sharp.Repository;
 namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
 {
     [TestFixture]
+    [Category(TestCategory.RequiresOpenSsl3)]
     public class GitHubPullRequestClientTests
     {
         [Test]
