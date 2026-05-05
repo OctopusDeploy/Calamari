@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
@@ -49,7 +48,7 @@ public class CommitToGitCommand : Command
     readonly IVariables variables;
     readonly ICommandLineRunner commandLineRunner;
     readonly IScriptEngine scriptEngine;
-    readonly DeploymentConfigFactory configFactory;
+    readonly CommitToGitConfigFactory configFactory;
 
     public CommitToGitCommand(ILog log, INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles, ISubstituteInFiles substituteInFiles, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
                               ICalamariFileSystem fileSystem,
@@ -57,7 +56,7 @@ public class CommitToGitCommand : Command
                               ICommandLineRunner commandLineRunner,
                               IScriptEngine scriptEngine,
                               IDeploymentJournalWriter deploymentJournalWriter,
-                              DeploymentConfigFactory configFactory)
+                              CommitToGitConfigFactory configFactory)
     {
         Options.Add("package=", "Path to the package to extract that contains the script.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
@@ -96,7 +95,7 @@ public class CommitToGitCommand : Command
 
         var deployment = new RunningDeployment(pathToPackage, variables);
         var baseWorkingDirectory = deployment.CurrentDirectory;
-        var repositoryConfig = configFactory.CreateCommitToGitRepositoryConfig(deployment);
+        var repositoryConfig = configFactory.CreateRepositoryConfig(deployment);
         var repositoryFactory = new RepositoryFactory(log, fileSystem, baseWorkingDirectory, gitVendorPullRequestClientResolver, clock);
         var clonedRepository = repositoryFactory.CloneRepository("git_repository", repositoryConfig.gitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);

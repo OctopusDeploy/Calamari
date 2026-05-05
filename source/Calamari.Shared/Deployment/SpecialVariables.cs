@@ -89,7 +89,6 @@ namespace Calamari.Deployment
             static string GetIndexedName(string name, string property) => $"Octopus.Action.GitResource[{name}].{property}";
         }
 
-
         public static class Packages
         {
             public static string ExtractedPath(string key)
@@ -362,8 +361,19 @@ namespace Calamari.Deployment
                 public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
                 public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
                 public const string DestinationPath = "Octopus.Action.Git.DestinationPath";
-                
+
                 public const string TemplateFileSources = "Octopus.Action.Git.TemplateFileSources";
+
+                public const string CommitMessageSummary = "Octopus.Action.Git.CommitMessageSummary";
+                public const string CommitMessageDescription = "Octopus.Action.Git.CommitMessageDescription";
+                public const string CommitMethod = "Octopus.Action.Git.CommitMethod";
+                public const string InputPath = "Octopus.Action.Git.InputPath";
+                public const string PurgeOutput = "Octopus.Action.Git.PurgeOutputFolder";
+
+                public static class PullRequest
+                {
+                    public const string Create = "Octopus.Action.Git.PullRequest.Create";
+                }
             }
         }
 

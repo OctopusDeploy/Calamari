@@ -7,7 +7,6 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -48,8 +47,8 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.Password, "", true),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.Reference, targetBranchFriendlyName, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, "arbitrarySubPath", false),
-            new CalamariExecutionVariable(SpecialVariables.Git.PullRequest.Create, "false", false),
-            new CalamariExecutionVariable(SpecialVariables.Git.CommitMessageSummary, "Git Commit Summary", false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.PullRequest.Create, "false", false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.CommitMessageSummary, "Git Commit Summary", false),
         ]);
 
         Directory.SetCurrentDirectory(executionDirectory);
