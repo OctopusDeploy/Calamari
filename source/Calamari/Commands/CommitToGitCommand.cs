@@ -251,9 +251,9 @@ public class CommitToGitCommand : Command
             clonedRepository.Dispose();
         }
 
-        var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
+        var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
         deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
-        return exitCode.Value;
+        return exitCode;
     }
     
     void WriteVariableScriptToFile(RunningDeployment deployment)

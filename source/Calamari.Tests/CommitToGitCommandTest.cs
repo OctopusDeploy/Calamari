@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -17,6 +18,7 @@ using NUnit.Framework;
 namespace Calamari.Tests;
 
 [TestFixture]
+[Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
 public class CommitToGitCommandTest
 {
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -261,8 +263,8 @@ public class CommitToGitCommandTest
 
         var templateValueSources =
             $"[" +
-            $"{{\"Type\":\"Package\",\"PackageId\":\"{package1Name}\",\"PackageName\":\"{package1Name}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"\"}}," +
-            $"{{\"Type\":\"Package\",\"PackageId\":\"{package2Name}\",\"PackageName\":\"{package2Name}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"\"}}" +
+            $"{{\"Type\":\"Package\",\"PackageId\":\"{package1Name}\",\"PackageName\":\"{package1Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}," +
+            $"{{\"Type\":\"Package\",\"PackageId\":\"{package2Name}\",\"PackageName\":\"{package2Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}" +
             $"]";
 
         variables.AddRange([
@@ -288,7 +290,7 @@ public class CommitToGitCommandTest
 
         var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
 
-        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
+        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
@@ -393,7 +395,7 @@ public class CommitToGitCommandTest
 
     void AddInputPackageVariables(string packageReferenceName, string zipPath, string destinationPath)
     {
-        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":\"configs/**/*\",\"DestinationSubFolder\":\"\"}}]";
+        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}]";
         variables.AddRange([
             // Package to copy into the repository, declared via TemplateValuesSources
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),

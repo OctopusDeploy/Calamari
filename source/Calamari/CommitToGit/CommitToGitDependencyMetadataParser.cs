@@ -131,11 +131,11 @@ namespace Calamari.CommitToGit
                 {
                     case CommitToGitDependencyType.Package:
                         var package = PackageDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
-                        dependencyNames.Add(package.GetName());
+                        dependencyNames.Add(fileSystem.RemoveInvalidFileNameChars(package.GetName()));
                         break;
                     case CommitToGitDependencyType.GitRepository:
                         var gitDependency = GitRepositoryDependency.FromJTokenWithEvaluation(jToken, deployment.Variables);
-                        dependencyNames.Add(gitDependency.GetName());
+                        dependencyNames.Add(fileSystem.RemoveInvalidFileNameChars(gitDependency.GetName()));
                         break;
                 }
             }
@@ -220,7 +220,7 @@ namespace Calamari.CommitToGit
     {
         public string PackageId { get; set; }
         public string PackageName { get; set; }
-        public string InputFilePaths { get; set; }
+        public string[] InputFilePaths { get; set; }
         public string DestinationSubFolder { get; set; }
 
         public override string GetName()
@@ -241,7 +241,7 @@ namespace Calamari.CommitToGit
             {
                 PackageId = variables.Evaluate(packageDependency.PackageId),
                 PackageName = variables.Evaluate(packageDependency.PackageName),
-                InputFilePaths =  variables.Evaluate(packageDependency.InputFilePaths),
+                InputFilePaths = packageDependency.InputFilePaths?.Select(p => variables.Evaluate(p)).ToArray(),
                 DestinationSubFolder = variables.Evaluate(packageDependency.DestinationSubFolder),
             };
         }

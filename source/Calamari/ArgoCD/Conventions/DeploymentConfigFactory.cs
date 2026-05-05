@@ -7,7 +7,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -75,9 +74,11 @@ namespace Calamari.ArgoCD.Conventions
         {
             var variables = deployment.Variables;
 
-            var uriAsString = variables.Get(Deployment.SpecialVariables.Action.Git.Url);
-            
-            var gitReferenceAsString = variables.Get(Deployment.SpecialVariables.Action.Git.Reference);
+            var uriAsString = variables.Get(Deployment.SpecialVariables.Action.Git.Url)
+                ?? throw new CommandException($"Required variable '{Deployment.SpecialVariables.Action.Git.Url}' is not set.");
+
+            var gitReferenceAsString = variables.Get(Deployment.SpecialVariables.Action.Git.Reference)
+                ?? throw new CommandException($"Required variable '{Deployment.SpecialVariables.Action.Git.Reference}' is not set.");
         
             return new CommitToGitRepositorySettings(
                                                      new GitConnection(

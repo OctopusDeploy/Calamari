@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.CommitToGit;
@@ -32,17 +31,6 @@ namespace Calamari.Tests.CommitToGit
             sut = new CommitToGitDependencyMetadataParser(fileSystem, log);
         }
 
-        [Test]
-        public void blah()
-        {
-            var value = """[{"Type":"Package","PackageId":"first-1","PackageName":"first-1","InputFilePaths":"","DestinationSubfolder":"./"}]""";
-            deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.TemplateFileSources, value);
-
-            var result = sut.ParseInputFilesFromDependencies(deployment);
-
-            result.Should().BeEmpty();
-        }
-        
         #region ParseInputFilesFromDependencies
 
         [Test]
