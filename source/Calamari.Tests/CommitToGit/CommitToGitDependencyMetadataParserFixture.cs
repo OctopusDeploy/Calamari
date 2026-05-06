@@ -3,7 +3,6 @@ using Calamari.CommitToGit;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,7 +14,6 @@ namespace Calamari.Tests.CommitToGit
     {
         RunningDeployment deployment;
         ICalamariFileSystem fileSystem;
-        InMemoryLog log;
         CommitToGitDependencyMetadataParser sut;
 
         [SetUp]
@@ -26,8 +24,7 @@ namespace Calamari.Tests.CommitToGit
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.RemoveInvalidFileNameChars(Arg.Any<string>()).Returns(ci => ci.ArgAt<string>(0));
 
-            log = new InMemoryLog();
-            sut = new CommitToGitDependencyMetadataParser(fileSystem, log);
+            sut = new CommitToGitDependencyMetadataParser(fileSystem);
         }
 
         #region ReferencedDependencyNames

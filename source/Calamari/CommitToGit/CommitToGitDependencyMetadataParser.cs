@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json.Linq;
 
@@ -12,12 +11,10 @@ namespace Calamari.CommitToGit
     public class CommitToGitDependencyMetadataParser
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly ILog log;
 
-        public CommitToGitDependencyMetadataParser(ICalamariFileSystem fileSystem, ILog log)
+        public CommitToGitDependencyMetadataParser(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.log = log;
         }
 
         public IEnumerable<string> ReferencedDependencyNames(RunningDeployment deployment)

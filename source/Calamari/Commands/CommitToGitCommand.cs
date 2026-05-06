@@ -97,9 +97,9 @@ public class CommitToGitCommand : Command
         var baseWorkingDirectory = deployment.CurrentDirectory;
         var repositoryConfig = configFactory.CreateRepositoryConfig(deployment);
         var repositoryFactory = new RepositoryFactory(log, fileSystem, baseWorkingDirectory, gitVendorPullRequestClientResolver, clock);
-        var clonedRepository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), repositoryConfig.GitConnection);
+        using var clonedRepository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), repositoryConfig.GitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
-        var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem, log);
+        var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem);
         WriteVariableScriptToFile(deployment);
         
         var extractAllPackages = new List<IConvention>
@@ -222,15 +222,8 @@ public class CommitToGitCommand : Command
         conventions.AddRange(transformRepository);
         conventions.AddRange(commitToRemote);
 
-        try
-        {
-            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
-            conventionRunner.RunConventions();
-        }
-        finally
-        {
-            clonedRepository.Dispose();
-        }
+        var conventionRunner = new ConventionProcessor(deployment, conventions, log);
+        conventionRunner.RunConventions();
 
         var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
         deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
