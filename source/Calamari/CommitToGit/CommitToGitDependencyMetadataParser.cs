@@ -23,7 +23,7 @@ namespace Calamari.CommitToGit
 
         public IEnumerable<string> ParseInputFilesFromDependencies(RunningDeployment deployment, bool logIncludedFiles = true)
         {
-            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.TemplateFileSources);
+            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.InputFileSources);
 
             if (string.IsNullOrWhiteSpace(templateValueSources))
                 return Enumerable.Empty<string>();
@@ -101,7 +101,7 @@ namespace Calamari.CommitToGit
 
         public IEnumerable<string> ReferencedDependencyNames(RunningDeployment deployment)
         {
-            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.TemplateFileSources);
+            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.InputFileSources);
 
             if (string.IsNullOrWhiteSpace(templateValueSources))
                 return Enumerable.Empty<string>();
@@ -157,7 +157,7 @@ namespace Calamari.CommitToGit
 
         IEnumerable<T> GetDependenciesOfType<T>(RunningDeployment deployment, CommitToGitDependencyType dependencyType, Func<JToken, T> factory)
         {
-            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.TemplateFileSources);
+            var templateValueSources = deployment.Variables.GetRaw(Deployment.SpecialVariables.Action.Git.InputFileSources);
             if (string.IsNullOrWhiteSpace(templateValueSources))
                 return Enumerable.Empty<T>();
 

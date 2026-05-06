@@ -161,23 +161,25 @@ public class CommitToGitCommand : Command
                                               {
                                                   var sanitizedName = fileSystem.RemoveInvalidFileNameChars(gitDep.GitDependencyName);
                                                   var gitSourceDir = Path.Combine(d.CurrentDirectory, sanitizedName);
-                                                  //no input-globs are required as only the relevant files were transmitted to Calamari
-                                                  nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, fileSystem.EnumerateFilesRecursively(gitSourceDir).ToList());
                                                   if (!fileSystem.DirectoryExists(gitSourceDir))
                                                   {
                                                       log.Verbose($"Git dependency source directory '{gitSourceDir}' not found, skipping");
                                                       continue;
                                                   }
 
+                                                  //no input-globs are required as only the relevant files were transmitted to Calamari
+                                                  var gitFiles = fileSystem.EnumerateFilesRecursively(gitSourceDir).ToList();
+                                                  nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, gitFiles);
+
                                                   var gitDepDestBase = Path.Combine(destBase, gitDep.DestinationSubFolder ?? string.Empty);
-                                                  foreach (var sourceFile in fileSystem.EnumerateFilesRecursively(gitSourceDir))
+                                                  foreach (var sourceFile in gitFiles)
                                                   {
                                                       var relativePath = Path.GetRelativePath(gitSourceDir, sourceFile);
                                                       var destFile = Path.Combine(gitDepDestBase, relativePath);
                                                       fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
                                                       fileSystem.CopyFile(sourceFile, destFile);
                                                   }
-                                                  log.Verbose($"Copied staged files to repository at {destBase}");
+                                                  log.Verbose($"Copied files for git dependency '{gitDep.GitDependencyName}' to {gitDepDestBase}");
                                               }
                                           })
         };

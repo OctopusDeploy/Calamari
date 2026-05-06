@@ -67,7 +67,7 @@ namespace Calamari.Tests.CommitToGit
         {
             serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.CommitSha).Should().Be(CommitSha);
             serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.ShortSha).Should().Be(ShortSha);
-            serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.CommitTimestamp).Should().Be(Timestamp.ToString("o"));
+            serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.CommitTimestamp).Should().Be(Timestamp.ToString("O"));
         }
 
         static void AssertNoPullRequestVariables(ServiceMessage[] serviceMessages)

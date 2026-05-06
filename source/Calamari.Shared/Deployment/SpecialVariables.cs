@@ -362,13 +362,10 @@ namespace Calamari.Deployment
                 public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
                 public const string DestinationPath = "Octopus.Action.Git.DestinationPath";
 
-                public const string TemplateFileSources = "Octopus.Action.Git.TemplateFileSources";
+                public const string InputFileSources = "Octopus.Action.Git.InputFileSources";
 
                 public const string CommitMessageSummary = "Octopus.Action.Git.CommitMessageSummary";
                 public const string CommitMessageDescription = "Octopus.Action.Git.CommitMessageDescription";
-                public const string CommitMethod = "Octopus.Action.Git.CommitMethod";
-                public const string InputPath = "Octopus.Action.Git.InputPath";
-                public const string PurgeOutput = "Octopus.Action.Git.PurgeOutputFolder";
 
                 public static class PullRequest
                 {

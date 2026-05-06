@@ -46,7 +46,7 @@ namespace Calamari.Tests.CommitToGit
         [TestCase("\t")]
         public void ParseInputFilesFromDependencies_WhenTemplateFileSourcesIsWhitespace_ReturnsEmpty(string value)
         {
-            deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.TemplateFileSources, value);
+            deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.InputFileSources, value);
 
             var result = sut.ParseInputFilesFromDependencies(deployment);
 
@@ -327,7 +327,7 @@ namespace Calamari.Tests.CommitToGit
 
         void SetTemplateFileSources(string json)
         {
-            deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.TemplateFileSources, json);
+            deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.InputFileSources, json);
         }
 
         void SetupFileSystemToReturnFiles(string subFolder, params string[] filenames)
