@@ -53,6 +53,7 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
+            // 3072 = SecurityProtocolType.Tls12 — cast used because the enum value wasn't defined in older .NET Framework targets
             ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
