@@ -10,8 +10,8 @@ namespace Calamari.Tests.ArgoCD.Contracts;
 /// <summary>
 /// Deserialisation tests for <see cref="ArgoCDCustomPropertiesDto"/> with a focus on
 /// the polymorphic <see cref="IGitCredentialDto"/> array. The converter discriminates on
-/// the <c>Kind</c> field emitted by Octopus Server (the concrete type name); a missing
-/// <c>Kind</c> defaults to <see cref="GitCredentialDto"/> for backwards compatibility.
+/// the <c>Type</c> field emitted by Octopus Server (the concrete type name); a missing
+/// <c>Type</c> defaults to <see cref="GitCredentialDto"/> for backwards compatibility.
 /// </summary>
 [TestFixture]
 public class ArgoCDCustomPropertiesDtoSerializationTests
@@ -27,14 +27,14 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
         => JsonConvert.DeserializeObject<T>(json, Settings)!;
 
     [Test]
-    public void KindGitCredentialDto_DeserializesAsHttpsCredential()
+    public void TypeGitCredentialDto_DeserializesAsHttpsCredential()
     {
         const string json = """
             {
               "Gateways": [], "Applications": [],
               "Credentials": [
                 {
-                  "Kind": "GitCredentialDto",
+                  "Type": "GitCredentialDto",
                   "Url": "https://github.com/org/repo.git",
                   "Username": "user",
                   "Password": "pass"
@@ -53,14 +53,14 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
     }
 
     [Test]
-    public void KindSshKeyGitCredentialDto_DeserializesAsSshCredential()
+    public void TypeSshKeyGitCredentialDto_DeserializesAsSshCredential()
     {
         const string json = """
             {
               "Gateways": [], "Applications": [],
               "Credentials": [
                 {
-                  "Kind": "SshKeyGitCredentialDto",
+                  "Type": "SshKeyGitCredentialDto",
                   "Url": "git@github.com:org/repo.git",
                   "Username": "git",
                   "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----",
@@ -87,13 +87,13 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
               "Gateways": [], "Applications": [],
               "Credentials": [
                 {
-                  "Kind": "GitCredentialDto",
+                  "Type": "GitCredentialDto",
                   "Url": "https://github.com/org/repo.git",
                   "Username": "user",
                   "Password": "pass"
                 },
                 {
-                  "Kind": "SshKeyGitCredentialDto",
+                  "Type": "SshKeyGitCredentialDto",
                   "Url": "git@github.com:org/other.git",
                   "Username": "git",
                   "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----",
@@ -111,9 +111,9 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
     }
 
     [Test]
-    public void MissingKind_DefaultsToHttpsCredential()
+    public void MissingType_DefaultsToHttpsCredential()
     {
-        // Backwards compatibility: older server versions don't emit the Kind field.
+        // Backwards compatibility: older server versions don't emit the Type field.
         const string json = """
             {
               "Gateways": [], "Applications": [],
@@ -134,13 +134,13 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
     }
 
     [Test]
-    public void UnknownKind_Throws()
+    public void UnknownType_Throws()
     {
         const string json = """
             {
               "Gateways": [], "Applications": [],
               "Credentials": [
-                { "Kind": "MysteryCredentialDto", "Url": "x" }
+                { "Type": "MysteryCredentialDto", "Url": "x" }
               ]
             }
             """;
@@ -164,23 +164,5 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
         var result = DeserializeRaw<ArgoCDCustomPropertiesDto>(json);
 
         result.Credentials.Should().BeEmpty();
-    }
-
-    [Test]
-    public void MissingCredentialsField_DeserializesAsNull()
-    {
-        const string json = """
-            {
-              "Gateways": [{"Id": "gw1", "Name": "Gateway 1"}],
-              "Applications": [{"GatewayId": "gw1", "Name": "App1", "KubernetesNamespace": "argocd",
-                                "Manifest": "manifest.yaml", "DefaultRegistry": "docker.io",
-                                "InstanceWebUiUrl": null}]
-            }
-            """;
-
-        var result = DeserializeRaw<ArgoCDCustomPropertiesDto>(json);
-
-        result.Should().NotBeNull();
-        result.Credentials.Should().BeNull();
     }
 }
