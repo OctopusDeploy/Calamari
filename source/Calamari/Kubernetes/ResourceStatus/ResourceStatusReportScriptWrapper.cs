@@ -5,6 +5,7 @@ using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
@@ -46,6 +47,12 @@ namespace Calamari.Kubernetes.ResourceStatus
             //helm performs its own resource status tracking, even though it uses the script engine
             //we look for the release name as it's a required helm field
             if (!string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Helm.ReleaseName)))
+            {
+                return false;
+            }
+
+            // When argo-rollouts-support toggle is on, KOS is handled by injected verify actions
+            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(variables))
             {
                 return false;
             }
