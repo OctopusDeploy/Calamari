@@ -8,13 +8,13 @@ namespace Calamari.CommitToGit
     {
         public CommitToGitRepositorySettings(GitConnection gitConnection, GitCommitParameters commitParameters, string destinationPath)
         {
-            this.gitConnection = gitConnection;
+            GitConnection = gitConnection;
             DestinationPath = destinationPath;
             CommitParameters = commitParameters;
         }
 
-        public GitConnection gitConnection { get; }
-        
+        public GitConnection GitConnection { get; }
+
         public string DestinationPath { get; }
         public GitCommitParameters CommitParameters { get; }
     }

@@ -97,7 +97,7 @@ public class CommitToGitCommand : Command
         var baseWorkingDirectory = deployment.CurrentDirectory;
         var repositoryConfig = configFactory.CreateRepositoryConfig(deployment);
         var repositoryFactory = new RepositoryFactory(log, fileSystem, baseWorkingDirectory, gitVendorPullRequestClientResolver, clock);
-        var clonedRepository = repositoryFactory.CloneRepository("git_repository", repositoryConfig.gitConnection);
+        var clonedRepository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), repositoryConfig.GitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
         var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem, log);
         WriteVariableScriptToFile(deployment);
@@ -142,12 +142,13 @@ public class CommitToGitCommand : Command
                                                       log.Verbose($"Package source directory '{packageSourceDir}' not found, skipping");
                                                       continue;
                                                   }
-                                                  
+
                                                   var filesToTarget = fileSystem.EnumerateFilesWithGlob(packageSourceDir, package.InputFilePaths).ToList();
                                                   nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, filesToTarget);
-                                                  
+
                                                   //now copy the requisite files into the repository
                                                   var packageDestBase = Path.Combine(destBase, package.DestinationSubFolder ?? string.Empty);
+                                                  EnsurePathInsideWorkingDirectory(clonedRepository.WorkingDirectory, packageDestBase, $"DestinationSubFolder for package '{package.PackageName}'");
                                                   foreach (var sourceFile in filesToTarget)
                                                   {
                                                       var relativePath = Path.GetRelativePath(packageSourceDir, sourceFile);
@@ -172,6 +173,7 @@ public class CommitToGitCommand : Command
                                                   nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, gitFiles);
 
                                                   var gitDepDestBase = Path.Combine(destBase, gitDep.DestinationSubFolder ?? string.Empty);
+                                                  EnsurePathInsideWorkingDirectory(clonedRepository.WorkingDirectory, gitDepDestBase, $"DestinationSubFolder for git dependency '{gitDep.GitDependencyName}'");
                                                   foreach (var sourceFile in gitFiles)
                                                   {
                                                       var relativePath = Path.GetRelativePath(gitSourceDir, sourceFile);
@@ -208,7 +210,7 @@ public class CommitToGitCommand : Command
                                               var updater = new RepositoryUpdater(commitParams, log, new UserDefinedCommitMessageGenerator(commitParams.Description));
 
                                               //TODO(tmm): This is a smell, shouldn't need the FileUpdateResult here :/
-                                              var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.gitConnection.GitReference, new FileUpdateResult([], [], [], []));
+                                              var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.GitConnection.GitReference, new FileUpdateResult([], [], [], []));
                                               new CommitToGitOutputVariablesWriter(log).WritePushResultOutput(pushResult);
                                           })
         };
@@ -323,4 +325,13 @@ public class CommitToGitCommand : Command
         return !string.IsNullOrEmpty(value);
     }
 
+    static void EnsurePathInsideWorkingDirectory(string workingDirectory, string candidatePath, string description)
+    {
+        var workingDirFull = Path.GetFullPath(workingDirectory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var candidateFull = Path.GetFullPath(candidatePath).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        if (!candidateFull.StartsWith(workingDirFull, StringComparison.Ordinal))
+        {
+            throw new CommandException($"{description} ('{candidatePath}') resolves outside the cloned repository.");
+        }
+    }
 }

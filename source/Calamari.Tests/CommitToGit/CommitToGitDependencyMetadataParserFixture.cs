@@ -1,4 +1,3 @@
-using System.IO;
 using System.Linq;
 using Calamari.CommitToGit;
 using Calamari.Common.Commands;
@@ -31,114 +30,6 @@ namespace Calamari.Tests.CommitToGit
             sut = new CommitToGitDependencyMetadataParser(fileSystem, log);
         }
 
-        #region ParseInputFilesFromDependencies
-
-        [Test]
-        public void ParseInputFilesFromDependencies_WhenTemplateFileSourcesIsNull_ReturnsEmpty()
-        {
-            var result = sut.ParseInputFilesFromDependencies(deployment);
-
-            result.Should().BeEmpty();
-        }
-
-        [TestCase("")]
-        [TestCase("  ")]
-        [TestCase("\t")]
-        public void ParseInputFilesFromDependencies_WhenTemplateFileSourcesIsWhitespace_ReturnsEmpty(string value)
-        {
-            deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.InputFileSources, value);
-
-            var result = sut.ParseInputFilesFromDependencies(deployment);
-
-            result.Should().BeEmpty();
-        }
-
-        [Test]
-        public void ParseInputFilesFromDependencies_WhenOnlyInlineType_ReturnsEmpty()
-        {
-            SetTemplateFileSources("[{\"Type\":\"Inline\",\"FileContent\":\"key: value\",\"DestinationFilename\":\"inline.yaml\"}]");
-
-            var result = sut.ParseInputFilesFromDependencies(deployment);
-
-            result.Should().BeEmpty();
-        }
-
-        [Test]
-        public void ParseInputFilesFromDependencies_WhenPackageTypeWithMatchingFiles_ReturnsFiles()
-        {
-            const string packageName = "MyPackage";
-            const string packageId = "pkg-id";
-            const string valuesFile = "values.yaml";
-
-            SetTemplateFileSources($"[{{\"Type\":\"Package\",\"PackageId\":\"{packageId}\",\"PackageName\":\"{packageName}\",\"InputFilePaths\":[\"**/*\"],\"DestinationSubFolder\":\"{valuesFile}\"}}]");
-            deployment.Variables.Add(PackageVariables.IndexedPackageId(packageName), packageId);
-            SetupFileSystemToReturnFiles(packageName, valuesFile);
-
-            var result = sut.ParseInputFilesFromDependencies(deployment);
-
-            result.Should().BeEquivalentTo(new[] { Path.Combine(deployment.CurrentDirectory, packageName, valuesFile) });
-        }
-
-        [Test]
-        public void ParseInputFilesFromDependencies_WhenGitRepositoryTypeWithMatchingFiles_ReturnsFiles()
-        {
-            const string gitDepName = "my-git-dep";
-            const string valuesFile = "values.yaml";
-
-            SetTemplateFileSources($"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDepName}\",\"DestinationSubFolder\":\"{valuesFile}\"}}]");
-            deployment.Variables.Add(Deployment.SpecialVariables.GitResources.CommitHash(gitDepName), "abc123");
-            SetupFileSystemToReturnFiles(gitDepName, valuesFile);
-
-            var result = sut.ParseInputFilesFromDependencies(deployment);
-
-            result.Should().BeEquivalentTo(new[] { Path.Combine(deployment.CurrentDirectory, gitDepName, valuesFile) });
-        }
-
-        [Test]
-        public void ParseInputFilesFromDependencies_WhenPackageWriterReturnsNull_ExcludesFromResult()
-        {
-            // Package with no matching variables — FindPackageValuesFiles returns null
-            const string packageName = "UnknownPackage";
-            SetTemplateFileSources($"[{{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"{packageName}\",\"InputFilePaths\":[\"**/*\"],\"DestinationSubFolder\":\"values.yaml\"}}]");
-            // Deliberately NOT adding package variables so the writer returns null
-
-            var result = sut.ParseInputFilesFromDependencies(deployment);
-
-            result.Should().BeEmpty();
-        }
-
-        [Test]
-        public void ParseInputFilesFromDependencies_WhenMultipleSources_TopSourceAppearsLastForHigherPrecedence()
-        {
-            const string packageId1 = "pkg-1";
-            const string packageName1 = "Package1";
-            const string valuesFile1 = "values1.yaml";
-
-            const string packageId2 = "pkg-2";
-            const string packageName2 = "Package2";
-            const string valuesFile2 = "values2.yaml";
-
-            // Package1 is listed first (index 0 = higher precedence in Helm --values args)
-            SetTemplateFileSources($"[" +
-                                   $"{{\"Type\":\"Package\",\"PackageId\":\"{packageId1}\",\"PackageName\":\"{packageName1}\",\"InputFilePaths\":[\"**/*\"],\"DestinationSubFolder\":\"{valuesFile1}\"}}," +
-                                   $"{{\"Type\":\"Package\",\"PackageId\":\"{packageId2}\",\"PackageName\":\"{packageName2}\",\"InputFilePaths\":[\"**/*\"],\"DestinationSubFolder\":\"{valuesFile2}\"}}" +
-                                   $"]");
-
-            deployment.Variables.Add(PackageVariables.IndexedPackageId(packageName1), packageId1);
-            deployment.Variables.Add(PackageVariables.IndexedPackageId(packageName2), packageId2);
-            SetupFileSystemToReturnFiles(packageName1, valuesFile1);
-            SetupFileSystemToReturnFiles(packageName2, valuesFile2);
-
-            var result = sut.ParseInputFilesFromDependencies(deployment).ToList();
-
-            // Package2 (index 1) appears first, Package1 (index 0) appears last — so Package1 has higher precedence
-            result.Should().HaveCount(2);
-            result[0].Should().Contain(valuesFile2);
-            result[1].Should().Contain(valuesFile1);
-        }
-
-        #endregion
-
         #region ReferencedDependencyNames
 
         [Test]
@@ -152,7 +43,7 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void ReferencedDependencyNames_WhenPackageType_ReturnsPackageName()
         {
-            SetTemplateFileSources("[{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"MyPackage\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}]");
+            SetInputFileSources("[{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"MyPackage\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}]");
 
             var result = sut.ReferencedDependencyNames(deployment);
 
@@ -162,7 +53,7 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void ReferencedDependencyNames_WhenGitRepositoryType_ReturnsGitDependencyName()
         {
-            SetTemplateFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"\"}]");
+            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"\"}]");
 
             var result = sut.ReferencedDependencyNames(deployment);
 
@@ -170,21 +61,10 @@ namespace Calamari.Tests.CommitToGit
         }
 
         [Test]
-        public void ReferencedDependencyNames_WhenInlineType_ExcludesFromResult()
+        public void ReferencedDependencyNames_WhenMixedTypes_ReturnsPackageAndGitNames()
         {
-            SetTemplateFileSources("[{\"Type\":\"Inline\",\"FileContent\":\"key: value\",\"DestinationFilename\":\"inline.yaml\"}]");
-
-            var result = sut.ReferencedDependencyNames(deployment);
-
-            result.Should().BeEmpty();
-        }
-
-        [Test]
-        public void ReferencedDependencyNames_WhenMixedTypes_ReturnsOnlyPackageAndGitNames()
-        {
-            SetTemplateFileSources("[" +
+            SetInputFileSources("[" +
                                    "{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"MyPackage\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}," +
-                                   "{\"Type\":\"Inline\",\"FileContent\":\"key: value\",\"DestinationFilename\":\"inline.yaml\"}," +
                                    "{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"\"}" +
                                    "]");
 
@@ -208,7 +88,7 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void GetPackageDependenciesForCopying_WhenPackageType_ReturnsDependencyWithCorrectFields()
         {
-            SetTemplateFileSources("[{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"MyPackage\",\"InputFilePaths\":[\"**/*\"],\"DestinationSubFolder\":\"output\"}]");
+            SetInputFileSources("[{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"MyPackage\",\"InputFilePaths\":[\"**/*\"],\"DestinationSubFolder\":\"output\"}]");
 
             var result = sut.GetPackageDependenciesForCopying(deployment).ToList();
 
@@ -220,12 +100,9 @@ namespace Calamari.Tests.CommitToGit
         }
 
         [Test]
-        public void GetPackageDependenciesForCopying_WhenGitRepositoryAndInlineTypes_ReturnsEmpty()
+        public void GetPackageDependenciesForCopying_WhenOnlyGitRepositoryType_ReturnsEmpty()
         {
-            SetTemplateFileSources("[" +
-                                   "{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"\"}," +
-                                   "{\"Type\":\"Inline\",\"FileContent\":\"key: value\",\"DestinationFilename\":\"inline.yaml\"}" +
-                                   "]");
+            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"\"}]");
 
             var result = sut.GetPackageDependenciesForCopying(deployment);
 
@@ -237,7 +114,7 @@ namespace Calamari.Tests.CommitToGit
         {
             deployment.Variables.Set("PackageIdVar", "resolved-pkg-id");
             deployment.Variables.Set("PackageNameVar", "resolved-pkg-name");
-            SetTemplateFileSources("[{\"Type\":\"Package\",\"PackageId\":\"#{PackageIdVar}\",\"PackageName\":\"#{PackageNameVar}\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}]");
+            SetInputFileSources("[{\"Type\":\"Package\",\"PackageId\":\"#{PackageIdVar}\",\"PackageName\":\"#{PackageNameVar}\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}]");
 
             var result = sut.GetPackageDependenciesForCopying(deployment).ToList();
 
@@ -249,7 +126,7 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void GetPackageDependenciesForCopying_WhenMultiplePackages_ReturnsAll()
         {
-            SetTemplateFileSources("[" +
+            SetInputFileSources("[" +
                                    "{\"Type\":\"Package\",\"PackageId\":\"pkg-1\",\"PackageName\":\"Package1\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}," +
                                    "{\"Type\":\"Package\",\"PackageId\":\"pkg-2\",\"PackageName\":\"Package2\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}" +
                                    "]");
@@ -275,7 +152,7 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void GetGitRepositoryDependenciesForCopying_WhenGitRepositoryType_ReturnsDependencyWithCorrectFields()
         {
-            SetTemplateFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"output\"}]");
+            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"output\"}]");
 
             var result = sut.GetGitRepositoryDependenciesForCopying(deployment).ToList();
 
@@ -285,12 +162,9 @@ namespace Calamari.Tests.CommitToGit
         }
 
         [Test]
-        public void GetGitRepositoryDependenciesForCopying_WhenPackageAndInlineTypes_ReturnsEmpty()
+        public void GetGitRepositoryDependenciesForCopying_WhenOnlyPackageType_ReturnsEmpty()
         {
-            SetTemplateFileSources("[" +
-                                   "{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"MyPackage\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}," +
-                                   "{\"Type\":\"Inline\",\"FileContent\":\"key: value\",\"DestinationFilename\":\"inline.yaml\"}" +
-                                   "]");
+            SetInputFileSources("[{\"Type\":\"Package\",\"PackageId\":\"pkg-id\",\"PackageName\":\"MyPackage\",\"InputFilePaths\":[],\"DestinationSubFolder\":\"\"}]");
 
             var result = sut.GetGitRepositoryDependenciesForCopying(deployment);
 
@@ -301,7 +175,7 @@ namespace Calamari.Tests.CommitToGit
         public void GetGitRepositoryDependenciesForCopying_EvaluatesVariablesInGitProperties()
         {
             deployment.Variables.Set("RepoNameVar", "resolved-repo");
-            SetTemplateFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"#{RepoNameVar}\",\"DestinationSubFolder\":\"\"}]");
+            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"#{RepoNameVar}\",\"DestinationSubFolder\":\"\"}]");
 
             var result = sut.GetGitRepositoryDependenciesForCopying(deployment).ToList();
 
@@ -312,7 +186,7 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void GetGitRepositoryDependenciesForCopying_WhenMultipleGitRepos_ReturnsAll()
         {
-            SetTemplateFileSources("[" +
+            SetInputFileSources("[" +
                                    "{\"Type\":\"GitRepository\",\"GitDependencyName\":\"repo-1\",\"DestinationSubFolder\":\"\"}," +
                                    "{\"Type\":\"GitRepository\",\"GitDependencyName\":\"repo-2\",\"DestinationSubFolder\":\"\"}" +
                                    "]");
@@ -325,15 +199,9 @@ namespace Calamari.Tests.CommitToGit
 
         #endregion
 
-        void SetTemplateFileSources(string json)
+        void SetInputFileSources(string json)
         {
             deployment.Variables.Set(Deployment.SpecialVariables.Action.Git.InputFileSources, json);
-        }
-
-        void SetupFileSystemToReturnFiles(string subFolder, params string[] filenames)
-        {
-            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), Arg.Is<string[]>(paths => paths.Any(p => p.Contains(subFolder) || filenames.Any(f => p.Contains(f)))))
-                      .Returns(ci => filenames.Select(f => Path.Combine(ci.ArgAt<string>(0), subFolder, f)).ToList());
         }
     }
 }
