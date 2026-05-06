@@ -77,7 +77,7 @@ namespace Calamari.Tests.ArgoCD
         {
             // Arrange
             const int sourceIndex = 1;
-            var pullRequestPushResult = new PullRequestPushResult(CommitSha, ShortSha, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber);
+            var pullRequestPushResult = new PullRequestPushResult(CommitSha, ShortSha, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber, "GitLab");
             var sourceUpdateResult = new SourceUpdateResult([], pullRequestPushResult, [], []);
 
             // Act
@@ -101,7 +101,7 @@ namespace Calamari.Tests.ArgoCD
             var pushResult1 = new PushResult(CommitSha, ShortSha, Timestamp);
             var sourceUpdateResult1 = new SourceUpdateResult([], pushResult1, [], []);
             
-            var pushResult2 = new PullRequestPushResult(commitSha2, shortSha2, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber);
+            var pushResult2 = new PullRequestPushResult(commitSha2, shortSha2, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber, "BitBucket");
             var sourceUpdateResult2 = new SourceUpdateResult([], pushResult2, [], []);
 
             // Act

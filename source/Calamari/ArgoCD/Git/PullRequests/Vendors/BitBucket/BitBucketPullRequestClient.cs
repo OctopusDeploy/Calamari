@@ -26,6 +26,8 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
             repositorySlug = parts[1];
         }
 
+        public string Name => "BitBucket";
+
         public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
                                                          string body,
                                                          GitBranchName sourceBranch,

@@ -7,6 +7,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
 {
     public interface IGitVendorPullRequestClient
     {
+        string Name { get; }
 
         public Task<PullRequest> CreatePullRequest(string pullRequestTitle,
                                                    string body,
