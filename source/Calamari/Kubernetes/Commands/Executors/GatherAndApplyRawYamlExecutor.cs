@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Commands.Executors
@@ -62,7 +63,24 @@ namespace Calamari.Kubernetes.Commands.Executors
                 resourcesIdentifiers.UnionWith(res);
             }
 
+            SetAppliedResourcesOutputVariable(deployment, resourcesIdentifiers);
+
             return resourcesIdentifiers;
+        }
+
+        void SetAppliedResourcesOutputVariable(RunningDeployment deployment, IEnumerable<ResourceIdentifier> resources)
+        {
+            var resourceList = resources.Select(r => new
+            {
+                Group = r.GroupVersionKind.Group,
+                Version = r.GroupVersionKind.Version,
+                Kind = r.GroupVersionKind.Kind,
+                r.Name,
+                r.Namespace
+            }).ToArray();
+
+            var json = JsonConvert.SerializeObject(resourceList);
+            log.SetOutputVariable("AppliedResources", json, deployment.Variables);
         }
 
         IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(RunningDeployment deployment, GlobDirectory globDirectory)
