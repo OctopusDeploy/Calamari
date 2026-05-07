@@ -6,7 +6,8 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
-using ResourceStatusAttributes = Calamari.Kubernetes.SpecialVariables.ServiceMessages.ResourceStatus.Attributes;
+using Octopus.Calamari.Contracts.Kubernetes;
+using ResourceStatusAttributes = Octopus.Calamari.Contracts.Kubernetes.ServiceMessages.ResourceStatus.Attributes;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -97,7 +98,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {ResourceStatusAttributes.CheckCount, checkCount.ToString()}
             };
 
-            var message = new ServiceMessage(SpecialVariables.ServiceMessages.ResourceStatus.Name, parameters);
+            var message = new ServiceMessage(ServiceMessages.ResourceStatus.Name, parameters);
             log.WriteServiceMessage(message);
         }
     }
