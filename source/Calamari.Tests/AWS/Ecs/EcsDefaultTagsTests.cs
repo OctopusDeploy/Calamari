@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Amazon.ECS.Model;
 using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
@@ -10,47 +11,18 @@ namespace Calamari.Tests.AWS.Ecs;
 public class EcsDefaultTagsTests
 {
     [Test]
-    public void EmitsDefaultTag_WhenOctopusVariableHasValue()
+    public void Sanitize_TruncatesKeyTo128AndValueTo256()
     {
-        var variables = new CalamariVariables();
-        variables.Set("Octopus.Project.Name", "MyProject");
-
-        var tags = EcsDefaultTags.Merge(variables, []);
-
-        tags.Should().ContainSingle()
-            .Which.Should().BeEquivalentTo(new KeyValuePair<string, string>("Octopus.Project.Name", "MyProject"));
-    }
-
-    [Test]
-    public void OmitsDefaultTag_WhenOctopusVariableIsUnset()
-    {
-        var tags = EcsDefaultTags.Merge(new CalamariVariables(), []);
-
-        tags.Should().BeEmpty();
-    }
-
-    [Test]
-    public void TruncatesKeyLongerThan128Chars()
-    {
-        var userTags = new[] { new KeyValuePair<string, string>(new string('k', 200), "v") };
+        var userTags = new[] { new KeyValuePair<string, string>(new string('k', 200), new string('v', 300)) };
 
         var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
 
         tags[0].Key.Length.Should().Be(128);
-    }
-
-    [Test]
-    public void TruncatesValueLongerThan256Chars()
-    {
-        var userTags = new[] { new KeyValuePair<string, string>("k", new string('v', 300)) };
-
-        var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
-
         tags[0].Value.Length.Should().Be(256);
     }
 
     [Test]
-    public void StripsInvalidCharactersFromKeyAndValue()
+    public void Sanitize_StripsInvalidCharactersFromKeyAndValue()
     {
         var userTags = new[] { new KeyValuePair<string, string>("my!@#$key", "val!ue%") };
 
@@ -61,7 +33,23 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void MergesDefaultsThenUserTags_PreservingOrder()
+    public void Sanitize_DropsTagWhenSanitizationProducesEmptyKey()
+    {
+        // All-invalid-chars key sanitises to "", which the final Where() filter drops so AWS
+        // isn't sent a tag with an empty key.
+        var userTags = new[]
+        {
+            new KeyValuePair<string, string>("!!!", "value"),
+            new KeyValuePair<string, string>("validKey", "validValue")
+        };
+
+        var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
+
+        tags.Should().ContainSingle().Which.Key.Should().Be("validKey");
+    }
+
+    [Test]
+    public void Merge_PreservesOctopusVariableNamesDeclarationOrder()
     {
         var variables = new CalamariVariables();
         // Environment.Name is declared before Project.Name in OctopusVariableNames,
@@ -69,10 +57,7 @@ public class EcsDefaultTagsTests
         variables.Set("Octopus.Environment.Name", "Production");
         variables.Set("Octopus.Project.Name", "MyProject");
 
-        var userTags = new[]
-        {
-            new KeyValuePair<string, string>("Owner", "team@example.com")
-        };
+        var userTags = new[] { new KeyValuePair<string, string>("Owner", "team@example.com") };
 
         var tags = EcsDefaultTags.Merge(variables, userTags);
 
@@ -83,18 +68,31 @@ public class EcsDefaultTagsTests
     }
 
     [Test]
-    public void DropsTag_WhenSanitizeProducesEmptyKey()
+    public void MergeTemplateTags_PriorityChain_TemplateBelowDefaultsBelowUser()
     {
-        // All-invalid-chars key sanitizes to "", which the final Where() filter drops
-        // so AWS isn't sent a tag with an empty key.
+        var v = new CalamariVariables();
+        v.Set("Octopus.Project.Name", "fromDefault");
+        v.Set("Octopus.Action.Name", "fromDefault");
+
+        var templateTags = new[]
+        {
+            new Tag { Key = "CostCenter", Value = "fromTemplate" },
+            new Tag { Key = "Octopus.Action.Name", Value = "fromTemplate" },
+            new Tag { Key = "Env", Value = "fromTemplate" },
+        };
         var userTags = new[]
         {
-            new KeyValuePair<string, string>("!!!", "value"),
-            new KeyValuePair<string, string>("validKey", "validValue")
+            new KeyValuePair<string, string>("Env", "fromUser"),
+            new KeyValuePair<string, string>("Octopus.Project.Name", "fromUser"),
         };
 
-        var tags = EcsDefaultTags.Merge(new CalamariVariables(), userTags);
+        var tags = EcsDefaultTags.MergeAndDeduplicateTags(v, userTags, templateTags);
 
-        tags.Should().ContainSingle().Which.Key.Should().Be("validKey");
+        tags.Should().BeEquivalentTo([
+            new Tag { Key = "CostCenter", Value = "fromTemplate" },          // template-only carryforward
+            new Tag { Key = "Octopus.Action.Name", Value = "fromDefault" },  // default beats template
+            new Tag { Key = "Env", Value = "fromUser" },                     // user beats template
+            new Tag { Key = "Octopus.Project.Name", Value = "fromUser" }     // user beats default
+        ]);
     }
 }
