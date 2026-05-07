@@ -33,7 +33,11 @@ public static class ServiceMessages
     public static class ManifestApplied
     {
         public const string Name = "k8s-manifest-applied";
-        public const string ManifestAttribute = "manifest";
-        public const string NamespaceAttribute = "ns";
+
+        public static class Attributes
+        {
+            public const string Manifest = "manifest";
+            public const string Namespace = "ns";
+        }
     }
 }

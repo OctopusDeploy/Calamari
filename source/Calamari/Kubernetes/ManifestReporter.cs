@@ -98,8 +98,8 @@ namespace Calamari.Kubernetes
                                                  ServiceMessages.ManifestApplied.Name,
                                                  new Dictionary<string, string>
                                                  {
-                                                     { ServiceMessages.ManifestApplied.ManifestAttribute, updatedDocument },
-                                                     { ServiceMessages.ManifestApplied.NamespaceAttribute, ns }
+                                                     { ServiceMessages.ManifestApplied.Attributes.Manifest, updatedDocument },
+                                                     { ServiceMessages.ManifestApplied.Attributes.Namespace, ns }
                                                  });
 
                 log.WriteServiceMessage(message);
