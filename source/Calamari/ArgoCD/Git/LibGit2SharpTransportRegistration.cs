@@ -31,8 +31,8 @@ static class LibGit2SharpTransportRegistration
             var message = $"""
                            Failed to load the native libgit2 library required for Git operations.
 
-                           On Linux, libgit2 requires OpenSSL 3 (libcrypto.so.3) to be installed on the worker.
-                           Please install it according to your distributions guidance or update to a supported OS.
+                           On Linux, libgit2 requires either OpenSSL 3 (libcrypto.so.3) or OpenSSL 1.1 (libcrypto.so.1.1) to be installed on the worker.
+                           Please install one of them according to your distributions guidance or update to a supported OS.
 
                            Original exception:
                            {dllEx.Message}

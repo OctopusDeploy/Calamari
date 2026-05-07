@@ -23,7 +23,6 @@ using Repository = LibGit2Sharp.Repository;
 namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
 {
     [TestFixture]
-    [Category(TestCategory.RequiresOpenSsl3)]
     public class GitHubPullRequestClientTests
     {
         [Test]

@@ -15,7 +15,6 @@ using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.Tests.ArgoCD.Git;
 
-[Category(TestCategory.RequiresOpenSsl3)]
 public abstract class AuthenticatingRepositoryFactoryTestBase
 {
     protected readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();

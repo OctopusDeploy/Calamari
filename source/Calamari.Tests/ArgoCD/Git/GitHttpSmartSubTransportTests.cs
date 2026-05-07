@@ -17,7 +17,6 @@ using WireMock.Server;
 namespace Calamari.Tests.ArgoCD.Git;
 
 [TestFixture]
-[Category(TestCategory.RequiresOpenSsl3)]
 public class GitHttpSmartSubTransportTests
 {
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
