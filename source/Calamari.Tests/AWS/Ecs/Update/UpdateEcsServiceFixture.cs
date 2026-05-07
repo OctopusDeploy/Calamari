@@ -9,6 +9,7 @@ using Amazon.Runtime;
 using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.Ecs;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Serialization;
 using Calamari.Testing;
@@ -89,6 +90,28 @@ public class UpdateEcsServiceFixture
         });
         var service = serviceResp.Services.Should().ContainSingle().Subject;
         service.TaskDefinition.Should().EndWith($"/{registeredFamily}:{registeredRevision}");
+    }
+
+    [Test]
+    public async Task FailsWhenTargetTaskDefinitionMissing()
+    {
+        // No service is created — the convention errors out at the target-family describe before
+        // any ECS state is touched. Leaving serviceName empty so TearDown skips its delete call.
+        var unique = Guid.NewGuid().ToString("N")[..8];
+        var missingTarget = $"calamari-ecs-missing-target-{unique}";
+
+        var variables = await CreateVariables(serviceName: $"unused-{unique}", newImage: "public.ecr.aws/docker/library/nginx:1.28-alpine");
+        // Default behavior collapses TemplateTaskDefinitionName to TargetTaskDefinitionName when
+        // the former is empty — so we set both explicitly: a known-good template, a known-missing target.
+        variables.Set(AwsSpecialVariables.Ecs.TemplateTaskDefinitionName, TaskDefinitionFamily);
+        variables.Set(AwsSpecialVariables.Ecs.TargetTaskDefinitionName, missingTarget);
+
+        var log = new InMemoryLog();
+        var command = new UpdateEcsServiceCommand(log, variables);
+
+        var act = () => command.Execute([]);
+        act.Should().Throw<CommandException>()
+            .WithMessage($"*Existing destination task definition '{missingTarget}' not found*");
     }
 
     static async Task<IVariables> CreateVariables(string serviceName, string newImage)

@@ -56,23 +56,33 @@ public class UpdateEcsServiceConvention : IInstallConvention
 
     public void Install(RunningDeployment deployment) => InstallAsync(deployment).GetAwaiter().GetResult();
 
-    public async Task InstallAsync(RunningDeployment deployment)
+    async Task InstallAsync(RunningDeployment deployment)
     {
         var ct = CancellationToken.None;
 
-        var templateResp = await ecs.DescribeTaskDefinitionAsync(
-            new DescribeTaskDefinitionRequest { TaskDefinition = templateTaskDefinitionName, Include = ["TAGS"] }, ct);
-        var template = templateResp.TaskDefinition
-            ?? throw new CommandException($"Template task definition '{templateTaskDefinitionName}' not found.");
+        DescribeTaskDefinitionResponse templateResp;
+        try
+        {
+            templateResp = await ecs.DescribeTaskDefinitionAsync(
+                new DescribeTaskDefinitionRequest { TaskDefinition = templateTaskDefinitionName, Include = ["TAGS"] }, ct);
+        }
+        catch (ClientException)
+        {
+            throw new CommandException($"Template task definition '{templateTaskDefinitionName}' not found.");
+        }
+        var template = templateResp.TaskDefinition;
 
         // SPF behavior to check if the target task definition family exists before applying the update
         // Only needed if the target is different from the source
         // Without this check AWS will just create any task definition family it is given
         if (targetTaskDefinitionName != templateTaskDefinitionName)
         {
-            var targetResp = await ecs.DescribeTaskDefinitionAsync(
-                new DescribeTaskDefinitionRequest { TaskDefinition = targetTaskDefinitionName }, ct);
-            if (targetResp.TaskDefinition is null)
+            try
+            {
+                await ecs.DescribeTaskDefinitionAsync(
+                    new DescribeTaskDefinitionRequest { TaskDefinition = targetTaskDefinitionName }, ct);
+            }
+            catch (ClientException)
             {
                 throw new CommandException($"Existing destination task definition '{targetTaskDefinitionName}' not found.");
             }
