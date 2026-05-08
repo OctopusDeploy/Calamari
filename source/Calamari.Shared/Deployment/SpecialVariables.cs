@@ -360,7 +360,7 @@ namespace Calamari.Deployment
                 public const string Username = "Octopus.Action.Git.TargetRepositoryUsername";
                 public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
                 public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
-                public const string DestinationPath = "Octopus.Action.Git.DestinationPath";
+                public const string DestinationPath = "Octopus.Action.Git.TargetRepositoryDestinationPath";
 
                 public const string InputFileSources = "Octopus.Action.Git.InputFileSources";
 

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
@@ -13,7 +12,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -21,7 +19,6 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
@@ -33,8 +30,6 @@ namespace Calamari.Commands;
 public class CommitToGitCommand : Command
 {
     public const string Name = "commit-to-git";
-    public const string TransformsDirectoryName = "transforms";
-    public const string InputsDirectoryName = "inputs";
     
     string scriptFileArg;
     PathToPackage pathToPackage;
@@ -77,41 +72,61 @@ public class CommitToGitCommand : Command
     public override int Execute(string[] commandLineArguments)
     {
         Options.Parse(commandLineArguments);
-
-        if (WasProvided(scriptParametersArg))
-        {
-            if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptParameters)))
-            {
-                log.Warn($"The `--scriptParameters` parameter and `{SpecialVariables.Action.Script.ScriptParameters}` variable are both set.\r\n" +
-                         $"Please provide just the `{SpecialVariables.Action.Script.ScriptParameters}` variable instead.");
-            }
-            else
-            {
-                variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
-            }
-        }
-
-        var clock = new SystemClock();
+        ApplyScriptParametersOverride();
 
         var deployment = new RunningDeployment(pathToPackage, variables);
-        var baseWorkingDirectory = deployment.CurrentDirectory;
         var repositoryConfig = configFactory.CreateRepositoryConfig(deployment);
-        var repositoryFactory = new RepositoryFactory(log, fileSystem, baseWorkingDirectory, gitVendorPullRequestClientResolver, clock);
+        var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorPullRequestClientResolver, new SystemClock());
         using var clonedRepository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), repositoryConfig.GitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
         var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem);
         WriteVariableScriptToFile(deployment);
-        
-        var extractAllPackages = new List<IConvention>
+
+        var conventions = new List<IConvention>();
+        conventions.AddRange(BuildExtractAllPackagesConventions());
+        conventions.AddRange(BuildSubstituteScriptPackagesConventions(metadataParser));
+        conventions.AddRange(BuildSubstituteAndCopyInputFilesConventions(metadataParser, repositoryConfig, clonedRepository));
+        conventions.AddRange(BuildTransformRepositoryConventions());
+        conventions.AddRange(BuildCommitToRemoteConventions(repositoryConfig, clonedRepository));
+
+        new ConventionProcessor(deployment, conventions, log).RunConventions();
+
+        var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
+        deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
+        return exitCode;
+    }
+
+    void ApplyScriptParametersOverride()
+    {
+        if (!WasProvided(scriptParametersArg))
+            return;
+
+        if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptParameters)))
         {
-            //we only want to include files which are NOT explicitly referenced as dependencies (i.e. we have files which are to be copied into the repo (referenced in variable), and some which should just be used for script dependencies. 
+            log.Warn($"The `--scriptParameters` parameter and `{SpecialVariables.Action.Script.ScriptParameters}` variable are both set.\r\n" +
+                     $"Please provide just the `{SpecialVariables.Action.Script.ScriptParameters}` variable instead.");
+        }
+        else
+        {
+            variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
+        }
+    }
+
+    IEnumerable<IConvention> BuildExtractAllPackagesConventions()
+    {
+        //we only want to include files which are NOT explicitly referenced as dependencies (i.e. we have files which are to be copied into the repo (referenced in variable), and some which should just be used for script dependencies.
+        return new IConvention[]
+        {
             new StageDependenciesConvention(pathToPackage, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory()),
             new StageDependenciesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new GitDependencyVariablesFactory()),  // don't re-extract script.
             new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
         };
+    }
 
-        var substituteScriptPackages = new List<IConvention>
-        {
+    IEnumerable<IConvention> BuildSubstituteScriptPackagesConventions(CommitToGitDependencyMetadataParser metadataParser)
+    {
+        return
+        [
             new DelegateInstallConvention(d =>
                                           {
                                               var packageVariablesFactory = new PackageVariablesFactory();
@@ -125,109 +140,104 @@ public class CommitToGitCommand : Command
                                                   substituteInFiles.Substitute(packagePath, fileSystem.EnumerateFilesRecursively(packagePath).ToList());
                                               }
                                           })
-        };
+        ];
+    }
 
-        var substituteAndCopyInputFiles = new List<IConvention>
-        {
+    IEnumerable<IConvention> BuildSubstituteAndCopyInputFilesConventions(
+        CommitToGitDependencyMetadataParser metadataParser,
+        CommitToGitRepositorySettings repositoryConfig,
+        RepositoryWrapper clonedRepository)
+    {
+        return
+        [
             new DelegateInstallConvention(d =>
                                           {
                                               var destinationPath = repositoryConfig!.DestinationPath ?? string.Empty;
                                               var destBase = Path.Combine(clonedRepository.WorkingDirectory, destinationPath);
+
                                               foreach (var package in metadataParser.GetPackageDependenciesForCopying(d))
                                               {
-                                                  var sanitizedName = fileSystem.RemoveInvalidFileNameChars(package.PackageName);
-                                                  var packageSourceDir = Path.Combine(d.CurrentDirectory, sanitizedName);
-                                                  if (!fileSystem.DirectoryExists(packageSourceDir))
-                                                  {
-                                                      log.Verbose($"Package source directory '{packageSourceDir}' not found, skipping");
-                                                      continue;
-                                                  }
-
-                                                  var filesToTarget = fileSystem.EnumerateFilesWithGlob(packageSourceDir, package.InputFilePaths).ToList();
-                                                  nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, filesToTarget);
-
-                                                  //now copy the requisite files into the repository
-                                                  var packageDestBase = Path.Combine(destBase, package.DestinationSubFolder ?? string.Empty);
-                                                  EnsurePathInsideWorkingDirectory(clonedRepository.WorkingDirectory, packageDestBase, $"DestinationSubFolder for package '{package.PackageName}'");
-                                                  foreach (var sourceFile in filesToTarget)
-                                                  {
-                                                      var relativePath = Path.GetRelativePath(packageSourceDir, sourceFile);
-                                                      var destFile = Path.Combine(packageDestBase, relativePath);
-                                                      fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
-                                                      fileSystem.CopyFile(sourceFile, destFile);
-                                                  }
+                                                  CopyDependencyToRepository(d, clonedRepository, destBase, new CopyDependencySpec(
+                                                      "Package",
+                                                      package.PackageName,
+                                                      package.DestinationSubFolder,
+                                                      dir => fileSystem.EnumerateFilesWithGlob(dir, package.InputFilePaths)));
                                               }
 
                                               foreach (var gitDep in metadataParser.GetGitRepositoryDependenciesForCopying(d))
                                               {
-                                                  var sanitizedName = fileSystem.RemoveInvalidFileNameChars(gitDep.GitDependencyName);
-                                                  var gitSourceDir = Path.Combine(d.CurrentDirectory, sanitizedName);
-                                                  if (!fileSystem.DirectoryExists(gitSourceDir))
-                                                  {
-                                                      log.Verbose($"Git dependency source directory '{gitSourceDir}' not found, skipping");
-                                                      continue;
-                                                  }
-
                                                   //no input-globs are required as only the relevant files were transmitted to Calamari
-                                                  var gitFiles = fileSystem.EnumerateFilesRecursively(gitSourceDir).ToList();
-                                                  nonSensitiveSubstituteInFiles.Substitute(d.CurrentDirectory, gitFiles);
-
-                                                  var gitDepDestBase = Path.Combine(destBase, gitDep.DestinationSubFolder ?? string.Empty);
-                                                  EnsurePathInsideWorkingDirectory(clonedRepository.WorkingDirectory, gitDepDestBase, $"DestinationSubFolder for git dependency '{gitDep.GitDependencyName}'");
-                                                  foreach (var sourceFile in gitFiles)
-                                                  {
-                                                      var relativePath = Path.GetRelativePath(gitSourceDir, sourceFile);
-                                                      var destFile = Path.Combine(gitDepDestBase, relativePath);
-                                                      fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
-                                                      fileSystem.CopyFile(sourceFile, destFile);
-                                                  }
-                                                  log.Verbose($"Copied files for git dependency '{gitDep.GitDependencyName}' to {gitDepDestBase}");
+                                                  var copiedTo = CopyDependencyToRepository(d, clonedRepository, destBase, new CopyDependencySpec(
+                                                      "Git dependency",
+                                                      gitDep.GitDependencyName,
+                                                      gitDep.DestinationSubFolder,
+                                                      dir => fileSystem.EnumerateFilesRecursively(dir)));
+                                                  if (copiedTo != null)
+                                                      log.Verbose($"Copied files for git dependency '{gitDep.GitDependencyName}' to {copiedTo}");
                                               }
                                           })
-        };
-        
-        // Execute the transform script over the repository from its 'base directory'
-        var transformRepository = new List<IConvention>
-        {
-            new DelegateInstallConvention(d =>
-            {
-                var scriptFileName = d.Variables.Get(ScriptVariables.ScriptFileName);
-                if (!WasProvided(scriptFileName))
-                {
-                    log.Verbose("No transform script configured, skipping script execution.");
-                    log.SetOutputVariable(SpecialVariables.Action.Script.ExitCode, "0", d.Variables);
-                    return;
-                }
-                new ExecuteScriptConvention(scriptEngine, commandLineRunner, log).Install(d);
-            }),
-        };
+        ];
+    }
 
-        var commitToRemote = new List<IConvention>
+    string CopyDependencyToRepository(RunningDeployment deployment, RepositoryWrapper clonedRepository, string destBase, CopyDependencySpec spec)
+    {
+        var sanitizedName = fileSystem.RemoveInvalidFileNameChars(spec.Name);
+        var sourceDir = Path.Combine(deployment.CurrentDirectory, sanitizedName);
+        if (!fileSystem.DirectoryExists(sourceDir))
+        {
+            log.Verbose($"{spec.Kind} source directory '{sourceDir}' not found, skipping");
+            return null;
+        }
+
+        var filesToTarget = spec.EnumerateFiles(sourceDir).ToList();
+        nonSensitiveSubstituteInFiles.Substitute(deployment.CurrentDirectory, filesToTarget);
+
+        var depDestBase = Path.Combine(destBase, spec.DestinationSubFolder ?? string.Empty);
+        EnsurePathInsideWorkingDirectory(clonedRepository.WorkingDirectory, depDestBase, $"DestinationSubFolder for {spec.Kind.ToLowerInvariant()} '{spec.Name}'");
+        foreach (var sourceFile in filesToTarget)
+        {
+            var relativePath = Path.GetRelativePath(sourceDir, sourceFile);
+            var destFile = Path.Combine(depDestBase, relativePath);
+            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
+            fileSystem.CopyFile(sourceFile, destFile);
+        }
+        return depDestBase;
+    }
+
+    record CopyDependencySpec(string Kind, string Name, string DestinationSubFolder, Func<string, IEnumerable<string>> EnumerateFiles);
+
+    // Execute the transform script over the repository from its 'base directory'
+    IEnumerable<IConvention> BuildTransformRepositoryConventions()
+    {
+        return
+        [
+            new DelegateInstallConvention(d =>
+                                          {
+                                              var scriptFileName = d.Variables.Get(ScriptVariables.ScriptFileName);
+                                              if (!WasProvided(scriptFileName))
+                                              {
+                                                  log.Verbose("No transform script configured, skipping script execution.");
+                                                  log.SetOutputVariable(SpecialVariables.Action.Script.ExitCode, "0", d.Variables);
+                                                  return;
+                                              }
+                                              new ExecuteScriptConvention(scriptEngine, commandLineRunner, log).Install(d);
+                                          })
+        ];
+    }
+
+    IEnumerable<IConvention> BuildCommitToRemoteConventions(CommitToGitRepositorySettings repositoryConfig, RepositoryWrapper clonedRepository)
+    {
+        return new IConvention[]
         {
             new DelegateInstallConvention(d =>
                                           {
                                               var commitParams = repositoryConfig!.CommitParameters;
                                               var updater = new RepositoryUpdater(commitParams, log, new UserDefinedCommitMessageGenerator(commitParams.Description));
-
-                                              //TODO(tmm): This is a smell, shouldn't need the FileUpdateResult here :/
-                                              var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.GitConnection.GitReference, new FileUpdateResult([], [], [], []));
+                                              
+                                              var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.GitConnection.GitReference, FileUpdateResult.EmptyFileUpdateResult);
                                               new CommitToGitOutputVariablesWriter(log).WritePushResultOutput(pushResult);
                                           })
         };
-        
-        var conventions = new List<IConvention>();
-        conventions.AddRange(extractAllPackages);
-        conventions.AddRange(substituteScriptPackages);
-        conventions.AddRange(substituteAndCopyInputFiles);
-        conventions.AddRange(transformRepository);
-        conventions.AddRange(commitToRemote);
-
-        var conventionRunner = new ConventionProcessor(deployment, conventions, log);
-        conventionRunner.RunConventions();
-
-        var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
-        deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
-        return exitCode;
     }
     
     void WriteVariableScriptToFile(RunningDeployment deployment)
