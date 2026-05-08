@@ -34,6 +34,7 @@ namespace Calamari.Tests.CommitToGit
         {
             var result = sut.ReferencedDependencyNames(deployment);
 
+
             result.Should().BeEmpty();
         }
 

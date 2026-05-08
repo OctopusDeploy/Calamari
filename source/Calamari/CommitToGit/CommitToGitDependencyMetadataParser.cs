@@ -25,8 +25,7 @@ namespace Calamari.CommitToGit
                 return Enumerable.Empty<string>();
 
             var parsedJsonArray = JArray.Parse(templateValueSources);
-
-            //we are only interested in the values files in external dependencies (chart/package/git repo), so filter this array
+            
             var relevantTypes = parsedJsonArray.Where(t =>
                                                       {
                                                           var type = (CommitToGitDependencyType)Enum.Parse(typeof(CommitToGitDependencyType), t.Value<string>(nameof(CommitToGitDependency.Type)));
@@ -40,8 +39,7 @@ namespace Calamari.CommitToGit
         IEnumerable<string> ParseReferenceNames(RunningDeployment deployment, IEnumerable<JToken> parsedJsonArray)
         {
             var dependencyNames = new List<string>();
-            // we reverse the order of the array so that we maintain the order that sources at the top take higher precendences (i.e. are adding to the --values list later),
-            // however, within a source, the file path order must be maintained (for consistency) so that later file paths take higher precendence 
+
             foreach (var jToken in parsedJsonArray.Select((json, index) => json))
             {
                 var dependencies = jToken.ToObject<CommitToGitDependency>();
