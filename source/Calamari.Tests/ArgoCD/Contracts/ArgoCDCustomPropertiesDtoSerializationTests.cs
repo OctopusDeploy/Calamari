@@ -34,7 +34,7 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
               "Gateways": [], "Applications": [],
               "Credentials": [
                 {
-                  "Type": "GitCredentialDto",
+                  "Type": "UsernamePassword",
                   "Url": "https://github.com/org/repo.git",
                   "Username": "user",
                   "Password": "pass"
