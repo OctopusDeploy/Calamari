@@ -34,7 +34,7 @@ namespace Calamari.Tests.ArgoCD
             log = new InMemoryLog();
             writer = new ArgoCDOutputVariablesWriter(log);
         }
-        
+
         [Test]
         public void WriteSourceUpdateResultOutputWhenPushResultExists_NoPushResult_NoOutputVariablesAreWritten()
         {
@@ -51,6 +51,9 @@ namespace Calamari.Tests.ArgoCD
 
             AssertZeroCommitVariables(serviceMessages, sourceIndex);
             AssertNoPullRequestVariables(serviceMessages, sourceIndex);
+           
+            var pullRequestCreatedServiceMessages = log.Messages.GetServiceMessagesOfType("pull-request-created");
+            pullRequestCreatedServiceMessages.Should().BeEmpty();
         }
 
         [Test]
@@ -70,6 +73,9 @@ namespace Calamari.Tests.ArgoCD
 
             AssertCommitVariables(serviceMessages, sourceIndex);
             AssertNoPullRequestVariables(serviceMessages, sourceIndex);
+
+            var pullRequestCreatedServiceMessages = log.Messages.GetServiceMessagesOfType("pull-request-created");
+            pullRequestCreatedServiceMessages.Should().BeEmpty();
         }
 
         [Test]
@@ -77,7 +83,14 @@ namespace Calamari.Tests.ArgoCD
         {
             // Arrange
             const int sourceIndex = 1;
-            var pullRequestPushResult = new PullRequestPushResult(CommitSha, ShortSha, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber, "GitLab");
+            var pullRequestPushResult = new PullRequestPushResult(CommitSha,
+                                                                  ShortSha,
+                                                                  Timestamp,
+                                                                  RepositoryUrl,
+                                                                  PrTitle,
+                                                                  PrUrl,
+                                                                  PrNumber,
+                                                                  "GitLab");
             var sourceUpdateResult = new SourceUpdateResult([], pullRequestPushResult, [], []);
 
             // Act
@@ -89,6 +102,9 @@ namespace Calamari.Tests.ArgoCD
 
             AssertCommitVariables(serviceMessages, sourceIndex);
             AssertPullRequestVariables(serviceMessages, sourceIndex);
+            
+            var pullRequestCreatedServiceMessages = log.Messages.GetServiceMessagesOfType("pull-request-created");
+            AssertPullRequestCreatedServiceMessage(pullRequestCreatedServiceMessages, pullRequestPushResult);
         }
 
         [Test]
@@ -100,8 +116,15 @@ namespace Calamari.Tests.ArgoCD
 
             var pushResult1 = new PushResult(CommitSha, ShortSha, Timestamp);
             var sourceUpdateResult1 = new SourceUpdateResult([], pushResult1, [], []);
-            
-            var pushResult2 = new PullRequestPushResult(commitSha2, shortSha2, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber, "BitBucket");
+
+            var pushResult2 = new PullRequestPushResult(commitSha2,
+                                                        shortSha2,
+                                                        Timestamp,
+                                                        RepositoryUrl,
+                                                        PrTitle,
+                                                        PrUrl,
+                                                        PrNumber,
+                                                        "BitBucket");
             var sourceUpdateResult2 = new SourceUpdateResult([], pushResult2, [], []);
 
             // Act
@@ -111,7 +134,7 @@ namespace Calamari.Tests.ArgoCD
             // Assert
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
-
+            
             // Source 0
             AssertCommitVariables(serviceMessages, 0);
             AssertNoPullRequestVariables(serviceMessages, 0);
@@ -119,8 +142,11 @@ namespace Calamari.Tests.ArgoCD
             // Source 1
             AssertCommitVariables(serviceMessages, 1, commitSha2, shortSha2);
             AssertPullRequestVariables(serviceMessages, 1);
+            
+            var pullRequestCreatedServiceMessages = log.Messages.GetServiceMessagesOfType("pull-request-created");
+            AssertPullRequestCreatedServiceMessage(pullRequestCreatedServiceMessages, pushResult2);
         }
-        
+
         //Zero = No (but NO COMMIT is part of the forbidden words list)
         static void AssertZeroCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
@@ -148,6 +174,16 @@ namespace Calamari.Tests.ArgoCD
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].PullRequest.Title").Should().Be(PrTitle);
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].PullRequest.Number").Should().Be(PrNumber.ToString());
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].PullRequest.Url").Should().Be(PrUrl);
+        }
+
+        static void AssertPullRequestCreatedServiceMessage(ServiceMessage[] serviceMessages, PullRequestPushResult pushResult)
+        {
+            var serviceMessage = serviceMessages.Should().ContainSingle().Subject;
+            serviceMessage.Name.Should().Be("pull-request-created");
+
+            serviceMessage.GetValue("pullRequestUri").Should().Be(pushResult.PullRequestUri);
+            serviceMessage.GetValue("repositoryUri").Should().Be(pushResult.RepositoryUri);
+            serviceMessage.GetValue("vendorName").Should().Be(pushResult.VendorName);
         }
     }
 }
