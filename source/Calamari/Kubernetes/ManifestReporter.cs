@@ -6,7 +6,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.Calamari.Contracts.Kubernetes;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
@@ -95,11 +94,11 @@ namespace Calamari.Kubernetes
                 var ns = namespaceResolver.ResolveNamespace(rootNode, variables);
 
                 var message = new ServiceMessage(
-                                                 ServiceMessages.ManifestApplied.Name,
+                                                 SpecialVariables.ServiceMessages.ManifestApplied.Name,
                                                  new Dictionary<string, string>
                                                  {
-                                                     { ServiceMessages.ManifestApplied.Attributes.Manifest, updatedDocument },
-                                                     { ServiceMessages.ManifestApplied.Attributes.Namespace, ns }
+                                                     { SpecialVariables.ServiceMessages.ManifestApplied.ManifestAttribute, updatedDocument },
+                                                     { SpecialVariables.ServiceMessages.ManifestApplied.NamespaceAttribute, ns }
                                                  });
 
                 log.WriteServiceMessage(message);

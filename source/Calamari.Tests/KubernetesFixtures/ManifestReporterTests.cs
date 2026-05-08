@@ -12,7 +12,6 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Octopus.Calamari.Contracts.Kubernetes;
 using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -45,7 +44,7 @@ quoted_float: ""5.75""
 
                 mr.ReportManifestFileApplied(filePath);
 
-                var expected = ServiceMessage.Create(ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
+                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
                 memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
             }
         }
@@ -110,7 +109,7 @@ quoted_float: ""5.75""
 
             mr.ReportManifestApplied(yaml);
 
-            var expected = ServiceMessage.Create(ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
+            var expected = ServiceMessage.Create(SpecialVariables.ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
             memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
         }
 

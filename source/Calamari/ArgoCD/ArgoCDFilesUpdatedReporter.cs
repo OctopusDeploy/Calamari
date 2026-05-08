@@ -7,8 +7,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes;
-using Octopus.Calamari.Contracts.ArgoCD;
-using ArgoCDFilesUpdatedAttributes = Octopus.Calamari.Contracts.ArgoCD.ServiceMessages.ArgoCDFilesUpdated.Attributes;
+using ArgoCDFilesUpdatedAttributes = Calamari.Kubernetes.SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.Attributes;
 
 namespace Calamari.ArgoCD
 {
@@ -39,7 +38,7 @@ namespace Calamari.ArgoCD
                 };
 
                 var message = new ServiceMessage(
-                                                 ServiceMessages.ArgoCDFilesUpdated.Name,
+                                                 SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.Name,
                                                  parameters);
 
                 log.WriteServiceMessage(message);

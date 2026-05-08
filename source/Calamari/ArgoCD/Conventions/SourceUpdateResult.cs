@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD.Git;
-using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions;
     

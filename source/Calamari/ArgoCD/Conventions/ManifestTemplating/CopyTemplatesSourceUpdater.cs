@@ -6,7 +6,6 @@ using Calamari.ArgoCD.Domain;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Octopus.Calamari.Contracts.ArgoCD;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions.ManifestTemplating;
