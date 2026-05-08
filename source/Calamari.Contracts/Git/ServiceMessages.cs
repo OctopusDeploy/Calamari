@@ -1,4 +1,4 @@
-namespace Octopus.Calamari.Contracts.GitOps;
+namespace Octopus.Calamari.Contracts.Git;
 
 public static class ServiceMessages
 {

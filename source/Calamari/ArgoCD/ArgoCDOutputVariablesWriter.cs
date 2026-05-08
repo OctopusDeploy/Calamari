@@ -75,13 +75,13 @@ namespace Calamari.ArgoCD
         {
             var parameters = new Dictionary<string, string>
             {
-                { Octopus.Calamari.Contracts.GitOps.ServiceMessages.PullRequestCreated.Attributes.PullRequestUri, prResult.PullRequestUri },
-                { Octopus.Calamari.Contracts.GitOps.ServiceMessages.PullRequestCreated.Attributes.RepositoryUri, prResult.RepositoryUri },
-                { Octopus.Calamari.Contracts.GitOps.ServiceMessages.PullRequestCreated.Attributes.VendorName, prResult.VendorName },
+                { Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Attributes.PullRequestUri, prResult.PullRequestUri },
+                { Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Attributes.RepositoryUri, prResult.RepositoryUri },
+                { Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Attributes.VendorName, prResult.VendorName },
             };
 
             var message = new ServiceMessage(
-                                             Octopus.Calamari.Contracts.GitOps.ServiceMessages.PullRequestCreated.Name,
+                                             Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Name,
                                              parameters);
             return message;
         }
