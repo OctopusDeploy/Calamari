@@ -99,11 +99,10 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   });
         }
 
-        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<IRepositoryConnection, IGitVendorPullRequestClient> createVendorApiAdapter)
+        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<HttpsGitConnection, IGitVendorPullRequestClient> createVendorApiAdapter)
         {
-            
             using var temporaryFolder = TemporaryDirectory.Create();
-            
+
             CredentialsHandler credentialsHandler = (url, usernameFromUrl, types) => new UsernamePasswordCredentials { Username = cloneUsername, Password = clonePassword};
             var repositoryPath =  Repository.Clone(repositoryUrl, temporaryFolder.DirectoryPath, new CloneOptions()
             {
@@ -120,8 +119,8 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
             repository.Branches.Update(newBranch, branch => branch.Remote = remote.Name, branch => branch.UpstreamBranch = newBranch.CanonicalName);
             repository.Network.Push(newBranch, new PushOptions() { CredentialsProvider = credentialsHandler });
 
-            var conn = Substitute.For<IRepositoryConnection>();
-            conn.Url.Returns(new Uri(repositoryUrl));
+            var conn = Substitute.For<HttpsGitConnection>();
+            conn.Url.Returns(repositoryUrl);
             conn.Username.Returns(cloneUsername);
             conn.Password.Returns(clonePassword);
             try

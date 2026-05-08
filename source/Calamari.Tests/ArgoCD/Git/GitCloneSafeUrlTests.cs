@@ -13,7 +13,7 @@ public class GitCloneSafeUrlTests
     public void FromString_ShouldConvertGitScpAddressToUri(string scpAddress, string expectedUrl)
     {
         var result = GitCloneSafeUrl.FromString(scpAddress);
-        result.AbsoluteUri.Should().Be(expectedUrl);
+        result.Should().Be(expectedUrl);
     } 
 
     [Test]
@@ -21,7 +21,7 @@ public class GitCloneSafeUrlTests
     {
         var uri = "https://github.com/Foo/Bar.git";
         var result = GitCloneSafeUrl.FromString(uri);
-        result.AbsoluteUri.Should().Be(uri);
+        result.Should().Be(uri);
     } 
     
     [Test]
@@ -37,6 +37,6 @@ public class GitCloneSafeUrlTests
     {
         var uri = "registry-1.docker.io/bitnamicharts";
         var result = GitCloneSafeUrl.FromString(uri);
-        result.AbsoluteUri.Should().Be($"oci://{uri}");
+        result.Should().Be($"oci://{uri}");
     }
 }

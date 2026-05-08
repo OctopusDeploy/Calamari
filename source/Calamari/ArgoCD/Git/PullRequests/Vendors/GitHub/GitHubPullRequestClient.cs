@@ -3,7 +3,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Octokit;
-using PullRequest = Calamari.ArgoCD.Git.PullRequests.PullRequest;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
@@ -14,12 +13,12 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
         readonly string repoOwner;
         readonly string repoName;
 
-        public GitHubPullRequestClient(IGitHubClient client, IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public GitHubPullRequestClient(IGitHubClient client, IHttpsGitConnection repositoryConnection, Uri baseUrl)
         {
             this.client = client;
             this.baseUrl = baseUrl;
 
-            var parts = repositoryConnection.Url.ExtractPropertiesFromUrlPath();
+            var parts = repositoryConnection.Url.ParseAsHttpsUri().ExtractPropertiesFromUrlPath();
             repoOwner = parts[0];
             repoName = parts[1];
         }

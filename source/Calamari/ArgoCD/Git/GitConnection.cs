@@ -1,23 +1,26 @@
 #nullable enable
-using System;
 
 namespace Calamari.ArgoCD.Git
 {
     public interface IRepositoryConnection
     {
-        public string? Username { get;  }
-        public string? Password { get;  }
-        public Uri Url { get;  }
-    }
-    
-    public interface IGitConnection : IRepositoryConnection
-    {
-        public GitReference GitReference { get;  }
+        public string Url { get; }
     }
 
-    public class GitConnection : IGitConnection
+    public interface IGitConnection : IRepositoryConnection
     {
-        public GitConnection(string? username, string? password, Uri url, GitReference gitReference)
+        public GitReference GitReference { get; }
+    }
+
+    public interface IHttpsGitConnection : IGitConnection
+    {
+        string? Username { get; }
+        string? Password { get; }
+    }
+
+    public class HttpsGitConnection : IHttpsGitConnection
+    {
+        public HttpsGitConnection(string? username, string? password, string url, GitReference gitReference)
         {
             Username = username;
             Password = password;
@@ -27,7 +30,7 @@ namespace Calamari.ArgoCD.Git
 
         public string? Username { get; }
         public string? Password { get; }
-        public Uri Url { get; }
+        public string Url { get; }
         public GitReference GitReference { get; }
     }
 }

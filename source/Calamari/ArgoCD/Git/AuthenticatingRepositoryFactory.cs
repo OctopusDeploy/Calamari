@@ -6,27 +6,31 @@ namespace Calamari.ArgoCD.Git;
 
 public class AuthenticatingRepositoryFactory
 {
-    readonly Dictionary<string, GitCredentialDto> gitCredentials;
-    readonly RepositoryFactory repositoryFactory;
+    readonly Dictionary<string, IGitCredentialDto> gitCredentials;
+    readonly IRepositoryFactory repositoryFactory;
     readonly ILog log;
-    
 
-    public AuthenticatingRepositoryFactory(Dictionary<string, GitCredentialDto> gitCredentials, RepositoryFactory repositoryFactory, ILog log)
+    public AuthenticatingRepositoryFactory(
+        Dictionary<string, IGitCredentialDto> gitCredentials,
+        IRepositoryFactory repositoryFactory,
+        ILog log)
     {
         this.gitCredentials = gitCredentials;
         this.repositoryFactory = repositoryFactory;
         this.log = log;
     }
-    
+
     public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
-        if (gitCredential == null)
+        if (gitCredential is GitCredentialDto passwordCredential)
         {
-            log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
+            var gitConnection = new HttpsGitConnection(passwordCredential.Username, passwordCredential.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
+            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
-        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
-        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
+        log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
+        var anonGitConnection = new HttpsGitConnection(null, null, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
+        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), anonGitConnection);
     }
 }

@@ -32,10 +32,10 @@ namespace Calamari.CommitToGit
             var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest);
 
             return new CommitToGitRepositorySettings(
-                                                     new GitConnection(
+                                                     new HttpsGitConnection(
                                                                        variables.Get(SpecialVariables.Action.Git.Username),
                                                                        variables.Get(SpecialVariables.Action.Git.Password),
-                                                                       new Uri(uriAsString),
+                                                                       uriAsString,
                                                                        GitReference.CreateFromString(gitReferenceAsString)),
             commitParameters,
             variables.Get(SpecialVariables.Action.Git.DestinationPath));

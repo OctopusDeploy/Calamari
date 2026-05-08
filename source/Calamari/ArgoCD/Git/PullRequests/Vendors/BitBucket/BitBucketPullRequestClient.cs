@@ -11,17 +11,17 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 {
     public class BitBucketPullRequestClient : IGitVendorPullRequestClient
     {
-        readonly IRepositoryConnection repositoryConnection;
+        readonly IHttpsGitConnection repositoryConnection;
         readonly Uri baseUrl;
 
         readonly string workspace;
         readonly string repositorySlug;
-        public BitBucketPullRequestClient(IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public BitBucketPullRequestClient(IHttpsGitConnection repositoryConnection, Uri baseUrl)
         {
             this.repositoryConnection = repositoryConnection;
             this.baseUrl = baseUrl;
 
-            var parts = repositoryConnection.Url.ExtractPropertiesFromUrlPath();
+            var parts = repositoryConnection.Url.ParseAsHttpsUri().ExtractPropertiesFromUrlPath();
             workspace = parts[0];
             repositorySlug = parts[1];
         }
