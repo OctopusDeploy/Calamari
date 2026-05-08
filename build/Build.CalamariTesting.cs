@@ -34,7 +34,7 @@ partial class Build
     // Temporary so I can merge this PR without breaking Teamcity builds
     [PublicAPI]
     Target LinuxSpecificTestingWithoutOpenSsl3 =>
-        target => target.DependsOn(LinuxSpecificTestingWithoutOpenSsl3);
+        target => target.DependsOn(LinuxSpecificTestingWithoutWithoutOpenSsl11OrOpenSsl3);
 
     [PublicAPI]
     Target LinuxSpecificTestingWithoutWithoutOpenSsl11OrOpenSsl3 =>
