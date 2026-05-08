@@ -18,5 +18,6 @@ namespace Calamari.Common.Features.Packages
         ArtifactoryGeneric,
         Npm,
         GcsStorage,
+        PyPi,
     }
 }
