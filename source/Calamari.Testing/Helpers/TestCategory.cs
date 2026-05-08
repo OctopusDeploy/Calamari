@@ -23,5 +23,7 @@ namespace Calamari.Testing.Helpers
         public const string PlatformAgnostic = "PlatformAgnostic";
 
         public const string RunOnceOnWindowsAndLinux = "RunOnceOnWindowsAndLinux";
+
+        public const string RequiresOpenSsl1_1OrOpenSsl3 = "RequiresOpenSsl1_1OrOpenSsl3";
     }
 }

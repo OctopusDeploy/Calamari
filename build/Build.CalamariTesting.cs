@@ -31,8 +31,13 @@ partial class Build
                               .Execute();
                       });
 
+    // Temporary so I can merge this PR without breaking Teamcity builds
     [PublicAPI]
     Target LinuxSpecificTestingWithoutOpenSsl3 =>
+        target => target.DependsOn(LinuxSpecificTestingWithoutOpenSsl3);
+
+    [PublicAPI]
+    Target LinuxSpecificTestingWithoutWithoutOpenSsl11OrOpenSsl3 =>
         target => target
             .Executes(async () =>
                       {
@@ -40,7 +45,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != RequiresOpenSsl3")
+                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != RequiresOpenSsl1_1OrOpenSsl3")
                               .Execute();
                       });
 
@@ -54,19 +59,6 @@ partial class Build
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
                               .WithFilter("(TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux")
-                              .Execute();
-                      });
-
-    [PublicAPI]
-    Target OncePerWindowsOrLinuxTestingWithoutOpenSsl3 =>
-        target => target
-            .Executes(async () =>
-                      {
-                          var dotnetPath = await LocateOrInstallDotNetSdk();
-
-                          CreateTestRun("Binaries/Calamari.Tests.dll")
-                              .WithDotNetPath(dotnetPath)
-                              .WithFilter("((TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux) & TestCategory != RequiresOpenSsl3")
                               .Execute();
                       });
 

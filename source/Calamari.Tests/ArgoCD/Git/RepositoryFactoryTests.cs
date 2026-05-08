@@ -17,6 +17,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD.Git
 {
     [TestFixture]
+    [Category(TestCategory.RequiresOpenSsl1_1OrOpenSsl3)]
     public class RepositoryFactoryTests
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
