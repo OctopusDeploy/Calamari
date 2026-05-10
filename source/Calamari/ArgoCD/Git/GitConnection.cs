@@ -30,6 +30,7 @@ namespace Calamari.ArgoCD.Git
             Password = password;
             Url = url;
             GitReference = gitReference;
+            Uri = new Lazy<Uri>(() => ParseAsHttpsUri(Url));
         }
 
         public string? Username { get; }
@@ -37,7 +38,7 @@ namespace Calamari.ArgoCD.Git
         public string Url { get; }
         public GitReference GitReference { get; }
 
-        public Lazy<Uri> Uri => new(() => ParseAsHttpsUri(Url));
+        public Lazy<Uri> Uri { get; }
 
         static Uri ParseAsHttpsUri(string repositoryUrl)
         {
