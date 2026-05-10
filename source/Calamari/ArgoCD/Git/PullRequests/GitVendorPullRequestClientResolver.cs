@@ -27,7 +27,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
         {
             if (!Uri.TryCreate(repositoryConnection.Url, UriKind.Absolute, out var repositoryUri))
             {
-                log.Verbose($"Could not load a Git vendor: URL is not a valid URI: '{repositoryConnection.Url}'");
+                log.Verbose($"Could not load a Git vendor: URL is not a valid URI '{repositoryConnection.Url}'");
                 return null;
             }
 

@@ -18,7 +18,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
             this.client = client;
             this.baseUrl = baseUrl;
 
-            var parts = repositoryConnection.Url.ParseAsHttpsUri().ExtractPropertiesFromUrlPath();
+            var parts = repositoryConnection.Uri.Value.ExtractPropertiesFromUrlPath();
             repoOwner = parts[0];
             repoName = parts[1];
         }

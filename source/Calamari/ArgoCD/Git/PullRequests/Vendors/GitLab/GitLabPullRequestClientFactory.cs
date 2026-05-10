@@ -26,10 +26,9 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
         {
             await Task.CompletedTask;
             //if we aren't cloud hosted, we must be self-hosted 
-            var repositoryUri = repositoryConnection.Url.ParseAsHttpsUri();
-            var host = CanHandleAsCloudHosted(repositoryUri)
+            var host = CanHandleAsCloudHosted(repositoryConnection.Uri.Value)
                 ? CloudHost
-                : SelfHostedGitLabInspector.GetSelfHostedBaseRepositoryUrl(repositoryUri);
+                : SelfHostedGitLabInspector.GetSelfHostedBaseRepositoryUrl(repositoryConnection.Uri.Value);
 
             var client = new GitLabClient(host, repositoryConnection.Password);
             return new GitLabPullRequestClient(client, repositoryConnection, new Uri(host));

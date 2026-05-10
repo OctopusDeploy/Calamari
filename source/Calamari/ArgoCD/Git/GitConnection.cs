@@ -1,5 +1,7 @@
 #nullable enable
 
+using System;
+
 namespace Calamari.ArgoCD.Git
 {
     public interface IRepositoryConnection
@@ -16,6 +18,8 @@ namespace Calamari.ArgoCD.Git
     {
         string? Username { get; }
         string? Password { get; }
+
+        public Lazy<Uri> Uri { get; }
     }
 
     public class HttpsGitConnection : IHttpsGitConnection
@@ -32,5 +36,19 @@ namespace Calamari.ArgoCD.Git
         public string? Password { get; }
         public string Url { get; }
         public GitReference GitReference { get; }
+
+        public Lazy<Uri> Uri => new(() => ParseAsHttpsUri(Url));
+
+        static Uri ParseAsHttpsUri(string repositoryUrl)
+        {
+            if (!System.Uri.TryCreate(repositoryUrl, UriKind.Absolute, out var uri))
+            {
+                throw new InvalidOperationException(
+                    $"Pull request operations require an HTTPS repository URL, but got: '{repositoryUrl}'. "
+                    + "SCP-style SSH URLs (e.g. git@github.com:org/repo.git) are not supported for pull request creation.");
+            }
+
+            return uri;
+        }
     }
 }
