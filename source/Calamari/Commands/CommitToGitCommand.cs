@@ -75,7 +75,7 @@ public class CommitToGitCommand : Command
         ApplyScriptParametersOverride();
 
         var deployment = new RunningDeployment(pathToPackage, variables);
-        var repositoryConfig = configFactory.CreateRepositoryConfig(deployment);
+        var repositoryConfig = configFactory.CreateRepositoryConfig(deployment, null!);
         var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorPullRequestClientResolver, new SystemClock());
         using var clonedRepository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), repositoryConfig.GitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
