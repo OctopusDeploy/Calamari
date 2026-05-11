@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using Octopus.Calamari.ConsolidatedPackage.Api;
+using SharpCompress.Archives.Zip;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {
@@ -28,16 +28,21 @@ namespace Octopus.Calamari.ConsolidatedPackage
                 throw new Exception($"Could not find platform {platform} for {calamariFlavour}");
             }
 
-            var platformFilesLookup = platformFiles.ToDictionary(f => f.Source);
-
-            using var sourceStream = packageStreamProvider.OpenStream();
-            using var source = new ZipArchive(sourceStream, ZipArchiveMode.Read);
-            foreach (var sourceEntry in source.Entries)
+            using (var sourceStream = packageStreamProvider.OpenStream())
             {
-                if (!platformFilesLookup.TryGetValue(sourceEntry.FullName, out var fileTransfer)) continue;
-
-                using var sourceEntryStream = sourceEntry.Open();
-                yield return (fileTransfer.Destination, sourceEntry.Length, sourceEntryStream);
+                using (var source = ZipArchive.Open(sourceStream))
+                {
+                    foreach (var fileTransfer in platformFiles)
+                    {
+                        var sourceEntry = source.Entries.FirstOrDefault(e => e.Key is not null && e.Key.Equals(fileTransfer.Source));
+                        if(sourceEntry is null) continue;
+                    
+                        using (var sourceEntryStream = sourceEntry.OpenEntryStream())
+                        {
+                            yield return (fileTransfer.Destination, sourceEntry.Size, sourceEntryStream);
+                        }
+                    }
+                }
             }
         }
     }
