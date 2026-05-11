@@ -22,7 +22,6 @@
     <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
     <NoWarn>CS8632</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>NU1901,NU1902,NU1903</WarningsNotAsErrors> <!-- Added for SharpCompress CVE -->
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
@@ -43,7 +42,9 @@
     <PackageReference Include="Octopus.Versioning" Version="5.1.883" />
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="SharpCompress" Version="0.37.2" />
+    <PackageReference Include="SharpCompress" Version="0.37.2">
+      <NoWarn>NU1902</NoWarn>
+    </PackageReference>
     <PackageReference Include="System.Text.Json" Version="8.0.6" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />

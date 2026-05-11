@@ -11,7 +11,6 @@
         <Title>Calamari.Common</Title>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
-        <WarningsNotAsErrors>NU1901,NU1902,NU1903</WarningsNotAsErrors> <!-- Added for SharpCompress CVE -->
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,7 +28,9 @@
         <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
         <PackageReference Include="Octostache" Version="3.9.2" />
         <PackageReference Include="Polly" Version="8.3.1" />
-        <PackageReference Include="SharpCompress" Version="0.37.2" />
+        <PackageReference Include="SharpCompress" Version="0.37.2">
+            <NoWarn>NU1902</NoWarn>
+        </PackageReference>
         <PackageReference Include="XPath2" Version="1.1.5" />
         <PackageReference Include="YamlDotNet" Version="16.3.0" />
         <PackageReference Include="System.ValueTuple" Version="4.5.0" />

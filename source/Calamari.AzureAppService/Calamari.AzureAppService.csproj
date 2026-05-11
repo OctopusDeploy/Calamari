@@ -10,7 +10,6 @@
     <NoWarn>NU5104</NoWarn>
     <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>NU1901,NU1902,NU1903</WarningsNotAsErrors> <!-- Added for SharpCompress CVE -->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.2" />
@@ -18,7 +17,9 @@
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Polly" Version="8.3.1" />
-    <PackageReference Include="SharpCompress" Version="0.37.2" />
+    <PackageReference Include="SharpCompress" Version="0.37.2">
+      <NoWarn>NU1902</NoWarn>
+    </PackageReference>
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
