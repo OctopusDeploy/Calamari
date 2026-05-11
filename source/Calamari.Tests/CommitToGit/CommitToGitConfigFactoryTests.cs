@@ -38,7 +38,7 @@ public class CommitToGitConfigFactoryTests
     public void CreateRepositoryConfig_UsesUsernameAndPasswordFromLoadedProperties()
     {
         loader.Load<CommitToGitCustomPropertiesDto>()
-              .Returns(new CommitToGitCustomPropertiesDto("MyCred", "https://example.invalid/repo.git", "user-from-file", "pwd-from-file"));
+              .Returns(new CommitToGitCustomPropertiesDto(new GitCredentialDto("MyCred", "https://example.invalid/repo.git", "user-from-file", "pwd-from-file")));
 
         var deployment = new RunningDeployment(null, variables);
 
