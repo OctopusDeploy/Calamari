@@ -10,7 +10,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
     public class ConsolidatedPackage : IConsolidatedPackage
     {
         readonly IConsolidatedPackageStreamProvider packageStreamProvider;
-        
+
         public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, IConsolidatedPackageIndex index)
         {
             this.packageStreamProvider = packageStreamProvider;
@@ -28,17 +28,35 @@ namespace Octopus.Calamari.ConsolidatedPackage
                 throw new Exception($"Could not find platform {platform} for {calamariFlavour}");
             }
 
-            var platformFilesLookup = platformFiles.ToDictionary(f => f.Source);
-
-            using var sourceStream = packageStreamProvider.OpenStream();
-            using var source = new ZipArchive(sourceStream, ZipArchiveMode.Read);
-            foreach (var sourceEntry in source.Entries)
+            using (var sourceStream = packageStreamProvider.OpenStream())
             {
-                if (!platformFilesLookup.TryGetValue(sourceEntry.FullName, out var fileTransfer)) continue;
+                using (var source = new ZipArchive(sourceStream, ZipArchiveMode.Read))
+                {
+                    foreach (var fileTransfer in platformFiles)
+                    {
+                        var sourceEntry = source.Entries.FirstOrDefault(e => e.FullName.Equals(fileTransfer.Source));
+                        if (sourceEntry is null) continue;
 
-                using var sourceEntryStream = sourceEntry.Open();
-                yield return (fileTransfer.Destination, sourceEntry.Length, sourceEntryStream);
+                        using (var sourceEntryStream = sourceEntry.Open())
+                        {
+                            yield return (fileTransfer.Destination, sourceEntry.Length, sourceEntryStream);
+                        }
+                    }
+                }
             }
         }
+
+        //
+        // var platformFilesLookup = platformFiles.ToDictionary(f => f.Source);
+        //
+        // using var sourceStream = packageStreamProvider.OpenStream();
+        // using var source = new ZipArchive(sourceStream, ZipArchiveMode.Read);
+        // foreach (var sourceEntry in source.Entries)
+        // {
+        //     if (!platformFilesLookup.TryGetValue(sourceEntry.FullName, out var fileTransfer)) continue;
+        //
+        //     using var sourceEntryStream = sourceEntry.Open();
+        //     yield return (fileTransfer.Destination, sourceEntry.Length, sourceEntryStream);
+        // }
     }
 }
