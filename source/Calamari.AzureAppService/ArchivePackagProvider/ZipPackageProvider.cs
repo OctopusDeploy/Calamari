@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
+using SharpCompress.Writers.Zip;
 
 namespace Calamari.AzureAppService
 {
@@ -15,10 +16,10 @@ namespace Calamari.AzureAppService
         {
             await Task.Run(() =>
             {
-                using var archive = ZipArchive.Create();
+                using var archive = ZipArchive.CreateArchive();
                 archive.AddAllFromDirectory(
                     $"{sourceDirectory}");
-                archive.SaveTo($"{targetDirectory}/app.zip", CompressionType.Deflate);
+                archive.SaveTo($"{targetDirectory}/app.zip", new ZipWriterOptions(CompressionType.Deflate));
             });
             return new FileInfo($"{targetDirectory}/app.zip");
         }

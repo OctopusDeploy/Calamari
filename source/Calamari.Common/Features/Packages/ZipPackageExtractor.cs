@@ -32,7 +32,7 @@ namespace Calamari.Common.Features.Packages
             
             var filesExtracted = 0;
             using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
-            using var archive = ZipArchive.Open(inStream);
+            using var archive = ZipArchive.OpenArchive(inStream);
             
             foreach (var entry in archive.Entries)
             {

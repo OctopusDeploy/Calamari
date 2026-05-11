@@ -158,7 +158,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 var fileName = Path.Combine(tempFolder.DirectoryPath, $"package.{extension}");
                 using (Stream stream = File.OpenWrite(fileName))
-                using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType)
+                using (var writer = WriterFactory.OpenWriter(stream, archiveType, new WriterOptions(compressionType)
                 {
                     ArchiveEncoding = new ArchiveEncoding {Default = Encoding.UTF8}
                 }))

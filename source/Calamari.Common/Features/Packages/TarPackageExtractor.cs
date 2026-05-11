@@ -30,7 +30,7 @@ namespace Calamari.Common.Features.Packages
             var compressionStream = GetCompressionStream(inStream);
             try
             {
-                using var reader = TarReader.Open(compressionStream, new ReaderOptions { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } });
+                using var reader = TarReader.OpenReader(compressionStream, new ReaderOptions { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } });
                 while (reader.MoveToNextEntry())
                 {
                     ProcessEvent(ref files, reader.Entry);
@@ -46,7 +46,7 @@ namespace Calamari.Common.Features.Packages
             return files;
         }
 
-        void ExtractEntry(string directory, TarReader reader)
+        void ExtractEntry(string directory, IReader reader)
         {
             var strategy = PackageExtractorUtils.CreateIoExceptionRetryStrategy(log);
 

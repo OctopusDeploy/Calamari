@@ -16,7 +16,7 @@ namespace Calamari.Common.Features.Packages
 
         protected override Stream GetCompressionStream(Stream stream)
         {
-            var gzipReader = GZipReader.Open(stream);
+            var gzipReader = GZipReader.OpenReader(stream);
             gzipReader.MoveToNextEntry();
             return gzipReader.OpenEntryStream();
         }

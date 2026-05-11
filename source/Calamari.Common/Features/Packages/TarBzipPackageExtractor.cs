@@ -17,7 +17,7 @@ namespace Calamari.Common.Features.Packages
 
         protected override Stream GetCompressionStream(Stream stream)
         {
-            return new BZip2Stream(stream, CompressionMode.Decompress, false);
+            return BZip2Stream.Create(stream, CompressionMode.Decompress, false);
         }
     }
 }

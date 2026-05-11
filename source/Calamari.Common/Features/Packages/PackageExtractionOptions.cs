@@ -4,18 +4,27 @@ using SharpCompress.Common;
 
 namespace Calamari.Common.Features.Packages
 {
-    public class PackageExtractionOptions : ExtractionOptions
+    public class PackageExtractionOptions
     {
         readonly ILog log;
 
         public PackageExtractionOptions(ILog log)
         {
             this.log = log;
-            ExtractFullPath = true;
-            Overwrite = true;
-            PreserveFileTime = true;
-            WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported;
         }
+
+        public bool ExtractFullPath { get; set; } = true;
+        public bool Overwrite { get; set; } = true;
+        public bool PreserveFileTime { get; set; } = true;
+
+        public static implicit operator ExtractionOptions(PackageExtractionOptions options)
+            => new ExtractionOptions
+            {
+                ExtractFullPath = options.ExtractFullPath,
+                Overwrite = options.Overwrite,
+                PreserveFileTime = options.PreserveFileTime,
+                SymbolicLinkHandler = options.WarnThatSymbolicLinksAreNotSupported
+            };
 
         void WarnThatSymbolicLinksAreNotSupported(string sourcepath, string targetpath)
         {

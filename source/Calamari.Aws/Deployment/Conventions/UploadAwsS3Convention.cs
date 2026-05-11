@@ -28,6 +28,8 @@ using Octopus.CoreUtilities.Extensions;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Tar;
 using SharpCompress.Archives.Zip;
+using SharpCompress.Writers.Tar;
+using SharpCompress.Writers.Zip;
 using CompressionType = SharpCompress.Common.CompressionType;
 
 namespace Calamari.Aws.Deployment.Conventions
@@ -358,34 +360,34 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 if (supportedZipExtensions.Any(lowercasedFileName.EndsWith) || supportedJavaExtensions.Any(lowercasedFileName.EndsWith))
                 {
-                    using (var archive = ZipArchive.Create())
+                    using (var archive = ZipArchive.CreateArchive())
                     {
                         archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.Deflate);
+                        archive.SaveTo(targetArchive, new ZipWriterOptions(CompressionType.Deflate));
                     }
                 }
                 else if (supportedTarExtensions.Any(lowercasedFileName.EndsWith))
                 {
-                    using (var archive = TarArchive.Create())
+                    using (var archive = TarArchive.CreateArchive())
                     {
                         archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.None);
+                        archive.SaveTo(targetArchive, new TarWriterOptions(CompressionType.None, finalizeArchiveOnClose: true));
                     }
                 }
                 else if (supportedTarGZipExtensions.Any(lowercasedFileName.EndsWith))
                 {
-                    using (var archive = TarArchive.Create())
+                    using (var archive = TarArchive.CreateArchive())
                     {
                         archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.GZip);
+                        archive.SaveTo(targetArchive, new TarWriterOptions(CompressionType.GZip, finalizeArchiveOnClose: true));
                     }
                 }
                 else if (supportedTarBZip2Extensions.Any(lowercasedFileName.EndsWith))
                 {
-                    using (var archive = TarArchive.Create())
+                    using (var archive = TarArchive.CreateArchive())
                     {
                         archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.BZip2);
+                        archive.SaveTo(targetArchive, new TarWriterOptions(CompressionType.BZip2, finalizeArchiveOnClose: true));
                     }
                 }
                 else

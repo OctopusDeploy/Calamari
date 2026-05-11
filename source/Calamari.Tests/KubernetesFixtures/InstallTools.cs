@@ -471,9 +471,9 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 await Download(zipPath, client, downloadUrl);
                 using (Stream stream = File.OpenRead(zipPath))
-                using (var reader = ReaderFactory.Open(stream))
+                using (var reader = ReaderFactory.OpenReader(stream))
                 {
-                    reader.WriteAllToDirectory(destination, new ExtractionOptions { ExtractFullPath = true, Overwrite = true, WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported });
+                    reader.WriteAllToDirectory(destination, new ExtractionOptions { ExtractFullPath = true, Overwrite = true, SymbolicLinkHandler = WarnThatSymbolicLinksAreNotSupported });
                 }
             }
         }
