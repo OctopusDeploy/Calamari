@@ -18,13 +18,16 @@ namespace Calamari.Common.Features.Packages
         public bool PreserveFileTime { get; set; } = true;
 
         public static implicit operator ExtractionOptions(PackageExtractionOptions options)
-            => new ExtractionOptions
+        {
+            ArgumentNullException.ThrowIfNull(options);
+            return new ExtractionOptions
             {
                 ExtractFullPath = options.ExtractFullPath,
                 Overwrite = options.Overwrite,
                 PreserveFileTime = options.PreserveFileTime,
                 SymbolicLinkHandler = options.WarnThatSymbolicLinksAreNotSupported
             };
+        }
 
         void WarnThatSymbolicLinksAreNotSupported(string sourcepath, string targetpath)
         {

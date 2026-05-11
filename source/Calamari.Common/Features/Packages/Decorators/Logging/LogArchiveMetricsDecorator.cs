@@ -41,7 +41,7 @@ namespace Calamari.Common.Features.Packages.Decorators.Logging
                     var compressionRatio = compressedSize == 0 ? 0 : (double)uncompressedSize / compressedSize;
 
                     log.LogMetric("DeploymentPackageCompressedSize", compressedSize, operationId);
-                    log.LogMetric("DeploymentPackageUncompressedSize", archive.TotalUncompressedSize, operationId);
+                    log.LogMetric("DeploymentPackageUncompressedSize", uncompressedSize, operationId);
                     log.LogMetric("DeploymentPackageCompressionRatio", compressionRatio, operationId);
                 }
             }
