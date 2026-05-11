@@ -11,6 +11,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
+using Calamari.CommitToGit;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
@@ -129,6 +130,7 @@ namespace Calamari
                    .As<ILaunchTool>();
 
             builder.RegisterModule<ArgoCDModule>();
+            builder.RegisterModule<CommitToGitModule>();
             builder.RegisterModule<PackageRetentionModule>();
         }
 
