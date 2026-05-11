@@ -23,6 +23,7 @@
     <RootNamespace>Calamari</RootNamespace>
     <Nullable>enable</Nullable>
     <TargetFramework>net8.0</TargetFramework>
+    <WarningsNotAsErrors>NU1901,NU1902,NU1903</WarningsNotAsErrors> <!-- Added for SharpCompress CVE -->
   </PropertyGroup>
 
   <ItemGroup>

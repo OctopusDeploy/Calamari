@@ -4,6 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <IsPackable>false</IsPackable>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsNotAsErrors>NU1901,NU1902,NU1903</WarningsNotAsErrors> <!-- Added for SharpCompress CVE -->
     </PropertyGroup>
 
     <ItemGroup>

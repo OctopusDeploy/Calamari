@@ -22,6 +22,7 @@
     <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
     <NoWarn>CS8632</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>NU1901,NU1902,NU1903</WarningsNotAsErrors> <!-- Added for SharpCompress CVE -->
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
