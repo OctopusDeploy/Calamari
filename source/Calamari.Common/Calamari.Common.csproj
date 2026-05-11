@@ -10,6 +10,7 @@
         <Owners>Octopus Deploy</Owners>        
         <Title>Calamari.Common</Title>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>        
         <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
     </PropertyGroup>
 
