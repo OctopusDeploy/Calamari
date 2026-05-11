@@ -33,6 +33,8 @@ namespace Calamari.CommitToGit
             var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest);
 
             var credential = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>().Credential;
+            if (credential == null)
+                throw new CommandException("Custom properties file did not contain a git credential.");
 
             return new CommitToGitRepositorySettings(
                                                      new GitConnection(

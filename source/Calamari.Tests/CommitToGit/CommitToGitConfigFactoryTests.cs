@@ -49,4 +49,18 @@ public class CommitToGitConfigFactoryTests
         config.GitConnection.Password.Should().Be("pwd-from-file");
         config.GitConnection.Url.Should().Be(new Uri("https://example.invalid/repo.git"));
     }
+
+    [Test]
+    public void CreateRepositoryConfig_ThrowsCommandException_WhenLoadedCredentialIsNull()
+    {
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(null));
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var act = () => factory.CreateRepositoryConfig(deployment, loader);
+
+        act.Should().Throw<CommandException>()
+           .WithMessage("*git credential*");
+    }
 }
