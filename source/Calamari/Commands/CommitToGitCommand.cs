@@ -34,6 +34,8 @@ public class CommitToGitCommand : Command
     string scriptFileArg;
     PathToPackage pathToPackage;
     string scriptParametersArg;
+    string customPropertiesFile;
+    string customPropertiesPassword;
     readonly ILog log;
     readonly IDeploymentJournalWriter deploymentJournalWriter;
     readonly INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles;
@@ -56,6 +58,8 @@ public class CommitToGitCommand : Command
         Options.Add("package=", "Path to the package to extract that contains the script.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
         Options.Add("scriptParameters=", $"Parameters to pass to the script.", v => scriptParametersArg = v);
+        Options.Add("customPropertiesFile=", "Path to an encrypted JSON file containing the git credential.", v => customPropertiesFile = Path.GetFullPath(v));
+        Options.Add("customPropertiesPassword=", "Password to decrypt the custom properties file.", v => customPropertiesPassword = v);
 
         this.log = log;
         this.nonSensitiveSubstituteInFiles = nonSensitiveSubstituteInFiles;
@@ -74,8 +78,17 @@ public class CommitToGitCommand : Command
         Options.Parse(commandLineArguments);
         ApplyScriptParametersOverride();
 
+        if (!WasProvided(customPropertiesFile))
+            throw new CommandException("Required option --customPropertiesFile was not provided.");
+        if (!WasProvided(customPropertiesPassword))
+            throw new CommandException("Required option --customPropertiesPassword was not provided.");
+        if (!fileSystem.FileExists(customPropertiesFile))
+            throw new CommandException($"Custom properties file '{customPropertiesFile}' does not exist.");
+
+        var customPropertiesLoader = new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword);
+
         var deployment = new RunningDeployment(pathToPackage, variables);
-        var repositoryConfig = configFactory.CreateRepositoryConfig(deployment, null!);
+        var repositoryConfig = configFactory.CreateRepositoryConfig(deployment, customPropertiesLoader);
         var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorPullRequestClientResolver, new SystemClock());
         using var clonedRepository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), repositoryConfig.GitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
