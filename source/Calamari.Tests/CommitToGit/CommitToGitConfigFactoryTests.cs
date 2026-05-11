@@ -38,8 +38,7 @@ public class CommitToGitConfigFactoryTests
     public void CreateRepositoryConfig_UsesUsernameAndPasswordFromLoadedProperties()
     {
         loader.Load<CommitToGitCustomPropertiesDto>()
-              .Returns(new CommitToGitCustomPropertiesDto(
-                           new NamedGitCredentialDto("user-from-file", "pwd-from-file", "MyCred")));
+              .Returns(new CommitToGitCustomPropertiesDto("MyCred", "https://example.invalid/repo.git", "user-from-file", "pwd-from-file"));
 
         var deployment = new RunningDeployment(null, variables);
 
@@ -48,19 +47,5 @@ public class CommitToGitConfigFactoryTests
         config.GitConnection.Username.Should().Be("user-from-file");
         config.GitConnection.Password.Should().Be("pwd-from-file");
         config.GitConnection.Url.Should().Be(new Uri("https://example.invalid/repo.git"));
-    }
-
-    [Test]
-    public void CreateRepositoryConfig_ThrowsCommandException_WhenLoadedCredentialIsNull()
-    {
-        loader.Load<CommitToGitCustomPropertiesDto>()
-              .Returns(new CommitToGitCustomPropertiesDto(null));
-
-        var deployment = new RunningDeployment(null, variables);
-
-        var act = () => factory.CreateRepositoryConfig(deployment, loader);
-
-        act.Should().Throw<CommandException>()
-           .WithMessage("*git credential*");
     }
 }

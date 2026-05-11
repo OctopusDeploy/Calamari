@@ -372,7 +372,7 @@ public class CommitToGitCommandTest
     [Test]
     public void CommitToGit_FailsWithCommandException_WhenCustomPropertiesPasswordOptionIsMissing()
     {
-        var propsPath = WriteCustomPropertiesFile("u", "p", "n");
+        var propsPath = WriteCustomPropertiesFile("n", OriginPath, "u", "p");
 
         RunCommitToGit(includeCustomProperties: false, "--customPropertiesFile", propsPath)
             .Should().NotBe(0, "the command must reject runs that do not supply --customPropertiesPassword");
@@ -408,7 +408,7 @@ public class CommitToGitCommandTest
 
         if (includeCustomProperties)
         {
-            var propsPath = WriteCustomPropertiesFile("git-user", "git-password", "MyCred");
+            var propsPath = WriteCustomPropertiesFile("MyCred", OriginPath, "git-user", "git-password");
             args.AddRange(["--customPropertiesFile", propsPath, "--customPropertiesPassword", customPropertiesPassword]);
         }
 
@@ -417,9 +417,9 @@ public class CommitToGitCommandTest
         return Program.Main(args.ToArray());
     }
 
-    string WriteCustomPropertiesFile(string username, string password, string name)
+    string WriteCustomPropertiesFile(string credentialName, string repositoryUrl, string username, string password)
     {
-        var dto = new CommitToGitCustomPropertiesDto(new NamedGitCredentialDto(username, password, name));
+        var dto = new CommitToGitCustomPropertiesDto(credentialName, repositoryUrl, username, password);
         var json = JsonConvert.SerializeObject(dto);
         var absPath = Path.Combine(executionDirectory, customPropertiesFileName);
         File.WriteAllBytes(absPath, AesEncryption.ForServerVariables(customPropertiesPassword).Encrypt(json));

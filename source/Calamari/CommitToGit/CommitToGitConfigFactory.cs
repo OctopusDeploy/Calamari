@@ -32,14 +32,12 @@ namespace Calamari.CommitToGit
             var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Action.Git.CommitMessageDescription) ?? string.Empty);
             var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest);
 
-            var credential = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>().Credential;
-            if (credential == null)
-                throw new CommandException("Custom properties file did not contain a git credential.");
+            var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
 
             return new CommitToGitRepositorySettings(
                                                      new GitConnection(
-                                                                       credential.Username,
-                                                                       credential.Password,
+                                                                       properties.Username,
+                                                                       properties.Password,
                                                                        new Uri(uriAsString),
                                                                        GitReference.CreateFromString(gitReferenceAsString)),
             commitParameters,
