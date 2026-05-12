@@ -13,7 +13,7 @@ namespace Calamari.Common.Features.Packages
             this.log = log;
             ExtractFullPath = true;
             Overwrite = true;
-            PreserveFileTime = true;
+            PreserveFileTime = false;
             WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported;
         }
 
