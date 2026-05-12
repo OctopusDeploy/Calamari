@@ -1,0 +1,23 @@
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/AbstractHelmUpdater.cs
+  75abd7777830689a 52,57,63-65,70-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "43e9089290876f6d0ccd0bfa37947edc1532e7c2",
+  "prompts": {
+    "75abd7777830689a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7238d6ef-3312-464c-aac4-ea64d571c4dc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 21,
+      "accepted_lines": 42,
+      "overriden_lines": 0
+    }
+  }
+}

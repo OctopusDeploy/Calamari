@@ -1,0 +1,23 @@
+source/Calamari.Tests/ArgoCD/Commands/Conventions/UpdateArgoCDAppImagesInstallConventionHelmTests.cs
+  75abd7777830689a 1560
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "2808de19d780be1310b692ac87c5c396d06cef32",
+  "prompts": {
+    "75abd7777830689a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7238d6ef-3312-464c-aac4-ea64d571c4dc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 29,
+      "overriden_lines": 0
+    }
+  }
+}

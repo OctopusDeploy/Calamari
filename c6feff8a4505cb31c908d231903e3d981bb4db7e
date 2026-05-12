@@ -1,0 +1,20 @@
+source/Calamari/Kubernetes/Commands/Executors/GatherAndApplyRawYamlExecutor.cs
+  s_d0f41971e13094::t_f604ad41b8cc4e 66-67,71-83
+  s_d0f41971e13094::t_39a21d056240ae 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "c6feff8a4505cb31c908d231903e3d981bb4db7e",
+  "prompts": {},
+  "sessions": {
+    "s_d0f41971e13094": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1c941db0-5c13-4435-af97-a68486cb5023",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0 <scott.merchant@octopus.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+source/Calamari/ArgoCD/Helm/HelmContainerImageReplacer.cs
+  75abd7777830689a 44,49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "c1680f124cf0c52a0fd4e6a550599ebf55904d08",
+  "prompts": {
+    "75abd7777830689a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7238d6ef-3312-464c-aac4-ea64d571c4dc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}

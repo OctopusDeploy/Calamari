@@ -1,0 +1,25 @@
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/BaseUpdater.cs
+  89c97e7e118e7bb7 103
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/KustomizeUpdater.cs
+  89c97e7e118e7bb7 38-41,43-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "33040a75f43fc44596be5cbe64bddcc8c685f94c",
+  "prompts": {
+    "89c97e7e118e7bb7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "362c9e73-d8fd-4951-99b6-23bfd6884458",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 72,
+      "total_deletions": 0,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}

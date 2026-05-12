@@ -1,0 +1,25 @@
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/HelmUpdater.cs
+  75abd7777830689a 14
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/RefUpdater.cs
+  75abd7777830689a 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "51cffeaf39bfe1c0fb5263fd69c8bca1af7aeeda",
+  "prompts": {
+    "75abd7777830689a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7238d6ef-3312-464c-aac4-ea64d571c4dc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0",
+      "messages": [],
+      "total_additions": 348,
+      "total_deletions": 101,
+      "accepted_lines": 35,
+      "overriden_lines": 17
+    }
+  }
+}

@@ -1,0 +1,22 @@
+source/Calamari.Common/FeatureToggles/OctopusFeatureToggle.cs
+  s_d0f41971e13094::t_34ab9ce5343cf2 12,18
+source/Calamari/Kubernetes/ResourceStatus/ResourceStatusReportScriptWrapper.cs
+  s_d0f41971e13094::t_83db54fca2fafa 8
+  s_d0f41971e13094::t_258644d79bb187 54-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "0f229d10b473e6c9676bf1fafb8eafd23972fb04",
+  "prompts": {},
+  "sessions": {
+    "s_d0f41971e13094": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1c941db0-5c13-4435-af97-a68486cb5023",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "scme0 <scott.merchant@octopus.com>"
+    }
+  }
+}
