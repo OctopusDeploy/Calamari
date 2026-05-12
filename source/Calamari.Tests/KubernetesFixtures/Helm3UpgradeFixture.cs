@@ -7,6 +7,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Kubernetes;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -65,14 +66,14 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches("Resource Status Check: Stopped.");
 
             result.CapturedOutput.ServiceMessages
-                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Where(sm => sm.Name == ServiceMessages.ResourceStatus.Name)
                   .Should()
                   .HaveCountGreaterOrEqualTo(1);
 
             result.CapturedOutput.ServiceMessages
-                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Where(sm => sm.Name == ServiceMessages.ResourceStatus.Name)
                   .Should()
-                  .Contain(sm => sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Name] == $"mychart-configmap-{ReleaseName}" && sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Namespace] == Namespace && sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Group] == "" && sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Version] == "v1" && sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Kind] == "ConfigMap" && sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Status] == Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful.ToString());
+                  .Contain(sm => sm.Properties[ServiceMessages.ResourceStatus.Attributes.Name] == $"mychart-configmap-{ReleaseName}" && sm.Properties[ServiceMessages.ResourceStatus.Attributes.Namespace] == Namespace && sm.Properties[ServiceMessages.ResourceStatus.Attributes.Group] == "" && sm.Properties[ServiceMessages.ResourceStatus.Attributes.Version] == "v1" && sm.Properties[ServiceMessages.ResourceStatus.Attributes.Kind] == "ConfigMap" && sm.Properties[ServiceMessages.ResourceStatus.Attributes.Status] == Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful.ToString());
         }
 
         [Test]
@@ -99,7 +100,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 result.AssertOutputMatches("Octopus needs Helm v3.13 or later to display object status and manifests.");
 
                 result.CapturedOutput.ServiceMessages
-                      .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                      .Where(sm => sm.Name == ServiceMessages.ResourceStatus.Name)
                       .Should()
                       .BeEmpty();
             }
@@ -128,7 +129,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             //we should not have received any KOS service messages
             result.CapturedOutput.ServiceMessages
-                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Where(sm => sm.Name == ServiceMessages.ResourceStatus.Name)
                   .Should()
                   .BeEmpty();
         }
@@ -156,7 +157,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             //we should not have received any KOS service messages
             result.CapturedOutput.ServiceMessages
-                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Where(sm => sm.Name == ServiceMessages.ResourceStatus.Name)
                   .Should()
                   .BeEmpty();
         }
@@ -183,7 +184,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             //we should not have received any KOS service messages
             result.CapturedOutput.ServiceMessages
-                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Where(sm => sm.Name == ServiceMessages.ResourceStatus.Name)
                   .Should()
                   .BeEmpty();
         }

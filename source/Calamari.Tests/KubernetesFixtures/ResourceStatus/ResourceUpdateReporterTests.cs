@@ -7,6 +7,7 @@ using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Kubernetes;
 
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
@@ -29,7 +30,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
 
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                .Where(message => message.Name == ServiceMessages.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Select(message => message.Properties["name"])
@@ -72,7 +73,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                .Where(message => message.Name == ServiceMessages.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Should().ContainSingle().Which.Properties
@@ -102,7 +103,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                .Where(message => message.Name == ServiceMessages.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Should().ContainSingle().Which.Properties
@@ -132,7 +133,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(new Dictionary<string, Resource>(), newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                .Where(message => message.Name == ServiceMessages.ResourceStatus.Name)
                 .ToList();
             
             serviceMessages.Should().Contain(sm => sm.Properties.Intersect(new[]
