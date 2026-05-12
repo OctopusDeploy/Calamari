@@ -1,0 +1,14 @@
+source/Calamari.Common/Features/Packages/PackageExtractionOptions.cs
+  h_1903a5d928fbe4 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "f843c2bc6197732e945217b3f7b018d82500af9f",
+  "prompts": {},
+  "humans": {
+    "h_1903a5d928fbe4": {
+      "author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
