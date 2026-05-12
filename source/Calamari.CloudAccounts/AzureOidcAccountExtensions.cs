@@ -15,7 +15,7 @@ namespace Calamari.CloudAccounts
             Log.Verbose($"Authentication Context: {authContext}");
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
-                                                          .WithClientAssertion(token)
+                                                          .WithClientAssertion((AssertionRequestOptions _) => Task.FromResult(token))
                                                           .WithAuthority(authContext)
                                                           .WithHttpClientFactory(authClientFactory)
                                                           .Build();
