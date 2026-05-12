@@ -12,28 +12,14 @@ using Calamari.Deployment.Conventions;
 namespace Calamari.Aws.Deployment.Conventions;
 
 // Emits output variables matching SPF's ECS step contract.
-public class SetEcsOutputVariablesConvention : IInstallConvention
+public class SetEcsOutputVariablesConvention(
+    AwsEnvironmentGeneration environment,
+    string stackName,
+    string clusterName,
+    string taskFamily,
+    ILog log)
+    : IInstallConvention
 {
-    readonly AwsEnvironmentGeneration environment;
-    readonly string stackName;
-    readonly string clusterName;
-    readonly string taskFamily;
-    readonly ILog log;
-
-    public SetEcsOutputVariablesConvention(
-        AwsEnvironmentGeneration environment,
-        string stackName,
-        string clusterName,
-        string taskFamily,
-        ILog log)
-    {
-        this.environment = environment;
-        this.stackName = stackName;
-        this.clusterName = clusterName;
-        this.taskFamily = taskFamily;
-        this.log = log;
-    }
-
     public void Install(RunningDeployment deployment) => InstallAsync(deployment).GetAwaiter().GetResult();
 
     async Task InstallAsync(RunningDeployment deployment)

@@ -32,54 +32,29 @@ using CompressionType = SharpCompress.Common.CompressionType;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
-     public class UploadAwsS3Convention : IInstallConvention
-    {
-        readonly ILog log;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
-        private readonly string bucket;
-        private readonly S3TargetMode targetMode;
-        private readonly IProvideS3TargetOptions optionsProvider;
-        readonly IBucketKeyProvider bucketKeyProvider;
-        readonly ISubstituteInFiles substituteInFiles;
-        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
-        private readonly bool md5HashSupported;
-        readonly S3OutputVariablesStrategy s3OutputVariablesStrategy;
+     public class UploadAwsS3Convention(
+         ILog log,
+         ICalamariFileSystem fileSystem,
+         AwsEnvironmentGeneration awsEnvironmentGeneration,
+         string bucket,
+         S3TargetMode targetMode,
+         IProvideS3TargetOptions optionsProvider,
+         IBucketKeyProvider bucketKeyProvider,
+         ISubstituteInFiles substituteInFiles,
+         IStructuredConfigVariablesService structuredConfigVariablesService,
+         S3OutputVariablesStrategy s3OutputVariablesStrategy)
+         : IInstallConvention
+     {
+         readonly bool md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
 
-        private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
+         static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
 
-        public UploadAwsS3Convention(
-            ILog log,
-            ICalamariFileSystem fileSystem,
-            AwsEnvironmentGeneration awsEnvironmentGeneration,
-            string bucket,
-            S3TargetMode targetMode,
-            IProvideS3TargetOptions optionsProvider,
-            IBucketKeyProvider bucketKeyProvider,
-            ISubstituteInFiles substituteInFiles,
-            IStructuredConfigVariablesService structuredConfigVariablesService,
-            S3OutputVariablesStrategy s3OutputVariablesStrategy
-        )
-        {
-            this.log = log;
-            this.fileSystem = fileSystem;
-            this.awsEnvironmentGeneration = awsEnvironmentGeneration;
-            this.bucket = bucket;
-            this.targetMode = targetMode;
-            this.optionsProvider = optionsProvider;
-            this.bucketKeyProvider = bucketKeyProvider;
-            this.substituteInFiles = substituteInFiles;
-            this.structuredConfigVariablesService = structuredConfigVariablesService;
-            this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
-            this.s3OutputVariablesStrategy = s3OutputVariablesStrategy;
-        }
-
-        private static string ExceptionMessageWithFilePath(PutObjectRequest request, Exception exception)
+        static string ExceptionMessageWithFilePath(PutObjectRequest request, Exception exception)
         {
             return $"Failed to upload file {request.FilePath}. {exception.Message}";
         }
 
-        private static string InvalidArgumentExceptionMessage(PutObjectRequest request, Exception exception)
+        static string InvalidArgumentExceptionMessage(PutObjectRequest request, Exception exception)
         {
             //There isn't an associated error we can check for the Canned ACL so just check it against what we can determine
             //from the values in the SDK.
@@ -88,7 +63,7 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         //Errors we care about for each upload.
-        private readonly Dictionary<string, Func<PutObjectRequest, Exception, string>> perFileUploadErrors = new Dictionary<string, Func<PutObjectRequest, Exception, string>>
+        readonly Dictionary<string, Func<PutObjectRequest, Exception, string>> perFileUploadErrors = new Dictionary<string, Func<PutObjectRequest, Exception, string>>
         {
             { "RequestIsNotMultiPartContent", ExceptionMessageWithFilePath },
             { "UnexpectedContent", ExceptionMessageWithFilePath },
@@ -106,7 +81,7 @@ namespace Calamari.Aws.Deployment.Conventions
             InstallAsync(deployment).GetAwaiter().GetResult();
         }
 
-        private async Task InstallAsync(RunningDeployment deployment)
+        async Task InstallAsync(RunningDeployment deployment)
         {
             //The bucket should exist at this point
             Guard.NotNull(deployment, "deployment can not be null");
@@ -197,7 +172,7 @@ namespace Calamari.Aws.Deployment.Conventions
             log.SetOutputVariableButDoNotAddToVariables(packageObjectVersionVariableName, packageObjectVersionVariableValue);
         }
 
-        private static void ThrowInvalidFileUpload(Exception exception, string message)
+        static void ThrowInvalidFileUpload(Exception exception, string message)
         {
             throw new AmazonFileUploadException(message, exception);
         }
@@ -235,7 +210,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        private async Task<IEnumerable<S3UploadResult>> UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
+        async Task<IEnumerable<S3UploadResult>> UploadMultiFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3MultiFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Multi file selection properties may not be null");
@@ -244,7 +219,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             var files = new RelativeGlobber(
                 (@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern),
-                deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
+                deployment.StagingDirectory ?? string.Empty).EnumerateFilesWithGlob(selection.Pattern).ToList();
 
             if (!files.Any())
             {
@@ -282,13 +257,15 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="selection"></param>
-        public Task<S3UploadResult> UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSelectionProperties selection)
+        Task<S3UploadResult> UploadSingleFileSelection(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3SingleFileSelectionProperties selection)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(selection, "Single file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
-            var filePath = Path.Combine(deployment.StagingDirectory, selection.Path);
+            var stagingDirectory = deployment.StagingDirectory ?? string.Empty;
+
+            var filePath = Path.Combine(stagingDirectory, selection.Path);
 
             if (!fileSystem.FileExists(filePath))
             {
@@ -301,7 +278,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if(selection.PerformStructuredVariableSubstitution)
                 structuredConfigVariablesService.ReplaceVariables(deployment.CurrentDirectory, new List<string>{ filePath });
 
-            return CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(deployment.StagingDirectory), selection), selection)
+            return CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(stagingDirectory), selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
                     .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -312,7 +289,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="clientFactory"></param>
         /// <param name="deployment"></param>
         /// <param name="options"></param>
-        public Task<S3UploadResult> UploadUsingPackage(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3PackageOptions options)
+        Task<S3UploadResult> UploadUsingPackage(Func<AmazonS3Client> clientFactory, RunningDeployment deployment, S3PackageOptions options)
         {
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(options, "Package options may not be null");
@@ -354,50 +331,40 @@ namespace Calamari.Aws.Deployment.Conventions
             var supportedTarBZip2Extensions = new[] { "tar.bz", ".tar.bz2", ".tbz"};
 
             var lowercasedFileName = fileName.ToLower();
-            using (var targetArchive = fileSystem.CreateTemporaryFile(string.Empty, out var targetArchivePath))
+            using var targetArchive = fileSystem.CreateTemporaryFile(string.Empty, out var targetArchivePath);
+            if (supportedZipExtensions.Any(lowercasedFileName.EndsWith) || supportedJavaExtensions.Any(lowercasedFileName.EndsWith))
             {
-                if (supportedZipExtensions.Any(lowercasedFileName.EndsWith) || supportedJavaExtensions.Any(lowercasedFileName.EndsWith))
-                {
-                    using (var archive = ZipArchive.Create())
-                    {
-                        archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.Deflate);
-                    }
-                }
-                else if (supportedTarExtensions.Any(lowercasedFileName.EndsWith))
-                {
-                    using (var archive = TarArchive.Create())
-                    {
-                        archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.None);
-                    }
-                }
-                else if (supportedTarGZipExtensions.Any(lowercasedFileName.EndsWith))
-                {
-                    using (var archive = TarArchive.Create())
-                    {
-                        archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.GZip);
-                    }
-                }
-                else if (supportedTarBZip2Extensions.Any(lowercasedFileName.EndsWith))
-                {
-                    using (var archive = TarArchive.Create())
-                    {
-                        archive.AddAllFromDirectory(stagingDirectory);
-                        archive.SaveTo(targetArchive, CompressionType.BZip2);
-                    }
-                }
-                else
-                {
-                    throw new ArgumentException($"Unable to compress file {fileName.ToLower()}, the extension is unsupported.");
-                }
-
-                return targetArchivePath;
+                using var archive = ZipArchive.Create();
+                archive.AddAllFromDirectory(stagingDirectory);
+                archive.SaveTo(targetArchive, CompressionType.Deflate);
             }
+            else if (supportedTarExtensions.Any(lowercasedFileName.EndsWith))
+            {
+                using var archive = TarArchive.Create();
+                archive.AddAllFromDirectory(stagingDirectory);
+                archive.SaveTo(targetArchive, CompressionType.None);
+            }
+            else if (supportedTarGZipExtensions.Any(lowercasedFileName.EndsWith))
+            {
+                using var archive = TarArchive.Create();
+                archive.AddAllFromDirectory(stagingDirectory);
+                archive.SaveTo(targetArchive, CompressionType.GZip);
+            }
+            else if (supportedTarBZip2Extensions.Any(lowercasedFileName.EndsWith))
+            {
+                using var archive = TarArchive.Create();
+                archive.AddAllFromDirectory(stagingDirectory);
+                archive.SaveTo(targetArchive, CompressionType.BZip2);
+            }
+            else
+            {
+                throw new ArgumentException($"Unable to compress file {fileName.ToLower()}, the extension is unsupported.");
+            }
+
+            return targetArchivePath;
         }
 
-        public string GetNormalizedPackageFilename(RunningDeployment deployment)
+        static string GetNormalizedPackageFilename(RunningDeployment deployment)
         {
             var id = deployment.Variables.Get(PackageVariables.PackageId);
             var version = deployment.Variables.Get(PackageVariables.PackageVersion);
@@ -419,7 +386,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="bucketKey"></param>
         /// <param name="properties"></param>
         /// <returns>PutObjectRequest with all information including metadata and tags from provided properties</returns>
-        private PutObjectRequest CreateRequest(string path, string bucketKey, S3TargetPropertiesBase properties)
+        PutObjectRequest CreateRequest(string path, string bucketKey, S3TargetPropertiesBase properties)
         {
             Guard.NotNullOrWhiteSpace(path, "The given path may not be null");
             Guard.NotNullOrWhiteSpace(bucket, "The provided bucket key may not be null");
@@ -461,7 +428,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="client">The client to use</param>
         /// <param name="request">The request to send</param>
         /// <param name="errorAction">Action to take on per file error</param>
-        private async Task<S3UploadResult> HandleUploadRequest(AmazonS3Client client, PutObjectRequest request, Action<AmazonS3Exception, string> errorAction)
+        async Task<S3UploadResult> HandleUploadRequest(AmazonS3Client client, PutObjectRequest request, Action<AmazonS3Exception, string> errorAction)
         {
             try
             {
@@ -489,8 +456,8 @@ namespace Calamari.Aws.Deployment.Conventions
                         $"Please ensure the current account has permission to perform action(s) {string.Join(", ", permissions)}'.\n" +
                         ex.Message + "\n");
 
-                if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
-                perFileUploadErrors[ex.ErrorCode](request, ex).Tee((message) => errorAction(ex, message));
+                if (!perFileUploadErrors.TryGetValue(ex.ErrorCode, out var value)) throw;
+                value(request, ex).Tee((message) => errorAction(ex, message));
                 return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
             }
             catch (ArgumentException exception)
@@ -508,9 +475,9 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="client"></param>
         /// <param name="request"></param>
         /// <returns></returns>
-        private async Task<bool> ShouldUpload(AmazonS3Client client, PutObjectRequest request)
+        async Task<bool> ShouldUpload(AmazonS3Client client, PutObjectRequest request)
         {
-            //This isn't ideal, however the AWS SDK doesn't really provide any means to check the existence of an object.
+            //This isn't ideal, however, the AWS SDK doesn't really provide any means to check the existence of an object.
             try
             {
                 if (!md5HashSupported)
@@ -535,7 +502,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// the log.
         /// </summary>
         /// <param name="exception">The exception</param>
-        private void HandleAmazonServiceException(AmazonServiceException exception)
+        void HandleAmazonServiceException(AmazonServiceException exception)
         {
             ((exception.InnerException as WebException)?
              .Response?
