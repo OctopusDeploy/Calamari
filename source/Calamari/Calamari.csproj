@@ -51,7 +51,7 @@
     <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="KubernetesClient" Version="17.0.14" />
-    <PackageReference Include="Octopus.LibGit2Sharp" Version="0.31.2-octopus-em-better-li.464.6" />
+    <PackageReference Include="Octopus.LibGit2Sharp" Version="0.31.2-octopus-ssh-support.467.2" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />
