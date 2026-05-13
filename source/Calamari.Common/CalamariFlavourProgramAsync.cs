@@ -156,7 +156,7 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
         yield return typeof(CalamariFlavourProgramAsync).Assembly; // Calamari.Common
     }
 
-    Task ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
+    static Task ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
     {
         try
         {
