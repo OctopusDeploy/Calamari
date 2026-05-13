@@ -239,7 +239,8 @@ try {
 
     throw
 } finally {
-    If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
+    # Check the variable exists before reading in case user's script enabled Set-StrictMode
+    If (-not (Test-Path Variable:OctopusDisableAzureCLI) -or !$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
         try {
             # Save the last exit code so az logout doesn't clobber it
             $previousLastExitCode = $LastExitCode
