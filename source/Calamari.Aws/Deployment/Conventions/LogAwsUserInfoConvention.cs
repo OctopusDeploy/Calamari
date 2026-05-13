@@ -19,13 +19,12 @@ namespace Calamari.Aws.Deployment.Conventions;
 
 public partial class LogAwsUserInfoConvention(AwsEnvironmentGeneration awsEnvironmentGeneration) : IInstallConvention
 {
-    [GeneratedRegex("^.*?/(.+)$")]
-    private static partial Regex ArnNameRegex();
         
     /// <summary>
     /// Matches ARNs like arn:aws:iam::123456789:role/AWSTestRole and extracts the name as group 1 
     /// </summary>
-    static readonly Regex ArnNameRe = ArnNameRegex();
+    [GeneratedRegex("^.*?/(.+)$")]
+    private static partial Regex ArnNameRegex();
 
     public void Install(RunningDeployment deployment)
     {
@@ -76,7 +75,7 @@ public partial class LogAwsUserInfoConvention(AwsEnvironmentGeneration awsEnviro
                 // The response is narrowed to the Aen
                 .Map(response => response.Arn)
                 // Try and match the response to get just the role
-                .Map(arn => ArnNameRe.Match(arn))
+                .Map(arn => ArnNameRegex().Match(arn))
                 // Extract the role name, or a default
                 .Map(match => match.Success ? match.Groups[1].Value : "Unknown")
                 // Log the output
