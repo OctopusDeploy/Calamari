@@ -8,6 +8,9 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.FunctionScriptContributions;
 using Calamari.Common.Features.Packages;
@@ -21,6 +24,7 @@ using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
@@ -97,17 +101,23 @@ public abstract class CalamariFlavourProgram(ILog log)
         //register the options into the DI
         builder.RegisterInstance(options).AsSelf();
             
-        var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-        builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
-        builder.RegisterType<VariableLogger>().AsSelf();
-        builder.RegisterInstance(log).As<ILog>().SingleInstance();
-        builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
-        builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
-        builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
-        builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
-        builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
-        builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
+            builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
+            builder.RegisterType<VariableLogger>().AsSelf();
+            builder.RegisterInstance(log).As<ILog>().SingleInstance();
+            builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
+            builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
+            builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
+            builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
+            builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
+            builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
+            
+            // For Pipeline Commands
+            builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
+            builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
+            builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
+
             
         builder.RegisterModule<VariablesModule>();
         builder.RegisterModule<SubstitutionsModule>();
@@ -128,6 +138,12 @@ public abstract class CalamariFlavourProgram(ILog log)
                .Where(t => t.GetCommandNameFromAttribute()
                             .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                .Named<ICommand>(t => t.GetCommandNameFromAttribute());
+            
+            // Register Behaviors
+            builder.RegisterAssemblyTypes(assemblies)
+                   .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)
+                   .AsSelf()
+                   .InstancePerDependency();
 
         builder.RegisterInstance(options).AsSelf().SingleInstance();
 
