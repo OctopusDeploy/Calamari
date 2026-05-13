@@ -49,6 +49,6 @@ public class CommitToGitConfigFactoryTests
         httpsGitConnection.Should().NotBeNull();
         httpsGitConnection!.Username.Should().Be("user-from-file");
         httpsGitConnection.Password.Should().Be("pwd-from-file");
-        httpsGitConnection.Url.Should().Be("https://example.invalid/repo.git");
+        httpsGitConnection.Uri.Value.Should().Be(new Uri("https://example.invalid/repo.git"));
     }
 }

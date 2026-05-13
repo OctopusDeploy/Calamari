@@ -29,7 +29,7 @@ public static class GitCloneSafeUrl
     /// This is invoked during yaml deserialisation, and may be applied to repoURLs which will never actually be cloned
     /// during step execution (eg sources which have not been scoped to the step).
     /// </remarks>
-    public static string FromString(string uri)
+    public static string ConvertToUriString(string uri)
     {
         if (!uri.StartsWith(StandardSshScpPrefix))
         {

@@ -25,11 +25,14 @@ namespace Calamari.ArgoCD.Git.PullRequests
         public async Task<IGitVendorPullRequestClient?> TryResolve(IHttpsGitConnection repositoryConnection, ILog log,
                                                                    CancellationToken cancellationToken)
         {
+            // Avoid using repositoryConnection.Uri here as we do not want to throw if we somehow got here without a
+            // valid Uri - if we can gather confidence that this is impossible then we could remove this guard
             if (!Uri.TryCreate(repositoryConnection.Url, UriKind.Absolute, out var repositoryUri))
             {
-                log.Verbose($"Git vendor: Unknown (URL is not a valid URI: '{repositoryConnection.Url}')");
+                log.Verbose($"Could not load a Git vendor: URL is not a valid URI '{repositoryConnection.Url}'");
                 return null;
             }
+
 
             //first try getting a handling factory by checking if it can be handled as a cloud hosted repo
             var handlingFactory = clientFactories.SingleOrDefault(f => f.CanHandleAsCloudHosted(repositoryUri));

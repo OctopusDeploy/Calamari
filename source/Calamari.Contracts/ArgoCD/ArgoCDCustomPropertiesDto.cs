@@ -27,10 +27,12 @@ public interface IGitCredentialDto
 // UsernamePasswordGitCredentialDto - could rename, but not worth altering the API
 public record GitCredentialDto(string Url, string Username, string Password) : IGitCredentialDto
 {
-    public string Type => nameof(GitCredentialDto);
+    public const string DiscriminatorValue = "UsernamePassword";
+    public string Type => DiscriminatorValue;
 }
 
 public record SshKeyGitCredentialDto(string Url, string Username, string PrivateKey) : IGitCredentialDto
 {
-    public string Type => nameof(SshKeyGitCredentialDto);
+    public const string DiscriminatorValue = "SshKey";
+    public string Type => DiscriminatorValue;
 }

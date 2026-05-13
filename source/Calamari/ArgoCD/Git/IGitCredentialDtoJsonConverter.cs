@@ -7,9 +7,8 @@ namespace Calamari.ArgoCD.Git;
 
 /// <summary>
 /// Discriminates an <see cref="IGitCredentialDto"/> on the <c>Type</c> field emitted by Octopus
-/// Server (matching the concrete type name). A missing <c>Type</c> defaults to
-/// <see cref="GitCredentialDto"/> for backwards compatibility with server versions that pre-date
-/// the field.
+/// Server. A missing <c>Type</c> defaults to <see cref="GitCredentialDto"/> for backwards
+/// compatibility with server versions that pre-date the field.
 /// </summary>
 public class IGitCredentialDtoJsonConverter : JsonConverter<IGitCredentialDto>
 {
@@ -32,8 +31,8 @@ public class IGitCredentialDtoJsonConverter : JsonConverter<IGitCredentialDto>
 
         return type switch
         {
-            null or nameof(GitCredentialDto) => obj.ToObject<GitCredentialDto>(ConcreteSerializer)!,
-            nameof(SshKeyGitCredentialDto) => obj.ToObject<SshKeyGitCredentialDto>(ConcreteSerializer)!,
+            null or GitCredentialDto.DiscriminatorValue => obj.ToObject<GitCredentialDto>(ConcreteSerializer)!,
+            SshKeyGitCredentialDto.DiscriminatorValue => obj.ToObject<SshKeyGitCredentialDto>(ConcreteSerializer)!,
             _ => throw new JsonSerializationException($"Unrecognised credential Type '{type}'.")
         };
     }

@@ -68,7 +68,7 @@ namespace Calamari.ArgoCD.Git
 
             if (gitConnection is SshGitConnection ssh)
             {
-                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new SshKeyMemoryCredentials
+                options.FetchOptions.CredentialsProvider = (_, _, _) => new SshKeyMemoryCredentials
                 {
                     Username = ssh.Username,
                     PrivateKey = ssh.PrivateKey,
@@ -135,6 +135,7 @@ namespace Calamari.ArgoCD.Git
             {
                 log.Verbose("Git is using SSH authentication, Git vendor functionality will not be available");
             }
+
 
             return new RepositoryWrapper(repo,
                                          fileSystem,

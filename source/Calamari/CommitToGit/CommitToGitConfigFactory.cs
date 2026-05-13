@@ -36,8 +36,8 @@ namespace Calamari.CommitToGit
 
             return new CommitToGitRepositorySettings(
                                                      new HttpsGitConnection(
-                                                                       variables.Get(SpecialVariables.Action.Git.Username),
-                                                                       variables.Get(SpecialVariables.Action.Git.Password),
+                                                                       properties.GitCredential.Username,
+                                                                       properties.GitCredential.Password,
                                                                        uriAsString,
                                                                        GitReference.CreateFromString(gitReferenceAsString)),
             commitParameters,

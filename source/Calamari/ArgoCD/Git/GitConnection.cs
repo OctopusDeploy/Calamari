@@ -1,5 +1,8 @@
 #nullable enable
 
+using System;
+using Calamari.Common.Commands;
+
 namespace Calamari.ArgoCD.Git
 {
     public interface IRepositoryConnection
@@ -16,6 +19,11 @@ namespace Calamari.ArgoCD.Git
     {
         string? Username { get; }
         string? Password { get; }
+
+        // Resolved as lazy because we don't have a strong trust that the input data is of the correct format
+        // If this is _not_ a URI, the existing code would throw an error when it gets used - so we want to
+        // replicate that same lazy error throwing.
+        public Lazy<Uri> Uri { get; }
     }
 
     public class HttpsGitConnection : IHttpsGitConnection
@@ -26,12 +34,27 @@ namespace Calamari.ArgoCD.Git
             Password = password;
             Url = url;
             GitReference = gitReference;
+            Uri = new Lazy<Uri>(() => ParseAsHttpsUri(Url));
         }
 
         public string? Username { get; }
         public string? Password { get; }
         public string Url { get; }
         public GitReference GitReference { get; }
+
+        public Lazy<Uri> Uri { get; }
+
+        static Uri ParseAsHttpsUri(string repositoryUrl)
+        {
+            if (!System.Uri.TryCreate(repositoryUrl, UriKind.Absolute, out var uri))
+            {
+                throw new CommandException(
+                    $"Pull request operations require an HTTPS repository URL, but got: '{repositoryUrl}'. "
+                    + "SCP-style SSH URLs (e.g. git@github.com:org/repo.git) are not supported for pull request creation.");
+            }
+
+            return uri;
+        }
     }
 
     public class SshGitConnection : IGitConnection
