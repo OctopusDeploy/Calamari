@@ -63,8 +63,7 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
                   "Type": "SshKey",
                   "Url": "git@github.com:org/repo.git",
                   "Username": "git",
-                  "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----",
-                  "Passphrase": "my-passphrase"
+                  "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----"
                 }
               ]
             }
@@ -96,8 +95,7 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
                   "Type": "SshKey",
                   "Url": "git@github.com:org/other.git",
                   "Username": "git",
-                  "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----",
-                  "Passphrase": null
+                  "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----"
                 }
               ]
             }
