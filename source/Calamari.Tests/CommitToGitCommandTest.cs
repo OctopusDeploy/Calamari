@@ -12,7 +12,9 @@ using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
+using Newtonsoft.Json;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.CommitToGit;
 
 namespace Calamari.Tests;
 
@@ -23,6 +25,8 @@ public class CommitToGitCommandTest
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
     readonly string variablePassword = "password";
     readonly string variableFileName = "variables.json";
+    readonly string customPropertiesPassword = "props-password";
+    readonly string customPropertiesFileName = "custom-properties.json";
     string executionDirectory;
 
     string OriginPath => Path.Combine(executionDirectory, "origin");
@@ -43,8 +47,6 @@ public class CommitToGitCommandTest
         // Add git-repository data to the variables.
         variables.AddRange([
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.Url, OriginPath, false),
-            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.Username, "", false),
-            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.Password, "", true),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.Reference, targetBranchFriendlyName, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, "arbitrarySubPath", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.PullRequest.Create, "false", false),
@@ -360,13 +362,68 @@ public class CommitToGitCommandTest
         File.Exists(proofFile).Should().BeTrue("the variable value should take precedence over the --scriptParameters arg");
     }
 
+    [Test]
+    public void CommitToGit_FailsWithCommandException_WhenCustomPropertiesFileOptionIsMissing()
+    {
+        RunCommitToGit(includeCustomProperties: false)
+            .Should().NotBe(0, "the command must reject runs that do not supply --customPropertiesFile");
+    }
+
+    [Test]
+    public void CommitToGit_FailsWithCommandException_WhenCustomPropertiesPasswordOptionIsMissing()
+    {
+        var propsPath = WriteCustomPropertiesFile("n", OriginPath, "u", "p");
+
+        RunCommitToGit(includeCustomProperties: false, "--customPropertiesFile", propsPath)
+            .Should().NotBe(0, "the command must reject runs that do not supply --customPropertiesPassword");
+    }
+
+    [Test]
+    public void CommitToGit_FailsWithCommandException_WhenCustomPropertiesFileDoesNotExist()
+    {
+        var missingPath = Path.Combine(executionDirectory, "does-not-exist.json");
+
+        RunCommitToGit(includeCustomProperties: false,
+                       "--customPropertiesFile", missingPath,
+                       "--customPropertiesPassword", customPropertiesPassword)
+            .Should().NotBe(0, "the command must reject runs whose --customPropertiesFile path does not exist");
+    }
+
     // --- Helpers ---
 
     int RunCommitToGit(params string[] extraArgs)
+        => RunCommitToGit(includeCustomProperties: true, extraArgs);
+
+    int RunCommitToGit(bool includeCustomProperties, params string[] extraArgs)
     {
         var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
         File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
-        return Program.Main(["commit-to-git", "--variables", absPathToVariables, "--variablesPassword", variablePassword, ..extraArgs]);
+
+        var args = new List<string>
+        {
+            "commit-to-git",
+            "--variables", absPathToVariables,
+            "--variablesPassword", variablePassword,
+        };
+
+        if (includeCustomProperties)
+        {
+            var propsPath = WriteCustomPropertiesFile("MyCred", OriginPath, "git-user", "git-password");
+            args.AddRange(["--customPropertiesFile", propsPath, "--customPropertiesPassword", customPropertiesPassword]);
+        }
+
+        args.AddRange(extraArgs);
+
+        return Program.Main(args.ToArray());
+    }
+
+    string WriteCustomPropertiesFile(string credentialName, string repositoryUrl, string username, string password)
+    {
+        var dto = new CommitToGitCustomPropertiesDto(new GitCredentialDto(credentialName, repositoryUrl, username, password));
+        var json = JsonConvert.SerializeObject(dto);
+        var absPath = Path.Combine(executionDirectory, customPropertiesFileName);
+        File.WriteAllBytes(absPath, AesEncryption.ForServerVariables(customPropertiesPassword).Encrypt(json));
+        return absPath;
     }
 
     string CreateZipWithEntry(string packageName, string entryPath, string content)

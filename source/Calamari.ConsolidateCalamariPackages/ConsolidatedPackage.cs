@@ -10,7 +10,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
     public class ConsolidatedPackage : IConsolidatedPackage
     {
         readonly IConsolidatedPackageStreamProvider packageStreamProvider;
-        
+
         public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, IConsolidatedPackageIndex index)
         {
             this.packageStreamProvider = packageStreamProvider;
@@ -28,13 +28,16 @@ namespace Octopus.Calamari.ConsolidatedPackage
                 throw new Exception($"Could not find platform {platform} for {calamariFlavour}");
             }
 
-            var platformFilesLookup = platformFiles.ToDictionary(f => f.Source);
-
             using var sourceStream = packageStreamProvider.OpenStream();
             using var source = new ZipArchive(sourceStream, ZipArchiveMode.Read);
-            foreach (var sourceEntry in source.Entries)
+
+            var entriesLookup = source.Entries.ToDictionary(e => e.FullName);
+            foreach (var fileTransfer in platformFiles)
             {
-                if (!platformFilesLookup.TryGetValue(sourceEntry.FullName, out var fileTransfer)) continue;
+                if (!entriesLookup.TryGetValue(fileTransfer.Source, out var sourceEntry))
+                {
+                    continue;
+                }
 
                 using var sourceEntryStream = sourceEntry.Open();
                 yield return (fileTransfer.Destination, sourceEntry.Length, sourceEntryStream);

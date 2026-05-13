@@ -4,6 +4,7 @@ using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Octopus.Calamari.Contracts.CommitToGit;
 
 namespace Calamari.CommitToGit
 {
@@ -16,7 +17,7 @@ namespace Calamari.CommitToGit
             this.nonSensitiveVariables = nonSensitiveVariables;
         }
 
-        public CommitToGitRepositorySettings CreateRepositoryConfig(RunningDeployment deployment)
+        public CommitToGitRepositorySettings CreateRepositoryConfig(RunningDeployment deployment, ICustomPropertiesLoader customPropertiesLoader)
         {
             var variables = deployment.Variables;
 
@@ -31,10 +32,12 @@ namespace Calamari.CommitToGit
             var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Action.Git.CommitMessageDescription) ?? string.Empty);
             var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest);
 
+            var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
+
             return new CommitToGitRepositorySettings(
                                                      new HttpsGitConnection(
-                                                                       variables.Get(SpecialVariables.Action.Git.Username),
-                                                                       variables.Get(SpecialVariables.Action.Git.Password),
+                                                                       properties.GitCredential.Username,
+                                                                       properties.GitCredential.Password,
                                                                        uriAsString,
                                                                        GitReference.CreateFromString(gitReferenceAsString)),
             commitParameters,
