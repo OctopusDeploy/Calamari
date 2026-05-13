@@ -129,7 +129,7 @@ namespace Calamari.ArgoCD.Git
                 return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
             }
 
-            var (title, number, uri) = await CreatePullRequest(
+            var ((title, number, uri), vendorName) = await CreatePullRequest(
                 summary,
                 description,
                 pushToBranchName,
@@ -143,10 +143,11 @@ namespace Calamari.ArgoCD.Git
                 connection.Url.AbsoluteUri,
                 title,
                 uri,
-                number);
+                number,
+                vendorName);
         }
 
-        async Task<PullRequest> CreatePullRequest(
+        async Task<(PullRequest PullRequest, string VendorName)> CreatePullRequest(
             string summary,
             string description,
             GitBranchName pushToBranchName,
@@ -167,13 +168,9 @@ namespace Calamari.ArgoCD.Git
                     currentBranchName,
                     cancellationToken);
 
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Title", pullRequest.Title);
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Number", pullRequest.Number.ToString());
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Url", pullRequest.Url);
-
                 log.Info($"Pull Request [{pullRequest.Title} (#{pullRequest.Number})]({pullRequest.Url}) Created");
 
-                return pullRequest;
+                return (pullRequest, vendorApiAdapter.Name);
             }
             catch (LibGit2SharpException e)
             {
@@ -297,5 +294,6 @@ namespace Calamari.ArgoCD.Git
         string RepositoryUri,
         string PullRequestTitle,
         string PullRequestUri,
-        long PullRequestNumber) : PushResult(CommitSha, ShortSha, CommitTimestamp);
+        long PullRequestNumber,
+        string VendorName) : PushResult(CommitSha, ShortSha, CommitTimestamp);
 }
