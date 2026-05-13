@@ -54,7 +54,7 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void WritePushResultOutput_WhenPushResultIsPullRequest_WritesCommitAndPullRequestVariables()
         {
-            writer.WritePushResultOutput(new PullRequestPushResult(CommitSha, ShortSha, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber));
+            writer.WritePushResultOutput(new PullRequestPushResult(CommitSha, ShortSha, Timestamp, RepositoryUrl, PrTitle, PrUrl, PrNumber, "GitHub"));
 
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");

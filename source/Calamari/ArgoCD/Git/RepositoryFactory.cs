@@ -136,7 +136,6 @@ namespace Calamari.ArgoCD.Git
                 log.Verbose("Git is using SSH authentication, Git vendor functionality will not be available");
             }
 
-
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,

@@ -23,6 +23,8 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
             repoName = parts[1];
         }
 
+        public string Name => "GitHub";
+
         public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
                                                          string body,
                                                          GitBranchName sourceBranch,

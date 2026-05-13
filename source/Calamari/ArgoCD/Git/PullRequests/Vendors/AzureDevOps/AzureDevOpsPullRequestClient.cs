@@ -19,7 +19,9 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 		{
 			this.repositoryConnection = repositoryConnection;
 		}
-		
+
+		public string Name => "AzureDevOps";
+
 		public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
 		                                                 string body,
 		                                                 GitBranchName sourceBranch,

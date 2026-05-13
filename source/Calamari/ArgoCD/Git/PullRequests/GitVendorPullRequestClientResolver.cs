@@ -33,7 +33,6 @@ namespace Calamari.ArgoCD.Git.PullRequests
                 return null;
             }
 
-
             //first try getting a handling factory by checking if it can be handled as a cloud hosted repo
             var handlingFactory = clientFactories.SingleOrDefault(f => f.CanHandleAsCloudHosted(repositoryUri));
 
