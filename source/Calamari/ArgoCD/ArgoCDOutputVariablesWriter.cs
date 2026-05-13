@@ -10,6 +10,8 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes;
+using Octopus.Calamari.Contracts.Git;
+using PullRequestCreatedServiceMessage = Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated;
 
 namespace Calamari.ArgoCD
 {
@@ -65,23 +67,24 @@ namespace Calamari.ArgoCD
                                                                                                        })
                                                                                                        .ToList()));
                 
-                var message = PullRequestCreatedServiceMessage(prResult);
+                var message = CreatePullRequestCreatedServiceMessage(prResult);
 
                 log.WriteServiceMessage(message);
             }
         }
 
-        static ServiceMessage PullRequestCreatedServiceMessage(PullRequestPushResult prResult)
+        static ServiceMessage CreatePullRequestCreatedServiceMessage(PullRequestPushResult prResult)
         {
             var parameters = new Dictionary<string, string>
             {
-                { Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Attributes.PullRequestUri, prResult.PullRequestUri },
-                { Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Attributes.RepositoryUri, prResult.RepositoryUri },
-                { Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Attributes.VendorName, prResult.VendorName },
+                { PullRequestCreatedServiceMessage.Attributes.PullRequestUri, prResult.PullRequestUri },
+                { PullRequestCreatedServiceMessage.Attributes.RepositoryUri, prResult.RepositoryUri },
+                { PullRequestCreatedServiceMessage.Attributes.VendorName, prResult.VendorName },
+                { PullRequestCreatedServiceMessage.Attributes.SourceType, PullRequestCreatedServiceMessage.SourceTypes.ArgoCD },
             };
 
             var message = new ServiceMessage(
-                                             Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated.Name,
+                                             PullRequestCreatedServiceMessage.Name,
                                              parameters);
             return message;
         }

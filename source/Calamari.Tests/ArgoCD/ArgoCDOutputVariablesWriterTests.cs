@@ -184,6 +184,7 @@ namespace Calamari.Tests.ArgoCD
             serviceMessage.GetValue("pullRequestUri").Should().Be(pushResult.PullRequestUri);
             serviceMessage.GetValue("repositoryUri").Should().Be(pushResult.RepositoryUri);
             serviceMessage.GetValue("vendorName").Should().Be(pushResult.VendorName);
+            serviceMessage.GetValue("sourceType").Should().Be("ArgoCD");
         }
     }
 }

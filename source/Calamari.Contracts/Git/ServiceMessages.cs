@@ -11,7 +11,12 @@ public static class ServiceMessages
             public const string PullRequestUri = "pullRequestUri";
             public const string RepositoryUri = "repositoryUri";
             public const string VendorName = "vendorName";
+            public const string SourceType = "sourceType";
+        }
+        
+        public static class SourceTypes
+        {
+            public const string ArgoCD = "ArgoCD";
         }
     }
-
 }
