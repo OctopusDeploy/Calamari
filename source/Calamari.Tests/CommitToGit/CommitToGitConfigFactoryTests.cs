@@ -1,4 +1,5 @@
 using System;
+using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.CommitToGit;
@@ -44,8 +45,10 @@ public class CommitToGitConfigFactoryTests
 
         var config = factory.CreateRepositoryConfig(deployment, loader);
 
-        config.GitConnection.Username.Should().Be("user-from-file");
-        config.GitConnection.Password.Should().Be("pwd-from-file");
-        config.GitConnection.Url.Should().Be(new Uri("https://example.invalid/repo.git"));
+        var httpsGitConnection = config.GitConnection as HttpsGitConnection;
+        httpsGitConnection.Should().NotBeNull();
+        httpsGitConnection!.Username.Should().Be("user-from-file");
+        httpsGitConnection.Password.Should().Be("pwd-from-file");
+        httpsGitConnection.Uri.Value.Should().Be(new Uri("https://example.invalid/repo.git"));
     }
 }
