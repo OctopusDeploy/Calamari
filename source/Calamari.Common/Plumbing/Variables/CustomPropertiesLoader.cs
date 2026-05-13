@@ -4,6 +4,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Newtonsoft.Json;
+using NuGet.Packaging;
 
 namespace Calamari.Common.Plumbing.Variables
 {
@@ -30,10 +31,8 @@ namespace Calamari.Common.Plumbing.Variables
                 TypeNameHandling = TypeNameHandling.None,
                 DateParseHandling = DateParseHandling.None,
             };
-            foreach (var converter in converters)
-            {
-                serializerSettings.Converters.Add(converter);
-            }
+
+            serializerSettings.Converters.AddRange(converters);
         }
 
         public T Load<T>()

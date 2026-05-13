@@ -25,12 +25,12 @@ public class AuthenticatingRepositoryFactory
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
         if (gitCredential is GitCredentialDto passwordCredential)
         {
-            var gitConnection = new HttpsGitConnection(passwordCredential.Username, passwordCredential.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
+            var gitConnection = new HttpsGitConnection(passwordCredential.Username, passwordCredential.Password, GitCloneSafeUrl.ConvertToUriString(requestedUrl), GitReference.CreateFromString(targetRevision));
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
         log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
-        var anonGitConnection = new HttpsGitConnection(null, null, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
+        var anonGitConnection = new HttpsGitConnection(null, null, GitCloneSafeUrl.ConvertToUriString(requestedUrl), GitReference.CreateFromString(targetRevision));
         return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), anonGitConnection);
     }
 }

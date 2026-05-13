@@ -12,7 +12,7 @@ public class GitCloneSafeUrlTests
     [TestCase("git@bitbucket.com:FooBar.git", "https://bitbucket.com/FooBar.git")]
     public void FromString_ShouldConvertGitScpAddressToUri(string scpAddress, string expectedUrl)
     {
-        var result = GitCloneSafeUrl.FromString(scpAddress);
+        var result = GitCloneSafeUrl.ConvertToUriString(scpAddress);
         result.Should().Be(expectedUrl);
     } 
 
@@ -20,7 +20,7 @@ public class GitCloneSafeUrlTests
     public void FromString_ShouldReturnValidUriUnmodified()
     {
         var uri = "https://github.com/Foo/Bar.git";
-        var result = GitCloneSafeUrl.FromString(uri);
+        var result = GitCloneSafeUrl.ConvertToUriString(uri);
         result.Should().Be(uri);
     } 
     
@@ -28,7 +28,7 @@ public class GitCloneSafeUrlTests
     public void FromString_ShouldThrowInvalidGitScpAddress()
     {
         var uri = "git@ihavenopath.com";
-        var func = () => GitCloneSafeUrl.FromString(uri);
+        var func = () => GitCloneSafeUrl.ConvertToUriString(uri);
         func.Should().Throw<FormatException>();
     }
 
@@ -36,7 +36,7 @@ public class GitCloneSafeUrlTests
     public void ANonProtocoledString_AutomaticallyAddsOci()
     {
         var uri = "registry-1.docker.io/bitnamicharts";
-        var result = GitCloneSafeUrl.FromString(uri);
+        var result = GitCloneSafeUrl.ConvertToUriString(uri);
         result.Should().Be($"oci://{uri}");
     }
 }
