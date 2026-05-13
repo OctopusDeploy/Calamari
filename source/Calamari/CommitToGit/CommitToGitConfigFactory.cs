@@ -35,10 +35,10 @@ namespace Calamari.CommitToGit
             var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
 
             return new CommitToGitRepositorySettings(
-                                                     new GitConnection(
+                                                     new HttpsGitConnection(
                                                                        properties.GitCredential.Username,
                                                                        properties.GitCredential.Password,
-                                                                       new Uri(uriAsString),
+                                                                       uriAsString,
                                                                        GitReference.CreateFromString(gitReferenceAsString)),
             commitParameters,
             variables.Get(SpecialVariables.Action.Git.DestinationPath));

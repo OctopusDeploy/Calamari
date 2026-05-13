@@ -12,7 +12,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
 
             return url;
         }
-        
+
         // This extension method is here until we can drop netfx and put it into the interface
         public static string[] ExtractPropertiesFromUrlPath(this Uri repositoryUri)
         {

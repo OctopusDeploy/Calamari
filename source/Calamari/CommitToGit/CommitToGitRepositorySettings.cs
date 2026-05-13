@@ -6,14 +6,14 @@ namespace Calamari.CommitToGit
 {
     public class CommitToGitRepositorySettings
     {
-        public CommitToGitRepositorySettings(GitConnection gitConnection, GitCommitParameters commitParameters, string destinationPath)
+        public CommitToGitRepositorySettings(IGitConnection gitConnection, GitCommitParameters commitParameters, string destinationPath)
         {
             GitConnection = gitConnection;
             DestinationPath = destinationPath;
             CommitParameters = commitParameters;
         }
 
-        public GitConnection GitConnection { get; }
+        public IGitConnection GitConnection { get; }
 
         public string DestinationPath { get; }
         public GitCommitParameters CommitParameters { get; }
