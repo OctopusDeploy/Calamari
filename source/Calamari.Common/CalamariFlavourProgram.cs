@@ -22,6 +22,7 @@ using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -104,6 +105,7 @@ public abstract class CalamariFlavourProgram(ILog log)
         // For Pipeline Commands
         builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
         builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
+        builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
         builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
 
         builder.RegisterModule<VariablesModule>();
@@ -125,8 +127,6 @@ public abstract class CalamariFlavourProgram(ILog log)
                .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)
                .AsSelf()
                .InstancePerDependency();
-
-        builder.RegisterInstance(options).AsSelf().SingleInstance();
 
         builder.RegisterModule<StructuredConfigVariablesModule>();
     }

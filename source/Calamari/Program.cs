@@ -95,7 +95,6 @@ namespace Calamari
             base.ConfigureContainer(builder, options);
 
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
-            builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
             builder.RegisterType<ResourceRetriever>().As<IResourceRetriever>().SingleInstance();
             builder.RegisterType<RunningResourceStatusCheck>().As<IRunningResourceStatusCheck>().SingleInstance();
