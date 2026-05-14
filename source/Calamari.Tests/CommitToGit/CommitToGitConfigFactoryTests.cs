@@ -8,6 +8,7 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.CommitToGit;
+using Octopus.Calamari.Contracts.Git;
 
 namespace Calamari.Tests.CommitToGit;
 
@@ -39,7 +40,7 @@ public class CommitToGitConfigFactoryTests
     public void CreateRepositoryConfig_UsesUsernameAndPasswordFromLoadedProperties()
     {
         loader.Load<CommitToGitCustomPropertiesDto>()
-              .Returns(new CommitToGitCustomPropertiesDto(new GitCredentialDto("MyCred", "https://example.invalid/repo.git", "user-from-file", "pwd-from-file")));
+              .Returns(new CommitToGitCustomPropertiesDto(new GitUsernameAndPasswordCredentialDto("MyCred", "https://example.invalid/repo.git", "user-from-file", "pwd-from-file")));
 
         var deployment = new RunningDeployment(null, variables);
 
