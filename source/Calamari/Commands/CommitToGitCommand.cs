@@ -85,7 +85,7 @@ public class CommitToGitCommand : Command
         if (!fileSystem.FileExists(customPropertiesFile))
             throw new CommandException($"Custom properties file '{customPropertiesFile}' does not exist.");
 
-        var customPropertiesLoader = new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword);
+        var customPropertiesLoader = new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword, new GitCredentialDtoJsonConverter());
 
         var deployment = new RunningDeployment(pathToPackage, variables);
         var repositoryConfig = configFactory.CreateRepositoryConfig(deployment, customPropertiesLoader);
