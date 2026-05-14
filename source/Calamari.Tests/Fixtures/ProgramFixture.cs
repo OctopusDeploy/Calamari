@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Calamari.Common;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
@@ -20,20 +21,20 @@ namespace Calamari.Tests.Fixtures
             Assert.AreEqual(1, retCode);
         }
 
-        static int RunProgram()
-            => Program.Main(new[] {"run-script"});
+        static async Task<int> RunProgram()
+            => await Program.Main(["run-script"]);
 
         [Test]
-        public void OctopusCalamariWorkingDirectoryEnvironmentVariableIsSet()
+        public async Task OctopusCalamariWorkingDirectoryEnvironmentVariableIsSet()
         {
             EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory", null);
-            RunProgram();
+            await RunProgram();
             // This usage of Environment.GetEnvironmentVariable is fine as it's not accessing a test dependency variable
             Environment.GetEnvironmentVariable("OctopusCalamariWorkingDirectory").Should().NotBeNullOrWhiteSpace();
         }
         
         [Test]
-        public void ProxyIsInitialized()
+        public async Task ProxyIsInitialized()
         {
             var existingProxy = WebRequest.DefaultWebProxy;
             try
@@ -41,7 +42,7 @@ namespace Calamari.Tests.Fixtures
                 EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", "localhost");
 
                 WebRequest.DefaultWebProxy = null;
-                RunProgram();
+                await RunProgram();
                 WebRequest.DefaultWebProxy.Should().NotBeNull();
             }
             finally
@@ -52,9 +53,9 @@ namespace Calamari.Tests.Fixtures
         }
 
         [Test]
-        public void DefaultRegexMatchTimeoutIsSet()
+        public async Task DefaultRegexMatchTimeoutIsSet()
         {
-            RunProgram();
+            await RunProgram();
             var regexTimeout = AppDomain.CurrentDomain.GetData("REGEX_DEFAULT_MATCH_TIMEOUT");
             regexTimeout.Should().Be(AppDomainConfiguration.DefaultRegexMatchTimeout);
         }

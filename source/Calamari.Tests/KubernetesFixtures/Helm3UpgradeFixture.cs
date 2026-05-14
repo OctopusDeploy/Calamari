@@ -17,9 +17,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void Upgrade_Succeeds()
+        public async Task Upgrade_Succeeds()
         {
-            var result = DeployPackage();
+            var result = await DeployPackage();
 
             result.AssertSuccess();
             result.AssertOutputMatches($"NAMESPACE: {Namespace}");
@@ -43,12 +43,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void HelmVersionNewerThanMinimumVersion_ReportsObjectStatus()
+        public async Task HelmVersionNewerThanMinimumVersion_ReportsObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
 
             result.AssertSuccess();
             result.AssertOutputMatches($"NAMESPACE: {Namespace}");
@@ -87,7 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
                 Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
-                var result = DeployPackage();
+                var result =await  DeployPackage();
 
                 result.AssertSuccess();
                 result.AssertOutputMatches($"NAMESPACE: {Namespace}");
@@ -109,12 +109,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void HooksOnlyPackage_RetrievesEmptyManifestButDoesNotReportObjectStatus()
+        public async Task HooksOnlyPackage_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
-            var result = DeployPackage("hooks-only-1.0.0.tgz");
+            var result = await DeployPackage("hooks-only-1.0.0.tgz");
 
             result.AssertSuccess();
             result.AssertOutputMatches($"NAMESPACE: {Namespace}");
@@ -137,12 +137,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void EmptyChart_RetrievesEmptyManifestButDoesNotReportObjectStatus()
+        public async Task EmptyChart_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
-            var result = DeployPackage("empty-chart-1.0.0.tgz");
+            var result =await  DeployPackage("empty-chart-1.0.0.tgz");
 
             result.AssertSuccess();
             result.AssertOutputMatches($"NAMESPACE: {Namespace}");
@@ -166,13 +166,13 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNon32BitWindows]
         [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
-        public void TargetingANamespaceThatDoesNotExistAbortsTheManifestSearchingLoop()
+        public async Task TargetingANamespaceThatDoesNotExistAbortsTheManifestSearchingLoop()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
             Variables.Set(SpecialVariables.Helm.Namespace, "this-namespace-does-not-exist");
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
 
             result.AssertFailure();
             result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");

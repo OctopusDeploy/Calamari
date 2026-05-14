@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
@@ -12,7 +13,7 @@ namespace Calamari.Tests.Fixtures.Variables
     {
 
         [Test]
-        public void ShouldLogVariables()
+        public async Task ShouldLogVariables()
         {
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.PrintVariables, true.ToString());
@@ -26,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Variables
             {
                 VariablesOverride = variables
             };
-            program.RunStubCommand();
+            await program.RunStubCommand();
 
             var messages = program.TestLog.Messages;
             var messagesAsString = string.Join(Environment.NewLine, program.TestLog.Messages.Select(m => m.FormattedMessage));

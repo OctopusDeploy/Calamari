@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -10,6 +11,7 @@ using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
+using JetBrains.Annotations;
 
 namespace Calamari.Tests.Helpers
 {
@@ -27,21 +29,21 @@ namespace Calamari.Tests.Helpers
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
 
-        public int RunWithArgs(string[] args)
+        public async Task<int> RunWithArgs(string[] args)
         {
-            return Run(args);
+            return await Run(args);
         }
 
-        public int RunStubCommand()
+        public async Task<int> RunStubCommand()
         {
             registerTestAssembly = false;
             CommandOverride  = new StubCommand(() => StubWasCalled = true);
-            return Run(new [] {"stub"});
+            return await Run(["stub"]);
         }
 
-        protected override Assembly GetProgramAssemblyToRegister()
+        protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
         {
-            return typeof(Program).Assembly;
+            yield return typeof(Program).Assembly;
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()

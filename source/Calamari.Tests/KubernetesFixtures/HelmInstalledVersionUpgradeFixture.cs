@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
@@ -12,9 +13,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNon32BitWindows]
         [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
-        public void Upgrade_Succeeds()
+        public async Task Upgrade_Succeeds()
         {
-            var result = DeployPackage();
+            var result =await  DeployPackage();
 
             result.AssertSuccess();
             result.AssertNoOutput("Using custom helm executable at");

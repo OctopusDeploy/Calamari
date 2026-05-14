@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
@@ -36,7 +37,7 @@ public class CommitToGitCommandTest
     CalamariExecutionVariableCollection variables;
 
     [SetUp]
-    public void setUp()
+    public void SetUp()
     {
         executionDirectory = fileSystem.CreateTemporaryDirectory();
 
@@ -57,19 +58,19 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    public void CommitToGitRunsScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
+    public async Task CommitToGitRunsScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
     {
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptBody, "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"", false),
             new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
         GetCommittedFileContent("proof.txt").Should().NotBeNull("the transform script should have created and committed the file to the repository");
     }
 
     [Test]
-    public void CommitToGitRunsInlineScriptWithPackageDependencyToCreateFileWhichIsCommitedToRepository()
+    public async Task CommitToGitRunsInlineScriptWithPackageDependencyToCreateFileWhichIsCommitedToRepository()
     {
         const string packageReferenceName = "my-scripts";
 
@@ -83,12 +84,12 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
         GetCommittedFileContent("proof.txt").Should().NotBeNull("the helper script should have created and committed the file to the repository");
     }
 
     [Test]
-    public void CommitToGitRunsPackageBasedScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
+    public async Task CommitToGitRunsPackageBasedScriptWithNoDependenciesToCreateFileWhichIsCommitedToRepository()
     {
         var zipPath = CreateZipWithEntry("transform-script", "script.sh", "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"");
 
@@ -96,12 +97,12 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(ScriptVariables.ScriptFileName, "script.sh", false),
         ]);
 
-        RunCommitToGit("--package", zipPath).Should().Be(0);
+        (await RunCommitToGit("--package", zipPath)).Should().Be(0);
         GetCommittedFileContent("proof.txt").Should().NotBeNull("the package-based script should have created and committed the file to the repository");
     }
 
     [Test]
-    public void CommitToGitRunsPackageBasedScriptWithScriptParameters()
+    public async Task CommitToGitRunsPackageBasedScriptWithScriptParameters()
     {
         var proofFile = Path.Combine(executionDirectory, "script_ran.txt");
         var zipPath = CreateZipWithEntry("transform-script", "script.sh",
@@ -111,12 +112,12 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(ScriptVariables.ScriptFileName, "script.sh", false),
         ]);
 
-        RunCommitToGit("--package", zipPath, "--scriptParameters", "expected-arg").Should().Be(0);
+        (await RunCommitToGit("--package", zipPath, "--scriptParameters", "expected-arg")).Should().Be(0);
         File.Exists(proofFile).Should().BeTrue("the transform script should have run with the expected argument");
     }
 
     [Test]
-    public void CanCopyPackageFilesIntoGitRepository()
+    public async Task CanCopyPackageFilesIntoGitRepository()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -124,14 +125,14 @@ public class CommitToGitCommandTest
         var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
         AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
 
         GetCommittedFileContent($"{destinationPath}/configs/settings.json")
             .Should().NotBeNull("the package files should have been copied into the repository under the destination path");
     }
 
     [Test]
-    public void SubstitutesNonSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
+    public async Task SubstitutesNonSensitiveVariablesIntoAnExpandedPackageThenCopiesToGitRepository()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -144,7 +145,7 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable("MyVar", "production-value", false),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
 
         var content = GetCommittedFileContent($"{destinationPath}/configs/settings.json");
         content.Should().NotBeNull("the package file should have been copied into the repository");
@@ -153,7 +154,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    public void OnlyCopiesFilesMatchingInputPathsFromPackageIntoGitRepository()
+    public async Task OnlyCopiesFilesMatchingInputPathsFromPackageIntoGitRepository()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -165,7 +166,7 @@ public class CommitToGitCommandTest
         });
         AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
 
         GetCommittedFileContent($"{destinationPath}/configs/settings.json")
             .Should().NotBeNull("files matching the InputFilePaths glob should be copied");
@@ -174,7 +175,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    public void CopiesAllGitReferenceFilesIntoGitRepository()
+    public async Task CopiesAllGitReferenceFilesIntoGitRepository()
     {
         const string gitDependencyName = "my-git-dep";
         const string destinationPath = "output-dir";
@@ -182,14 +183,14 @@ public class CommitToGitCommandTest
         var zipPath = CreateZipWithEntry(gitDependencyName, "manifests/deployment.yaml", "apiVersion: apps/v1");
         AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
 
         GetCommittedFileContent($"{destinationPath}/manifests/deployment.yaml")
             .Should().NotBeNull("git reference files should be copied into the repository under the destination path");
     }
 
     [Test]
-    public void FailsWhenSensitiveVariableTemplatesAreEncounteredDuringSubstitution()
+    public async Task FailsWhenSensitiveVariableTemplatesAreEncounteredDuringSubstitution()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -202,14 +203,14 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable("MySecret", "super-secret-value", true),
         ]);
 
-        RunCommitToGit().Should().NotBe(0);
+        (await RunCommitToGit()).Should().NotBe(0);
 
         var content = GetCommittedFileContent($"{destinationPath}/configs/settings.json");
         content.Should().BeNull("the package file should not be committed when sensitive variable substitution throws");
     }
 
     [Test]
-    public void CommitMessageSummaryIsUsedAsCommitMessage()
+    public async Task CommitMessageSummaryIsUsedAsCommitMessage()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -217,25 +218,25 @@ public class CommitToGitCommandTest
         var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{}");
         AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
 
         using var repo = new Repository(OriginPath);
         repo.Branches[targetBranchFriendlyName].Tip.Message.Should().StartWith("Git Commit Summary");
     }
 
     [Test]
-    public void FailingScriptResultsInNonZeroExitCode()
+    public async Task FailingScriptResultsInNonZeroExitCode()
     {
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptBody, "exit 1", false),
-            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
+            new CalamariExecutionVariable(ScriptVariables.Syntax, nameof(ScriptSyntax.Bash), false),
         ]);
 
-        RunCommitToGit().Should().NotBe(0);
+        (await RunCommitToGit()).Should().NotBe(0);
     }
 
     [Test]
-    public void BothPackageCopyAndScriptTransformProduceFilesInRepository()
+    public async Task BothPackageCopyAndScriptTransformProduceFilesInRepository()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -245,16 +246,16 @@ public class CommitToGitCommandTest
 
         variables.AddRange([
             new CalamariExecutionVariable(ScriptVariables.ScriptBody, "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/script-output.txt\"", false),
-            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
+            new CalamariExecutionVariable(ScriptVariables.Syntax, nameof(ScriptSyntax.Bash), false),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
         GetCommittedFileContent($"{destinationPath}/configs/settings.json").Should().NotBeNull("package files should be copied to the repository");
         GetCommittedFileContent("script-output.txt").Should().NotBeNull("the script should have created and committed the file");
     }
 
     [Test]
-    public void MultiplePackagesAreAllCopiedToGitRepository()
+    public async Task MultiplePackagesAreAllCopiedToGitRepository()
     {
         const string package1Name = "configs-package";
         const string package2Name = "templates-package";
@@ -280,13 +281,13 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
         GetCommittedFileContent($"{destinationPath}/configs/settings.json").Should().NotBeNull("files from the first package should be copied");
         GetCommittedFileContent($"{destinationPath}/configs/template.yaml").Should().NotBeNull("files from the second package should be copied");
     }
 
     [Test]
-    public void PackageFilesAreCopiedToDestinationSubFolderDefinedInMetadata()
+    public async Task PackageFilesAreCopiedToDestinationSubFolderDefinedInMetadata()
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "base-dir";
@@ -303,7 +304,7 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
 
         GetCommittedFileContent($"{destinationPath}/{destinationSubFolder}/configs/settings.json")
             .Should().NotBeNull("package files should be placed under the DestinationSubFolder from the source metadata");
@@ -312,7 +313,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    public void GitDependencyFilesAreCopiedToDestinationSubFolderDefinedInMetadata()
+    public async Task GitDependencyFilesAreCopiedToDestinationSubFolderDefinedInMetadata()
     {
         const string gitDependencyName = "my-git-dep";
         const string destinationPath = "base-dir";
@@ -321,7 +322,7 @@ public class CommitToGitCommandTest
         var zipPath = CreateZipWithEntry(gitDependencyName, "deployment.yaml", "apiVersion: apps/v1");
         AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath, destinationSubFolder);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
 
         GetCommittedFileContent($"{destinationPath}/{destinationSubFolder}/deployment.yaml")
             .Should().NotBeNull("git dependency files should be placed under the DestinationSubFolder from the source metadata");
@@ -330,24 +331,24 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    public void CommitToGitRunsScriptProvidedViaScriptBodyBySyntaxVariable()
+    public async Task CommitToGitRunsScriptProvidedViaScriptBodyBySyntaxVariable()
     {
         variables.AddRange([
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"", false),
         ]);
 
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
         GetCommittedFileContent("proof.txt").Should().NotBeNull("script provided via syntax-specific variable should run and commit the file");
     }
 
     [Test]
-    public void WhenNoScriptAndNoPackagesCommandSucceedsWithZeroExitCode()
+    public async Task WhenNoScriptAndNoPackagesCommandSucceedsWithZeroExitCode()
     {
-        RunCommitToGit().Should().Be(0);
+        (await RunCommitToGit()).Should().Be(0);
     }
 
     [Test]
-    public void WhenBothScriptParametersArgAndVariableAreSetVariableTakesPrecedence()
+    public async Task WhenBothScriptParametersArgAndVariableAreSetVariableTakesPrecedence()
     {
         var proofFile = Path.Combine(executionDirectory, "arg_check.txt");
         var zipPath = CreateZipWithEntry("transform-script", "script.sh",
@@ -358,46 +359,46 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(ScriptVariables.ScriptParameters, "from-variable", false),
         ]);
 
-        RunCommitToGit("--package", zipPath, "--scriptParameters", "from-arg").Should().Be(0);
+       (await RunCommitToGit("--package", zipPath, "--scriptParameters", "from-arg")).Should().Be(0);
         File.Exists(proofFile).Should().BeTrue("the variable value should take precedence over the --scriptParameters arg");
     }
 
     [Test]
-    public void CommitToGit_FailsWithCommandException_WhenCustomPropertiesFileOptionIsMissing()
+    public async Task CommitToGit_FailsWithCommandException_WhenCustomPropertiesFileOptionIsMissing()
     {
-        RunCommitToGit(includeCustomProperties: false)
+        (await RunCommitToGit(includeCustomProperties: false))
             .Should().NotBe(0, "the command must reject runs that do not supply --customPropertiesFile");
     }
 
     [Test]
-    public void CommitToGit_FailsWithCommandException_WhenCustomPropertiesPasswordOptionIsMissing()
+    public async Task CommitToGit_FailsWithCommandException_WhenCustomPropertiesPasswordOptionIsMissing()
     {
         var propsPath = WriteCustomPropertiesFile("n", OriginPath, "u", "p");
 
-        RunCommitToGit(includeCustomProperties: false, "--customPropertiesFile", propsPath)
+        (await RunCommitToGit(includeCustomProperties: false, "--customPropertiesFile", propsPath))
             .Should().NotBe(0, "the command must reject runs that do not supply --customPropertiesPassword");
     }
 
     [Test]
-    public void CommitToGit_FailsWithCommandException_WhenCustomPropertiesFileDoesNotExist()
+    public async Task CommitToGit_FailsWithCommandException_WhenCustomPropertiesFileDoesNotExist()
     {
         var missingPath = Path.Combine(executionDirectory, "does-not-exist.json");
 
-        RunCommitToGit(includeCustomProperties: false,
+        (await RunCommitToGit(includeCustomProperties: false,
                        "--customPropertiesFile", missingPath,
-                       "--customPropertiesPassword", customPropertiesPassword)
+                       "--customPropertiesPassword", customPropertiesPassword))
             .Should().NotBe(0, "the command must reject runs whose --customPropertiesFile path does not exist");
     }
 
     // --- Helpers ---
 
-    int RunCommitToGit(params string[] extraArgs)
-        => RunCommitToGit(includeCustomProperties: true, extraArgs);
+    async Task<int> RunCommitToGit(params string[] extraArgs)
+        => await RunCommitToGit(includeCustomProperties: true, extraArgs);
 
-    int RunCommitToGit(bool includeCustomProperties, params string[] extraArgs)
+    async Task<int> RunCommitToGit(bool includeCustomProperties, params string[] extraArgs)
     {
         var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
-        File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
+        await File.WriteAllBytesAsync(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
 
         var args = new List<string>
         {
@@ -414,7 +415,7 @@ public class CommitToGitCommandTest
 
         args.AddRange(extraArgs);
 
-        return Program.Main(args.ToArray());
+        return await Program.Main(args.ToArray());
     }
 
     string WriteCustomPropertiesFile(string credentialName, string repositoryUrl, string username, string password)
