@@ -420,7 +420,7 @@ public class CommitToGitCommandTest
 
     string WriteCustomPropertiesFile(string credentialName, string repositoryUrl, string username, string password)
     {
-        var dto = new CommitToGitCustomPropertiesDto(new GitUsernameAndPasswordCredentialDto(credentialName, repositoryUrl, username, password));
+        var dto = new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto(credentialName, repositoryUrl, username, password));
         var json = JsonConvert.SerializeObject(dto);
         var absPath = Path.Combine(executionDirectory, customPropertiesFileName);
         File.WriteAllBytes(absPath, AesEncryption.ForServerVariables(customPropertiesPassword).Encrypt(json));

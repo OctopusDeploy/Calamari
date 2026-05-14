@@ -7,7 +7,7 @@ namespace Calamari.CommitToGit;
 
 /// <summary>
 /// Discriminates an <see cref="IGitCredentialDto"/> on the <c>Type</c> field emitted by Octopus
-/// Server. A missing <c>Type</c> defaults to <see cref="GitUsernameAndPasswordCredentialDto"/> for
+/// Server. A missing <c>Type</c> defaults to <see cref="UsernamePasswordGitCredentialDto"/> for
 /// backwards compatibility with server versions that pre-date the field.
 /// </summary>
 public class GitCredentialDtoJsonConverter : JsonConverter
@@ -28,10 +28,10 @@ public class GitCredentialDtoJsonConverter : JsonConverter
 
         return type switch
         {
-            null or GitUsernameAndPasswordCredentialDto.DiscriminatorValue
-                => obj.ToObject<GitUsernameAndPasswordCredentialDto>(ConcreteSerializer),
-            GitSshKeyAndKnownHostsDto.DiscriminatorValue
-                => obj.ToObject<GitSshKeyAndKnownHostsDto>(ConcreteSerializer),
+            null or UsernamePasswordGitCredentialDto.DiscriminatorValue
+                => obj.ToObject<UsernamePasswordGitCredentialDto>(ConcreteSerializer),
+            SshKeyGitCredentialDto.DiscriminatorValue
+                => obj.ToObject<SshKeyGitCredentialDto>(ConcreteSerializer),
             _ => throw new JsonSerializationException($"Unrecognised credential Type '{type}'.")
         };
     }

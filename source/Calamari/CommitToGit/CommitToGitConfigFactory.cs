@@ -38,7 +38,7 @@ namespace Calamari.CommitToGit
 
             var connection = properties.GitCredential switch
                              {
-                                 GitUsernameAndPasswordCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                 UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
                                  _ => throw new UnsupportedFeatureException("Yeah nah"),
                              };
 
