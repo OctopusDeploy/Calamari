@@ -1,3 +1,4 @@
+using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Util;
 using FluentAssertions;
@@ -35,9 +36,9 @@ public class TypeExtensionMethodsFixture
     
     
     [Command("command-name") ]
-    class InputClass : ICommand
+    class InputClass : ICommandWithArgs
     {
-        public int Execute()
+        public int Execute(string[] args)
         {
             return 0;
         }

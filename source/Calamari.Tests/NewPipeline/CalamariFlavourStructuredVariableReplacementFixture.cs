@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -132,10 +134,15 @@ namespace Calamari.Tests.NewPipeline
             public SyncFlavourProgram(ILog log) : base(log)
             {
             }
+
+            protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
+            {
+                return 0;
+            }
         }
         
         [Command("no-op-command")]
-        class NoOpTraditionalCommandWithStructuredVariableReplacementConvention : Command, ICommand
+        class NoOpTraditionalCommandWithStructuredVariableReplacementConvention : Command
         {
             readonly IStructuredConfigVariablesService structuredConfigVariablesService;
             readonly ILog log;
