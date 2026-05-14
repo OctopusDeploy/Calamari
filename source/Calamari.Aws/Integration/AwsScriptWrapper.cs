@@ -45,7 +45,7 @@ public class AwsScriptWrapper(ILog log, IVariables variables) : IScriptWrapper
         var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables, VerifyAmazonLogin).GetAwaiter().GetResult().EnvironmentVars;
         awsEnvironmentVars.AddRange(environmentVars);
 
-        // We force dereference here, but IScriptRunner needs an overhaul on how this is setup
+        // We force null-suppression here, but IScriptRunner needs an overhaul on how this is setup
         return NextWrapper!.ExecuteScript(
                                          script,
                                          scriptSyntax,
