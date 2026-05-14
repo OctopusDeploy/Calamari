@@ -129,16 +129,10 @@ namespace Calamari.Tests.NewPipeline
             }
         }
 
-        class SyncFlavourProgram : CalamariFlavourProgram
+        class SyncFlavourProgram : Program
         {
             public SyncFlavourProgram(ILog log) : base(log)
-            {
-            }
-
-            protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
-            {
-                return 0;
-            }
+            { }
         }
         
         [Command("no-op-command")]
