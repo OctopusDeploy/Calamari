@@ -43,16 +43,18 @@ namespace Calamari.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            if (taskId == null)
-                throw new CommandException("No task ID was specified. Please pass --taskId YourTaskId");
 
             try
             {
-
                 var pkg = downloadService.DownloadPackage(options);
                 var version = VersionFactory.TryCreateVersion(options.PackageVersion, options.VersionFormat);
+
+                if (taskId == null)
+                    throw new CommandException("No task ID was specified. Please pass --taskId YourTaskId");
+
                 RegisterPackageUse(pkg, version);
 
+                return 0;
             }
             catch (Exception ex)
             {
@@ -60,9 +62,6 @@ namespace Calamari.Commands
                     options.PackageId, options.PackageVersion, options.FeedUri);
                 return ConsoleFormatter.PrintError(log, ex);
             }
-
-            return 0;
-
         }
 
         void RegisterPackageUse(PackagePhysicalFileMetadata pkg, IVersion version)

@@ -44,14 +44,17 @@ namespace Calamari.Commands
 
             try
             {
-                if (taskId == null)
-                    throw new CommandException("No task ID was specified. Please pass --taskId YourTaskId");
-
+                // Find and validate package options first (packageId, packageVersion, packageHash)
                 var package = findService.FindPackage(options);
 
                 if (package != null)
                 {
                     var version = VersionFactory.TryCreateVersion(options.PackageVersion, options.VersionFormat);
+
+                    // Then validate taskId before registration
+                    if (taskId == null)
+                        throw new CommandException("No task ID was specified. Please pass --taskId YourTaskId");
+
                     RegisterPackageUse(package, version);
                 }
 
