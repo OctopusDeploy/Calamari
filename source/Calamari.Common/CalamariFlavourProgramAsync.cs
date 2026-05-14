@@ -67,7 +67,7 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
             if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
             {
                 using var proc = Process.GetCurrentProcess();
-                Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+                log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
 
                 while (!Debugger.IsAttached)
                 {
@@ -82,7 +82,7 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
         }
         catch (Exception ex)
         {
-            return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
+            return ConsoleFormatter.PrintError(log, ex);
         }
     }
 
@@ -139,12 +139,6 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
                .Except<TerminalScriptWrapper>()
                .As<IScriptWrapper>()
                .SingleInstance();
-
-        builder.RegisterAssemblyTypes(assemblies)
-               .AssignableTo<ICommandAsync>()
-               .Where(t => t.GetCommandNameFromAttribute()
-                            .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-               .Named<ICommandAsync>(t => t.GetCommandNameFromAttribute());
 
         builder.RegisterAssemblyTypes(assemblies)
                .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)

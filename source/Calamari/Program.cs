@@ -144,15 +144,7 @@ namespace Calamari
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithInputs>();
 
-            // Register Pipeline commands
-            builder.RegisterAssemblyTypes(assembliesToRegister)
-                   .AssignableTo<PipelineCommand>()
-                   .WithMetadataFrom<CommandAttribute>()
-                   .Where(t => t.GetCustomAttribute<CommandAttribute>() is not null)
-                   .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>()!.Name);
-            
-
-            builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
+            builder.RegisterAssemblyTypes(GetProgramAssembliesToRegister().ToArray())
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();

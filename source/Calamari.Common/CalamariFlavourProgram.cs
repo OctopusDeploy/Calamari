@@ -6,10 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
-using Autofac.Core;
-using Autofac.Core.Registration;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.EmbeddedResources;
@@ -29,6 +26,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 
 namespace Calamari.Common;
 
@@ -74,7 +72,7 @@ public abstract class CalamariFlavourProgram(ILog log)
             }
 #endif
             var isolation = container.Resolve<IScriptIsolationEnforcer>();
-            await using var _ = isolation.Enforce(options.ScriptIsolation);
+            await using var _ = await isolation.EnforceAsync(options.ScriptIsolation, CancellationToken.None);
             return await ResolveAndExecuteCommand(container, options);
         }
         catch (Exception ex)
@@ -83,7 +81,7 @@ public abstract class CalamariFlavourProgram(ILog log)
         }
     }
 
-    protected abstract Task<int? ResolveAndExecuteCommand(IContainer container, CommonOptions options);
+    protected abstract Task<int> ResolveAndExecuteCommand(IContainer container, CommonOptions options);
 
     protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
     {
@@ -127,20 +125,29 @@ public abstract class CalamariFlavourProgram(ILog log)
                .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)
                .AsSelf()
                .InstancePerDependency();
-
+        
+        // Register Pipeline commands
+        builder.RegisterAssemblyTypes(assemblies)
+               .AssignableTo<PipelineCommand>()
+               .WithMetadataFrom<CommandAttribute>()
+               .Where(t => t.GetCustomAttribute<CommandAttribute>() is not null)
+               .Named<PipelineCommand>(t => t.GetCommandNameFromAttribute());
+        
         builder.RegisterModule<StructuredConfigVariablesModule>();
     }
 
-    protected virtual Assembly GetProgramAssemblyToRegister()
+    protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()
     {
-        return GetType().Assembly;
+       yield return GetType().Assembly;
     }
 
     protected virtual IEnumerable<Assembly> GetAllAssembliesToRegister()
     {
-        var programAssembly = GetProgramAssemblyToRegister();
+        var programAssemblies = GetProgramAssembliesToRegister();
 
-        yield return programAssembly; // Calamari Flavour
+        foreach (var assembly in programAssemblies)
+            yield return assembly; // Calamari Flavour & dependencies
+        
         yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
     }
 }
