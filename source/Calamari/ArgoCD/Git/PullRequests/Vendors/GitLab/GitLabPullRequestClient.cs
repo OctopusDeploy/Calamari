@@ -13,20 +13,22 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
         readonly Uri baseUrl;
         readonly string projectPath;
 
-        public GitLabPullRequestClient(GitLabClient gitLabClient, IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public GitLabPullRequestClient(GitLabClient gitLabClient, IHttpsGitConnection repositoryConnection, Uri baseUrl)
         {
             this.gitLabClient = gitLabClient;
             this.baseUrl = baseUrl;
             
-            var parts = repositoryConnection.Url.ExtractPropertiesFromUrlPath();
+            var parts = repositoryConnection.Uri.Value.ExtractPropertiesFromUrlPath();
             projectPath = $"{parts[^2]}/{parts[^1]}";
         }
-        
+
+        public string Name => "GitLab";
+
         public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
-                                                   string body,
-                                                   GitBranchName sourceBranch,
-                                                   GitBranchName destinationBranch,
-                                                   CancellationToken cancellationToken)
+                                                         string body,
+                                                         GitBranchName sourceBranch,
+                                                         GitBranchName destinationBranch,
+                                                         CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             

@@ -69,7 +69,10 @@ namespace Calamari.ArgoCD.Conventions
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
-            var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
+            // Takes the first git credential per URL, with a preference for username/password credentials (they are more broadly useful)
+            var gitCredentials = argoProperties.Credentials
+                                               .GroupBy(c => c.Url)
+                                               .ToDictionary(g => g.Key, g => g.OfType<GitCredentialDto>().FirstOrDefault<IGitCredentialDto>() ?? g.First());
             var authenticatingRepositoryFactory = new AuthenticatingRepositoryFactory(gitCredentials, repositoryFactory, log);
             var deploymentScope = deployment.Variables.GetDeploymentScope();
 
