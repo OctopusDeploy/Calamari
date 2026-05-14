@@ -27,7 +27,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Common.Util;
 
 namespace Calamari.Common;
 
@@ -82,19 +81,7 @@ public abstract class CalamariFlavourProgram(ILog log)
         }
     }
 
-    protected virtual int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
-    {
-        try
-        {
-            var command = container.ResolveNamed<ICommand>(options.Command);
-            return command.Execute();
-        }
-        catch (Exception e) when (e is ComponentNotRegisteredException ||
-                                  e is DependencyResolutionException)
-        {
-            throw new CommandException($"Could not find the command {options.Command}");
-        }
-    }
+    protected abstract int ResolveAndExecuteCommand(IContainer container, CommonOptions options);
 
     protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
     {            
@@ -132,12 +119,6 @@ public abstract class CalamariFlavourProgram(ILog log)
                .Except<TerminalScriptWrapper>()
                .As<IScriptWrapper>()
                .SingleInstance();
-
-        builder.RegisterAssemblyTypes(assemblies)
-               .AssignableTo<ICommand>()
-               .Where(t => t.GetCommandNameFromAttribute()
-                            .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-               .Named<ICommand>(t => t.GetCommandNameFromAttribute());
             
             // Register Behaviors
             builder.RegisterAssemblyTypes(assemblies)

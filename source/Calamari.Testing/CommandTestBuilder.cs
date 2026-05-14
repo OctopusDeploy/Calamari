@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Calamari.Commands.Support;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages.NuGet;
@@ -14,6 +15,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
@@ -35,7 +37,7 @@ namespace Calamari.Testing
             where TCalamari : CalamariFlavourProgramAsync
             where TCommand : PipelineCommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCommandNameFromAttribute());
         }
 
         public static CommandTestBuilder<TCalamari> Create<TCalamari>(string command)
@@ -46,9 +48,9 @@ namespace Calamari.Testing
 
         public static CommandTestBuilder<TCalamari> Create<TCommand, TCalamari>()
             where TCalamari : CalamariFlavourProgram
-            where TCommand : ICommand
+            where TCommand : ICommandWithArgs
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCommandNameFromAttribute());
         }
 
         public static CommandTestBuilderContext WithFilesToCopy(this CommandTestBuilderContext context, string path)
