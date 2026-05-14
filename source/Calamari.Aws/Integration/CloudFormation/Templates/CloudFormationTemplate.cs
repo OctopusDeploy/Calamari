@@ -14,32 +14,27 @@ using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates;
 
-public class CloudFormationTemplate : BaseTemplate, ITemplate
+public class CloudFormationTemplate(
+    Func<string> content,
+    ITemplateInputs<Parameter> parameters,
+    string stackName,
+    List<string> iamCapabilities,
+    bool disableRollback,
+    string roleArn,
+    IEnumerable<KeyValuePair<string, string>> tags,
+    StackArn stack,
+    Func<IAmazonCloudFormation> clientFactory,
+    IVariables variables)
+    : BaseTemplate(parameters.Inputs,
+                   stackName,
+                   iamCapabilities,
+                   disableRollback,
+                   roleArn,
+                   tags,
+                   stack,
+                   clientFactory,
+                   variables), ITemplate
 {
-    readonly Func<string> content;
-
-    CloudFormationTemplate(Func<string> content,
-                                  ITemplateInputs<Parameter> parameters,
-                                  string stackName,
-                                  List<string> iamCapabilities,
-                                  bool disableRollback,
-                                  string roleArn,
-                                  IEnumerable<KeyValuePair<string, string>> tags,
-                                  StackArn stack,
-                                  Func<IAmazonCloudFormation> clientFactory,
-                                  IVariables variables) : base(parameters.Inputs,
-                                                               stackName,
-                                                               iamCapabilities,
-                                                               disableRollback,
-                                                               roleArn,
-                                                               tags,
-                                                               stack,
-                                                               clientFactory,
-                                                               variables)
-    {
-        this.content = content;
-    }
-
     public static ICloudFormationRequestBuilder Create(ITemplateResolver templateResolver,
                                                        string templateFile,
                                                        string templateParameterFile,
