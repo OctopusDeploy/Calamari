@@ -39,7 +39,7 @@ namespace Calamari.AzureResourceGroup
 
             var variables = context.Variables;
             var hasAccessToken = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            IAzureAccount account = hasAccessToken ? new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var armClient = account.CreateArmClient();
 
