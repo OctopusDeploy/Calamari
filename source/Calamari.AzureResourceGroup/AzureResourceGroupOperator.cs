@@ -24,7 +24,7 @@ namespace Calamari.AzureResourceGroup
         {
             this.log = log;
         }
-        
+
         public async Task<ArmOperation<ArmDeploymentResource>> CreateDeployment(ResourceGroupResource resourceGroupResource,
                                                                                 string deploymentName,
                                                                                 ArmDeploymentMode deploymentMode,
@@ -55,22 +55,26 @@ namespace Calamari.AzureResourceGroup
             }
         }
 
-        public async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation, IVariables variables)
+        public async Task PollForCompletionWithTimeout(ArmOperation<ArmDeploymentResource> deploymentOperation, IVariables variables)
         {
             var pollingTimeout = GetPollingTimeout(variables);
-            var asyncResourceGroupPollingTimeoutPolicy = Policy.TimeoutAsync<ArmDeploymentResource>(pollingTimeout, TimeoutStrategy.Optimistic);
+            var asyncResourceGroupPollingTimeoutPolicy = Policy.TimeoutAsync(pollingTimeout, TimeoutStrategy.Optimistic);
+            await asyncResourceGroupPollingTimeoutPolicy.ExecuteAsync(ct => Poll(deploymentOperation, ct), CancellationToken.None);
+        }
 
+        public async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation)
+        {
+            await Poll(deploymentOperation, CancellationToken.None);
+        }
+
+        async Task Poll(ArmOperation<ArmDeploymentResource> deploymentOperation, CancellationToken cancellationToken)
+        {
             log.Info("Polling for deployment completion...");
             try
             {
-                var deploymentResult = await asyncResourceGroupPollingTimeoutPolicy.ExecuteAsync(async timeoutCancellationToken =>
-                                                                                                 {
-                                                                                                     var delayStrategy = DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30));
-                                                                                                     var result = await deploymentOperation.WaitForCompletionAsync(delayStrategy, timeoutCancellationToken);
-                                                                                                     return result;
-                                                                                                 },
-                                                                                                 CancellationToken.None);
-                log.Info($"Deployment completed with status: {deploymentResult.Data.Properties?.ProvisioningState}");
+                var delayStrategy = DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30));
+                var response = await deploymentOperation.WaitForCompletionAsync(delayStrategy, cancellationToken);
+                log.Info($"Deployment completed with status: {response.Value?.Data.Properties?.ProvisioningState}");
             }
             catch
             {
@@ -121,7 +125,7 @@ namespace Calamari.AzureResourceGroup
             foreach (var output in outputs)
                 log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
         }
-        
+
         static TimeSpan GetPollingTimeout(IVariables variables)
         {
             var pollingTimeoutVariableValue = variables.GetInt32(SpecialVariables.Action.Azure.ArmDeploymentTimeout);
