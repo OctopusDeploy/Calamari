@@ -75,12 +75,6 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
                .InstancePerDependency();
 
         builder.RegisterAssemblyTypes(assemblies)
-               .AssignableTo<ICommandAsync>()
-               .Where(t => t.GetCommandNameFromAttribute()
-                            .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-               .Named<ICommandAsync>(t => t.GetCommandNameFromAttribute());
-
-        builder.RegisterAssemblyTypes(assemblies)
                .AssignableTo<PipelineCommand>()
                .Where(t => t.GetCommandNameFromAttribute()
                             .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
@@ -166,12 +160,10 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
                 var variables = container.Resolve<IVariables>();
                 return pipeline.Execute(container, variables);
             }
-
-            var command = container.ResolveNamed<ICommandAsync>(options.Command);
-            return command.Execute();
+            
+            throw new CommandException($"Could not find the command {options.Command}");
         }
-        catch (Exception e) when (e is ComponentNotRegisteredException ||
-                                  e is DependencyResolutionException)
+        catch (Exception e) when (e is ComponentNotRegisteredException or DependencyResolutionException)
         {
             throw new CommandException($"Could not find the command {options.Command}");
         }
