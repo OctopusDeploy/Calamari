@@ -79,7 +79,7 @@ namespace Calamari.AzureResourceGroup
                                                                                         deploymentMode,
                                                                                         template,
                                                                                         parameters);
-            await azureResourceGroupOperator.PollForCompletion(deploymentOperation, variables);
+            await azureResourceGroupOperator.PollForCompletionWithTimeout(deploymentOperation, variables);
             await azureResourceGroupOperator.FinalizeDeployment(deploymentOperation, variables);
         }
     }
