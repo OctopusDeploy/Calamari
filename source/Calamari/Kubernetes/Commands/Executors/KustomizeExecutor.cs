@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Octopus.Versioning.Semver;
@@ -15,7 +16,7 @@ namespace Calamari.Kubernetes.Commands.Executors
     public interface IKustomizeKubernetesApplyExecutor : IKubernetesApplyExecutor
     {
     }
-    
+
     class KustomizeExecutor : BaseKubernetesApplyExecutor, IKustomizeKubernetesApplyExecutor
     {
         public const string HydratedKustomizeManifestFilename = "hydrated-kustomize-manifest.yaml";
@@ -46,13 +47,13 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             log.Verbose("Validating kubectl version");
             var versionOutput = ValidateKubectlVersion();
-            
+
             log.Info("Building kustomization");
-            BuildKustomization(deployment.CurrentDirectory, overlayPath);
-            
+            BuildKustomization(deployment.CurrentDirectory, overlayPath, variables, versionOutput);
+
             log.Verbose("Reporting manifest");
             manifestReporter.ReportManifestFileApplied(HydratedManifestFilepath(deployment.CurrentDirectory));
-            
+
             log.Info("Applying kustomization");
             return await ApplyKustomization(deployment, appliedResourcesCallback, overlayPath);
         }
@@ -62,9 +63,9 @@ namespace Calamari.Kubernetes.Commands.Executors
             string[] executeArgs = ["apply", "-f", $"\"{HydratedManifestFilepath(deployment.CurrentDirectory)}\"", "-o", "json"];
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
-            
+
             var resourceIdentifiers = ProcessKubectlCommandOutput(deployment, result, KustomizationDirectory(deployment.CurrentDirectory, overlayPath)).ToArray();
-            
+
             if (appliedResourcesCallback != null)
             {
                 await appliedResourcesCallback(resourceIdentifiers);
@@ -73,16 +74,34 @@ namespace Calamari.Kubernetes.Commands.Executors
             return resourceIdentifiers;
         }
 
-        void BuildKustomization(string currentDirectory, string overlayPath)
+        void BuildKustomization(string currentDirectory, string overlayPath, IVariables variables, KubectlVersionOutput versionOutput)
         {
             string[] executeArgs = ["kustomize", $"\"{KustomizationDirectory(currentDirectory, overlayPath)}\"", "-o", $"\"{HydratedManifestFilepath(currentDirectory)}\""];
-            
+
+            executeArgs = ConditionallySetLoadRestrictorArg(variables, versionOutput, executeArgs);
+
             var commandResult = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
             commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
             if (commandResult.Result.ExitCode != 0)
             {
                 throw new KubectlException("Failed to build kustomization");
             }
+        }
+
+        string[] ConditionallySetLoadRestrictorArg(IVariables variables, KubectlVersionOutput versionOutput, string[] executeArgs)
+        {
+            if (!variables.GetFlag(SpecialVariables.KustomizeLoadRestrictorNone))
+                return executeArgs;
+
+            // kubectl >= 1.27 bundles kustomize v5 which uses --load-restrictor (hyphen)
+            // Earlier versions bundle kustomize v4 which uses --load_restrictor (underscore)
+            var loadRestrictorArg = versionOutput.KubectlVersion.Minor >= 27
+                ? "--load-restrictor=LoadRestrictionsNone"
+                : "--load_restrictor=none";
+            log.Verbose($"Adding load restrictor flag: {loadRestrictorArg}");
+            executeArgs = executeArgs.Concat([loadRestrictorArg]).ToArray();
+
+            return executeArgs;
         }
 
         KubectlVersionOutput ValidateKubectlVersion()
