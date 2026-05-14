@@ -1,14 +1,7 @@
-﻿namespace Calamari.Aws.Integration.CloudFormation
+﻿namespace Calamari.Aws.Integration.CloudFormation;
+
+public class VariableOutput(string name, string value)
 {
-    public class VariableOutput
-    {
-        public VariableOutput(string name, string value)
-        {
-            Name = name;
-            Value = value;
-        }
-        
-        public string Name { get; }
-        public string Value { get; }
-    }
+    public string Name { get; } = name;
+    public string Value { get; } = value;
 }

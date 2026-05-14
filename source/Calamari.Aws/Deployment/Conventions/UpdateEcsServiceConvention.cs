@@ -14,45 +14,23 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Aws.Deployment.Conventions;
 
-public class UpdateEcsServiceConvention : IInstallConvention
+public class UpdateEcsServiceConvention(
+    IAmazonECS ecs,
+    ILog log,
+    AwsEnvironmentGeneration environment,
+    string clusterName,
+    string serviceName,
+    string templateTaskDefinitionName,
+    string targetTaskDefinitionName,
+    List<EcsContainerUpdate> containers,
+    List<KeyValuePair<string, string>> tags,
+    WaitOptionType waitOption,
+    TimeSpan? waitTimeout,
+    Func<TimeSpan> deploymentPollInterval = null,
+    Func<TimeSpan> taskPollInterval = null)
+    : IInstallConvention
 {
-    readonly IAmazonECS ecs;
-    readonly ILog log;
-    readonly AwsEnvironmentGeneration environment;
-    readonly string clusterName;
-    readonly string serviceName;
-    readonly string templateTaskDefinitionName;
-    readonly string targetTaskDefinitionName;
-    readonly List<EcsContainerUpdate> containers;
-    readonly List<KeyValuePair<string, string>> tags;
-    readonly EcsPostDeployWatcher watcher;
-
-    public UpdateEcsServiceConvention(
-        IAmazonECS ecs,
-        ILog log,
-        AwsEnvironmentGeneration environment,
-        string clusterName,
-        string serviceName,
-        string templateTaskDefinitionName,
-        string targetTaskDefinitionName,
-        List<EcsContainerUpdate> containers,
-        List<KeyValuePair<string, string>> tags,
-        WaitOptionType waitOption,
-        TimeSpan? waitTimeout,
-        Func<TimeSpan> deploymentPollInterval = null,
-        Func<TimeSpan> taskPollInterval = null)
-    {
-        this.ecs = ecs;
-        this.log = log;
-        this.environment = environment;
-        this.clusterName = clusterName;
-        this.serviceName = serviceName;
-        this.templateTaskDefinitionName = templateTaskDefinitionName;
-        this.targetTaskDefinitionName = targetTaskDefinitionName;
-        this.containers = containers;
-        this.tags = tags;
-        watcher = new EcsPostDeployWatcher(ecs, log, clusterName, serviceName, waitOption, waitTimeout, deploymentPollInterval, taskPollInterval);
-    }
+    readonly EcsPostDeployWatcher watcher = new(ecs, log, clusterName, serviceName, waitOption, waitTimeout, deploymentPollInterval, taskPollInterval);
 
     public void Install(RunningDeployment deployment) => InstallAsync(deployment).GetAwaiter().GetResult();
 
@@ -74,7 +52,7 @@ public class UpdateEcsServiceConvention : IInstallConvention
 
         // SPF behavior to check if the target task definition family exists before applying the update
         // Only needed if the target is different from the source
-        // Without this check AWS will just create any task definition family it is given
+        // Without this check, AWS will just create any task definition family it is given
         if (targetTaskDefinitionName != templateTaskDefinitionName)
         {
             try

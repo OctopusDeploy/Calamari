@@ -23,17 +23,8 @@ using Newtonsoft.Json;
 namespace Calamari.Aws.Commands
 {
     [Command("create-aws-s3", Description = "Creates an AWS S3 bucket")]
-    public class CreateAwsS3Command : Command
+    public class CreateAwsS3Command(ILog log, IVariables variables) : Command
     {
-        readonly ILog log;
-        readonly IVariables variables;
-
-        public CreateAwsS3Command(ILog log, IVariables variables)
-        {
-            this.log = log;
-            this.variables = variables;
-        }
-
         public override int Execute(string[] commandLineArguments)
         {
             var bucketName = variables.Get(AwsSpecialVariables.S3.BucketName);
@@ -53,10 +44,6 @@ namespace Calamari.Aws.Commands
             ValidateTags(tags);
 
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
-
-            IAmazonCloudFormation ClientFactory() => ClientHelpers.CreateCloudFormationClient(environment);
-
-            StackArn StackProvider(RunningDeployment _) => new StackArn(stackName);
 
             ICloudFormationRequestBuilder TemplateFactory()
             {
@@ -97,6 +84,9 @@ namespace Calamari.Aws.Commands
             conventionRunner.RunConventions();
 
             return 0;
+
+            StackArn StackProvider(RunningDeployment _) => new (stackName);
+            IAmazonCloudFormation ClientFactory() => ClientHelpers.CreateCloudFormationClient(environment);
         }
 
         void ValidateTags(List<KeyValuePair<string, string>> tags)
@@ -110,7 +100,7 @@ namespace Calamari.Aws.Commands
                 throw new CommandException($"{errorLink} Each tag key must be unique.");
         }
 
-        string GetTemplateBody(string bucketName, bool publicAccess, bool objectWriterOwnership)
+        static string GetTemplateBody(string bucketName, bool publicAccess, bool objectWriterOwnership)
         {
             var template = new
             {
@@ -148,7 +138,7 @@ namespace Calamari.Aws.Commands
             return JsonConvert.SerializeObject(template);
         }
 
-        List<KeyValuePair<string, string>> ExtractBucketName(List<StackResourceSummary> resourceSummaries)
+        static List<KeyValuePair<string, string>> ExtractBucketName(List<StackResourceSummary> resourceSummaries)
         {
             var result = new List<KeyValuePair<string, string>>();
             var bucket = resourceSummaries.FirstOrDefault(x => x.ResourceType == "AWS::S3::Bucket");

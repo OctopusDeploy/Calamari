@@ -17,15 +17,15 @@ namespace Calamari.Aws.Integration.CloudFormation
 {
     public static class CloudFormationObjectExtensions
     {
-        private static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"
         };
 
         // These status indicate that an update or create was not successful.
         // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
-        private static HashSet<string> UnsuccessfulStackEvents =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        static HashSet<string> UnsuccessfulStackEvents =
+            new(StringComparer.OrdinalIgnoreCase)
             {
                 "CREATE_ROLLBACK_COMPLETE",
                 "CREATE_ROLLBACK_FAILED",
@@ -61,8 +61,8 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// your stack can return to a working state. Or, you can contact customer support to restore the stack to a usable state.
         ///
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
-        private static HashSet<string> UnrecoverableStackStatuses =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        static HashSet<string> UnrecoverableStackStatuses =
+            new(StringComparer.OrdinalIgnoreCase)
             {
                 "CREATE_FAILED", "ROLLBACK_COMPLETE", "ROLLBACK_FAILED", "DELETE_FAILED",
                 "UPDATE_ROLLBACK_FAILED"
@@ -107,11 +107,13 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <summary>
         /// Gets the last stack event by timestamp, optionally filtered by a predicate
         /// </summary>
+        /// <param name="clientFactory"></param>
+        /// <param name="stack"></param>
         /// <param name="predicate">The optional predicate used to filter events</param>
         /// <returns>The stack event</returns>
         public static async Task<Maybe<StackEvent>> GetLastStackEvent(this Func<IAmazonCloudFormation> clientFactory,
-            StackArn stack,
-            Func<StackEvent, bool> predicate = null)
+                                                                      StackArn stack,
+                                                                      Func<StackEvent, bool> predicate = null)
         {
             try
             {
@@ -144,11 +146,13 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <summary>
         /// Gets all stack events, optionally filtered by a predicate
         /// </summary>
+        /// <param name="stack"></param>
         /// <param name="predicate">The optional predicate used to filter events</param>
+        /// <param name="clientFactory"></param>
         /// <returns>The stack events</returns>
         public static async Task<List<Maybe<StackEvent>>> GetStackEvents(this Func<IAmazonCloudFormation> clientFactory,
-            StackArn stack,
-            Func<StackEvent, bool> predicate = null)
+                                                                         StackArn stack,
+                                                                         Func<StackEvent, bool> predicate = null)
         {
             try
             {

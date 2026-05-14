@@ -30,6 +30,8 @@ using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
+using Calamari.Common.Plumbing.Pipeline;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
@@ -57,6 +59,23 @@ namespace Calamari
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
+            // Handle Pipeline commands such as Target Discovery
+            if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
+            {
+                try
+                {                
+                    var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
+                    var variables = container.Resolve<IVariables>();
+                    pipeline.Execute(container, variables).GetAwaiter().GetResult();
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
+                }
+            }
+
+
             var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
 
             var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -123,6 +142,14 @@ namespace Calamari
                    .AssignableTo<ICommandWithInputs>()
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithInputs>();
+
+            // Register Pipeline commands
+            builder.RegisterAssemblyTypes(assembliesToRegister)
+                   .AssignableTo<PipelineCommand>()
+                   .WithMetadataFrom<CommandAttribute>()
+                   .Where(t => t.GetCustomAttribute<CommandAttribute>() is not null)
+                   .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>()!.Name);
+            
 
             builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
