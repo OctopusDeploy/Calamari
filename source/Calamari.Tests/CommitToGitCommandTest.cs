@@ -359,6 +359,46 @@ public class CommitToGitCommandTest
     }
 
     [Test]
+    [TestCase("manifests/**/*", "manifests/sub/app.yaml", "sub/app.yaml", TestName = "GitDep_DeepGlob_StripsNonWildcardPrefix")]
+    [TestCase("manifests/*.yaml", "manifests/app.yaml", "app.yaml", TestName = "GitDep_SingleStarGlob_StripsNonWildcardPrefix")]
+    [TestCase("manifests/sub/app.yaml", "manifests/sub/app.yaml", "app.yaml", TestName = "GitDep_ExactPath_StripsDirectoryKeepsFilename")]
+    [TestCase("**/*.yaml", "manifests/sub/app.yaml", "manifests/sub/app.yaml", TestName = "GitDep_RootGlob_NothingToStripPreservesMatchedRelativePath")]
+    public void GitDependencyDestinationPathStripsNonWildcardPrefixOfInputGlob(string inputGlob, string entryPath, string expectedRepoPath)
+    {
+        const string gitDependencyName = "my-git-dep";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(gitDependencyName, entryPath, "apiVersion: apps/v1");
+        AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath, inputFilePaths: new[] { inputGlob });
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/{expectedRepoPath}")
+            .Should().NotBeNull($"file matched by '{inputGlob}' should land at '{destinationPath}/{expectedRepoPath}'");
+    }
+
+    [Test]
+    public void OnlyCopiesFilesMatchingInputPathsFromGitDependencyIntoGitRepository()
+    {
+        const string gitDependencyName = "my-git-dep";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntries(gitDependencyName, new Dictionary<string, string>
+        {
+            ["manifests/deployment.yaml"] = "apiVersion: apps/v1",
+            ["scripts/setup.sh"] = "#!/bin/bash",
+        });
+        AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath, inputFilePaths: new[] { "manifests/**/*" });
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/deployment.yaml")
+            .Should().NotBeNull("files matching the InputFilePaths glob should be copied");
+        GetCommittedFileContent($"{destinationPath}/scripts/setup.sh")
+            .Should().BeNull("files not matching the InputFilePaths glob should not be copied");
+    }
+
+    [Test]
     public void CommitToGitRunsScriptProvidedViaScriptBodyBySyntaxVariable()
     {
         variables.AddRange([
@@ -498,9 +538,12 @@ public class CommitToGitCommandTest
         ]);
     }
 
-    void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath, string destinationSubFolder = "")
+    void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath, string destinationSubFolder = "", string[] inputFilePaths = null)
     {
-        var inputFileSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
+        var inputFilePathsJson = inputFilePaths != null
+            ? "[" + string.Join(",", inputFilePaths.Select(p => $"\"{p}\"")) + "]"
+            : "[\"**/*\"]";
+        var inputFileSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationSubFolder}\",\"InputFilePaths\":{inputFilePathsJson}}}]";
         variables.AddRange([
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.Extract(gitDependencyName), "true", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.OriginalPath(gitDependencyName), zipPath, false),

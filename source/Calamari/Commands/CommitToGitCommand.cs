@@ -179,12 +179,11 @@ public class CommitToGitCommand : Command
 
                                               foreach (var gitDep in metadataParser.GetGitRepositoryDependenciesForCopying(d))
                                               {
-                                                  //no input-globs are required as only the relevant files were transmitted to Calamari
                                                   var copiedTo = CopyDependencyToRepository(d, clonedRepository, destBase, new CopyDependencySpec(
                                                       "Git dependency",
                                                       gitDep.GitDependencyName,
                                                       gitDep.DestinationSubFolder,
-                                                      dir => fileSystem.EnumerateFilesRecursively(dir).Select(f => (f, Path.GetRelativePath(dir, f)))));
+                                                      dir => EnumerateGlobMatchesWithStrippedPrefix(dir, gitDep.InputFilePaths)));
                                                   if (copiedTo != null)
                                                       log.Verbose($"Copied files for git dependency '{gitDep.GitDependencyName}' to {copiedTo}");
                                               }
