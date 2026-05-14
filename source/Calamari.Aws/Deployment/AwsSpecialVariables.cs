@@ -6,8 +6,8 @@
 
         public static class Authentication
         {
-            public static readonly string UseInstanceRole = "Octopus.Action.AwsAccount.UseInstanceRole";
-            public static readonly string AwsAccountVariable = "Octopus.Action.AwsAccount.Variable";
+            public const string UseInstanceRole = "Octopus.Action.AwsAccount.UseInstanceRole";
+            public const string AwsAccountVariable = "Octopus.Action.AwsAccount.Variable";
         }
 
         public static class S3

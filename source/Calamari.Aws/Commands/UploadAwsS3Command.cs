@@ -97,7 +97,7 @@ namespace Calamari.Aws.Commands
             return 0;
         }
 
-        private static S3TargetMode GetTargetMode(string value)
+        static S3TargetMode GetTargetMode(string value)
         {
             return Enum.TryParse<S3TargetMode>(value, out var result) ? result : S3TargetMode.EntirePackage;
         }

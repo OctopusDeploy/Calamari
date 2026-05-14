@@ -15,21 +15,15 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
-    public abstract class CloudFormationInstallationConventionBase: IInstallConvention
+    public abstract class CloudFormationInstallationConventionBase(StackEventLogger stackEventLogger, ILog log) : IInstallConvention
     {
-        protected readonly StackEventLogger Logger;
-        protected readonly ILog Log;
+        protected readonly StackEventLogger Logger = stackEventLogger;
+        protected readonly ILog Log = log;
         const int DefaultPollTimeoutSeconds = 5;
-
-        public CloudFormationInstallationConventionBase(StackEventLogger stackEventLogger, ILog log)
-        {
-            Logger = stackEventLogger;
-            Log = log;
-        }
 
         public abstract void Install(RunningDeployment deployment);
 
-        protected TimeSpan PollPeriod(RunningDeployment deployment)
+        protected static TimeSpan PollPeriod(RunningDeployment deployment)
         {
             var timeoutRaw = deployment.Variables.Get(SpecialVariables.Action.Aws.CloudFormationPollSeconds);
             if (!int.TryParse(timeoutRaw, out var timeout))
