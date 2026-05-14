@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Autofac.Features.Metadata;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
@@ -44,20 +45,21 @@ namespace Calamari
         {
         }
 
-        public static int Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
-            return new Program(ConsoleLog.Instance).Execute(args);
+            var program = new Program(ConsoleLog.Instance);
+                return await program.Execute(args);
         }
 
-        public int Execute(params string[] args)
+        public async Task<int> Execute(params string[] args)
         {
             // Backward compatibility fix for v4 collections to ensure they are not null
             // from https://docs.aws.amazon.com/sdk-for-net/v4/developer-guide/net-dg-v4.html#net-dg-v4-collections
             Amazon.AWSConfigs.InitializeCollections = true;
-            return Run(args);
+            return await Run(args);
         }
 
-        protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
+        protected override async Task<int> ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
             // Handle Pipeline commands such as Target Discovery
             if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
@@ -66,7 +68,7 @@ namespace Calamari
                 {                
                     var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
                     var variables = container.Resolve<IVariables>();
-                    pipeline.Execute(container, variables).GetAwaiter().GetResult();
+                    await pipeline.Execute(container, variables);
                     return 0;
                 }
                 catch (Exception ex)
