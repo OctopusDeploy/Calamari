@@ -196,6 +196,8 @@ public class CommitToGitCommandTest
 
         GetCommittedFileContent($"{destinationPath}/configs/settings.json")
             .Should().NotBeNull("files matching the InputFilePaths glob should be copied");
+        GetCommittedFileContent($"{destinationPath}/scripts/setup.sh")
+            .Should().BeNull("files not matching the InputFilePaths glob should not be copied");
         GetCommittedFileContent($"{destinationPath}/configs/setup.sh")
             .Should().BeNull("files not matching the InputFilePaths glob should not be copied");
     }
@@ -308,8 +310,8 @@ public class CommitToGitCommandTest
         ]);
 
         RunCommitToGit().Should().Be(0);
-        GetCommittedFileContent($"{destinationPath}/settings.json").Should().NotBeNull("files from the first package should be copied (with the non-wildcard glob prefix stripped)");
-        GetCommittedFileContent($"{destinationPath}/template.yaml").Should().NotBeNull("files from the second package should be copied (with the non-wildcard glob prefix stripped)");
+        GetCommittedFileContent($"{destinationPath}/settings.json").Should().NotBeNull("files from the first package should be copied");
+        GetCommittedFileContent($"{destinationPath}/template.yaml").Should().NotBeNull("files from the second package should be copied");
     }
 
     [Test]

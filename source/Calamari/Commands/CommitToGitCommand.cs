@@ -194,9 +194,6 @@ public class CommitToGitCommand : Command
 
     IEnumerable<(string SourceFile, string DestRelativePath)> EnumerateGlobMatchesWithStrippedPrefix(string sourceDir, string[] globPatterns)
     {
-        if (globPatterns == null)
-            yield break;
-
         foreach (var glob in globPatterns)
         {
             var prefix = GetNonWildcardPrefix(glob);
