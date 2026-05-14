@@ -28,159 +28,152 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 
-namespace Calamari.Common
+namespace Calamari.Common;
+
+public abstract class CalamariFlavourProgramAsync(ILog log)
 {
-    public abstract class CalamariFlavourProgramAsync
+    protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
     {
-        readonly ILog log;
-
-        protected CalamariFlavourProgramAsync(ILog log)
-        {
-            this.log = log;
-        }
-
-        protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
-        {
-            //register the options into the DI
-            builder.RegisterInstance(options).AsSelf();
+        //register the options into the DI
+        builder.RegisterInstance(options).AsSelf();
             
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
-            builder.RegisterType<VariableLogger>().AsSelf();
-            builder.RegisterInstance(log).As<ILog>().SingleInstance();
-            builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
-            builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
-            builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
-            builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
-            builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
-            builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
-            builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
-            builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
-            builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
-            builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
+        var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
+        builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
+        builder.RegisterType<VariableLogger>().AsSelf();
+        builder.RegisterInstance(log).As<ILog>().SingleInstance();
+        builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
+        builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
+        builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
+        builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
+        builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
+        builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
+        builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
+        builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
+        builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
+        builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
             
-            builder.RegisterModule<VariablesModule>();
-            builder.RegisterModule<SubstitutionsModule>();
-            builder.RegisterModule<ScriptIsolationModule>();
+        builder.RegisterModule<VariablesModule>();
+        builder.RegisterModule<SubstitutionsModule>();
+        builder.RegisterModule<ScriptIsolationModule>();
 
-            var assemblies = GetAllAssembliesToRegister().ToArray();
+        var assemblies = GetAllAssembliesToRegister().ToArray();
 
-            builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
+        builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 
-            builder.RegisterAssemblyTypes(assemblies)
-                   .AssignableTo<IScriptWrapper>()
-                   .Except<TerminalScriptWrapper>()
-                   .As<IScriptWrapper>()
-                   .SingleInstance();
+        builder.RegisterAssemblyTypes(assemblies)
+               .AssignableTo<IScriptWrapper>()
+               .Except<TerminalScriptWrapper>()
+               .As<IScriptWrapper>()
+               .SingleInstance();
 
-            builder.RegisterAssemblyTypes(assemblies)
-                   .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)
-                   .AsSelf()
-                   .InstancePerDependency();
+        builder.RegisterAssemblyTypes(assemblies)
+               .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)
+               .AsSelf()
+               .InstancePerDependency();
 
-            builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<ICommandAsync>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
-                    .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .Named<ICommandAsync>(t => t.GetCustomAttribute<CommandAttribute>().Name);
+        builder.RegisterAssemblyTypes(assemblies)
+               .AssignableTo<ICommandAsync>()
+               .Where(t => t.GetCommandNameFromAttribute()
+                            .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+               .Named<ICommandAsync>(t => t.GetCommandNameFromAttribute());
 
-            builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<PipelineCommand>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
-                    .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
+        builder.RegisterAssemblyTypes(assemblies)
+               .AssignableTo<PipelineCommand>()
+               .Where(t => t.GetCommandNameFromAttribute()
+                            .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+               .Named<PipelineCommand>(t => t.GetCommandNameFromAttribute());
 
-            builder.RegisterModule<StructuredConfigVariablesModule>();
-        }
+        builder.RegisterModule<StructuredConfigVariablesModule>();
+    }
 
-        protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()
+    protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()
+    {
+        yield return GetType().Assembly;
+    }
+
+    protected async Task<int> Run(string[] args)
+    {
+        try
         {
-            yield return GetType().Assembly;
-        }
+            AppDomainConfiguration.SetDefaultRegexMatchTimeout();
 
-        protected async Task<int> Run(string[] args)
-        {
-            try
+            SecurityProtocols.EnableAllSecurityProtocols();
+            var options = CommonOptions.Parse(args);
+
+            log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
+
+            if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
             {
-                AppDomainConfiguration.SetDefaultRegexMatchTimeout();
-
-                SecurityProtocols.EnableAllSecurityProtocols();
-                var options = CommonOptions.Parse(args);
-
-                log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
-
-                if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
-                {
-                    return 0;
-                }
-
-                var envInfo = string.Join($"{Environment.NewLine}  ",
-                    EnvironmentHelper.SafelyGetEnvironmentInformation());
-                log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
-
-                EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory",
-                    Environment.CurrentDirectory);
-                ProxyInitializer.InitializeDefaultProxy();
-
-                var builder = new ContainerBuilder();
-                ConfigureContainer(builder, options);
-                
-                using var container = builder.Build();
-                container.Resolve<VariableLogger>().LogVariables();
-#if DEBUG
-                if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
-                {
-                    using var proc = Process.GetCurrentProcess();
-                    Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
-
-                    while (!Debugger.IsAttached)
-                    {
-                        await Task.Delay(1000);
-                    }
-                }
-#endif
-                var isolation = container.Resolve<IScriptIsolationEnforcer>();
-                await using var _ = await isolation.EnforceAsync(options.ScriptIsolation, CancellationToken.None);
-                await ResolveAndExecuteCommand(container, options);
                 return 0;
             }
-            catch (Exception ex)
+
+            var envInfo = string.Join($"{Environment.NewLine}  ",
+                                      EnvironmentHelper.SafelyGetEnvironmentInformation());
+            log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+
+            EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory",
+                                                     Environment.CurrentDirectory);
+            ProxyInitializer.InitializeDefaultProxy();
+
+            var builder = new ContainerBuilder();
+            ConfigureContainer(builder, options);
+                
+            using var container = builder.Build();
+            container.Resolve<VariableLogger>().LogVariables();
+#if DEBUG
+            if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
             {
-                return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
-            }
-        }
+                using var proc = Process.GetCurrentProcess();
+                Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
 
-        IEnumerable<Assembly> GetAllAssembliesToRegister()
-        {
-            var programAssemblies = GetProgramAssembliesToRegister();
-
-            foreach (var assembly in programAssemblies)
-                yield return assembly; // Calamari Flavour & dependencies
-
-            yield return typeof(CalamariFlavourProgramAsync).Assembly; // Calamari.Common
-        }
-
-        Task ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
-        {
-            try
-            {
-                if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
+                while (!Debugger.IsAttached)
                 {
-                    var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
-                    var variables = container.Resolve<IVariables>();
-                    return pipeline.Execute(container, variables);
+                    await Task.Delay(1000);
                 }
+            }
+#endif
+            var isolation = container.Resolve<IScriptIsolationEnforcer>();
+            await using var _ = await isolation.EnforceAsync(options.ScriptIsolation, CancellationToken.None);
+            await ResolveAndExecuteCommand(container, options);
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
+        }
+    }
 
-                var command = container.ResolveNamed<ICommandAsync>(options.Command);
-                return command.Execute();
-            }
-            catch (Exception e) when (e is ComponentNotRegisteredException ||
-                                      e is DependencyResolutionException)
+    IEnumerable<Assembly> GetAllAssembliesToRegister()
+    {
+        var programAssemblies = GetProgramAssembliesToRegister();
+
+        foreach (var assembly in programAssemblies)
+            yield return assembly; // Calamari Flavour & dependencies
+
+        yield return typeof(CalamariFlavourProgramAsync).Assembly; // Calamari.Common
+    }
+
+    static Task ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
+    {
+        try
+        {
+            if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
             {
-                throw new CommandException($"Could not find the command {options.Command}");
+                var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
+                var variables = container.Resolve<IVariables>();
+                return pipeline.Execute(container, variables);
             }
+
+            var command = container.ResolveNamed<ICommandAsync>(options.Command);
+            return command.Execute();
+        }
+        catch (Exception e) when (e is ComponentNotRegisteredException ||
+                                  e is DependencyResolutionException)
+        {
+            throw new CommandException($"Could not find the command {options.Command}");
         }
     }
 }
