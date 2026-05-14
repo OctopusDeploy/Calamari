@@ -16,7 +16,7 @@ using Calamari.Common.Plumbing.Variables;
 namespace Calamari.AzureResourceGroup.Bicep;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, IResourceGroupTemplateNormalizer parameterNormalizer, ILog log)
+class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ILog log)
     : IDeployBehaviour
 {
     public bool IsEnabled(RunningDeployment context)
@@ -90,12 +90,12 @@ class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, Templat
         log.Info("Bicep file processed");
 
         var template = templateService.GetSubstitutedTemplateContent(armTemplateFile, filesInPackageOrRepository, context.Variables);
-        
+
 
         var parametersValue = context.Variables.GetRaw(SpecialVariables.Action.Azure.BicepTemplateParameters) ?? string.Empty;
-        
+
         var parameters = BicepToArmParameterMapper.Map(parametersValue, template, context.Variables);
-        
+
         return (template, parameters);
     }
 }
