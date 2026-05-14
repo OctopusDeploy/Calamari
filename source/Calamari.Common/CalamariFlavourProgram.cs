@@ -6,6 +6,8 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
+using Autofac.Core;
+using Autofac.Core.Registration;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
@@ -44,7 +46,9 @@ public abstract class CalamariFlavourProgram(ILog log)
             log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
 
             if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
+            {
                 return 0;
+            }
 
             var envInfo = string.Join($"{Environment.NewLine}  ",
                                       EnvironmentHelper.SafelyGetEnvironmentInformation());
@@ -81,7 +85,34 @@ public abstract class CalamariFlavourProgram(ILog log)
         }
     }
 
-    protected abstract Task<int> ResolveAndExecuteCommand(IContainer container, CommonOptions options);
+    async Task<int> ResolveAndExecuteCommand(IContainer container, CommonOptions options)
+    {
+        try
+        {
+            if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
+            {
+                try
+                {
+                    var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
+                    var variables = container.Resolve<IVariables>();
+                    await pipeline.Execute(container, variables);
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    return ConsoleFormatter.PrintError(log, ex);
+                }
+            }
+
+            return await ResolveAndExecuteCommandWithArgs(container, options);
+        }
+        catch (Exception e) when (e is ComponentNotRegisteredException or DependencyResolutionException)
+        {
+            throw new CommandException($"Could not find the command {options.Command}");
+        }
+    }
+
+    protected abstract Task<int> ResolveAndExecuteCommandWithArgs(IContainer container, CommonOptions options);
 
     protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
     {
@@ -125,20 +156,20 @@ public abstract class CalamariFlavourProgram(ILog log)
                .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)
                .AsSelf()
                .InstancePerDependency();
-        
+
         // Register Pipeline commands
         builder.RegisterAssemblyTypes(assemblies)
                .AssignableTo<PipelineCommand>()
                .WithMetadataFrom<CommandAttribute>()
                .Where(t => t.GetCustomAttribute<CommandAttribute>() is not null)
                .Named<PipelineCommand>(t => t.GetCommandNameFromAttribute());
-        
+
         builder.RegisterModule<StructuredConfigVariablesModule>();
     }
 
     protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()
     {
-       yield return GetType().Assembly;
+        yield return GetType().Assembly;
     }
 
     protected virtual IEnumerable<Assembly> GetAllAssembliesToRegister()
@@ -147,7 +178,7 @@ public abstract class CalamariFlavourProgram(ILog log)
 
         foreach (var assembly in programAssemblies)
             yield return assembly; // Calamari Flavour & dependencies
-        
+
         yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
     }
 }

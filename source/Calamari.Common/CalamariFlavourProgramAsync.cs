@@ -77,8 +77,8 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
 #endif
             var isolation = container.Resolve<IScriptIsolationEnforcer>();
             await using var _ = await isolation.EnforceAsync(options.ScriptIsolation, CancellationToken.None);
-            await ResolveAndExecuteCommand(container, options);
-            return 0;
+            return await ResolveAndExecuteCommand(container, options);
+            
         }
         catch (Exception ex)
         {
@@ -86,7 +86,7 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
         }
     }
 
-    static Task ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
+    static async Task<int> ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
     {
         try
         {
@@ -94,7 +94,8 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
             {
                 var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
                 var variables = container.Resolve<IVariables>();
-                return pipeline.Execute(container, variables);
+                await pipeline.Execute(container, variables);
+                return 0;
             }
             
             throw new CommandException($"Could not find the command {options.Command}");

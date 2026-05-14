@@ -48,7 +48,7 @@ namespace Calamari
         public static async Task<int> Main(string[] args)
         {
             var program = new Program(ConsoleLog.Instance);
-                return await program.Execute(args);
+            return await program.Execute(args);
         }
 
         public async Task<int> Execute(params string[] args)
@@ -59,35 +59,20 @@ namespace Calamari
             return await Run(args);
         }
 
-        protected override async Task<int> ResolveAndExecuteCommand(IContainer container, CommonOptions options)
+        protected override async Task<int> ResolveAndExecuteCommandWithArgs(IContainer container, CommonOptions options)
         {
-            // Handle Pipeline commands such as Target Discovery
-            if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
-            {
-                try
-                {                
-                    var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
-                    var variables = container.Resolve<IVariables>();
-                    await pipeline.Execute(container, variables);
-                    return 0;
-                }
-                catch (Exception ex)
-                {
-                    return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
-                }
-            }
-
+            await Task.CompletedTask;
 
             var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
 
             var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
 
-            if (commandCandidates.Length == 0)
-                throw new CommandException($"Could not find the command {options.Command}");
-            if (commandCandidates.Length > 1)
-                throw new CommandException($"Multiple commands found with the name {options.Command}");
-
-            return commandCandidates[0].Value.Value.Execute(options.RemainingArguments.ToArray());
+            return commandCandidates.Length switch
+                   {
+                       0 => throw new CommandException($"Could not find the command {options.Command}"),
+                       1 => commandCandidates[0].Value.Value.Execute(options.RemainingArguments.ToArray()),
+                       _ => throw new CommandException($"Multiple commands found with the name {options.Command}")
+                   };
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
@@ -112,12 +97,12 @@ namespace Calamari
             builder.RegisterType<HelmTemplateValueSourcesParser>().AsSelf().SingleInstance();
             if (OperatingSystem.IsWindows())
                 builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
-            else 
+            else
                 builder.RegisterType<NoOpWindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
-                
+
             builder.RegisterType<ApiResourceScopeLookup>().As<IApiResourceScopeLookup>().SingleInstance();
             builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
-            
+
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
                    .SingleInstance();
