@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
