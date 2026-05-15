@@ -1,10 +1,12 @@
 using System;
+using Amazon.ECS.Model;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Octopus.Calamari.Contracts.CommitToGit;
+using Octopus.Calamari.Contracts.Git;
 
 namespace Calamari.CommitToGit
 {
@@ -22,10 +24,10 @@ namespace Calamari.CommitToGit
             var variables = deployment.Variables;
 
             var uriAsString = variables.Get(SpecialVariables.Action.Git.Url)
-                ?? throw new CommandException($"Required variable '{SpecialVariables.Action.Git.Url}' is not set.");
+                              ?? throw new CommandException($"Required variable '{SpecialVariables.Action.Git.Url}' is not set.");
 
             var gitReferenceAsString = variables.Get(SpecialVariables.Action.Git.Reference)
-                ?? throw new CommandException($"Required variable '{SpecialVariables.Action.Git.Reference}' is not set.");
+                                       ?? throw new CommandException($"Required variable '{SpecialVariables.Action.Git.Reference}' is not set.");
 
             var requiresPullRequest = variables.GetFlag(SpecialVariables.Action.Git.PullRequest.Create);
             var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Action.Git.CommitMessageSummary));
@@ -34,14 +36,15 @@ namespace Calamari.CommitToGit
 
             var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
 
-            return new CommitToGitRepositorySettings(
-                                                     new HttpsGitConnection(
-                                                                       properties.GitCredential.Username,
-                                                                       properties.GitCredential.Password,
-                                                                       uriAsString,
-                                                                       GitReference.CreateFromString(gitReferenceAsString)),
-            commitParameters,
-            variables.Get(SpecialVariables.Action.Git.DestinationPath));
+            var connection = properties.GitCredential switch
+                             {
+                                 UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                 _ => throw new NotSupportedException("Commit-To-Git only supports the use of username/password. Please select a username/password based credential in your step configuration."),
+                             };
+
+            return new CommitToGitRepositorySettings(connection,
+                                                     commitParameters,
+                                                     variables.Get(SpecialVariables.Action.Git.DestinationPath));
         }
 
         string EvaluateNonsensitiveExpression(string expression)
