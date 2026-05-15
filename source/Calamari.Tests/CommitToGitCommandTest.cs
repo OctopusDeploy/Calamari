@@ -15,6 +15,7 @@ using LibGit2Sharp;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.CommitToGit;
+using Octopus.Calamari.Contracts.Git;
 
 namespace Calamari.Tests;
 
@@ -419,7 +420,7 @@ public class CommitToGitCommandTest
 
     string WriteCustomPropertiesFile(string credentialName, string repositoryUrl, string username, string password)
     {
-        var dto = new CommitToGitCustomPropertiesDto(new GitCredentialDto(credentialName, repositoryUrl, username, password));
+        var dto = new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto(credentialName, repositoryUrl, username, password));
         var json = JsonConvert.SerializeObject(dto);
         var absPath = Path.Combine(executionDirectory, customPropertiesFileName);
         File.WriteAllBytes(absPath, AesEncryption.ForServerVariables(customPropertiesPassword).Encrypt(json));
