@@ -28,7 +28,7 @@ public class GitCredentialDtoJsonConverter : JsonConverter
 
         return type switch
         {
-            null or UsernamePasswordGitCredentialDto.DiscriminatorValue
+            UsernamePasswordGitCredentialDto.DiscriminatorValue
                 => obj.ToObject<UsernamePasswordGitCredentialDto>(ConcreteSerializer),
             SshKeyGitCredentialDto.DiscriminatorValue
                 => obj.ToObject<SshKeyGitCredentialDto>(ConcreteSerializer),

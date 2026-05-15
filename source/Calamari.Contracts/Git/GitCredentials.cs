@@ -15,6 +15,6 @@ public record UsernamePasswordGitCredentialDto(string Name, string Url, string U
 
 public record SshKeyGitCredentialDto(string Name, string Url)
 {
-    public const string DiscriminatorValue = "SSHKeyAndKnownHosts";
+    public const string DiscriminatorValue = "SshKey";
     public string Type => DiscriminatorValue;
 }
