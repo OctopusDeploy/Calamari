@@ -5,7 +5,7 @@ using Octopus.Versioning;
 
 namespace Calamari.Commands.Support
 {
-    public class PackageFindOptions
+    public class PackageFindOptions : IPackageFindOptions
     {
         public string PackageId { get; set; }
         public string PackageVersion { get; set; }
@@ -13,7 +13,7 @@ namespace Calamari.Commands.Support
         public bool ExactMatchOnly { get; set; }
         public VersionFormat VersionFormat { get; set; } = VersionFormat.Semver;
 
-        public static void ConfigureOptions(OptionSet options, PackageFindOptions findOptions)
+        public static void ConfigureOptions(OptionSet options, IPackageFindOptions findOptions)
         {
             options.Add("packageId=", "Package ID to find", v => findOptions.PackageId = v);
             options.Add("packageVersion=", "Package version to find", v => findOptions.PackageVersion = v);

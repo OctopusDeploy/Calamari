@@ -18,9 +18,7 @@ namespace Calamari.Commands
         readonly IManagePackageCache journal;
         readonly ICalamariFileSystem fileSystem;
         readonly PackageFindService findService;
-        readonly PackageFindOptions options;
-
-        ServerTaskId taskId;
+        readonly PackageFindRegistrationOptions options;
 
         public FindAndRegisterPackageCommand(
             ILog log,
@@ -32,10 +30,9 @@ namespace Calamari.Commands
             this.journal = journal;
             this.fileSystem = fileSystem;
             this.findService = new PackageFindService(log, packageStore);
-            this.options = new PackageFindOptions();
+            this.options = new PackageFindRegistrationOptions();
 
-            PackageFindOptions.ConfigureOptions(Options, options);
-            Options.Add("taskId=", "Id of the task that is using the package", v => taskId = new ServerTaskId(v));
+            PackageFindRegistrationOptions.ConfigureOptions(Options, options);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -44,17 +41,11 @@ namespace Calamari.Commands
 
             try
             {
-                // Find and validate package options first (packageId, packageVersion, packageHash)
-                var package = findService.FindPackage(options);
+                var package = findService.FindPackageForRegistration(options);
 
                 if (package != null)
                 {
                     var version = VersionFactory.TryCreateVersion(options.PackageVersion, options.VersionFormat);
-
-                    // Then validate taskId before registration
-                    if (taskId == null)
-                        throw new CommandException("No task ID was specified. Please pass --taskId YourTaskId");
-
                     RegisterPackageUse(package, version);
                 }
 
@@ -75,7 +66,7 @@ namespace Calamari.Commands
                 version,
                 new PackagePath(pkg.FullFilePath));
             var size = fileSystem.GetFileSize(package.Path.Value);
-            journal.RegisterPackageUse(package, taskId, (ulong)size);
+            journal.RegisterPackageUse(package, new ServerTaskId(options.TaskId), (ulong)size);
         }
     }
 }

@@ -6,7 +6,7 @@ using Octopus.Versioning;
 
 namespace Calamari.Commands.Support
 {
-    public class PackageDownloadOptions
+    public class PackageDownloadOptions : IPackageDownloadOptions
     {
         public string PackageId { get; set; }
         public string PackageVersion { get; set; }
@@ -20,7 +20,7 @@ namespace Calamari.Commands.Support
         public FeedType FeedType { get; set; } = FeedType.NuGet;
         public VersionFormat VersionFormat { get; set; } = VersionFormat.Semver;
 
-        public static void ConfigureOptions(OptionSet options, PackageDownloadOptions downloadOptions)
+        public static void ConfigureOptions(OptionSet options, IPackageDownloadOptions downloadOptions)
         {
             options.Add("packageId=", "Package ID to download", v => downloadOptions.PackageId = v);
             options.Add("packageVersion=", "Package version to download", v => downloadOptions.PackageVersion = v);
