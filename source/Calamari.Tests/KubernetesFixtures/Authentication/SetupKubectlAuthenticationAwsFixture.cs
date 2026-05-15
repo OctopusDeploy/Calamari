@@ -5,6 +5,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Authentication;
+using Calamari.Kubernetes.Integration;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -86,7 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             AddLogForWhichAws();
             AddLogForAwsVersion(CurrentAwsVersion);
 
-            kubectl.GetVersion().Returns(Maybe<SemanticVersion>.Some(new SemanticVersion(1, 29, 7)));
+            kubectl.GetVersion().Returns(new KubectlVersionOutput(new SemanticVersion(1, 29, 7), null));
 
             variables.SetStrings(KnownVariables.EnabledFeatureToggles,
                                  new[]
