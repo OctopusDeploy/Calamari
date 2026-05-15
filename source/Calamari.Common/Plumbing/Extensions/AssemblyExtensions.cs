@@ -16,7 +16,7 @@ namespace Calamari
 
         public static string FullLocalPath(this Assembly assembly)
         {
-            var codeBase = assembly.CodeBase;
+            var codeBase = assembly.Location;
             var uri = new UriBuilder(codeBase);
             var root = Uri.UnescapeDataString(uri.Path);
             root = root.Replace('/', Path.DirectorySeparatorChar);
