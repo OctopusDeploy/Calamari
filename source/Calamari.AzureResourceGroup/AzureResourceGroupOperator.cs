@@ -114,9 +114,6 @@ class AzureResourceGroupOperator(ILog log)
         log.Verbose(outputsJson);
 
         var outputs = JObject.Parse(outputsJson);
-
-
-            
         foreach (var output in outputs)
         {
             if (output.Value?["value"] is not null)
@@ -124,7 +121,6 @@ class AzureResourceGroupOperator(ILog log)
                 log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"]!.ToString(), variables);
             }
         }
-                
     }
 
     static TimeSpan GetPollingTimeout(IVariables variables)
