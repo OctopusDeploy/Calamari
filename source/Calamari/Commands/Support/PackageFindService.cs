@@ -19,13 +19,29 @@ namespace Calamari.Commands.Support
             this.log = log;
             this.packageStore = packageStore;
         }
+        
+        public PackagePhysicalFileMetadata FindPackageForRegistration(PackageFindRegistrationOptions options)
+        {
+            ValidateCommonOptions(options);
+            Guard.NotNullOrWhiteSpace(options.TaskId, "No task ID was specified. Please pass --taskId YourTaskId");
+            return GetPackage(options);
+        }
 
         public PackagePhysicalFileMetadata FindPackage(PackageFindOptions options)
+        {
+            ValidateCommonOptions(options);
+            return GetPackage(options);
+        }
+
+        void ValidateCommonOptions(IPackageFindOptions options)
         {
             Guard.NotNullOrWhiteSpace(options.PackageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(options.PackageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(options.PackageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
+        }
 
+        PackagePhysicalFileMetadata GetPackage(IPackageFindOptions options)
+        {
             var version = VersionFactory.TryCreateVersion(options.PackageVersion, options.VersionFormat);
             if (version == null)
                 throw new CommandException($"Package version '{options.PackageVersion}' is not a valid {options.VersionFormat} version string. Please pass --packageVersionFormat with a different version type.");
@@ -45,17 +61,17 @@ namespace Calamari.Commands.Support
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(
-                package.PackageId,
-                package.FileVersion,
-                package.Hash,
-                package.Extension,
-                package.FullFilePath,
-                true,
-                options.VersionFormat
-            );
+                            package.PackageId,
+                            package.FileVersion,
+                            package.Hash,
+                            package.Extension,
+                            package.FullFilePath,
+                            true,
+                            options.VersionFormat
+                           );
             return package;
         }
-
+        
         void FindEarlierPackages(string packageId, IVersion version, VersionFormat versionFormat)
         {
             log.VerboseFormat("Finding earlier packages that have been uploaded to this Tentacle.");

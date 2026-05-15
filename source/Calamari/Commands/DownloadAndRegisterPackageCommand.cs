@@ -19,9 +19,7 @@ namespace Calamari.Commands
         readonly ILog log;
         readonly IManagePackageCache journal;
         readonly PackageDownloadService downloadService;
-        readonly PackageDownloadOptions options;
-
-        ServerTaskId taskId;
+        readonly PackageDownloadAndRegisterOptions options;
 
         public DownloadAndRegisterPackageCommand(
             IScriptEngine scriptEngine,
@@ -34,10 +32,8 @@ namespace Calamari.Commands
             this.log = log;
             this.journal = journal;
             this.downloadService = new PackageDownloadService(scriptEngine, variables, fileSystem, commandLineRunner, log);
-            this.options = new PackageDownloadOptions();
-
-            PackageDownloadOptions.ConfigureOptions(Options, options);
-            Options.Add("taskId=", "Id of the task that is using the package", v => taskId = new ServerTaskId(v));
+            this.options = new PackageDownloadAndRegisterOptions();
+            PackageDownloadAndRegisterOptions.ConfigureOptions(Options, options);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -46,14 +42,9 @@ namespace Calamari.Commands
 
             try
             {
-                var pkg = downloadService.DownloadPackage(options);
+                var pkg = downloadService.DownloadPackageForRegistration(options);
                 var version = VersionFactory.TryCreateVersion(options.PackageVersion, options.VersionFormat);
-
-                if (taskId == null)
-                    throw new CommandException("No task ID was specified. Please pass --taskId YourTaskId");
-
                 RegisterPackageUse(pkg, version);
-
                 return 0;
             }
             catch (Exception ex)
@@ -71,7 +62,7 @@ namespace Calamari.Commands
                 version,
                 new PackagePath(pkg.FullFilePath));
             var size = (ulong)pkg.Size;
-            journal.RegisterPackageUse(package, taskId, size);
+            journal.RegisterPackageUse(package, new ServerTaskId(options.TaskId), size);
         }
 
     }

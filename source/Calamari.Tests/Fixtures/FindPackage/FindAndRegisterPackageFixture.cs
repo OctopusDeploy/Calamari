@@ -128,6 +128,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     .Argument("packageHash", acmeWeb.Hash));
 
                 result.AssertFailure();
+                result.AssertErrorOutput("No task ID was specified. Please pass --taskId YourTaskId");
             }
         }
 

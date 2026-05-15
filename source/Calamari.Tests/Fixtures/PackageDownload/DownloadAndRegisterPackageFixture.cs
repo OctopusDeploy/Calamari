@@ -207,6 +207,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = Invoke(calamari);
 
             result.AssertFailure();
+            result.AssertErrorOutput("No task ID was specified. Please pass --taskId YourTaskId");
         }
 
         [Test]
