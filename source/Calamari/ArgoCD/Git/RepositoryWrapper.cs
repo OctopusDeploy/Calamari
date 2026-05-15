@@ -38,13 +38,6 @@ namespace Calamari.ArgoCD.Git
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        Credentials RepositoryCredentials => connection switch
-             {
-                 SshGitConnection ssh => new SshKeyMemoryCredentials { Username = ssh.Username, PrivateKey = ssh.PrivateKey },
-                 HttpsGitConnection https => new UsernamePasswordCredentials { Username = https.Username, Password = https.Password },
-                 _ => null
-             };
-
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
@@ -198,7 +191,7 @@ namespace Calamari.ArgoCD.Git
             PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
                 OnPushStatusError = errors => errorsDetected = errors,
                 CertificateCheck = connection is SshGitConnection ? SshHostKeyVerificationBypass.AcceptAll : null
             };
@@ -216,7 +209,7 @@ namespace Calamari.ArgoCD.Git
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
             var fetchOptions = new FetchOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
                 CertificateCheck = connection is SshGitConnection ? SshHostKeyVerificationBypass.AcceptAll : null
             };
 
