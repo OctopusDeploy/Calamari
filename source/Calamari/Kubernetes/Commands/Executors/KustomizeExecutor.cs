@@ -93,9 +93,12 @@ namespace Calamari.Kubernetes.Commands.Executors
             if (!variables.GetFlag(SpecialVariables.KustomizeLoadRestrictorNone))
                 return executeArgs;
 
-            // kubectl >= 1.27 bundles kustomize v5 which uses --load-restrictor (hyphen)
-            // Earlier versions bundle kustomize v4 which uses --load_restrictor (underscore)
-            var loadRestrictorArg = versionOutput.KubectlVersion.Minor >= 27
+            // Prefer the bundled kustomize version when available, because the load restrictor
+            // flag syntax is defined by kustomize rather than kubectl. Fall back to the existing
+            // kubectl-based heuristic if the bundled kustomize version is unavailable.
+            var usesKustomizeV5Syntax = versionOutput.KustomizeVersion?.Major >= 5
+                                        || (versionOutput.KustomizeVersion == null && versionOutput.KubectlVersion.Minor >= 27);
+            var loadRestrictorArg = usesKustomizeV5Syntax
                 ? "--load-restrictor=LoadRestrictionsNone"
                 : "--load_restrictor=none";
             log.Verbose($"Adding load restrictor flag: {loadRestrictorArg}");
