@@ -62,6 +62,8 @@ namespace Calamari.Kubernetes.Commands.Executors
                 resourcesIdentifiers.UnionWith(res);
             }
 
+            AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resourcesIdentifiers);
+
             return resourcesIdentifiers;
         }
 
