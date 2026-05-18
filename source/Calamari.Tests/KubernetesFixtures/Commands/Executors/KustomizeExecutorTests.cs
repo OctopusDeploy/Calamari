@@ -156,10 +156,10 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             var result = await executor.Execute(runningDeployment, RecordingCallback);
 
             // Assert
-            result.Should().BeTrue();
+            result.Should().BeTrue();   
             commandLineRunner.ReceivedCalls().Count().Should().Be(3);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
-            commandLineArgs[0].Should().Contain("version").And.Contain("--client").And.Contain("-o json");
+            commandLineArgs[0].Should().Contain("version").And.Contain("--client").And.Contain("--output=json");
             commandLineArgs[1].Should().Contain("kustomize").And.Contain(OverlayPath).And.Contain("-o").And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename);
             commandLineArgs[2].Should().Contain("apply -f").And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename).And.Contain("-o json");
             receivedCallbacks.Should()
