@@ -139,9 +139,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void NoValues_EmbeddedValuesUsed()
+        public async Task NoValues_EmbeddedValuesUsed()
         {
-            var result = DeployPackage();
+            var result = await DeployPackage();
 
             result.AssertSuccess();
 
@@ -152,13 +152,13 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void MismatchPackageIDAndHelmArchivePathWorks()
+        public async Task MismatchPackageIDAndHelmArchivePathWorks()
         {
             var packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
             Variables.Set(PackageVariables.PackageId, "thisisnotamatch");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
 
-            var result = DeployPackage(packageName);
+            var result =await  DeployPackage(packageName);
 
             result.AssertSuccess();
 
@@ -169,12 +169,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void ExplicitValues_NewValuesUsed()
+        public async Task ExplicitValues_NewValuesUsed()
         {
             //Helm Config
             Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -183,7 +183,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void ValuesFromPackage_NewValuesUsed()
+        public async Task ValuesFromPackage_NewValuesUsed()
         {
             //Additional Package
             Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
@@ -194,7 +194,7 @@ namespace Calamari.Tests.KubernetesFixtures
             //Variable that will replace packaged value in package
             Variables.Set("MySecretMessage", "Variable Replaced In Package");
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -203,12 +203,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void ValuesFromChartPackage_NewValuesUsed()
+        public async Task ValuesFromChartPackage_NewValuesUsed()
         {
             //Additional Package
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), Path.Combine("mychart", "secondary.Development.yaml"));
 
-            var result = DeployPackage();
+            var result =await  DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -217,12 +217,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void ValuesFromChartPackage_GetSubstituted()
+        public async Task ValuesFromChartPackage_GetSubstituted()
         {
             Variables.Set(PackageVariables.PackageVersion, "0.3.8");
             Variables.Set("SpecialMessage", "octostache is working");
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello octostache is working", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -231,12 +231,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void ValuesFromChartPackageWithoutSubDirectory_NewValuesUsed()
+        public async Task ValuesFromChartPackageWithoutSubDirectory_NewValuesUsed()
         {
             //Additional Package
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath(""), "secondary.Development.yaml");
 
-            var result = DeployPackage();
+            var result =await  DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -245,7 +245,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void ValuesFromPackageAndExplicit_ExplicitTakesPrecedence()
+        public async Task ValuesFromPackageAndExplicit_ExplicitTakesPrecedence()
         {
             //Helm Config (lets make sure Explicit values take precedence
             Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
@@ -260,7 +260,7 @@ namespace Calamari.Tests.KubernetesFixtures
             //Variable that will replace packaged value in package
             Variables.Set("MySecretMessage", "From A Variable Replaced In Package");
 
-            var result = DeployPackage();
+            var result =await  DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -269,11 +269,11 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void ValuesFromRawYaml_ValuesAdded()
+        public async Task ValuesFromRawYaml_ValuesAdded()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.YamlValues, "\"SpecialMessage\": \"YAML\"");
 
-            var result = DeployPackage();
+            var result =await  DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -284,7 +284,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 AddPostDeployMessageCheckAndCleanup();
 
-                var result = DeployPackage();
+                var result = await DeployPackage();
                 result.AssertSuccess();
                 result.AssertOutput($"Using custom helm executable at {HelmOsPlatform}\\helm from inside package. Full path at");
             }
@@ -314,13 +314,13 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void Namespace_Override_Used()
+        public async Task Namespace_Override_Used()
         {
             const string @namespace = "calamari-testing-foo";
             Variables.Set(Kubernetes.SpecialVariables.Helm.Namespace, @namespace);
             AddPostDeployMessageCheckAndCleanup(@namespace);
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
@@ -329,12 +329,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void AdditionalArgumentsPassed()
+        public async Task AdditionalArgumentsPassed()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
             AddPostDeployMessageCheckAndCleanup(explicitNamespace: null, dryRun: true);
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
             result.AssertSuccess();
             result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
         }
@@ -343,13 +343,13 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void DoesNotReportManifestsWhenDryRunIsSet()
+        public async Task DoesNotReportManifestsWhenDryRunIsSet()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
             Variables.Set(Kubernetes.SpecialVariables.ResourceStatusCheck, "true");
             AddPostDeployMessageCheckAndCleanup(explicitNamespace: null, dryRun: true);
 
-            var result = DeployPackage();
+            var result = await DeployPackage();
             result.AssertSuccess();
             result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
             result.AssertOutputContains("Helm --dry-run is enabled, no object statuses will be reported");
@@ -360,10 +360,10 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNon32BitWindows]
         [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
-        public void WhenTheChartDirectoryVariableIsSet_TheChartAtThatLocationIsUsed()
+        public async Task WhenTheChartDirectoryVariableIsSet_TheChartAtThatLocationIsUsed()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
-            var result = DeployPackage("mychart-with-specific-location-0.3.8.tar.gz");
+            var result =await  DeployPackage("mychart-with-specific-location-0.3.8.tar.gz");
             result.AssertSuccess();
         }
 
@@ -371,10 +371,10 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void WhenTheChartDirectoryVariableIsSet_AndTheChartDoesNotExist_AnErrorIsReturned()
+        public async Task WhenTheChartDirectoryVariableIsSet_AndTheChartDoesNotExist_AnErrorIsReturned()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
-            var result = DeployPackage(); // This package doesn't have the specific location, should go :boom:
+            var result =await  DeployPackage(); // This package doesn't have the specific location, should go :boom:
             result.AssertFailure();
             result.AssertOutputContains("Chart was not found in 'specific/location/for/my/chart'");
         }
@@ -383,9 +383,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [Category(TestCategory.PlatformAgnostic)]
-        public void WhenChartIsInRootOfPackage_ShouldUseTheRootStagingDirectory()
+        public async Task WhenChartIsInRootOfPackage_ShouldUseTheRootStagingDirectory()
         {
-            var result = DeployPackage("mychart-with-no-root-folder-0.3.8.tgz");
+            var result = await DeployPackage("mychart-with-no-root-folder-0.3.8.tgz");
             result.AssertSuccess();
         }
 
@@ -421,7 +421,7 @@ namespace Calamari.Tests.KubernetesFixtures
         static string DeleteCommand(string @namespace, string releaseName)
             => $"uninstall {releaseName} --namespace {@namespace}";
 
-        protected CalamariResult DeployPackage(string packageName = null)
+        protected async Task<CalamariResult> DeployPackage(string packageName = null)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
@@ -435,7 +435,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
                var encryptionKey = Variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
 
-                return InvokeInProcess(Calamari()
+                return await InvokeInProcess(Calamari()
                                        .Action("helm-upgrade")
                                        .Argument("package", pkg)
                                        .VariablesFileArguments(variablesFile.FilePath, encryptionKey));

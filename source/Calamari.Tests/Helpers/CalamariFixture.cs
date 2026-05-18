@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Commands; //Required when NETFX is defined
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
@@ -40,21 +41,14 @@ namespace Calamari.Tests.Helpers
             return new CommandLine(calamariFullPath).UseDotnet().OutputToLog(false);
         }
 
-        protected CommandLine OctoDiff()
-        {
-            var octoDiffExe = OctoDiffCommandLineRunner.FindOctoDiffExecutable();
-
-            return new CommandLine(octoDiffExe);
-        }
-
-        protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
+        protected async Task<CalamariResult> InvokeInProcess(CommandLine command, IVariables variables = null)
         {
             var args = command.GetRawArgs();
             var program = new TestProgram(Log);
             int exitCode;
             try
             {
-                exitCode = program.RunWithArgs(args);
+                exitCode = await program.RunWithArgs(args);
             }
             catch (Exception ex)
             {

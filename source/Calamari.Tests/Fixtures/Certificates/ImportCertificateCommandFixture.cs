@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.Versioning;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -25,20 +26,20 @@ namespace Calamari.Tests.Fixtures.Certificates
         readonly SampleCertificate cert = SampleCertificate.CapiWithPrivateKey;
 
         [Test]
-        public void AddingCertToRoot_ThrowsError()
+        public async Task AddingCertToRoot_ThrowsError()
         {
             var variables = CreateInitialVariables();
             variables.Add(SpecialVariables.Action.Certificate.StoreName, StoreName.Root.ToString());
             variables.Add(SpecialVariables.Action.Certificate.StoreLocation, StoreLocation.CurrentUser.ToString());
 
-            var result = Invoke(variables);
+            var result = await Invoke(variables);
 
             result.AssertFailure();
             result.AssertErrorOutput("When importing certificate into Root store, location must be 'LocalMachine'. Windows security restrictions prevent importing into the Root store for a user.");
         }
         
         [Test]
-        public void AddingCertToStore_AddsCert()
+        public async Task AddingCertToStore_AddsCert()
         {
             var certificateStoreLocation = StoreLocation.LocalMachine;
             var storeName = StoreName.My.ToString();
@@ -47,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             variables.Add(SpecialVariables.Action.Certificate.StoreLocation, certificateStoreLocation.ToString());
             cert.EnsureCertificateNotInStore(storeName, certificateStoreLocation);
 
-            var result = Invoke(variables);
+            var result = await Invoke(variables);
 
             result.AssertSuccess();
             result.AssertOutputContains($"Importing certificate '{randomSubject}' with thumbprint '{cert.Thumbprint}' into store 'LocalMachine\\My'");
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Certificates
         }
 
         [Test]
-        public void NoStoreLocationProvided_StoresInUserName()
+        public async Task NoStoreLocationProvided_StoresInUserName()
         {
             var storeName = StoreName.My.ToString();
             var storeLocation = StoreLocation.CurrentUser;
@@ -69,7 +70,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             variables.Add(SpecialVariables.Action.Certificate.StoreUser, userName);
             cert.EnsureCertificateNotInStore(storeName, storeLocation);
             
-            var result = Invoke(variables);
+            var result = await Invoke(variables);
 
             result.AssertSuccess();
             result.AssertOutputContains($"Importing certificate '{randomSubject}' with thumbprint '{cert.Thumbprint}' into store 'My' for user '{userName}'");
@@ -80,13 +81,13 @@ namespace Calamari.Tests.Fixtures.Certificates
             cert.EnsureCertificateNotInStore(storeName, storeLocation);
         }
 
-        CalamariResult Invoke(VariableDictionary variables)
+        async Task<CalamariResult> Invoke(VariableDictionary variables)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
                 var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
                 
-                return InvokeInProcess(Calamari()
+                return await InvokeInProcess(Calamari()
                               .Action("import-certificate")
                               .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
             }
