@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
@@ -14,6 +15,7 @@ using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
+using Newtonsoft.Json;
 using NSubstitute;
 using NSubstitute.ClearExtensions;
 using NUnit.Framework;
@@ -369,6 +371,59 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
             AssertNoManifestsReported();
+        }
+
+        [Test]
+        public async Task SetsAppliedResourcesOutputVariable_WhenFeatureToggleIsEnabled()
+        {
+            // Arrange
+            SetupCommandLineRunnerMock();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath,
+                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoRolloutsSupportFeatureToggle
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            var appliedResourcesJson = variables.Get("AppliedResources");
+            appliedResourcesJson.Should().NotBeNullOrEmpty();
+
+            var deserializedResources = JsonConvert.DeserializeAnonymousType(appliedResourcesJson, new[]
+            {
+                new { Group = "", Version = "", Kind = "", Name = "", Namespace = "" }
+            });
+            deserializedResources.Should().HaveCount(2);
+            deserializedResources.Should().Contain(r => r.Kind == "Deployment" && r.Name == "basic-deployment" && r.Namespace == "dev");
+            deserializedResources.Should().Contain(r => r.Kind == "Service" && r.Name == "basic-service" && r.Namespace == "dev");
+        }
+
+        [Test]
+        public async Task DoesNotSetAppliedResourcesOutputVariable_WhenFeatureToggleIsDisabled()
+        {
+            // Arrange
+            SetupCommandLineRunnerMock();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            var appliedResourcesJson = variables.Get("AppliedResources");
+            appliedResourcesJson.Should().BeNull();
         }
 
         void SetupCommandLineRunnerMock(int kubectlMinor = 28)
