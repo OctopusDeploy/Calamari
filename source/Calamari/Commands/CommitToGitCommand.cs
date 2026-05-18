@@ -174,22 +174,51 @@ public class CommitToGitCommand : Command
                                                       "Package",
                                                       package.PackageName,
                                                       package.DestinationSubFolder,
-                                                      dir => fileSystem.EnumerateFilesWithGlob(dir, package.InputFilePaths)));
+                                                      dir => EnumerateGlobMatchesWithStrippedPrefix(dir, package.InputFilePaths)));
                                               }
 
                                               foreach (var gitDep in metadataParser.GetGitRepositoryDependenciesForCopying(d))
                                               {
-                                                  //no input-globs are required as only the relevant files were transmitted to Calamari
                                                   var copiedTo = CopyDependencyToRepository(d, clonedRepository, destBase, new CopyDependencySpec(
                                                       "Git dependency",
                                                       gitDep.GitDependencyName,
                                                       gitDep.DestinationSubFolder,
-                                                      dir => fileSystem.EnumerateFilesRecursively(dir)));
+                                                      dir => EnumerateGlobMatchesWithStrippedPrefix(dir, gitDep.InputFilePaths)));
                                                   if (copiedTo != null)
                                                       log.Verbose($"Copied files for git dependency '{gitDep.GitDependencyName}' to {copiedTo}");
                                               }
                                           })
         ];
+    }
+
+    IEnumerable<(string SourceFile, string DestRelativePath)> EnumerateGlobMatchesWithStrippedPrefix(string sourceDir, string[] globPatterns)
+    {
+        foreach (var glob in globPatterns)
+        {
+            var prefix = GetNonWildcardPrefix(glob);
+            foreach (var sourceFile in fileSystem.EnumerateFilesWithGlob(sourceDir, glob))
+            {
+                var relativePath = Path.GetRelativePath(sourceDir, sourceFile).Replace('\\', '/');
+                var destRelative = !string.IsNullOrEmpty(prefix) && relativePath.StartsWith(prefix, StringComparison.Ordinal)
+                    ? relativePath[prefix.Length..]
+                    : relativePath;
+                yield return (sourceFile, destRelative);
+            }
+        }
+    }
+
+    static string GetNonWildcardPrefix(string globPattern)
+    {
+        if (string.IsNullOrEmpty(globPattern))
+            return string.Empty;
+
+        var segments = globPattern.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Split(Path.AltDirectorySeparatorChar);
+        var firstWildcard = Array.FindIndex(segments, s => s.Contains('*'));
+        // No wildcard at all: treat the final segment as the filename, prefix is its directory.
+        var prefixSegmentCount = firstWildcard == -1 ? segments.Length - 1 : firstWildcard;
+        return prefixSegmentCount <= 0
+            ? string.Empty
+            : string.Join("/", segments.Take(prefixSegmentCount)) + "/";
     }
 
     string CopyDependencyToRepository(RunningDeployment deployment, RepositoryWrapper clonedRepository, string destBase, CopyDependencySpec spec)
@@ -203,21 +232,20 @@ public class CommitToGitCommand : Command
         }
 
         var filesToTarget = spec.EnumerateFiles(sourceDir).ToList();
-        nonSensitiveSubstituteInFiles.Substitute(deployment.CurrentDirectory, filesToTarget);
+        nonSensitiveSubstituteInFiles.Substitute(deployment.CurrentDirectory, filesToTarget.Select(f => f.SourceFile).ToList());
 
         var depDestBase = Path.Combine(destBase, spec.DestinationSubFolder ?? string.Empty);
         EnsurePathInsideWorkingDirectory(clonedRepository.WorkingDirectory, depDestBase, $"DestinationSubFolder for {spec.Kind.ToLowerInvariant()} '{spec.Name}'");
-        foreach (var sourceFile in filesToTarget)
+        foreach (var (sourceFile, destRelativePath) in filesToTarget)
         {
-            var relativePath = Path.GetRelativePath(sourceDir, sourceFile);
-            var destFile = Path.Combine(depDestBase, relativePath);
+            var destFile = Path.Combine(depDestBase, destRelativePath);
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
             fileSystem.CopyFile(sourceFile, destFile);
         }
         return depDestBase;
     }
 
-    record CopyDependencySpec(string Kind, string Name, string DestinationSubFolder, Func<string, IEnumerable<string>> EnumerateFiles);
+    record CopyDependencySpec(string Kind, string Name, string DestinationSubFolder, Func<string, IEnumerable<(string SourceFile, string DestRelativePath)>> EnumerateFiles);
 
     // Execute the transform script over the repository from its 'base directory'
     IEnumerable<IConvention> BuildTransformRepositoryConventions()
