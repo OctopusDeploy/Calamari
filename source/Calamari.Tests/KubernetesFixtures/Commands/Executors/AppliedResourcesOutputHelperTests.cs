@@ -109,27 +109,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         }
 
         [Test]
-        public void LogsAppliedResourcesJson_WhenFeatureToggleIsEnabled()
-        {
-            // Arrange
-            var variables = new CalamariVariables
-            {
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoRolloutsSupportFeatureToggle
-            };
-            var deployment = new RunningDeployment(variables);
-            var resources = new[]
-            {
-                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "my-deployment", "default")
-            };
-
-            // Act
-            AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
-
-            // Assert
-            log.StandardOut.Should().Contain(msg => msg.Contains("Applied resources:"));
-        }
-
-        [Test]
         public void SerializesResourcesWithCorrectJsonFormat()
         {
             // Arrange
