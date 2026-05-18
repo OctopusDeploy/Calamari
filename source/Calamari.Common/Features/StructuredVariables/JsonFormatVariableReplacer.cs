@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -36,14 +37,13 @@ namespace Calamari.Common.Features.StructuredVariables
                 map.Load(json.root);
                 map.Update(variables);
 
-                fileSystem.OverwriteFile(filePath,
-                                         textWriter =>
-                                         {
-                                             textWriter.NewLine = json.lineEnding == StringExtensions.LineEnding.Unix ? "\n" : "\r\n";
-                                             var jsonWriter = new JsonTextWriter(textWriter);
-                                             jsonWriter.Formatting = Formatting.Indented;
-                                             json.root.WriteTo(jsonWriter);
-                                         }, json.encoding);
+                using var textWriter = new StringWriter();
+                textWriter.NewLine = json.lineEnding == StringExtensions.LineEnding.Unix ? "\n" : "\r\n";
+                var jsonWriter = new JsonTextWriter(textWriter);
+                jsonWriter.Formatting = Formatting.Indented;
+                json.root.WriteTo(jsonWriter);
+                
+                fileSystem.OverwriteFile(filePath, textWriter.ToString(), json.encoding);
             }
             catch (JsonReaderException e)
             {
