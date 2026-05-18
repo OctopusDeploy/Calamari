@@ -1,0 +1,12 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "2acdb61f3d08190d30fd144f9ae539a2488a8eec",
+  "prompts": {},
+  "humans": {
+    "h_8814cab10e818f": {
+      "author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}
