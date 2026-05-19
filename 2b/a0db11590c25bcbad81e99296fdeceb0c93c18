@@ -1,0 +1,14 @@
+source/Calamari.Tests/KubernetesFixtures/Conventions/Helm/HelmUpgradeExecutorTests.cs
+  h_8814cab10e818f 176-177
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "2ba0db11590c25bcbad81e99296fdeceb0c93c18",
+  "prompts": {},
+  "humans": {
+    "h_8814cab10e818f": {
+      "author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}
