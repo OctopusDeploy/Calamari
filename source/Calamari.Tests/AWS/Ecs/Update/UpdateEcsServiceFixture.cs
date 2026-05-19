@@ -17,6 +17,8 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
+using Octopus.Calamari.Contracts.Serialization;
 using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Tests.AWS.Ecs.Update;
@@ -140,16 +142,18 @@ public class UpdateEcsServiceFixture
 
         var environment = new EnvAction<EnvVarItem>(EnvActionMode.Replace,
         [
-            new EnvVarItem(EnvVarType.Text, "LOG_LEVEL", "info"),
+            new EnvVarItem(EnvVarType.Plain, "LOG_LEVEL", "info"),
             new EnvVarItem(EnvVarType.Secret, "DB_PASSWORD", "arn:aws:ssm:us-east-1:017645897735:parameter/calamari-ecs-integration-tests-fake")
         ]);
         var containers = new[]
         {
             new EcsContainerUpdate("web", newImage, environment, null)
         };
-        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers, JsonSerialization.GetDefaultSerializerSettings()));
+        var settings = CalamariContractsSerializerSettings.Create();
+        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers, settings));
 
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "dontWait");
+        var waitOption = new WaitOption(WaitMode.DontWait, null);
+        variables.Set(AwsSpecialVariables.Ecs.Wait, JsonConvert.SerializeObject(waitOption, settings));
 
         return variables;
     }

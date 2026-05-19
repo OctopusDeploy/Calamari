@@ -10,6 +10,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Aws.Deployment.Conventions;
@@ -24,13 +25,12 @@ public class UpdateEcsServiceConvention(
     string targetTaskDefinitionName,
     List<EcsContainerUpdate> containers,
     List<KeyValuePair<string, string>> tags,
-    WaitOptionType waitOption,
-    TimeSpan? waitTimeout,
+    WaitOption waitOption,
     Func<TimeSpan> deploymentPollInterval = null,
     Func<TimeSpan> taskPollInterval = null)
     : IInstallConvention
 {
-    readonly EcsPostDeployWatcher watcher = new(ecs, log, clusterName, serviceName, waitOption, waitTimeout, deploymentPollInterval, taskPollInterval);
+    readonly EcsPostDeployWatcher watcher = new(ecs, log, clusterName, serviceName, waitOption, deploymentPollInterval, taskPollInterval);
 
     public void Install(RunningDeployment deployment) => InstallAsync(deployment).GetAwaiter().GetResult();
 

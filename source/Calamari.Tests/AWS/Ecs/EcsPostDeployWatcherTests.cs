@@ -8,6 +8,7 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 using Task = System.Threading.Tasks.Task;
 using EcsTask = Amazon.ECS.Model.Task;
 using EcsDeployment = Amazon.ECS.Model.Deployment;
@@ -25,21 +26,20 @@ public class EcsPostDeployWatcherTests
         ecs = Substitute.For<IAmazonECS>();
     }
 
-    EcsPostDeployWatcher Watcher(WaitOptionType waitOption = WaitOptionType.WaitUntilCompleted, TimeSpan? waitTimeout = null) =>
+    EcsPostDeployWatcher Watcher(WaitMode waitMode = WaitMode.WaitUntilCompleted, TimeSpan? waitTimeout = null) =>
         new(
             ecs,
             new InMemoryLog(),
             clusterName: "cluster-x",
             serviceName: "svc-x",
-            waitOption: waitOption,
-            waitTimeout: waitTimeout,
+            waitOption: new WaitOption(waitMode, waitTimeout),
             deploymentPollInterval: () => TimeSpan.Zero,
             taskPollInterval: () => TimeSpan.Zero);
 
     [Test]
     public async Task DontWaitSkipsPolling()
     {
-        await Watcher(WaitOptionType.DontWait).WaitAsync(Service());
+        await Watcher(WaitMode.DontWait).WaitAsync(Service());
 
         await ecs.DidNotReceive().DescribeServicesAsync(Arg.Any<DescribeServicesRequest>(), Arg.Any<CancellationToken>());
         await ecs.DidNotReceive().ListTasksAsync(Arg.Any<ListTasksRequest>(), Arg.Any<CancellationToken>());
@@ -116,7 +116,7 @@ public class EcsPostDeployWatcherTests
         ecs.DescribeServicesAsync(Arg.Any<DescribeServicesRequest>(), Arg.Any<CancellationToken>())
            .Returns(ServicesWithRollout(DeploymentRolloutState.IN_PROGRESS));
 
-        var act = async () => await Watcher(WaitOptionType.WaitWithTimeout, TimeSpan.Zero).WaitAsync(Service());
+        var act = async () => await Watcher(WaitMode.WaitWithTimeout, TimeSpan.Zero).WaitAsync(Service());
 
         await act.Should().ThrowAsync<CommandException>().WithMessage("*Timed out*deployment*");
     }
@@ -134,7 +134,7 @@ public class EcsPostDeployWatcherTests
                Tasks = [new EcsTask { TaskArn = "arn:task/1", LastStatus = "PENDING" }]
            });
 
-        var act = async () => await Watcher(WaitOptionType.WaitWithTimeout, TimeSpan.Zero).WaitAsync(Service());
+        var act = async () => await Watcher(WaitMode.WaitWithTimeout, TimeSpan.Zero).WaitAsync(Service());
 
         await act.Should().ThrowAsync<CommandException>().WithMessage("*tasks to reach RUNNING*");
     }

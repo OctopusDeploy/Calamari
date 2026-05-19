@@ -27,6 +27,10 @@
             public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.TemplateTaskDefinitionName";
             public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
 
+            // Update step — JSON-encoded WaitOption record. Deploy step will move to this once migrated.
+            public const string Wait = "Octopus.Action.Aws.Ecs.Wait";
+
+            // Deploy step — split type/timeout. To be retired when Deploy migrates to the Wait variable above.
             public static class WaitOption
             {
                 public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";

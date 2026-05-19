@@ -4,6 +4,7 @@ using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Commands;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Tests.AWS.Ecs;
 
@@ -77,7 +78,7 @@ public class RegisterTaskDefinitionRequestFactoryTests
         var updates = new[]
         {
             new EcsContainerUpdate("web", null,
-                new EnvAction<EnvVarItem>(EnvActionMode.Replace, [new EnvVarItem(EnvVarType.Text, "NEW", "1")]),
+                new EnvAction<EnvVarItem>(EnvActionMode.Replace, [new EnvVarItem(EnvVarType.Plain, "NEW", "1")]),
                 null)
         };
 
@@ -98,7 +99,7 @@ public class RegisterTaskDefinitionRequestFactoryTests
         var updates = new[]
         {
             new EcsContainerUpdate("web", null,
-                new EnvAction<EnvVarItem>(EnvActionMode.Merge, [new EnvVarItem(EnvVarType.Text, "K", "new")]),
+                new EnvAction<EnvVarItem>(EnvActionMode.Merge, [new EnvVarItem(EnvVarType.Plain, "K", "new")]),
                 null)
         };
 

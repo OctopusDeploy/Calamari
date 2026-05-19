@@ -3,6 +3,7 @@ using System.Linq;
 using Amazon.ECS.Model;
 using Calamari.Common.Commands;
 using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Aws.Integration.Ecs;
 
@@ -50,7 +51,7 @@ public static class RegisterTaskDefinitionRequestFactory
             return;
         }
 
-        var plain = action.Items.Where(i => i.Type == EnvVarType.Text)
+        var plain = action.Items.Where(i => i.Type == EnvVarType.Plain)
                           .Select(i => new Amazon.ECS.Model.KeyValuePair { Name = i.Key, Value = i.Value })
                           .ToList();
         var secrets = action.Items.Where(i => i.Type == EnvVarType.Secret)
