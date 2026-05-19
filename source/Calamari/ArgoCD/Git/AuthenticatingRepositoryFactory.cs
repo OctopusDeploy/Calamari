@@ -41,8 +41,8 @@ public class AuthenticatingRepositoryFactory
                 var sshConnection = new SshGitConnection(
                     sshCredential.Username,
                     requestedUrl,
-                    GitReference.CreateFromString(targetRevision),
-                    sshCredential.PrivateKey);
+                    sshCredential.PrivateKey,
+                    GitReference.CreateFromString(targetRevision));
                 return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
             }
             case null:

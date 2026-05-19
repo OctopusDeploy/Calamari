@@ -61,19 +61,19 @@ namespace Calamari.ArgoCD.Git
     {
         public SshGitConnection(
             string? username,
+            string privateKey,
             string url,
-            GitReference gitReference,
-            string privateKey)
+            GitReference gitReference)
         {
             Username = username;
+            PrivateKey = privateKey;
             Url = url;
             GitReference = gitReference;
-            PrivateKey = privateKey;
         }
 
         public string? Username { get; }
+        public string PrivateKey { get; }
         public string Url { get; }
         public GitReference GitReference { get; }
-        public string PrivateKey { get; }
     }
 }

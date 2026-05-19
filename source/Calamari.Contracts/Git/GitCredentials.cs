@@ -13,7 +13,7 @@ public record UsernamePasswordGitCredentialDto(string Name, string Url, string U
     public string Type => DiscriminatorValue;
 }
 
-public record SshKeyGitCredentialDto(string Name, string Url)
+public record SshKeyGitCredentialDto(string Name, string Url, string Username, string PrivateKey) : IGitCredentialDto
 {
     public const string DiscriminatorValue = "SshKey";
     public string Type => DiscriminatorValue;
