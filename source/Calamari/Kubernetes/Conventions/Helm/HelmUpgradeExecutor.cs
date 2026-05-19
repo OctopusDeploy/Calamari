@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +9,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Helm;
 using Calamari.Kubernetes.Integration;
 using Calamari.Util;
@@ -22,20 +23,24 @@ namespace Calamari.Kubernetes.Conventions.Helm
         readonly ICalamariFileSystem fileSystem;
         readonly HelmTemplateValueSourcesParser templateValueSourcesParser;
         readonly HelmCli helmCli;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
 
         public HelmUpgradeExecutor(ILog log,
                                    ICalamariFileSystem fileSystem,
                                    HelmTemplateValueSourcesParser templateValueSourcesParser,
-                                   HelmCli helmCli)
+                                   HelmCli helmCli,
+                                   IKubernetesManifestNamespaceResolver namespaceResolver)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.templateValueSourcesParser = templateValueSourcesParser;
             this.helmCli = helmCli;
+            this.namespaceResolver = namespaceResolver;
         }
 
         public void ExecuteHelmUpgrade(RunningDeployment deployment,
                                        string releaseName,
+                                       int newRevisionNumber,
                                        CancellationTokenSource installCompletedCts,
                                        CancellationTokenSource installErrorCts)
         {
@@ -57,7 +62,33 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
             }
 
+            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
+            {
+                SetAppliedResourcesOutputVariable(deployment, releaseName, newRevisionNumber);
+            }
+
             installCompletedCts.Cancel();
+        }
+
+        void SetAppliedResourcesOutputVariable(RunningDeployment deployment, string releaseName, int revisionNumber)
+        {
+            try
+            {
+                var manifest = helmCli.GetManifest(releaseName, revisionNumber);
+
+                if (string.IsNullOrWhiteSpace(manifest))
+                {
+                    log.Verbose($"Helm manifest for {releaseName} revision {revisionNumber} is empty, skipping applied resources output variable.");
+                    return;
+                }
+
+                var resources = ManifestParser.GetResourcesFromManifest(manifest, namespaceResolver, deployment.Variables, log);
+                AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
+            }
+            catch (Exception ex)
+            {
+                log.Warn($"Failed to set applied resources output variable: {ex.Message}");
+            }
         }
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment)

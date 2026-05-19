@@ -9,11 +9,13 @@ namespace Calamari.Common.FeatureToggles
             public const string AnsiColorsInTaskLogFeatureToggle = "ansi-colors";
             public const string ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle = "argo-cd-helm-replace-path-from-container-reference";
             public const string KustomizePatchImageUpdatesFeatureToggle = "kustomize-patch-image-updates";
+            public const string ArgoRolloutsSupportFeatureToggle = "argo-rollouts-support";
         };
 
         public static readonly OctopusFeatureToggle AnsiColorsInTaskLogFeatureToggle = new(KnownSlugs.AnsiColorsInTaskLogFeatureToggle);
         public static readonly OctopusFeatureToggle ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle = new(KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle);
         public static readonly OctopusFeatureToggle KustomizePatchImageUpdatesFeatureToggle = new(KnownSlugs.KustomizePatchImageUpdatesFeatureToggle);
+        public static readonly OctopusFeatureToggle ArgoRolloutsSupportFeatureToggle = new(KnownSlugs.ArgoRolloutsSupportFeatureToggle);
 
         public class OctopusFeatureToggle
         {
