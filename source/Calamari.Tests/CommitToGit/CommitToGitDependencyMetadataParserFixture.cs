@@ -150,13 +150,25 @@ namespace Calamari.Tests.CommitToGit
         [Test]
         public void GetGitRepositoryDependenciesForCopying_WhenGitRepositoryType_ReturnsDependencyWithCorrectFields()
         {
-            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"output\"}]");
+            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"output\",\"InputFilePaths\":[\"src/**/*\",\"docs/**/*\"]}]");
 
             var result = sut.GetGitRepositoryDependenciesForCopying(deployment).ToList();
 
             result.Should().HaveCount(1);
             result[0].GitDependencyName.Should().Be("my-repo");
             result[0].DestinationSubFolder.Should().Be("output");
+            result[0].InputFilePaths.Should().BeEquivalentTo("src/**/*", "docs/**/*");
+        }
+
+        [Test]
+        public void GetGitRepositoryDependenciesForCopying_WhenInputFilePathsNotSpecified_DefaultsToWildcard()
+        {
+            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"my-repo\",\"DestinationSubFolder\":\"\"}]");
+
+            var result = sut.GetGitRepositoryDependenciesForCopying(deployment).ToList();
+
+            result.Should().HaveCount(1);
+            result[0].InputFilePaths.Should().BeEquivalentTo("**/*");
         }
 
         [Test]
@@ -173,12 +185,14 @@ namespace Calamari.Tests.CommitToGit
         public void GetGitRepositoryDependenciesForCopying_EvaluatesVariablesInGitProperties()
         {
             deployment.Variables.Set("RepoNameVar", "resolved-repo");
-            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"#{RepoNameVar}\",\"DestinationSubFolder\":\"\"}]");
+            deployment.Variables.Set("PathVar", "src/app");
+            SetInputFileSources("[{\"Type\":\"GitRepository\",\"GitDependencyName\":\"#{RepoNameVar}\",\"DestinationSubFolder\":\"\",\"InputFilePaths\":[\"#{PathVar}/**/*\"]}]");
 
             var result = sut.GetGitRepositoryDependenciesForCopying(deployment).ToList();
 
             result.Should().HaveCount(1);
             result[0].GitDependencyName.Should().Be("resolved-repo");
+            result[0].InputFilePaths.Should().BeEquivalentTo("src/app/**/*");
         }
 
         [Test]

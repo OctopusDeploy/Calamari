@@ -47,7 +47,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             log.Verbose("Validating kubectl version");
             var versionOutput = ValidateKubectlVersion();
-
+            
             log.Info("Building kustomization");
             BuildKustomization(deployment.CurrentDirectory, overlayPath, variables, versionOutput);
 

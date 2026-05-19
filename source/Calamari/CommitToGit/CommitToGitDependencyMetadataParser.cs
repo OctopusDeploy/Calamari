@@ -106,7 +106,7 @@ namespace Calamari.CommitToGit
     {
         public string PackageId { get; set; }
         public string PackageName { get; set; }
-        public string[] InputFilePaths { get; set; }
+        public string[] InputFilePaths { get; set; } = ["**/*"];
         public string DestinationSubFolder { get; set; }
 
         public override string GetName()
@@ -127,7 +127,7 @@ namespace Calamari.CommitToGit
             {
                 PackageId = variables.Evaluate(packageDependency.PackageId),
                 PackageName = variables.Evaluate(packageDependency.PackageName),
-                InputFilePaths = packageDependency.InputFilePaths?.Select(p => variables.Evaluate(p)).ToArray(),
+                InputFilePaths = packageDependency.InputFilePaths?.Select(p => variables.Evaluate(p)).ToArray() ?? new[] { "**/*" },
                 DestinationSubFolder = variables.Evaluate(packageDependency.DestinationSubFolder),
             };
         }
@@ -137,6 +137,7 @@ namespace Calamari.CommitToGit
     {
         public string GitDependencyName { get; set; }
         public string DestinationSubFolder { get; set; }
+        public string[] InputFilePaths { get; set; } = ["**/*"];
 
         public override string GetName()
         {
@@ -150,12 +151,13 @@ namespace Calamari.CommitToGit
 
         public static GitRepositoryDependency FromJTokenWithEvaluation(JToken jToken, IVariables variables)
         {
-            var gitRepositoryTvs = jToken.ToObject<GitRepositoryDependency>();
+            var gitRepository = jToken.ToObject<GitRepositoryDependency>();
 
             return new GitRepositoryDependency
             {
-                GitDependencyName = variables.Evaluate(gitRepositoryTvs.GitDependencyName),
-                DestinationSubFolder = variables.Evaluate(gitRepositoryTvs.DestinationSubFolder)
+                GitDependencyName = variables.Evaluate(gitRepository.GitDependencyName),
+                DestinationSubFolder = variables.Evaluate(gitRepository.DestinationSubFolder),
+                InputFilePaths = gitRepository.InputFilePaths?.Select(p => variables.Evaluate(p)).ToArray() ?? new[] { "**/*" },
             };
         }
     }
