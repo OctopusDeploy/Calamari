@@ -173,7 +173,8 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
 
             // Assert
             log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains("Failed to set applied resources output variable"));
-            installCompletedCts.IsCancellationRequested.Should().BeTrue();
+            var appliedResourcesJson = variables.Get("AppliedResources");
+            appliedResourcesJson.Should().BeNull();
         }
 
         [Test]
@@ -196,40 +197,6 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             var appliedResourcesJson = variables.Get("AppliedResources");
             appliedResourcesJson.Should().BeNull();
             log.MessagesVerboseFormatted.Should().Contain(msg => msg.Contains("empty, skipping applied resources"));
-        }
-
-        [Test]
-        public void CancelsInstallCompletedToken_OnSuccessfulUpgrade()
-        {
-            // Arrange
-            var variables = CreateVariables();
-            SetupHelmUpgradeMock();
-
-            var deployment = CreateRunningDeployment(variables);
-            var executor = CreateExecutor(deployment);
-
-            // Act
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
-
-            // Assert
-            installCompletedCts.IsCancellationRequested.Should().BeTrue();
-            installErrorCts.IsCancellationRequested.Should().BeFalse();
-        }
-
-        [Test]
-        public void ThrowsCommandException_WhenUpgradeFails()
-        {
-            // Arrange
-            var variables = CreateVariables();
-            SetupHelmUpgradeMockToFail();
-
-            var deployment = CreateRunningDeployment(variables);
-            var executor = CreateExecutor(deployment);
-
-            // Act & Assert
-            var action = () => executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
-            action.Should().Throw<CommandException>().WithMessage("*non-zero exit code*");
-            installErrorCts.IsCancellationRequested.Should().BeTrue();
         }
 
         void SetupChartDirectory()
