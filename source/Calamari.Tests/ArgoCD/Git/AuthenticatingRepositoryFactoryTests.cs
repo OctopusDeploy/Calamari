@@ -89,7 +89,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var mockRepoFactory = Substitute.For<IRepositoryFactory>();
 
             var factory = new AuthenticatingRepositoryFactory(
-                [new SshKeyGitCredentialDto(sshUrl, "git", "private-key")],
+                [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", [])],
                 mockRepoFactory,
                 log);
 
@@ -145,7 +145,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         IGitCredentialDto[] rawCredentials =
         [
             new GitCredentialDto(url, "https-user", "https-pass"),
-            new SshKeyGitCredentialDto(url, "ssh-user", "private-key")
+            new SshKeyGitCredentialDto(url, "ssh-user", "private-key", [])
         ];
 
         var factory = new AuthenticatingRepositoryFactory(rawCredentials, mockRepoFactory, log);

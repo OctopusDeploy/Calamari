@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
@@ -155,6 +156,33 @@ public class CommitToGitCommandTest
     }
 
     [Test]
+    [TestCase("manifests/**/*", "manifests/sub/app.yaml", "sub/app.yaml", TestName = "DeepGlob_StripsNonWildcardPrefix")]
+    [TestCase("manifests/*.yaml", "manifests/app.yaml", "app.yaml", TestName = "SingleStarGlob_StripsNonWildcardPrefix")]
+    [TestCase("manifests/sub/app.yaml", "manifests/sub/app.yaml", "app.yaml", TestName = "ExactPath_StripsDirectoryKeepsFilename")]
+    [TestCase("**/*.yaml", "manifests/sub/app.yaml", "manifests/sub/app.yaml", TestName = "RootGlob_NothingToStripPreservesMatchedRelativePath")]
+    public void DestinationPathStripsNonWildcardPrefixOfInputGlob(string inputGlob, string packageEntryPath, string expectedRepoPath)
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, packageEntryPath, "irrelevant");
+
+        var inputFileSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"{inputGlob}\"],\"DestinationSubFolder\":\"\"}}]";
+        variables.AddRange([
+            new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, inputFileSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
+        ]);
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/{expectedRepoPath}")
+            .Should().NotBeNull($"file matched by '{inputGlob}' should land at '{destinationPath}/{expectedRepoPath}'");
+    }
+
+    [Test]
     public void OnlyCopiesFilesMatchingInputPathsFromPackageIntoGitRepository()
     {
         const string packageReferenceName = "my-configs";
@@ -172,6 +200,8 @@ public class CommitToGitCommandTest
         GetCommittedFileContent($"{destinationPath}/configs/settings.json")
             .Should().NotBeNull("files matching the InputFilePaths glob should be copied");
         GetCommittedFileContent($"{destinationPath}/scripts/setup.sh")
+            .Should().BeNull("files not matching the InputFilePaths glob should not be copied");
+        GetCommittedFileContent($"{destinationPath}/configs/setup.sh")
             .Should().BeNull("files not matching the InputFilePaths glob should not be copied");
     }
 
@@ -265,7 +295,7 @@ public class CommitToGitCommandTest
         var zip1Path = CreateZipWithEntry(package1Name, "configs/settings.json", "{}");
         var zip2Path = CreateZipWithEntry(package2Name, "configs/template.yaml", "apiVersion: apps/v1");
 
-        var templateValueSources =
+        var inputFileSources =
             $"[" +
             $"{{\"Type\":\"Package\",\"PackageId\":\"{package1Name}\",\"PackageName\":\"{package1Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}," +
             $"{{\"Type\":\"Package\",\"PackageId\":\"{package2Name}\",\"PackageName\":\"{package2Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}" +
@@ -278,13 +308,13 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(package2Name), package2Name, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(package2Name), zip2Path, false),
             new CalamariExecutionVariable(PackageVariables.IndexedExtract(package2Name), "True", false),
-            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, templateValueSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, inputFileSources, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
 
         RunCommitToGit().Should().Be(0);
-        GetCommittedFileContent($"{destinationPath}/configs/settings.json").Should().NotBeNull("files from the first package should be copied");
-        GetCommittedFileContent($"{destinationPath}/configs/template.yaml").Should().NotBeNull("files from the second package should be copied");
+        GetCommittedFileContent($"{destinationPath}/settings.json").Should().NotBeNull("files from the first package should be copied");
+        GetCommittedFileContent($"{destinationPath}/template.yaml").Should().NotBeNull("files from the second package should be copied");
     }
 
     [Test]
@@ -296,20 +326,20 @@ public class CommitToGitCommandTest
 
         var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
 
-        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
+        var inputFileSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
             new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
-            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, templateValueSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, inputFileSources, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
 
         RunCommitToGit().Should().Be(0);
 
-        GetCommittedFileContent($"{destinationPath}/{destinationSubFolder}/configs/settings.json")
-            .Should().NotBeNull("package files should be placed under the DestinationSubFolder from the source metadata");
-        GetCommittedFileContent($"{destinationPath}/configs/settings.json")
+        GetCommittedFileContent($"{destinationPath}/{destinationSubFolder}/settings.json")
+            .Should().NotBeNull("package files should be placed under the DestinationSubFolder from the source metadata (with the non-wildcard glob prefix stripped)");
+        GetCommittedFileContent($"{destinationPath}/settings.json")
             .Should().BeNull("package files should not be placed directly under the top-level DestinationPath when a DestinationSubFolder is specified");
     }
 
@@ -329,6 +359,46 @@ public class CommitToGitCommandTest
             .Should().NotBeNull("git dependency files should be placed under the DestinationSubFolder from the source metadata");
         GetCommittedFileContent($"{destinationPath}/{gitDependencyName}/deployment.yaml")
             .Should().BeNull("git dependency files should not be placed under the dependency name folder");
+    }
+
+    [Test]
+    [TestCase("manifests/**/*", "manifests/sub/app.yaml", "sub/app.yaml", TestName = "GitDep_DeepGlob_StripsNonWildcardPrefix")]
+    [TestCase("manifests/*.yaml", "manifests/app.yaml", "app.yaml", TestName = "GitDep_SingleStarGlob_StripsNonWildcardPrefix")]
+    [TestCase("manifests/sub/app.yaml", "manifests/sub/app.yaml", "app.yaml", TestName = "GitDep_ExactPath_StripsDirectoryKeepsFilename")]
+    [TestCase("**/*.yaml", "manifests/sub/app.yaml", "manifests/sub/app.yaml", TestName = "GitDep_RootGlob_NothingToStripPreservesMatchedRelativePath")]
+    public void GitDependencyDestinationPathStripsNonWildcardPrefixOfInputGlob(string inputGlob, string entryPath, string expectedRepoPath)
+    {
+        const string gitDependencyName = "my-git-dep";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(gitDependencyName, entryPath, "apiVersion: apps/v1");
+        AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath, inputFilePaths: new[] { inputGlob });
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/{expectedRepoPath}")
+            .Should().NotBeNull($"file matched by '{inputGlob}' should land at '{destinationPath}/{expectedRepoPath}'");
+    }
+
+    [Test]
+    public void OnlyCopiesFilesMatchingInputPathsFromGitDependencyIntoGitRepository()
+    {
+        const string gitDependencyName = "my-git-dep";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntries(gitDependencyName, new Dictionary<string, string>
+        {
+            ["manifests/deployment.yaml"] = "apiVersion: apps/v1",
+            ["scripts/setup.sh"] = "#!/bin/bash",
+        });
+        AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath, inputFilePaths: new[] { "manifests/**/*" });
+
+        RunCommitToGit().Should().Be(0);
+
+        GetCommittedFileContent($"{destinationPath}/deployment.yaml")
+            .Should().NotBeNull("files matching the InputFilePaths glob should be copied");
+        GetCommittedFileContent($"{destinationPath}/scripts/setup.sh")
+            .Should().BeNull("files not matching the InputFilePaths glob should not be copied");
     }
 
     [Test]
@@ -457,25 +527,30 @@ public class CommitToGitCommandTest
 
     void AddInputPackageVariables(string packageReferenceName, string zipPath, string destinationPath)
     {
-        var templateValueSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}]";
+        var inputFileSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}]";
         variables.AddRange([
-            // Package to copy into the repository, declared via TemplateValuesSources
+            // Package to copy into the repository, declared via InputFileSources
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
             new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
-            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, templateValueSources, false),
-            // Override the destination path set in setUp
-            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, inputFileSources, false),
+            // Override the destination path set in setUp. Suffix with "configs" so the prefix that the new
+            // strip-non-wildcard behaviour removes from `configs/**/*` is reintroduced — keeps the helper's
+            // committed paths aligned with the package layout.
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, Path.Combine(destinationPath, "configs"), false),
         ]);
     }
 
-    void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath, string destinationSubFolder = "")
+    void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath, string destinationSubFolder = "", string[] inputFilePaths = null)
     {
-        var templateValueSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
+        var inputFilePathsJson = inputFilePaths != null
+            ? "[" + string.Join(",", inputFilePaths.Select(p => $"\"{p}\"")) + "]"
+            : "[\"**/*\"]";
+        var inputFileSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationSubFolder}\",\"InputFilePaths\":{inputFilePathsJson}}}]";
         variables.AddRange([
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.Extract(gitDependencyName), "true", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.OriginalPath(gitDependencyName), zipPath, false),
-            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, templateValueSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, inputFileSources, false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
     }

@@ -8,7 +8,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
-using Newtonsoft.Json.Linq;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
@@ -19,8 +19,7 @@ namespace Calamari.Kubernetes.Commands.Executors
     class KustomizeExecutor : BaseKubernetesApplyExecutor, IKustomizeKubernetesApplyExecutor
     {
         public const string HydratedKustomizeManifestFilename = "hydrated-kustomize-manifest.yaml";
-        const int MinimumKubectlVersionMajor = 1;
-        const int MinimumKubectlVersionMinor = 24;
+        static readonly SemanticVersion MinimumKubectlVersion = new SemanticVersion("1.24.0");
         readonly ILog log;
         readonly Kubectl kubectl;
         readonly IManifestReporter manifestReporter;
@@ -46,7 +45,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
 
             log.Verbose("Validating kubectl version");
-            ValidateKubectlVersion(deployment.CurrentDirectory);
+            var versionOutput = ValidateKubectlVersion();
             
             log.Info("Building kustomization");
             BuildKustomization(deployment.CurrentDirectory, overlayPath);
@@ -86,50 +85,17 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
 
-        void ValidateKubectlVersion(string currentDirectory)
+        KubectlVersionOutput ValidateKubectlVersion()
         {
-            var commandResult = kubectl.ExecuteCommandAndReturnOutput("version", "--client", "-o", "json");
-            commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
-            if (commandResult.Result.ExitCode != 0)
-            {
-                throw new KubectlException("Failed to check kubectl version");
-            }
-            
-            var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);
-
-            if (!TryParseVersion(outputJson, out var major, out var minor))
+            var versionOutput = kubectl.GetVersion();
+            if (versionOutput == null)
                 throw new KubectlException("Could not determine the kubectl version.");
 
-            if (major < MinimumKubectlVersionMajor || minor < MinimumKubectlVersionMinor)
-                throw new KubectlException($"kubectl is on version v{major}.{minor}, it needs to be v{MinimumKubectlVersionMajor}.{MinimumKubectlVersionMinor} or higher to run Kustomize.");
-            log.Verbose($"kubectl version: {major}.{minor}");
-        }
+            if (versionOutput.KubectlVersion < MinimumKubectlVersion)
+                throw new KubectlException($"kubectl is on version {versionOutput.KubectlVersion}, it needs to be v{MinimumKubectlVersion} or higher to run Kustomize.");
 
-        bool TryParseVersion(string kubectlClientVersionJson, out int major, out int minor)
-        {
-            try
-            {
-                var outer = JToken.Parse(kubectlClientVersionJson);
-                major = GetVersion(outer, "clientVersion.major");
-                minor = GetVersion(outer, "clientVersion.minor");
-                return true;
-            }
-            catch
-            {
-                major = -1;
-                minor = -1;
-                return false;
-            }
-        }
-
-        static int GetVersion(JToken root, string jsonPathToVersion)
-        {
-            var clientVersionToken = root.SelectToken($"{jsonPathToVersion}");
-
-            if (clientVersionToken != null && int.TryParse(clientVersionToken.ToString(), out var version))
-                return version;
-
-            return -1;
+            log.Verbose($"kubectl version: {versionOutput.KubectlVersion}");
+            return versionOutput;
         }
     }
 }

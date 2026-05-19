@@ -31,8 +31,10 @@ public record GitCredentialDto(string Url, string Username, string Password) : I
     public string Type => DiscriminatorValue;
 }
 
-public record SshKeyGitCredentialDto(string Url, string Username, string PrivateKey) : IGitCredentialDto
+public record SshKeyGitCredentialDto(string Url, string Username, string PrivateKey, SshKnownHostDto[] KnownHosts) : IGitCredentialDto
 {
     public const string DiscriminatorValue = "SshKey";
     public string Type => DiscriminatorValue;
 }
+
+public record SshKnownHostDto(string Host, string PublicKey);
