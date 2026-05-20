@@ -9,18 +9,27 @@ public class EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, 
 {
     public void GenerateTemplate()
     {
-        var cluster = new Cluster(this, commandInputs.ClusterName);
+        
+        /***
+         * // This creates a lightweight reference token instead of generating a massive VPC template
+           var cluster = Cluster.FromClusterAttributes(this, "ImportedCluster", new ClusterAttributes
+           {
+               ClusterName = commandInputs.ClusterName,
+               SecurityGroups = new[] { SecurityGroup.FromSecurityGroupId(this, "ClusterSg", "sg-xxxxxxxx") } 
+           });
+         */
+        var cluster = new Cluster(this, commandInputs.ClusterName); // TODO: Handle deploying to an existing cluster
 
         var taskDefinition = new FargateTaskDefinition(this,
                                                        commandInputs.TaskName,
                                                        new FargateTaskDefinitionProps
                                                        {
-                                                           Cpu = 0, // TODO: From Variables
-                                                           MemoryLimitMiB = 0, // TODO: From Variables
+                                                           Cpu = commandInputs.Cpu,
+                                                           MemoryLimitMiB = commandInputs.Memory,
                                                            RuntimePlatform = new RuntimePlatform
                                                            {
                                                                OperatingSystemFamily = OperatingSystemFamily.LINUX, // Hardcode to Linux as it's all we support
-                                                               CpuArchitecture = CpuArchitecture.X86_64 // TODO: from Variables
+                                                               CpuArchitecture = commandInputs.CpuArchitecture,
                                                            }
                                                        });
 
@@ -30,25 +39,18 @@ public class EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, 
                                                 {
                                                     Cluster = cluster,
                                                     TaskDefinition = taskDefinition,
-                                                    DesiredCount = 1, // TODO: Variables
-                                                    MinHealthyPercent = 100, //TODO: Variables
-                                                    MaxHealthyPercent = 200, // TODO: Variables
+                                                    DesiredCount = commandInputs.DesiredCount, 
+                                                    MinHealthyPercent = commandInputs.MinimumHealthyPercentage,
+                                                    MaxHealthyPercent = commandInputs.MaximumHealthyPercentage,
                                                 });
     }
 }
 
 /*
- *                         public const string StackName = $"{DeployPrefix}CFStackName";
+ *                    
 
-   public const string DesiredCount =  $"{DeployPrefix}DesiredCount";
-   public const string MinimumHealthPercent =  $"{DeployPrefix}MinimumHealthPercent";
-   public const string MaximumHealthPercent =  $"{DeployPrefix}MaximumHealthPercent";
-   public const string Cpu =  $"{DeployPrefix}Cpu";
-   public const string Memory =  $"{DeployPrefix}Memory";
-   public const string RuntimeArchitecturePlatform =  $"{DeployPrefix}RuntimeArchitecturePlatform";
    public const string AutoAssignPublicIp =  $"{DeployPrefix}AutoAssignPublicIp";
    public const string EnableEcsManagedTags =  $"{DeployPrefix}EnableEcsManagedTags";
-   public const string TaskDefinitionName =  $"{DeployPrefix}TaskDefinitionName";
    public const string TaskRole =  $"{DeployPrefix}TaskRole";
    public const string TaskExecutionRole =  $"{DeployPrefix}TaskExecutionRole";
 */
