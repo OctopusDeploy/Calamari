@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Amazon.CDK.AWS.ECS;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.Ecs;
@@ -26,6 +27,14 @@ public class DeployEcsCommandInputs
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.ClusterName);
         requiredVariableKeys.Add(DeploymentEnvironment.Id);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName);
+        
+        // TODO: Type checking
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Cpu);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Memory);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.DesiredCount);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent);
 
 
     }
@@ -68,6 +77,27 @@ public class DeployEcsCommandInputs
     public string Environment => variables.GetMandatoryVariable(DeploymentEnvironment.Id);
     
     public string Tenant => variables.Get(DeploymentVariables.Tenant.Id, "");
+
+    public double Cpu => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Cpu));
+
+    public double Memory => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Memory));
+
+    public double DesiredCount => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount));
+    public double MinimumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
+    public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
+    
+    public CpuArchitecture CpuArchitecture
+    {
+        get
+        {
+            var cpuArchValue = variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform);
+            return cpuArchValue.ToUpper() switch
+                   {
+                       "ARM64" => CpuArchitecture.ARM64,
+                       _       => CpuArchitecture.X86_64  // default
+                   };
+        }
+    }
 
 }
 

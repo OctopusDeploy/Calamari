@@ -1,4 +1,5 @@
 using System;
+using Amazon.CDK.AWS.ECS;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Inputs;
 using Calamari.Aws.Integration.Ecs;
@@ -176,6 +177,90 @@ public class DeployEcsCommandInputsFixture
         
         taskName.Should().Be("TaskDefinitionmyNewEcsServiceTask");
     }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Cpu_IsReturnedAsADouble(bool useExpression)
+    {
+        const string cpuInput = "0.5";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Cpu, cpuInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var cpu = inputs.Cpu;
+
+        cpu.Should().Be(0.5);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Memory_IsReturnedAsADouble(bool useExpression)
+    {
+        const string memoryInput = "0.5";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Memory, memoryInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var memory = inputs.Memory;
+
+        memory.Should().Be(0.5);
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void CpuArchitecture_IsReturnedAsEnum(bool useExpression)
+    {
+        const string cpuArchitecture = "ARM64";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, cpuArchitecture, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var architecture = inputs.CpuArchitecture;
+        
+        architecture.Should().Be(CpuArchitecture.ARM64);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void DesiredCount_IsReturnedAsADouble(bool useExpression)
+    {
+        const string desiredCountInput = "7";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount, desiredCountInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var desiredCount = inputs.DesiredCount;
+
+        desiredCount.Should().Be(7);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void MinimumHealthyPercentage_IsReturnedAsADouble(bool useExpression)
+    {
+        const string minHealthInput = "50";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, minHealthInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var result = inputs.MinimumHealthyPercentage;
+
+        result.Should().Be(50);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void MaximumHealthyPercentage_IsReturnedAsADouble(bool useExpression)
+    {
+        const string maxHealthInput = "150";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, maxHealthInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var result = inputs.MaximumHealthyPercentage;
+
+        result.Should().Be(150);
+    }
     
     
     // Test Helpers
@@ -185,7 +270,14 @@ public class DeployEcsCommandInputsFixture
         {
             { AwsSpecialVariables.Ecs.ClusterName, "MyCluster" },
             { DeploymentEnvironment.Id, "Environment-1"},
-            { AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, "TestEcsTask"}
+            { AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, "TestEcsTask"},
+            { AwsSpecialVariables.Ecs.Deploy.Cpu, "2"},
+            { AwsSpecialVariables.Ecs.Deploy.Memory, "1"},
+            {AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, "X86_64"},
+            { AwsSpecialVariables.Ecs.Deploy.DesiredCount, "1"},
+            { AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, "100"},
+            { AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, "200"},
+            
         };
     }
     
