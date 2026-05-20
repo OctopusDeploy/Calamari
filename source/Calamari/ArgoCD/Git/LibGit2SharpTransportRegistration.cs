@@ -8,10 +8,8 @@ namespace Calamari.ArgoCD.Git;
 /// Lazily registers custom smart sub-transports for libgit2sharp so that the native
 /// library is only loaded when git operations are actually needed, rather than during
 /// startup.
-/// This class supports workers that have either OpenSSL 3 (<c>libcrypto.so.3</c>) or
-/// OpenSSL 1.1 (<c>libcrypto.so.1.1</c>) installed. When neither is found, a
-/// <see cref="Calamari.Common.Commands.CommandException"/> is raised with a
-/// user-actionable message explaining what to install.
+/// Out git library supports workers that have either OpenSSL 3 (<c>libcrypto.so.3</c>) or
+/// OpenSSL 1.1 (<c>libcrypto.so.1.1</c>) installed.
 /// </summary>
 static class LibGit2SharpTransportRegistration
 {

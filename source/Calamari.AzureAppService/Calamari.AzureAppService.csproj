@@ -21,7 +21,7 @@
       <NoWarn>NU1902</NoWarn>
     </PackageReference>
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.6" />
+    <PackageReference Include="System.Text.Json" Version="9.0.16" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />

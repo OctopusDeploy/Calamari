@@ -31,7 +31,7 @@ partial class Build
                               .Execute();
                       });
 
-    // Temporary so I can merge this PR without breaking Teamcity builds
+    // Temporary redirect so I can merge this PR without breaking Teamcity builds
     [PublicAPI]
     Target LinuxSpecificTestingWithoutOpenSsl3 =>
         target => target.DependsOn(LinuxSpecificTestingWithoutWithoutOpenSsl11OrOpenSsl3);

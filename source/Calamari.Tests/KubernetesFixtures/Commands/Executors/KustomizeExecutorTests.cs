@@ -276,6 +276,78 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         }
 
         [Test]
+        public async Task AppliesKustomizationWithLoadRestrictorNone_NewerKubectl()
+        {
+            // Arrange - kubectl 1.28 bundles kustomize v5+, should use --load-restrictor (hyphen)
+            SetupCommandLineRunnerMock(kubectlMinor: 28);
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath,
+                [SpecialVariables.KustomizeLoadRestrictorNone] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[1].Should().Contain("kustomize")
+                .And.Contain("--load-restrictor=LoadRestrictionsNone");
+        }
+
+        [Test]
+        public async Task AppliesKustomizationWithLoadRestrictorNone_OlderKubectl()
+        {
+            // Arrange - kubectl 1.24 bundles kustomize v4, should use --load_restrictor (underscore)
+            SetupCommandLineRunnerMock(kubectlMinor: 24);
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath,
+                [SpecialVariables.KustomizeLoadRestrictorNone] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[1].Should().Contain("kustomize")
+                .And.Contain("--load_restrictor=none");
+        }
+
+        [Test]
+        public async Task AppliesKustomizationWithoutLoadRestrictor_WhenVariableNotSet()
+        {
+            // Arrange
+            SetupCommandLineRunnerMock();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[1].Should().Contain("kustomize")
+                .And.NotContain("load-restrictor")
+                .And.NotContain("load_restrictor");
+        }
+
+        [Test]
         public async Task CommandLineReturnsNonZeroCode_ReturnsFalseToIndicateFailure()
         {
             // Arrange
@@ -299,7 +371,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             AssertNoManifestsReported();
         }
 
-        void SetupCommandLineRunnerMock()
+        void SetupCommandLineRunnerMock(int kubectlMinor = 28)
         {
             const string resourceJson = @"{
                 ""kind"": ""List"",
@@ -333,12 +405,12 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                                           invocation.AdditionalInvocationOutputSink?.WriteInfo(resourceJson);
                                           return new CommandResult("kubectl apply result", 0);
                                       });
-            
+
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(invocation => invocation.Arguments.Contains("version --client")))
                              .Returns(info =>
                                       {
                                           var invocation = (CommandLineInvocation)info[0];
-                                          invocation.AdditionalInvocationOutputSink?.WriteInfo(GetVersionJson());
+                                          invocation.AdditionalInvocationOutputSink?.WriteInfo(GetVersionJson(minor: kubectlMinor));
                                           return new CommandResult("kubectl version result", 0);
                                       });
         }
