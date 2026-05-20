@@ -24,6 +24,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Timeout;
@@ -150,7 +151,7 @@ namespace Calamari.AzureAppService.Behaviors
                 Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
                 using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
                 var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
-
+                
                 Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
                 Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
@@ -233,7 +234,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                       {
                                                                                           await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                           using var streamContent = new StreamContent(fileStream);
-                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
                                                                                           
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
@@ -287,7 +288,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!new FileInfo(uploadZipPath).Exists)
                 throw new FileNotFoundException(uploadZipPath);
 
-            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}?isAsync=true";
+            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}?remoteBuild=false&deployer=Octopus";
             Log.Verbose($"Publishing {uploadZipPath} to {zipUploadUrl} and checking for deployment");
 
             using var httpClient = new HttpClient(new HttpClientHandler
@@ -311,7 +312,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                 //we have to create a new request message each time
                                                                                                 await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                                 using var streamContent = new StreamContent(fileStream);
-                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
 
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                                 {
