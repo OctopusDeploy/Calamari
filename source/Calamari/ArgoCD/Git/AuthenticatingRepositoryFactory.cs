@@ -40,8 +40,8 @@ public class AuthenticatingRepositoryFactory
             {
                 var sshConnection = new SshGitConnection(
                     sshCredential.Username,
-                    requestedUrl,
                     sshCredential.PrivateKey,
+                    requestedUrl,
                     GitReference.CreateFromString(targetRevision));
                 return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
             }

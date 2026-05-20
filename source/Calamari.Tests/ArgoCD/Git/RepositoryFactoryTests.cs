@@ -108,9 +108,9 @@ namespace Calamari.Tests.ArgoCD.Git
 
             var sshConnection = new SshGitConnection(
                 username: "git",
+                privateKey: "private-key",
                 url: OriginPath,
-                gitReference: branchName,
-                privateKey: "private-key");
+                gitReference: branchName);
 
             // libgit2 skips credential callbacks for local file paths, so this test validates only pull-request-client resolution and verbose logging — not SSH credential validity.
             // Act

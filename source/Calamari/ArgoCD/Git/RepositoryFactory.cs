@@ -66,22 +66,10 @@ namespace Calamari.ArgoCD.Git
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
-            if (gitConnection is SshGitConnection ssh)
+            options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
+            if (gitConnection is SshGitConnection)
             {
-                options.FetchOptions.CredentialsProvider = (_, _, _) => new SshKeyMemoryCredentials
-                {
-                    Username = ssh.Username,
-                    PrivateKey = ssh.PrivateKey,
-                };
                 options.FetchOptions.CertificateCheck = SshHostKeyVerificationBypass.AcceptAll;
-            }
-            else if (gitConnection is HttpsGitConnection { Username: not null, Password: not null } https)
-            {
-                options.FetchOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials
-                {
-                    Username = https.Username,
-                    Password = https.Password
-                };
             }
 
             string repoPath;
