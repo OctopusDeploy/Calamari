@@ -27,6 +27,10 @@
             public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.TemplateTaskDefinitionName";
             public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
 
+            // Update ECS step: JSON-shaped wait option matching Octopus.Calamari.Contracts.Aws.Ecs.WaitOption.
+            public const string Wait = "Octopus.Action.Aws.Ecs.Wait";
+
+            // Deploy ECS step: legacy flat key/value pair. Will consolidate when Deploy migrates.
             public static class WaitOption
             {
                 public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";

@@ -10,6 +10,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Aws.Deployment.Conventions;
@@ -22,15 +23,14 @@ public class UpdateEcsServiceConvention(
     string serviceName,
     string templateTaskDefinitionName,
     string targetTaskDefinitionName,
-    List<EcsContainerUpdate> containers,
+    List<ContainerUpdate> containers,
     List<KeyValuePair<string, string>> tags,
-    WaitOptionType waitOption,
-    TimeSpan? waitTimeout,
+    WaitOption waitOption,
     Func<TimeSpan> deploymentPollInterval = null,
     Func<TimeSpan> taskPollInterval = null)
     : IInstallConvention
 {
-    readonly EcsPostDeployWatcher watcher = new(ecs, log, clusterName, serviceName, waitOption, waitTimeout, deploymentPollInterval, taskPollInterval);
+    readonly EcsPostDeployWatcher watcher = new(ecs, log, clusterName, serviceName, waitOption, deploymentPollInterval, taskPollInterval);
 
     public void Install(RunningDeployment deployment) => InstallAsync(deployment).GetAwaiter().GetResult();
 
@@ -67,7 +67,7 @@ public class UpdateEcsServiceConvention(
         }
 
         var taskDefTags = EcsDefaultTags.MergeAndDeduplicateTags(deployment.Variables, tags, templateResp.Tags);
-        var registerRequest = RegisterTaskDefinitionRequestFactory.FromTaskDefinition(template, targetTaskDefinitionName, containers, taskDefTags);
+        var registerRequest = RegisterTaskDefinitionRequestFactory.FromTaskDefinition(template, targetTaskDefinitionName, containers, taskDefTags, deployment.Variables);
         var registerResp = await ecs.RegisterTaskDefinitionAsync(registerRequest, ct);
         var registeredTaskDef = registerResp.TaskDefinition;
 

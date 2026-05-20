@@ -5,6 +5,7 @@ using Amazon.ECS;
 using Amazon.ECS.Model;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Aws.Integration.Ecs;
@@ -15,8 +16,7 @@ public class EcsPostDeployWatcher
     readonly ILog log;
     readonly string clusterName;
     readonly string serviceName;
-    readonly WaitOptionType waitOption;
-    readonly TimeSpan? waitTimeout;
+    readonly WaitOption waitOption;
     readonly Func<TimeSpan> deploymentPollInterval;
     readonly Func<TimeSpan> taskPollInterval;
 
@@ -25,8 +25,7 @@ public class EcsPostDeployWatcher
         ILog log,
         string clusterName,
         string serviceName,
-        WaitOptionType waitOption,
-        TimeSpan? waitTimeout,
+        WaitOption waitOption,
         Func<TimeSpan> deploymentPollInterval = null,
         Func<TimeSpan> taskPollInterval = null)
     {
@@ -35,14 +34,13 @@ public class EcsPostDeployWatcher
         this.clusterName = clusterName;
         this.serviceName = serviceName;
         this.waitOption = waitOption;
-        this.waitTimeout = waitTimeout;
         this.deploymentPollInterval = deploymentPollInterval ?? (() => TimeSpan.FromSeconds(3));
         this.taskPollInterval = taskPollInterval ?? (() => TimeSpan.FromSeconds(10));
     }
 
     public async Task WaitAsync(Service service, CancellationToken ct = default)
     {
-        if (waitOption == WaitOptionType.DontWait)
+        if (waitOption.Type == WaitType.DontWait)
         {
             return;
         }
@@ -60,7 +58,7 @@ public class EcsPostDeployWatcher
 
     async Task WaitForDeploymentAsync(CancellationToken ct)
     {
-        var timeout = GetTimeout(waitTimeout);
+        var timeout = GetTimeout();
 
         log.Info($"Waiting for ECS service '{serviceName}' deployment to reach COMPLETED.");
         string lastReportedState = null;
@@ -120,7 +118,7 @@ public class EcsPostDeployWatcher
 
     async Task WaitForTaskStatesAsync(CancellationToken ct)
     {
-        var timeout = GetTimeout(waitTimeout);
+        var timeout = GetTimeout();
 
         while (true)
         {
@@ -171,5 +169,9 @@ public class EcsPostDeployWatcher
         }
     }
 
-    static DateTime? GetTimeout(TimeSpan? waitTimeout) => waitTimeout.HasValue ? DateTime.UtcNow + waitTimeout.Value : null;
+    DateTime? GetTimeout()
+    {
+        var span = waitOption.GetTimeoutSpan();
+        return span.HasValue ? DateTime.UtcNow + span.Value : null;
+    }
 }

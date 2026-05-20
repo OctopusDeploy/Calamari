@@ -8,15 +8,14 @@ using Amazon.IdentityManagement;
 using Amazon.Runtime;
 using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
-using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Serialization;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Tests.AWS.Ecs.Update;
@@ -138,18 +137,30 @@ public class UpdateEcsServiceFixture
         variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
         variables.Set(AwsSpecialVariables.Ecs.TargetTaskDefinitionName, TaskDefinitionFamily);
 
-        var environment = new EnvAction<EnvVarItem>(EnvActionMode.Replace,
-        [
-            new EnvVarItem(EnvVarType.Text, "LOG_LEVEL", "info"),
-            new EnvVarItem(EnvVarType.Secret, "DB_PASSWORD", "arn:aws:ssm:us-east-1:017645897735:parameter/calamari-ecs-integration-tests-fake")
-        ]);
+        const string packageReference = "web";
+        variables.Set(PackageVariables.IndexedImage(packageReference), newImage);
+
         var containers = new[]
         {
-            new EcsContainerUpdate("web", newImage, environment, null)
+            new ContainerUpdate
+            {
+                ContainerName = "web",
+                PackageReference = packageReference,
+                EnvironmentVariables = new EnvAction<TypedKeyValuePair>
+                {
+                    Action = EnvActionMode.Replace,
+                    Items =
+                    [
+                        new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "LOG_LEVEL", Value = "info" },
+                        new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "DB_PASSWORD", Value = "arn:aws:ssm:us-east-1:017645897735:parameter/calamari-ecs-integration-tests-fake" }
+                    ]
+                }
+            }
         };
-        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers, JsonSerialization.GetDefaultSerializerSettings()));
+        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers));
 
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "dontWait");
+        var waitOption = new WaitOption { Type = WaitType.DontWait };
+        variables.Set(AwsSpecialVariables.Ecs.Wait, JsonConvert.SerializeObject(waitOption));
 
         return variables;
     }
