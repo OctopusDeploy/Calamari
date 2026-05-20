@@ -1,13 +1,9 @@
-using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.Variables;
-
 namespace Calamari.Aws.Integration.Ecs;
 
 public interface IEcsStackNameGenerator
 {
-    string Generate(IVariables variables, string clusterName, string serviceName);
+    string Generate(string clusterName, string serviceName, string environmentId, string tenantId = "");
 }
-
 
 // Generates a deterministic CFN stack name when the user didn't supply a stack name.
 // Mirrors SPF's getStackName
@@ -15,15 +11,12 @@ public class EcsStackNameGenerator : IEcsStackNameGenerator
 {
     const int MaxLength = 128;
 
-    public string Generate(IVariables variables, string clusterName, string serviceName)
+    public string Generate(string clusterName, string serviceName, string environmentId, string tenantId = "")
     {
-        var envId = variables.Get("Octopus.Environment.Id");
-        var tenantId = variables.Get("Octopus.Deployment.Tenant.Id");
-
 #pragma warning disable CS0618 // SPF parity requires the lodash camelCase port; tracked for replacement.
         var stackName = $"cf-ecs-{clusterName.CamelCase()}" +
                         $"-{serviceName.CamelCase()}" +
-                        $"-{envId.CamelCase()}" +
+                        $"-{environmentId.CamelCase()}" +
                         $"-{(string.IsNullOrEmpty(tenantId) ? "untenanted" : tenantId.CamelCase())}";
 #pragma warning restore CS0618
 
