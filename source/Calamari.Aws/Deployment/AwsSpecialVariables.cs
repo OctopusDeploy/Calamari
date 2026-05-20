@@ -21,6 +21,26 @@
 
         public static class Ecs
         {
+            public static class Deploy
+            {
+                const string DeployPrefix = "Octopus.Action.Aws.Ecs.Deploy.";
+
+                // Not reusing CloudFormation variable here to make it easier to remove all traces of this when we migrate to native ECS API
+                public const string StackName = "Octopus.Action.Aws.Ecs.Deploy.CFStackName";
+
+                public const string DesiredCount =  "Octopus.Action.Aws.Ecs.Deploy.DesiredCount";
+                public const string MinimumHealthPercent =  "Octopus.Action.Aws.Ecs.Deploy.MinimumHealthPercent";
+                public const string MaximumHealthPercent =  "Octopus.Action.Aws.Ecs.Deploy.MaximumHealthPercent";
+                public const string Cpu =  "Octopus.Action.Aws.Ecs.Deploy.Cpu";
+                public const string Memory =  "Octopus.Action.Aws.Ecs.Deploy.Memory";
+                public const string RuntimeArchitecturePlatform =  "Octopus.Action.Aws.Ecs.Deploy.RuntimeArchitecturePlatform";
+                public const string AutoAssignPublicIp =  "Octopus.Action.Aws.Ecs.Deploy.AutoAssignPublicIp";
+                public const string EnableEcsManagedTags =  "Octopus.Action.Aws.Ecs.Deploy.EnableEcsManagedTags";
+                public const string ServiceTaskName =  "Octopus.Action.Aws.Ecs.Deploy.ServiceTaskName";
+                public const string TaskRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskRole";
+                public const string TaskExecutionRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskExecutionRole";
+            }
+            
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
             public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
             public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.TargetTaskDefinitionName";
