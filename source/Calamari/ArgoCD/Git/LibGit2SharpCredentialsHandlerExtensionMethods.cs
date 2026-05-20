@@ -12,7 +12,7 @@ public static class LibGit2SharpCredentialsHandlerExtensionMethods
         return connection switch
                {
                    HttpsGitConnection https => UsernamePassword(https),
-                   SshGitConnection sshKey => SshKey(sshKey),
+                   SshKeyGitConnection sshKey => SshKey(sshKey),
                    null => Anonymous(),
                    _ => throw new NotSupportedException(),
                };
@@ -23,7 +23,7 @@ public static class LibGit2SharpCredentialsHandlerExtensionMethods
         return null!; // A null CredentialsHandler is valid for LibGit2Sharp
     }
 
-    static CredentialsHandler SshKey(SshGitConnection connection)
+    static CredentialsHandler SshKey(SshKeyGitConnection connection)
     {
         return (_, userFromUrl, types) =>
                {

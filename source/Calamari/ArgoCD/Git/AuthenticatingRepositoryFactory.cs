@@ -38,7 +38,7 @@ public class AuthenticatingRepositoryFactory
             }
             case SshKeyGitCredentialDto sshCredential:
             {
-                var sshConnection = new SshGitConnection(
+                var sshConnection = new SshKeyGitConnection(
                     sshCredential.Username,
                     sshCredential.PrivateKey,
                     requestedUrl,

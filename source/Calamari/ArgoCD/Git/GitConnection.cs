@@ -57,9 +57,9 @@ namespace Calamari.ArgoCD.Git
         }
     }
 
-    public class SshGitConnection : IGitConnection
+    public class SshKeyGitConnection : IGitConnection
     {
-        public SshGitConnection(
+        public SshKeyGitConnection(
             string? username,
             string privateKey,
             string url,

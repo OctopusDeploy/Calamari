@@ -67,7 +67,7 @@ namespace Calamari.ArgoCD.Git
                 };
 
             options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
-            if (gitConnection is SshGitConnection)
+            if (gitConnection is SshKeyGitConnection)
             {
                 options.FetchOptions.CertificateCheck = SshHostKeyVerificationBypass.AcceptAll;
             }
@@ -119,7 +119,7 @@ namespace Calamari.ArgoCD.Git
                 ? gitVendorPullRequestClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
                 : null;
 
-            if (gitConnection is SshGitConnection)
+            if (gitConnection is SshKeyGitConnection)
             {
                 log.Verbose("Git is using SSH authentication, Git vendor functionality will not be available");
             }

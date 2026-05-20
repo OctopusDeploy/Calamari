@@ -96,7 +96,7 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void CloningSshGitConnectionDoesNotResolveAPullRequestClientAndLogsVerboseMessage()
+        public void CloningSshKeyGitConnectionDoesNotResolveAPullRequestClientAndLogsVerboseMessage()
         {
             // Arrange
             var filename = "sshTest.txt";
@@ -106,7 +106,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var mockResolver = Substitute.For<IGitVendorPullRequestClientResolver>();
             var factoryWithMockedResolver = new RepositoryFactory(log, fileSystem, tempDirectory, mockResolver, new SystemClock());
 
-            var sshConnection = new SshGitConnection(
+            var sshConnection = new SshKeyGitConnection(
                 username: "git",
                 privateKey: "private-key",
                 url: OriginPath,

@@ -81,7 +81,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     public class SshUrlTests : AuthenticatingRepositoryFactoryTestBase
     {
         [Test]
-        public void SshCredentialBranch_IsSelectedAndDispatchesSshGitConnection()
+        public void SshCredentialBranch_IsSelectedAndDispatchesSshKeyGitConnection()
         {
             // Use an ssh:// URL so the new strict validation allows it, and mock the factory
             // so no real SSH connection is attempted.
@@ -98,7 +98,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             mockRepoFactory.Received()
                            .CloneRepository(
                                Arg.Any<string>(),
-                               Arg.Is<IGitConnection>(c => c is SshGitConnection));
+                               Arg.Is<IGitConnection>(c => c is SshKeyGitConnection));
         }
 
         [Test]

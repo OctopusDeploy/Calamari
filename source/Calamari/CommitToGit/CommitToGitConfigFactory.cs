@@ -39,7 +39,7 @@ namespace Calamari.CommitToGit
             IGitConnection connection = properties.GitCredential switch
                                         {
                                             UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
-                                            SshKeyGitCredentialDto ssh => new SshGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
                                             _ => throw new NotSupportedException($"An unrecognised credential type '{properties.GitCredential.GetType().Name}' was found for '{uriAsString}'"),
                                         };
 
