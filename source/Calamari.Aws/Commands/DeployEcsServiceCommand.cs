@@ -26,14 +26,16 @@ public class DeployEcsServiceCommand : Command
     readonly ILog log;
     readonly IVariables variables;
     readonly ICalamariFileSystem fileSystem;
+    readonly IEcsStackNameGenerator stackNameGenerator;
     string templateFile;
     string templateParameterFile;
 
-    public DeployEcsServiceCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
+    public DeployEcsServiceCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IEcsStackNameGenerator stackNameGenerator)
     {
         this.log = log;
         this.variables = variables;
         this.fileSystem = fileSystem;
+        this.stackNameGenerator = stackNameGenerator;
         Options.Add("template=", "Path to the CloudFormation template file.", v => templateFile = v);
         Options.Add("templateParameters=", "Path to the CloudFormation template parameters JSON file.", v => templateParameterFile = v);
     }
@@ -102,7 +104,7 @@ public class DeployEcsServiceCommand : Command
         var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
         if (string.IsNullOrWhiteSpace(stackName))
         {
-            stackName = EcsStackName.Generate(variables, clusterName, serviceName);
+            stackName = stackNameGenerator.Generate(variables, clusterName, serviceName);
             log.Verbose($"No stack name supplied; generated \"{stackName}\".");
         }
 
