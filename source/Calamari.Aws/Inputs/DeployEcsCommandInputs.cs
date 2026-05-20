@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Amazon.CDK.AWS.ECS;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.Calamari.Contracts.Aws.Ecs;
+
+using AwsCpuArchitecture = Amazon.CDK.AWS.ECS.CpuArchitecture;
 
 namespace Calamari.Aws.Inputs;
 
@@ -24,10 +26,12 @@ public class DeployEcsCommandInputs
         this.stackNameGenerator = stackNameGenerator;
         this.log = log;
 
+        // strings
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.ClusterName);
         requiredVariableKeys.Add(DeploymentEnvironment.Id);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName);
         
+        // primitives
         // TODO: Type checking
         // TODO: Defaults?
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Cpu);
@@ -36,6 +40,9 @@ public class DeployEcsCommandInputs
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.DesiredCount);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent);
+        
+        // Objects
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.WaitOption);
 
 
     }
@@ -87,16 +94,24 @@ public class DeployEcsCommandInputs
     public double MinimumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
     public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
     
-    public CpuArchitecture CpuArchitecture
+    public AwsCpuArchitecture CpuArchitecture
     {
         get
         {
             var cpuArchValue = variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform);
             return cpuArchValue.ToUpper() switch
                    {
-                       "ARM64" => CpuArchitecture.ARM64,
-                       _       => CpuArchitecture.X86_64  // default
+                       "ARM64" => AwsCpuArchitecture.ARM64,
+                       _       => AwsCpuArchitecture.X86_64  // default
                    };
+        }
+    }
+
+    public WaitOption WaitOption
+    {
+        get
+        {
+            var waitOptionString = variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.WaitOption);
         }
     }
 

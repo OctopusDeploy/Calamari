@@ -261,6 +261,18 @@ public class DeployEcsCommandInputsFixture
 
         result.Should().Be(150);
     }
+
+    [Test]
+    public void WaitOption_IsDeserialisedAndReturned()
+    {
+        const string waitOptionInput = """{ "type": "waitUntilCompleted" }""";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, waitOptionInput, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var result = inputs.WaitOption;
+        
+        result.Sh
+    }
     
     
     // Test Helpers
@@ -277,6 +289,7 @@ public class DeployEcsCommandInputsFixture
             { AwsSpecialVariables.Ecs.Deploy.DesiredCount, "1"},
             { AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, "100"},
             { AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, "200"},
+            { AwsSpecialVariables.Ecs.WaitOption, """{ "type": "waitWithTimeout", "timeout": 30 }"""}
             
         };
     }

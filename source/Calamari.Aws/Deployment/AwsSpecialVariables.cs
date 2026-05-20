@@ -23,7 +23,6 @@
         {
             public static class Deploy
             {
-                const string DeployPrefix = "Octopus.Action.Aws.Ecs.Deploy.";
 
                 // Not reusing CloudFormation variable here to make it easier to remove all traces of this when we migrate to native ECS API
                 public const string StackName = "Octopus.Action.Aws.Ecs.Deploy.CFStackName";
@@ -46,8 +45,10 @@
             public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.TargetTaskDefinitionName";
             public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.TemplateTaskDefinitionName";
             public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
+            public const string WaitOption = "Octopus.Action.Aws.Ecs.WaitOption";
 
-            public static class WaitOption
+            // Renamed until both ECS commands are updated
+            public static class WaitOptionLegacy
             {
                 public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";
                 public const string Timeout = "Octopus.Action.Aws.Ecs.WaitOption.Timeout";

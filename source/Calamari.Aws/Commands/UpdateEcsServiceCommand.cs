@@ -95,7 +95,7 @@ public class UpdateEcsServiceCommand : Command
             }
         }
 
-        var waitOptionRaw = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
+        var waitOptionRaw = variables.Get(AwsSpecialVariables.Ecs.WaitOptionLegacy.Type);
         Guard.NotNullOrWhiteSpace(waitOptionRaw, "The wait option is required");
         if (!Enum.TryParse<WaitOptionType>(waitOptionRaw, ignoreCase: true, out var waitOption))
         {
@@ -104,7 +104,7 @@ public class UpdateEcsServiceCommand : Command
         }
 
         TimeSpan? timeout = null;
-        var timeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOption.Timeout);
+        var timeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOptionLegacy.Timeout);
         if (waitOption == WaitOptionType.WaitWithTimeout)
         {
             if (!timeoutMs.HasValue)

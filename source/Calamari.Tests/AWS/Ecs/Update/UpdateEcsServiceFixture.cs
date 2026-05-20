@@ -149,7 +149,7 @@ public class UpdateEcsServiceFixture
         };
         variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers, JsonSerialization.GetDefaultSerializerSettings()));
 
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "dontWait");
+        variables.Set(AwsSpecialVariables.Ecs.WaitOptionLegacy.Type, "dontWait");
 
         return variables;
     }
