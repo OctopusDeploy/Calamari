@@ -29,6 +29,7 @@ public class DeployEcsCommandInputs
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName);
         
         // TODO: Type checking
+        // TODO: Defaults?
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Cpu);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Memory);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform);
