@@ -1,3 +1,5 @@
+using Calamari.Common.Plumbing.Extensions;
+
 namespace Calamari.Aws.Integration.Ecs;
 
 public interface IEcsStackNameGenerator
