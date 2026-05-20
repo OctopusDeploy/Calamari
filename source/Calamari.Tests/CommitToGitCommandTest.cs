@@ -22,6 +22,7 @@ namespace Calamari.Tests;
 
 [TestFixture]
 [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+[Category(TestCategory.RequiresOpenSsl1_1OrOpenSsl3)]
 public class CommitToGitCommandTest
 {
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
