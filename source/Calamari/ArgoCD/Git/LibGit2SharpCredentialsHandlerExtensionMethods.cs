@@ -11,6 +11,7 @@ public static class LibGit2SharpCredentialsHandlerExtensionMethods
     {
         return connection switch
                {
+                   HttpsGitConnection { Username: null, Password: null } => Anonymous(),
                    HttpsGitConnection https => UsernamePassword(https),
                    SshKeyGitConnection sshKey => SshKey(sshKey),
                    null => Anonymous(),
