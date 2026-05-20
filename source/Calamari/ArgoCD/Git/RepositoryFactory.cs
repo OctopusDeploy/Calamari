@@ -67,10 +67,7 @@ namespace Calamari.ArgoCD.Git
                 };
 
             options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
-            if (gitConnection is SshKeyGitConnection)
-            {
-                options.FetchOptions.CertificateCheck = SshHostKeyVerificationBypass.AcceptAll;
-            }
+            options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler();
 
             string repoPath;
             log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));

@@ -18,6 +18,15 @@ public static class LibGit2SharpCredentialsHandlerExtensionMethods
                };
     }
 
+    public static CertificateCheckHandler? ToLibGit2SharpCertificateCheckHandler(this IGitConnection? connection)
+    {
+        return connection switch
+               {
+                   SshKeyGitConnection sshKey => SshHostKeyVerificationBypass.AcceptAll,
+                   _ => null
+               };
+    }
+
     static CredentialsHandler Anonymous()
     {
         return null!; // A null CredentialsHandler is valid for LibGit2Sharp
