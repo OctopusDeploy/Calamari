@@ -1,11 +1,13 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
+using Newtonsoft.Json.Linq;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -22,24 +24,24 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "DownloadAndRegisterPackage");
         static readonly string DownloadPath = TestEnvironment.GetTestPath(TentacleHome, "Files");
 
-        static readonly string PublicFeedUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
-        static readonly string NuGetFeedUri = "https://www.nuget.org/api/v2/";
+        const string PublicFeedUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
+        const string NuGetFeedUri = "https://www.nuget.org/api/v2/";
 
-        static readonly string ExpectedPackageHash = "1e0856338eb5ada3b30903b980cef9892ebf7201";
-        static readonly long ExpectedPackageSize = 3749;
-        static readonly SampleFeedPackage FeedzPackage = new SampleFeedPackage()
+        const string ExpectedPackageHash = "1e0856338eb5ada3b30903b980cef9892ebf7201";
+        const long ExpectedPackageSize = 3749;
+        static readonly SampleFeedPackage FeedzPackage = new()
         {
             Id = "feeds-feedz",
             Version = new SemanticVersion("1.0.0"),
             PackageId = "OctoConsole"
         };
-        static readonly SampleFeedPackage FileShare = new SampleFeedPackage() { Id = "feeds-local", Version = new SemanticVersion(1, 0, 0), PackageId = "Acme.Web" };
-        static readonly SampleFeedPackage NuGetFeed = new SampleFeedPackage() { Id = "feeds-nuget", Version = new SemanticVersion(2, 1, 0), PackageId = "Abp.Castle.Log4Net" };
+        static readonly SampleFeedPackage FileShare = new() { Id = "feeds-local", Version = new SemanticVersion(1, 0, 0), PackageId = "Acme.Web" };
+        static readonly SampleFeedPackage NuGetFeed = new() { Id = "feeds-nuget", Version = new SemanticVersion(2, 1, 0), PackageId = "Abp.Castle.Log4Net" };
 
-        static readonly string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
-        static readonly string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
-        static readonly long ExpectedMavenPackageSize = 2575022;
-        static readonly SampleFeedPackage MavenPublicFeed = new SampleFeedPackage("#")
+        const string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
+        const string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
+        const long ExpectedMavenPackageSize = 2575022;
+        static readonly SampleFeedPackage MavenPublicFeed = new("#")
         {
             Id = "feeds-maven",
             Version = VersionFactory.CreateMavenVersion("22.0"),
@@ -50,7 +52,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static string AuthFeedUsername;
         static string AuthFeedPassword;
 
-        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        static readonly CancellationTokenSource CancellationTokenSource = new();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
@@ -64,13 +66,12 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [SetUp]
         public void SetUp()
         {
-            if (!Directory.Exists(TentacleHome))
-                Directory.CreateDirectory(TentacleHome);
+            if (Directory.Exists(TentacleHome))
+                Directory.Delete(TentacleHome, true);
 
+            Directory.CreateDirectory(TentacleHome);
             Directory.SetCurrentDirectory(TentacleHome);
-
             Environment.SetEnvironmentVariable("TentacleHome", TentacleHome);
-            Console.WriteLine("TentacleHome is set to: " + TentacleHome);
         }
 
         [TearDown]
@@ -103,6 +104,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
         }
 
         [Test]
@@ -131,6 +133,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
         }
 
         [Test]
@@ -153,6 +156,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
         }
 
         [Test]
@@ -167,6 +171,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             firstResult.AssertSuccess();
             firstResult.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
 
             // Second download should use cache but still register
             var secondResult = DownloadAndRegisterPackage(
@@ -189,6 +194,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal (even when using cache)
             secondResult.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
         }
 
         [Test]
@@ -226,6 +232,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", NuGetFeed.PackageId, NuGetFeed.Version);
+            AssertJournalContainsEntryFor(NuGetFeed.PackageId, NuGetFeed.Version);
         }
 
         [Test]
@@ -257,6 +264,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal (even when using cache)
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
         }
 
         [Test]
@@ -287,6 +295,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal (even when using cache)
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
         }
 
         [Test]
@@ -312,6 +321,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
         }
 
         [Test]
@@ -349,6 +359,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             secondDownload.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
         }
 
         [Test]
@@ -368,6 +379,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
         }
 
         [Test]
@@ -389,6 +401,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal (even when using cache)
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
         }
 
         [Test]
@@ -411,6 +424,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
         }
 
         [Test]
@@ -445,6 +459,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
                 // Verify package was registered with the journal
                 result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FileShare.PackageId, FileShare.Version);
+                AssertJournalContainsEntryFor(FileShare.PackageId, FileShare.Version);
             }
         }
 
@@ -466,6 +481,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
                 // Verify package was registered with the journal (even when using cache)
                 result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FileShare.PackageId, FileShare.Version);
+                AssertJournalContainsEntryFor(FileShare.PackageId, FileShare.Version);
             }
         }
 
@@ -492,6 +508,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
                 // Verify package was registered with the journal
                 result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FileShare.PackageId, FileShare.Version);
+                AssertJournalContainsEntryFor(FileShare.PackageId, FileShare.Version);
             }
         }
 
@@ -640,7 +657,26 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine", Does.Match(newPackageRegex + ".*"));
         }
 
-        private TemporaryFile CreateSamplePackage()
+        static void AssertJournalContainsEntryFor(string packageId, IVersion version)
+        {
+            var journalPath = Path.Combine(TentacleHome, "PackageRetentionJournal.json");
+
+            Assert.That(File.Exists(journalPath), Is.True,
+                $"Journal file not found at: {journalPath}");
+
+            var json = File.ReadAllText(journalPath);
+            var root = JObject.Parse(json);
+            var entries = root["JournalEntries"] as JArray ?? new JArray();
+
+            var match = entries.FirstOrDefault(e =>
+                string.Equals((string)e["Package"]?["PackageId"]?["Value"], packageId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals((string)e["Package"]?["Version"]?["Version"], version.ToString(), StringComparison.OrdinalIgnoreCase));
+
+            Assert.That(match, Is.Not.Null,
+                $"Expected a journal entry for {packageId} v{version} but the journal contains: {json}");
+        }
+
+        TemporaryFile CreateSamplePackage()
         {
             return new TemporaryFile(PackageBuilder.BuildSamplePackage(FileShare.PackageId, FileShare.Version.ToString()));
         }
