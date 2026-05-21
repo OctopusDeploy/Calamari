@@ -171,6 +171,11 @@ public class EcsPostDeployWatcher
 
     DateTime? GetTimeout()
     {
+        if (waitOption.Type != WaitType.WaitWithTimeout)
+        {
+            return null;
+        }
+
         var span = waitOption.GetTimeoutSpan();
         return span.HasValue ? DateTime.UtcNow + span.Value : null;
     }

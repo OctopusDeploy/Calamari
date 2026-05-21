@@ -92,10 +92,9 @@ public class UpdateEcsServiceCommand : Command
         }
 
         var waitOption = variables.GetValueDeserialisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
-
         if (waitOption.Type == WaitType.WaitWithTimeout && waitOption.GetTimeoutSpan() is null)
         {
-            throw new CommandException($"Wait option is '{nameof(WaitType.WaitWithTimeout)}' but timeout value is missing or invalid (expected non-negative integer minutes, got '{waitOption.Timeout}').");
+            throw new CommandException($"Wait option is '{nameof(WaitType.WaitWithTimeout)}' but got invalid timeout '{waitOption.TimeoutMinutes}').");
         }
 
         return new EcsUpdateServiceInputs(

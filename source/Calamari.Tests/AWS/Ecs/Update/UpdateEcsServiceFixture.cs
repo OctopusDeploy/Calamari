@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
@@ -157,10 +158,13 @@ public class UpdateEcsServiceFixture
                 }
             }
         };
-        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers));
+        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers, CalamariContractSerializationSettings.Default));
+
+        var tags = new[] { new KeyValuePair<string, string>("Environment", "Test") };
+        variables.Set(AwsSpecialVariables.ResourceTags, JsonConvert.SerializeObject(tags, CalamariContractSerializationSettings.Default));
 
         var waitOption = new WaitOption { Type = WaitType.DontWait };
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption, JsonConvert.SerializeObject(waitOption));
+        variables.Set(AwsSpecialVariables.Ecs.WaitOption, JsonConvert.SerializeObject(waitOption, CalamariContractSerializationSettings.Default));
 
         return variables;
     }

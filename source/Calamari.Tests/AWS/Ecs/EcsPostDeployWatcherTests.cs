@@ -26,13 +26,13 @@ public class EcsPostDeployWatcherTests
         ecs = Substitute.For<IAmazonECS>();
     }
 
-    EcsPostDeployWatcher Watcher(WaitType waitType = WaitType.WaitUntilCompleted, string timeout = null) =>
+    EcsPostDeployWatcher Watcher(WaitType waitType = WaitType.WaitUntilCompleted, string timeoutMinutes = null) =>
         new(
             ecs,
             new InMemoryLog(),
             clusterName: "cluster-x",
             serviceName: "svc-x",
-            waitOption: new WaitOption { Type = waitType, Timeout = timeout },
+            waitOption: new WaitOption { Type = waitType, TimeoutMinutes = timeoutMinutes },
             deploymentPollInterval: () => TimeSpan.Zero,
             taskPollInterval: () => TimeSpan.Zero);
 
