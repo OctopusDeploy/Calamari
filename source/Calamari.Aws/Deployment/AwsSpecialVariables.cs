@@ -38,6 +38,9 @@
                 public const string ServiceTaskName =  "Octopus.Action.Aws.Ecs.Deploy.ServiceTaskName";
                 public const string TaskRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskRole";
                 public const string TaskExecutionRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskExecutionRole";
+                
+                public const string SecurityGroupIds =  "Octopus.Action.Aws.Ecs.Deploy.SecurityGroupIds";
+                public const string SubnetIds =   "Octopus.Action.Aws.Ecs.Deploy.SubnetIds";
             }
             
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";

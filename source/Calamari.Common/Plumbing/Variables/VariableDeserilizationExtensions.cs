@@ -16,7 +16,12 @@ public static class CalamariVariableDeserilisationExtensions
     
     public static T GetValueDeserilisedAs<T>(this CalamariVariables variables, string name)
     {
+        IVariables castVariables = variables;
+        return castVariables.GetValueDeserilisedAs<T>(name);
+    }
 
+    public static T GetValueDeserilisedAs<T>(this IVariables variables, string name)
+    {
         var variableJson = variables.Get(name);
 
         if (string.IsNullOrEmpty(variableJson))
