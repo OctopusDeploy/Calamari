@@ -337,6 +337,12 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
         static string[] WriteScriptModules(IVariables variables, string parentDirectory, StringBuilder output)
         {
+            var preloadModules = variables.Get(ScriptVariables.PreloadScriptModules);
+            var selectivePreload = !string.IsNullOrWhiteSpace(preloadModules);
+            var selectedModules = selectivePreload
+                ? preloadModules.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(m => m.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase)
+                : null;
+
             var scriptModules = new List<string>();
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.PowerShell)
@@ -345,13 +351,23 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                     var name = "Library_" + ScriptVariables.FormatScriptName(libraryScriptModuleName) + "_" + DateTime.Now.Ticks;
                     var moduleFileName = $"{name}.psm1";
                     var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
-                    Log.VerboseFormat("Writing script module '{0}' as PowerShell module {1}. This module will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
                     var contents = variables.Get(variableName);
                     if (contents == null)
                         throw new InvalidOperationException($"Value for variable {variableName} could not be found.");
                     CalamariFileSystem.OverwriteFile(moduleFilePath, contents, Encoding.UTF8);
-                    output.AppendLine($"Import-ScriptModule '{libraryScriptModuleName.EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
-                    output.AppendLine();
+
+                    var shouldImport = !selectivePreload || selectedModules!.Contains(libraryScriptModuleName);
+                    if (shouldImport)
+                    {
+                        Log.VerboseFormat("Writing script module '{0}' as PowerShell module {1}. This module will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
+                        output.AppendLine($"Import-ScriptModule '{libraryScriptModuleName.EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
+                        output.AppendLine();
+                    }
+                    else
+                    {
+                        Log.VerboseFormat("Writing script module '{0}' as PowerShell module {1}. Module not in preload list - manual import required via `Import-Module '{1}'`.", libraryScriptModuleName, moduleFileName, name);
+                    }
+
                     scriptModules.Add(moduleFilePath);
                 }
 

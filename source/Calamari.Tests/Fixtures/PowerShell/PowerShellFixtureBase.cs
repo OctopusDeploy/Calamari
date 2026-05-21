@@ -476,6 +476,52 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        public void ShouldPreloadSelectedScriptModules()
+        {
+            var (output, _) = RunPowerShellScript("PreloadModules.ps1", new Dictionary<string, string>
+            {
+                ["Octopus.Script.Module[test_module]"] = "function TestFunction { Write-Host \"Function from preloaded module\" }\n$global:PreloadedVar = \"module_value\"",
+                ["Octopus.Action.Script.PreloadScriptModules"] = "test_module"
+            });
+
+            output.AssertSuccess();
+            output.AssertOutput("Calling test function from preloaded module...");
+            output.AssertOutput("Function from preloaded module");
+            output.AssertOutput("PRELOADED_VAR=module_value");
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
+        public void ShouldOnlyPreloadSelectedModulesWhenVariableIsSet()
+        {
+            var (output, _) = RunPowerShellScript("UseModule.ps1", new Dictionary<string, string>
+            {
+                ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module!\" }",
+                ["Octopus.Script.Module[Bar]"] = "function SayGoodbye() { Write-Host \"Goodbye from module!\" }",
+                ["Octopus.Action.Script.PreloadScriptModules"] = "Foo"
+            });
+
+            // Foo is in the preload list so SayHello should work
+            output.AssertSuccess();
+            output.AssertOutput("Hello from module!");
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
+        public void ShouldStillAutoImportAllModulesWhenPreloadVariableNotSet()
+        {
+            var (output, _) = RunPowerShellScript("UseModule.ps1", new Dictionary<string, string>
+            {
+                ["Octopus.Script.Module[Foo]"] = "function SayHello() { Write-Host \"Hello from module!\" }",
+            });
+
+            // No PreloadScriptModules variable set — existing behavior: all modules auto-imported
+            output.AssertSuccess();
+            output.AssertOutput("Hello from module!");
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
         public void ShouldShowFriendlyErrorWithInvalidSyntaxInScriptModule()
         {
             var (output, _) = RunPowerShellScript("UseModule.ps1", new Dictionary<string, string>()
