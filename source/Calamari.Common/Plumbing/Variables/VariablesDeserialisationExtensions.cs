@@ -1,20 +1,13 @@
 using System;
 using Calamari.Common.Commands;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace Calamari.Common.Plumbing.Variables;
 
-public static class CalamariVariableDeserilisationExtensions
+public static class VariablesDeserialisationExtensions
 {
-    public static readonly JsonSerializerSettings DefaultSerializationSettings = new()
-    {
-        Formatting = Formatting.None,
-        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-        MissingMemberHandling = MissingMemberHandling.Error,
-    };
     
-    public static T GetValueDeserilisedAs<T>(this CalamariVariables variables, string name)
+    public static T GetValueDeserialisedAs<T>(this IVariables variables, string name)
     {
 
         var variableJson = variables.Get(name);
@@ -26,7 +19,7 @@ public static class CalamariVariableDeserilisationExtensions
 
         try
         {
-            var output = JsonConvert.DeserializeObject<T>(variableJson, DefaultSerializationSettings);
+            var output = JsonConvert.DeserializeObject<T>(variableJson, CalamariContractSerializationSettings.Default);
             return output ?? throw new CommandException($"Variable {name} was deserialized as null ");
         }
         catch (JsonSerializationException)
