@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Tests.AWS.Inputs;
 
@@ -266,12 +267,59 @@ public class DeployEcsCommandInputsFixture
     public void WaitOption_IsDeserialisedAndReturned()
     {
         const string waitOptionInput = """{ "type": "waitUntilCompleted" }""";
-        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, waitOptionInput, false);
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, waitOptionInput, false);
         var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
         
         var result = inputs.WaitOption;
         
-        result.Sh
+        result.Type.Should().Be(WaitType.WaitUntilCompleted);
+        result.Timeout.Should().BeNull();
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void AutoAssignPublicIp_IsReturnedAsABool(bool useExpression)
+    {
+        const string enablePublicIpInput = "True";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp, enablePublicIpInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var result = inputs.AutoAssignPublicIp;
+
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void NetworkSecurityGroupIds_IsReturnedAsAListOfString(bool useExpression)
+    {
+        const string securityGroupsInput = """"
+                                           ["sg-0123abcd456789fgh", "sg-abcd1234abcdef567"]
+                                           """";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds, securityGroupsInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var result = inputs.NetworkSecurityGroupIds;
+        
+        result.Count.Should().Be(2);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void SubnetIds_IsReturnedAsAListOfString(bool useExpression)
+    {
+        const string subnetsInput = """"
+                                          ["subnet-0123abcd456789fgh", "subnet-abcd1234abcdef567", "subnet-xxxxxxxxxxxxxxxx"]
+                                          """";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.SubnetIds, subnetsInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var result = inputs.SubnetIDs;
+        
+        result.Count.Should().Be(3);
     }
     
     
@@ -285,11 +333,18 @@ public class DeployEcsCommandInputsFixture
             { AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, "TestEcsTask"},
             { AwsSpecialVariables.Ecs.Deploy.Cpu, "2"},
             { AwsSpecialVariables.Ecs.Deploy.Memory, "1"},
-            {AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, "X86_64"},
+            { AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, "X86_64"},
             { AwsSpecialVariables.Ecs.Deploy.DesiredCount, "1"},
             { AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, "100"},
             { AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, "200"},
-            { AwsSpecialVariables.Ecs.WaitOption, """{ "type": "waitWithTimeout", "timeout": 30 }"""}
+            { AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp, "False"},
+            { AwsSpecialVariables.Ecs.WaitOption, """{ "type": "waitWithTimeout", "timeout": 30 }"""},
+            { AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds, """"
+                                                               [sg-0d5e06a4bde84dabc"],
+                                                               """"},
+            { AwsSpecialVariables.Ecs.Deploy.SubnetIds, """
+                                                        [""subnet-0650cd8a2119e8abc"]
+                                                        """}
             
         };
     }

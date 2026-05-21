@@ -1,4 +1,6 @@
+using System.Linq;
 using Amazon.CDK;
+using Amazon.CDK.AWS.EC2;
 using Amazon.CDK.AWS.ECS;
 using Calamari.Aws.Inputs;
 
@@ -20,6 +22,8 @@ public class EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, 
          */
         var cluster = new Cluster(this, commandInputs.ClusterName); // TODO: Handle deploying to an existing cluster
 
+       
+        
         var taskDefinition = new FargateTaskDefinition(this,
                                                        commandInputs.TaskName,
                                                        new FargateTaskDefinitionProps
@@ -42,6 +46,16 @@ public class EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, 
                                                     DesiredCount = commandInputs.DesiredCount, 
                                                     MinHealthyPercent = commandInputs.MinimumHealthyPercentage,
                                                     MaxHealthyPercent = commandInputs.MaximumHealthyPercentage,
+                                                    AssignPublicIp =  commandInputs.AutoAssignPublicIp,
+                                                    VpcSubnets = new SubnetSelection
+                                                    {
+                                                        Subnets = commandInputs.SubnetIDs.
+                                                                                Select((id, index) => Subnet.FromSubnetId(this, $"Subnet-{index}", id))
+                                                                               .ToArray()
+                                                    },
+                                                    SecurityGroups = commandInputs.NetworkSecurityGroupIds
+                                                                                  .Select((id, index) => SecurityGroup.FromSecurityGroupId(this, $"sg-{index}", id))
+                                                                                  .ToArray()
                                                 });
     }
 }
@@ -49,7 +63,6 @@ public class EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, 
 /*
  *                    
 
-   public const string AutoAssignPublicIp =  $"{DeployPrefix}AutoAssignPublicIp";
    public const string EnableEcsManagedTags =  $"{DeployPrefix}EnableEcsManagedTags";
    public const string TaskRole =  $"{DeployPrefix}TaskRole";
    public const string TaskExecutionRole =  $"{DeployPrefix}TaskExecutionRole";

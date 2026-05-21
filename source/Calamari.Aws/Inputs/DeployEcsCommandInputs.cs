@@ -15,14 +15,14 @@ namespace Calamari.Aws.Inputs;
 
 public class DeployEcsCommandInputs
 {
-    readonly IVariables variables;
+    readonly CalamariVariables variables;
     readonly IEcsStackNameGenerator stackNameGenerator;
     readonly ILog log;
-    readonly List<string> requiredVariableKeys = [];
+    readonly HashSet<string> requiredVariableKeys = [];
 
     public DeployEcsCommandInputs(IVariables variables, IEcsStackNameGenerator stackNameGenerator, ILog log)
     {
-        this.variables = variables;
+        this.variables = variables as CalamariVariables;
         this.stackNameGenerator = stackNameGenerator;
         this.log = log;
 
@@ -40,6 +40,11 @@ public class DeployEcsCommandInputs
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.DesiredCount);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp);
+        
+        // collections
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.SubnetIds);
         
         // Objects
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.WaitOption);
@@ -94,6 +99,8 @@ public class DeployEcsCommandInputs
     public double MinimumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
     public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
     
+    public bool AutoAssignPublicIp => bool.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp));
+    
     public AwsCpuArchitecture CpuArchitecture
     {
         get
@@ -107,13 +114,12 @@ public class DeployEcsCommandInputs
         }
     }
 
-    public WaitOption WaitOption
-    {
-        get
-        {
-            var waitOptionString = variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.WaitOption);
-        }
-    }
+
+    public List<string> NetworkSecurityGroupIds => variables.GetValueDeserilisedAs<List<string>>(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds);
+    public List<string> SubnetIDs => variables.GetValueDeserilisedAs<List<string>>(AwsSpecialVariables.Ecs.Deploy.SubnetIds);
+
+    public WaitOption WaitOption => variables.GetValueDeserilisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
+
 
 }
 
