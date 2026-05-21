@@ -104,6 +104,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
             using var temporaryFolder = TemporaryDirectory.Create();
 
             CredentialsHandler credentialsHandler = (url, usernameFromUrl, types) => new UsernamePasswordCredentials { Username = cloneUsername, Password = clonePassword};
+            LibGit2SharpTransportRegistration.EnsureRegistered();
             var repositoryPath =  Repository.Clone(repositoryUrl, temporaryFolder.DirectoryPath, new CloneOptions()
             {
                 FetchOptions =

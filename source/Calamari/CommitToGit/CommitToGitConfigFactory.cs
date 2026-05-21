@@ -36,11 +36,12 @@ namespace Calamari.CommitToGit
 
             var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
 
-            var connection = properties.GitCredential switch
-                             {
-                                 UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
-                                 _ => throw new NotSupportedException("Commit-To-Git only supports the use of username/password. Please select a username/password based credential in your step configuration."),
-                             };
+            IGitConnection connection = properties.GitCredential switch
+                                        {
+                                            UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                            _ => throw new NotSupportedException($"An unrecognised credential type '{properties.GitCredential.GetType().Name}' was found for '{uriAsString}'"),
+                                        };
 
             return new CommitToGitRepositorySettings(connection,
                                                      commitParameters,
