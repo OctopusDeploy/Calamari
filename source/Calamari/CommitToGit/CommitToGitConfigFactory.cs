@@ -1,5 +1,5 @@
 using System;
-using Amazon.ECS.Model;
+using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
@@ -39,7 +39,7 @@ namespace Calamari.CommitToGit
             IGitConnection connection = properties.GitCredential switch
                                         {
                                             UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
-                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString), ssh.KnownHosts.Select(kh => new SshKnownHost(kh.Host, kh.PublicKey)).ToArray()),
                                             _ => throw new NotSupportedException($"An unrecognised credential type '{properties.GitCredential.GetType().Name}' was found for '{uriAsString}'"),
                                         };
 
