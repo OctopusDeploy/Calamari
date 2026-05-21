@@ -6,6 +6,7 @@
         <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
         <RootNamespace>Calamari.Build</RootNamespace>
         <NoWarn>CS0649;CS0169</NoWarn>
+        <DisableMSBuildAssemblyCopyCheck>true</DisableMSBuildAssemblyCopyCheck>
         <NukeRootDirectory>..</NukeRootDirectory>
         <NukeScriptDirectory>..</NukeScriptDirectory>
         <NukeTelemetryVersion>1</NukeTelemetryVersion>
@@ -28,7 +29,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Nuke.Common" Version="9.0.4" />
+        <PackageReference Include="Octopus.Nuke.Common" Version="10.1.14" />
         <PackageReference Include="Octopus.1Password.Sdk" Version="0.0.127" />
         <PackageReference Include="AzureSignTool" Version="6.0.1" ExcludeAssets="all" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
