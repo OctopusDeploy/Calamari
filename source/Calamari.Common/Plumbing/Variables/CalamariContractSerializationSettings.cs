@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
 namespace Calamari.Common.Plumbing.Variables;
@@ -14,5 +15,6 @@ public static class CalamariContractSerializationSettings
         NullValueHandling = NullValueHandling.Ignore,
         ContractResolver = new CamelCasePropertyNamesContractResolver(),
         MissingMemberHandling = MissingMemberHandling.Error,
+        Converters = { new StringEnumConverter() },
     };
 }
