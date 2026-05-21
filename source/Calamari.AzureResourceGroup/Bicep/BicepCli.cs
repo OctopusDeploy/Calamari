@@ -50,10 +50,23 @@ public class BicepCli
             ? ExecuteRawCommandAndReturnOutput("where", "az.cmd")
             : ExecuteRawCommandAndReturnOutput("which", "az");
 
-        var infoMessages = result.Output.Messages.Where(m => m.Level == Level.Verbose).Select(m => m.Text).ToArray();
+        var allMessages = result.Output.Messages.Select(m => $"[{m.Level}] {m.Text}").ToArray();
+        log.Verbose($"which/where az exit code: {result.Result.ExitCode}");
+        log.Verbose($"which/where az output:\n{string.Join("\n", allMessages)}");
+        log.Verbose($"PATH: {Environment.GetEnvironmentVariable("PATH")}");
+        log.Verbose($"Working directory: {workingDirectory}");
+
+        var infoMessages = result.Output.Messages
+                                 .Where(m => m.Level == Level.Verbose)
+                                 .Select(m => m.Text)
+                                 .ToArray();
+
         var foundExecutable = infoMessages.FirstOrDefault();
         if (string.IsNullOrEmpty(foundExecutable))
-            throw new CommandException("Could not find az. Make sure az is on the PATH.");
+            throw new CommandException(
+                                       $"Could not find az. Make sure az is on the PATH.\n" +
+                                       $"PATH was: {Environment.GetEnvironmentVariable("PATH")}\n" +
+                                       $"which/where output: {string.Join("; ", allMessages)}");
 
         azCliLocation = foundExecutable.Trim();
     }
