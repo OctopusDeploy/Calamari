@@ -55,7 +55,8 @@ public class EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, 
                                                     },
                                                     SecurityGroups = commandInputs.NetworkSecurityGroupIds
                                                                                   .Select((id, index) => SecurityGroup.FromSecurityGroupId(this, $"sg-{index}", id))
-                                                                                  .ToArray()
+                                                                                  .ToArray(),
+                                                    EnableECSManagedTags =  commandInputs.EnableEcsManagedTags,
                                                 });
     }
 }

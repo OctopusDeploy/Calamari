@@ -289,6 +289,20 @@ public class DeployEcsCommandInputsFixture
 
         result.Should().BeTrue();
     }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void EnableEcsManagedTags_IsReturnedAsABool(bool useExpression)
+    {
+        const string enableEcsManagedTagsInput = "True";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags, enableEcsManagedTagsInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        
+        var result = inputs.EnableEcsManagedTags;
+
+        result.Should().BeTrue();
+    }
 
     [Test]
     [TestCase(true)]
@@ -338,6 +352,7 @@ public class DeployEcsCommandInputsFixture
             { AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, "100"},
             { AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, "200"},
             { AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp, "False"},
+            { AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags, "False"},
             { AwsSpecialVariables.Ecs.WaitOption, """{ "type": "waitWithTimeout", "timeout": 30 }"""},
             { AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds, """"
                                                                [sg-0d5e06a4bde84dabc"],

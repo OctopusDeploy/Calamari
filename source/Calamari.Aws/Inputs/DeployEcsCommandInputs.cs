@@ -41,6 +41,7 @@ public class DeployEcsCommandInputs
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags);
         
         // collections
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds);
@@ -100,6 +101,8 @@ public class DeployEcsCommandInputs
     public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
     
     public bool AutoAssignPublicIp => bool.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp));
+
+    public bool EnableEcsManagedTags => bool.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags));
     
     public AwsCpuArchitecture CpuArchitecture
     {
