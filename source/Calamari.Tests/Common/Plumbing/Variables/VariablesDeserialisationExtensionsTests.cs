@@ -75,7 +75,7 @@ public class VariablesDeserialisationExtensionsTests
     }
 
     [Test]
-    public void VaribleSeriliseedAndDeserialised_AppearsTheSame()
+    public void VariableSerialisedAndDeserialised_AppearsTheSame()
     {
         var inputObject = new TestVariableClass
         {
@@ -92,10 +92,35 @@ public class VariablesDeserialisationExtensionsTests
 
         result.Should().BeEquivalentTo(inputObject);
     }
+
+    [Test]
+    public void VariableSerialisedAndDeserialisedWithNullableProperty_AppearsTheSame()
+    {
+        var inputObject = new TestVariableClassWithNullableProperty
+        {
+            Name = "Input Object",
+        };
+        
+        var inputObjectString = JsonConvert.SerializeObject(inputObject, CalamariContractSerializationSettings.Default);
+        var variables = new CalamariVariables
+        {
+            { TestKey,  inputObjectString }
+        };
+        
+        var result = variables.GetValueDeserialisedAs<TestVariableClassWithNullableProperty>(TestKey);
+
+        result.Should().BeEquivalentTo(inputObject);
+    }
 }
 
 public class TestVariableClass
 {
     public string Name { get; set; }
     public int NumericValue { get; set; }
+}
+
+public class TestVariableClassWithNullableProperty
+{
+    public string Name { get; set; }
+    public int? NumericValue { get; set; }
 }
