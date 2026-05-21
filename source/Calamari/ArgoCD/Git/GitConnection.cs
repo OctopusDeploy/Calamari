@@ -5,6 +5,8 @@ using Calamari.Common.Commands;
 
 namespace Calamari.ArgoCD.Git
 {
+    public record SshKnownHost(string Host, string PublicKey);
+
     public interface IRepositoryConnection
     {
         public string Url { get; }
@@ -63,17 +65,20 @@ namespace Calamari.ArgoCD.Git
             string? username,
             string privateKey,
             string url,
-            GitReference gitReference)
+            GitReference gitReference,
+            SshKnownHost[] knownHosts)
         {
             Username = username;
             PrivateKey = privateKey;
             Url = url;
             GitReference = gitReference;
+            KnownHosts = knownHosts;
         }
 
         public string? Username { get; }
         public string PrivateKey { get; }
         public string Url { get; }
         public GitReference GitReference { get; }
+        public SshKnownHost[] KnownHosts { get; }
     }
 }
