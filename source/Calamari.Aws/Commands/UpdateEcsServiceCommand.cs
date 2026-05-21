@@ -62,10 +62,10 @@ public class UpdateEcsServiceCommand : Command
         var serviceName = variables.Get(AwsSpecialVariables.Ecs.ServiceName);
         Guard.NotNullOrWhiteSpace(serviceName, "Service name is required");
 
-        var targetFamily = variables.Get(AwsSpecialVariables.Ecs.TargetTaskDefinitionName);
+        var targetFamily = variables.Get(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName);
         Guard.NotNullOrWhiteSpace(targetFamily, "Target task definition name is required");
 
-        var templateFamily = variables.Get(AwsSpecialVariables.Ecs.TemplateTaskDefinitionName);
+        var templateFamily = variables.Get(AwsSpecialVariables.Ecs.Update.TemplateTaskDefinitionName);
         if (string.IsNullOrWhiteSpace(templateFamily))
         {
             templateFamily = targetFamily;
@@ -83,7 +83,7 @@ public class UpdateEcsServiceCommand : Command
             Guard.NotNullOrWhiteSpace(c.ContainerName, "Container name is required");
         }
 
-        var tagsJson = variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]";
+        var tagsJson = variables.Get(AwsSpecialVariables.ResourceTags) ?? "[]";
         var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(tagsJson) ?? [];
         var seenTagKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var tag in userTags)
@@ -94,7 +94,7 @@ public class UpdateEcsServiceCommand : Command
             }
         }
 
-        var waitOptionJson = variables.Get(AwsSpecialVariables.Ecs.Wait);
+        var waitOptionJson = variables.Get(AwsSpecialVariables.Ecs.WaitOption);
         Guard.NotNullOrWhiteSpace(waitOptionJson, "The wait option is required");
         var waitOption = JsonConvert.DeserializeObject<WaitOption>(waitOptionJson)
                          ?? throw new CommandException("The wait option could not be deserialized.");

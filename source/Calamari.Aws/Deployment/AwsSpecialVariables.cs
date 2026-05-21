@@ -3,6 +3,7 @@
     public static class AwsSpecialVariables
     {
         public const string IamCapabilities = "Octopus.Action.Aws.IamCapabilities";
+        public const string ResourceTags = "Octopus.Action.Aws.Tags";
 
         public static class Authentication
         {
@@ -23,15 +24,17 @@
         {
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
             public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
-            public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.TargetTaskDefinitionName";
-            public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.TemplateTaskDefinitionName";
             public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
+            public const string WaitOption = "Octopus.Action.Aws.Ecs.WaitOption";
 
-            // Update ECS step: JSON-shaped wait option matching Octopus.Calamari.Contracts.Aws.Ecs.WaitOption.
-            public const string Wait = "Octopus.Action.Aws.Ecs.Wait";
+            public static class Update
+            {
+                public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TargetTaskDefinitionName";
+                public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TemplateTaskDefinitionName";
+            }
 
             // Deploy ECS step: legacy flat key/value pair. Will consolidate when Deploy migrates.
-            public static class WaitOption
+            public static class WaitOptionLegacy
             {
                 public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";
                 public const string Timeout = "Octopus.Action.Aws.Ecs.WaitOption.Timeout";
@@ -46,6 +49,7 @@
             public const string TemplateParameters = "Octopus.Action.Aws.CloudFormationTemplateParameters";
             public const string TemplateParametersRaw = "Octopus.Action.Aws.CloudFormationTemplateParametersRaw";
             public const string RoleArn = "Octopus.Action.Aws.CloudFormation.RoleArn";
+            // TODO: Tags aren't CFN specific so migrate to use ResourceTags = "Octopus.Action.Aws.Tags" above
             public const string Tags = "Octopus.Action.Aws.CloudFormation.Tags";
 
             public static class Changesets

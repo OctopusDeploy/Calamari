@@ -102,8 +102,8 @@ public class UpdateEcsServiceFixture
         var variables = await CreateVariables(serviceName: $"unused-{unique}", newImage: "public.ecr.aws/docker/library/nginx:1.28-alpine");
         // Default behavior collapses TemplateTaskDefinitionName to TargetTaskDefinitionName when
         // the former is empty — so we set both explicitly: a known-good template, a known-missing target.
-        variables.Set(AwsSpecialVariables.Ecs.TemplateTaskDefinitionName, TaskDefinitionFamily);
-        variables.Set(AwsSpecialVariables.Ecs.TargetTaskDefinitionName, missingTarget);
+        variables.Set(AwsSpecialVariables.Ecs.Update.TemplateTaskDefinitionName, TaskDefinitionFamily);
+        variables.Set(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName, missingTarget);
 
         var log = new InMemoryLog();
         var command = new UpdateEcsServiceCommand(log, variables);
@@ -135,7 +135,7 @@ public class UpdateEcsServiceFixture
 
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
         variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
-        variables.Set(AwsSpecialVariables.Ecs.TargetTaskDefinitionName, TaskDefinitionFamily);
+        variables.Set(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName, TaskDefinitionFamily);
 
         const string packageReference = "web";
         variables.Set(PackageVariables.IndexedImage(packageReference), newImage);
@@ -160,7 +160,7 @@ public class UpdateEcsServiceFixture
         variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers));
 
         var waitOption = new WaitOption { Type = WaitType.DontWait };
-        variables.Set(AwsSpecialVariables.Ecs.Wait, JsonConvert.SerializeObject(waitOption));
+        variables.Set(AwsSpecialVariables.Ecs.WaitOption, JsonConvert.SerializeObject(waitOption));
 
         return variables;
     }

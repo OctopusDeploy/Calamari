@@ -109,14 +109,14 @@ public class DeployEcsServiceCommand : Command
         var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]") ?? [];
         var tags = EcsDefaultTags.Merge(variables, userTags);
 
-        var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
+        var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOptionLegacy.Type);
         Guard.NotNullOrWhiteSpace(waitOptionType, "The wait option is required");
         if (waitOptionType != "waitUntilCompleted" && waitOptionType != "waitWithTimeout" && waitOptionType != "dontWait")
         {
             throw new CommandException($"The wait option has an invalid value '{waitOptionType}'. Expected one of: 'waitUntilCompleted', 'waitWithTimeout', 'dontWait'.");
         }
 
-        var waitOptionTimeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOption.Timeout);
+        var waitOptionTimeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOptionLegacy.Timeout);
         if (waitOptionType == "waitWithTimeout" && !waitOptionTimeoutMs.HasValue)
         {
             throw new CommandException("Wait option is 'waitWithTimeout' but timeout value is not set.");
