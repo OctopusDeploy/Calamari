@@ -12,6 +12,7 @@ public static class CalamariContractSerializationSettings
     {
         Formatting = Formatting.None,
         NullValueHandling = NullValueHandling.Ignore,
-        ContractResolver = new CamelCasePropertyNamesContractResolver()
+        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+        MissingMemberHandling = MissingMemberHandling.Error,
     };
 }
