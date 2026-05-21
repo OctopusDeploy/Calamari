@@ -9,12 +9,14 @@ using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
+using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using Newtonsoft.Json;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.AWS.Ecs;
@@ -28,6 +30,8 @@ public class DeployEcsServiceFixture
     const string ClusterName = "calamari-ecs-integration-tests";
     const string SubnetId = "subnet-0d3da9354f8253081";
     const string SecurityGroupId = "sg-053ae28309775ea7b";
+    
+    readonly IEcsStackNameGenerator fakeStackNameGenerator = Substitute.For<IEcsStackNameGenerator>();
 
     string stackName;
 
@@ -66,7 +70,7 @@ public class DeployEcsServiceFixture
             await File.WriteAllTextAsync(templatePath, BuildTemplate(serviceName));
             await File.WriteAllTextAsync(parametersPath, "[]");
 
-            var command = new DeployEcsServiceCommand(log, variables, fileSystem);
+            var command = new DeployEcsServiceCommand(log, variables, fileSystem, fakeStackNameGenerator);
 
             var result = command.Execute(["--template", templatePath, "--templateParameters", parametersPath]);
 

@@ -156,6 +156,10 @@ namespace Calamari
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();
 
+
+            var moduleAssemblies = GetModuleAssemblies().ToArray();
+            builder.RegisterAssemblyModules(moduleAssemblies);
+
             builder.RegisterModule<ArgoCDModule>();
             builder.RegisterModule<CommitToGitModule>();
             builder.RegisterModule<PackageRetentionModule>();
@@ -167,6 +171,12 @@ namespace Calamari
             yield return typeof(AwsSpecialVariables).Assembly;
             //Calamari.Azure, this includes AzureOidcAccount
             yield return typeof(AzureKubernetesDiscoverer).Assembly;
+        }
+
+        // This is for safety, for the time being, so we don't inadvertently register something we shouldn't;
+        IEnumerable<Assembly> GetModuleAssemblies()
+        {
+            yield return typeof(AwsSpecialVariables).Assembly;
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
