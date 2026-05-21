@@ -10,7 +10,6 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Newtonsoft.Json;
 using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Aws.Commands;
@@ -71,8 +70,7 @@ public class UpdateEcsServiceCommand : Command
             templateFamily = targetFamily;
         }
 
-        var containersJson = variables.Get(AwsSpecialVariables.Ecs.Containers) ?? "[]";
-        var containers = JsonConvert.DeserializeObject<List<ContainerUpdate>>(containersJson) ?? [];
+        var containers = variables.GetValueDeserialisedAs<List<ContainerUpdate>>(AwsSpecialVariables.Ecs.Containers);
         if (containers.Count == 0)
         {
             throw new CommandException("At least one container is required.");
@@ -83,8 +81,7 @@ public class UpdateEcsServiceCommand : Command
             Guard.NotNullOrWhiteSpace(c.ContainerName, "Container name is required");
         }
 
-        var tagsJson = variables.Get(AwsSpecialVariables.ResourceTags) ?? "[]";
-        var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(tagsJson) ?? [];
+        var userTags = variables.GetValueDeserialisedAs<List<KeyValuePair<string, string>>>(AwsSpecialVariables.ResourceTags);
         var seenTagKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var tag in userTags)
         {
@@ -94,10 +91,7 @@ public class UpdateEcsServiceCommand : Command
             }
         }
 
-        var waitOptionJson = variables.Get(AwsSpecialVariables.Ecs.WaitOption);
-        Guard.NotNullOrWhiteSpace(waitOptionJson, "The wait option is required");
-        var waitOption = JsonConvert.DeserializeObject<WaitOption>(waitOptionJson)
-                         ?? throw new CommandException("The wait option could not be deserialized.");
+        var waitOption = variables.GetValueDeserialisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
 
         if (waitOption.Type == WaitType.WaitWithTimeout && waitOption.GetTimeoutSpan() is null)
         {
