@@ -12,8 +12,18 @@ public static class EcsDeployTemplateGenerator
         var stackName = commandInputs.CfStackName;
         
         var app = new App();
+        
+        var stackProps = new StackProps
+        {
+            Synthesizer = new DefaultStackSynthesizer(new DefaultStackSynthesizerProps
+            {
+                // This flag kills the Rules assertion section and the bootstrap version parameter completely
+                GenerateBootstrapVersionRule = false 
+            })
+        };
 
-        _ = new EcsDeployTemplate(commandInputs, app, stackName);
+        _ = new EcsDeployTemplate(commandInputs, app, stackName, stackProps);
+        
 
         var assembly = app.Synth();
         

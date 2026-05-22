@@ -70,6 +70,8 @@ public class DeployEcsCommandInputs
     public string ServiceName => $"Service{variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName).CamelCase()}";
     
     public string TaskName  => $"TaskDefinition{variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName).CamelCase()}";
+
+    public string FallbackTaskExecutionRoleName => $"TaskExecutionRole{variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName).CamelCase()}";
 #pragma warning restore CS0618 // Type or member is obsolete
 
     
@@ -100,9 +102,15 @@ public class DeployEcsCommandInputs
     public double MinimumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
     public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
     
-    public bool AutoAssignPublicIp => bool.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp));
+    public bool AutoAssignPublicIp => variables.GetFlag(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp);
 
-    public bool EnableEcsManagedTags => bool.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags));
+    public bool EnableEcsManagedTags => variables.GetFlag(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags);
+
+    public string TaskRole => variables.Get(AwsSpecialVariables.Ecs.Deploy.TaskRole, "");
+    public string TaskExecutionRole => variables.Get(AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, "");
+    
+   
+
     
     public AwsCpuArchitecture CpuArchitecture
     {
