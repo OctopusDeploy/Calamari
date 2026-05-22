@@ -10,8 +10,8 @@ namespace Calamari.Tests.ArgoCD.Contracts;
 /// <summary>
 /// Deserialisation tests for <see cref="ArgoCDCustomPropertiesDto"/> with a focus on
 /// the polymorphic <see cref="IGitCredentialDto"/> array. The converter discriminates on
-/// the <c>Type</c> field emitted by Octopus Server (the concrete type name); a missing
-/// <c>Type</c> defaults to <see cref="GitCredentialDto"/> for backwards compatibility.
+/// the <c>Type</c> field emitted by Octopus Server; a missing <c>Type</c> defaults to
+/// <see cref="GitCredentialDto"/> for backwards compatibility.
 /// </summary>
 [TestFixture]
 public class ArgoCDCustomPropertiesDtoSerializationTests
@@ -27,7 +27,7 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
         => JsonConvert.DeserializeObject<T>(json, Settings)!;
 
     [Test]
-    public void TypeGitCredentialDto_DeserializesAsHttpsCredential()
+    public void TypeUsernamePassword_DeserializesAsHttpsCredential()
     {
         const string json = """
             {
@@ -50,6 +50,62 @@ public class ArgoCDCustomPropertiesDtoSerializationTests
         credential.Url.Should().Be("https://github.com/org/repo.git");
         credential.Username.Should().Be("user");
         credential.Password.Should().Be("pass");
+    }
+
+    [Test]
+    public void TypeSshKey_DeserializesAsSshCredential()
+    {
+        const string json = """
+            {
+              "Gateways": [], "Applications": [],
+              "Credentials": [
+                {
+                  "Type": "SshKey",
+                  "Url": "git@github.com:org/repo.git",
+                  "Username": "git",
+                  "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----"
+                }
+              ]
+            }
+            """;
+
+        var result = DeserializeRaw<ArgoCDCustomPropertiesDto>(json);
+
+        result.Credentials.Should().HaveCount(1);
+        var credential = result.Credentials[0].Should().BeOfType<SshKeyGitCredentialDto>().Subject;
+        credential.Url.Should().Be("git@github.com:org/repo.git");
+        credential.Username.Should().Be("git");
+        credential.PrivateKey.Should().Be("-----BEGIN OPENSSH PRIVATE KEY-----");
+    }
+
+    [Test]
+    public void MixedArray_BothTypesPreserved()
+    {
+        const string json = """
+            {
+              "Gateways": [], "Applications": [],
+              "Credentials": [
+                {
+                  "Type": "UsernamePassword",
+                  "Url": "https://github.com/org/repo.git",
+                  "Username": "user",
+                  "Password": "pass"
+                },
+                {
+                  "Type": "SshKey",
+                  "Url": "git@github.com:org/other.git",
+                  "Username": "git",
+                  "PrivateKey": "-----BEGIN OPENSSH PRIVATE KEY-----"
+                }
+              ]
+            }
+            """;
+
+        var result = DeserializeRaw<ArgoCDCustomPropertiesDto>(json);
+
+        result.Credentials.Should().HaveCount(2);
+        result.Credentials[0].Should().BeOfType<GitCredentialDto>();
+        result.Credentials[1].Should().BeOfType<SshKeyGitCredentialDto>();
     }
 
     [Test]

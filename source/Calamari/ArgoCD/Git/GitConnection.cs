@@ -56,4 +56,11 @@ namespace Calamari.ArgoCD.Git
             return uri;
         }
     }
+
+    public record SshKeyGitConnection(
+        string? Username,
+        string PrivateKey,
+        string Url,
+        GitReference GitReference)
+        : IGitConnection;
 }
