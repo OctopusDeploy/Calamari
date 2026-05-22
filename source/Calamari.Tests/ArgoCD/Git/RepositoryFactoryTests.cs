@@ -119,7 +119,7 @@ namespace Calamari.Tests.ArgoCD.Git
             mockResolver.DidNotReceive().TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<System.Threading.CancellationToken>());
 
             log.MessagesVerboseFormatted
-               .Should().Contain(s => s.Contains("SSH authentication") && s.Contains(PR creation will not be available"));
+               .Should().Contain(s => s.Contains("SSH authentication") && s.Contains("PR creation will not be available"));
         }
 
         void CreateCommitOnOrigin(GitBranchName branchName, string fileName, string content)
