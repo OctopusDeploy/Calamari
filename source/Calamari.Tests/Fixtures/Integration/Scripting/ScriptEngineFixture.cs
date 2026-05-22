@@ -44,63 +44,64 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         {
             DeterminesCorrectScriptTypePreferenceOrder(ScriptPreferencesNonWindows);
         }
-        
+
         [Test]
-          public void ExecuteWithoutEnvironmentVarsPassesEmptyDictionaryToWrappers()
-          {
-              Dictionary<string, string> receivedEnvironmentVars = null;
-              var capturingWrapper = new CapturingScriptWrapper(envVars => receivedEnvironmentVars = envVars);
-  
-              var engine = new ScriptEngine(new List<IScriptWrapper> { capturingWrapper }, Substitute.For<ILog>());
-              var variables = new CalamariVariables();
-              var runner = Substitute.For<ICommandLineRunner>();
-  
-              engine.Execute(new Script("test.ps1"), variables, runner);
-  
-              receivedEnvironmentVars.Should().NotBeNull();
-              receivedEnvironmentVars.Should().BeEmpty();
-          }
-  
-          [Test]
-          public void ExecuteWithEnvironmentVarsPassesDictionaryToWrappers()
-          {
-              Dictionary<string, string> receivedEnvironmentVars = null;
-              var capturingWrapper = new CapturingScriptWrapper(envVars => receivedEnvironmentVars = envVars);
-  
-              var engine = new ScriptEngine(new List<IScriptWrapper> { capturingWrapper }, Substitute.For<ILog>());
-              var variables = new CalamariVariables();
-              var runner = Substitute.For<ICommandLineRunner>();
-              var envVars = new Dictionary<string, string> { { "AWS_REGION", "us-east-1" } };
-  
-              engine.Execute(new Script("test.ps1"), variables, runner, envVars);
-  
-              receivedEnvironmentVars.Should().NotBeNull();
-              receivedEnvironmentVars.Should().ContainKey("AWS_REGION");
-          }
-  
-          /// <summary>
-          /// A wrapper that captures the environmentVars it receives, to verify they are never null.
-          /// </summary>
-          class CapturingScriptWrapper : IScriptWrapper
-          {
-              readonly Action<Dictionary<string, string>> onExecute;
-  
-              public CapturingScriptWrapper(Action<Dictionary<string, string>> onExecute)
-              {
-                  this.onExecute = onExecute;
-             }
- 
-             public int Priority => ScriptWrapperPriorities.ToolConfigPriority;
-             public IScriptWrapper NextWrapper { get; set; }
- 
-             public bool IsEnabled(ScriptSyntax syntax) => true;
- 
-             public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
-             {
-                 onExecute(environmentVars);
-                 return new CommandResult("captured", 0);
-             }
-         }
+        public void ExecuteWithoutEnvironmentVarsPassesEmptyDictionaryToWrappers()
+        {
+            Dictionary<string, string> receivedEnvironmentVars = null;
+            var capturingWrapper = new CapturingScriptWrapper()
+            {
+                OnExecute = envVars => receivedEnvironmentVars = envVars
+            };
+
+            var engine = new ScriptEngine(new List<IScriptWrapper> { capturingWrapper }, Substitute.For<ILog>());
+            var variables = new CalamariVariables();
+            var runner = Substitute.For<ICommandLineRunner>();
+
+            engine.Execute(new Script("test.ps1"), variables, runner);
+
+            receivedEnvironmentVars.Should().NotBeNull();
+            receivedEnvironmentVars.Should().BeEmpty();
+        }
+
+        [Test]
+        public void ExecuteWithEnvironmentVarsPassesDictionaryToWrappers()
+        {
+            Dictionary<string, string> receivedEnvironmentVars = null;
+            var capturingWrapper = new CapturingScriptWrapper()
+            {
+                OnExecute = envVars => receivedEnvironmentVars = envVars
+            };
+
+            var engine = new ScriptEngine(new List<IScriptWrapper> { capturingWrapper }, Substitute.For<ILog>());
+            var variables = new CalamariVariables();
+            var runner = Substitute.For<ICommandLineRunner>();
+            var envVars = new Dictionary<string, string> { { "AWS_REGION", "us-east-1" } };
+
+            engine.Execute(new Script("test.ps1"), variables, runner, envVars);
+
+            receivedEnvironmentVars.Should().NotBeNull();
+            receivedEnvironmentVars.Should().ContainKey("AWS_REGION");
+        }
+
+        /// <summary>
+        /// A wrapper that captures the environmentVars it receives, to verify they are never null.
+        /// </summary>
+        class CapturingScriptWrapper : IScriptWrapper
+        {
+            public Action<Dictionary<string, string>> OnExecute { get; set; }
+
+            public int Priority => ScriptWrapperPriorities.ToolConfigPriority;
+            public IScriptWrapper NextWrapper { get; set; }
+
+            public bool IsEnabled(ScriptSyntax syntax) => true;
+
+            public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
+            {
+                OnExecute?.Invoke(environmentVars);
+                return new CommandResult("captured", 0);
+            }
+        }
 
         void DeterminesCorrectScriptTypePreferenceOrder(IEnumerable<ScriptSyntax> expected)
         {
