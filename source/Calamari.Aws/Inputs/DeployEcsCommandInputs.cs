@@ -64,6 +64,8 @@ public class DeployEcsCommandInputs
 
     public string ClusterName => variables.Get(AwsSpecialVariables.Ecs.ClusterName);
 
+    public string ServiceTaskName => variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName);
+
 #pragma warning disable CS0618 // Type or member is obsolete temporary SPF deprecation
     public string ServiceName => $"Service{variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName).CamelCase()}";
     
