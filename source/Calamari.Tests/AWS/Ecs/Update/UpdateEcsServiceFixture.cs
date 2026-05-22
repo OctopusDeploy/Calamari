@@ -135,7 +135,7 @@ public class UpdateEcsServiceFixture
         variables.Set("Octopus.Action.Name", "Update ECS");
 
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
-        variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
+        variables.Set(AwsSpecialVariables.Ecs.Update.ServiceName, serviceName);
         variables.Set(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName, TaskDefinitionFamily);
 
         const string packageReference = "web";

@@ -28,6 +28,7 @@
 
             public static class Update
             {
+                public const string ServiceName = "Octopus.Action.Aws.Ecs.Update.ServiceName";
                 public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TargetTaskDefinitionName";
                 public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TemplateTaskDefinitionName";
                 public const string ContainerUpdates = "Octopus.Action.Aws.Ecs.Update.ContainerUpdates";

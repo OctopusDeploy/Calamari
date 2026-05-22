@@ -58,7 +58,7 @@ public class UpdateEcsServiceCommand : Command
         var clusterName = variables.Get(AwsSpecialVariables.Ecs.ClusterName);
         Guard.NotNullOrWhiteSpace(clusterName, "Cluster name is required");
 
-        var serviceName = variables.Get(AwsSpecialVariables.Ecs.ServiceName);
+        var serviceName = variables.Get(AwsSpecialVariables.Ecs.Update.ServiceName);
         Guard.NotNullOrWhiteSpace(serviceName, "Service name is required");
 
         var targetFamily = variables.Get(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName);
