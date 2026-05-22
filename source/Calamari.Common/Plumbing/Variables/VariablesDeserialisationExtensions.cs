@@ -6,8 +6,10 @@ namespace Calamari.Common.Plumbing.Variables;
 
 public static class VariablesDeserialisationExtensions
 {
-    public static T GetValueDeserilisedAs<T>(this IVariables variables, string name)
+    
+    public static T GetValueDeserialisedAs<T>(this IVariables variables, string name)
     {
+
         var variableJson = variables.Get(name);
 
         if (string.IsNullOrEmpty(variableJson))
