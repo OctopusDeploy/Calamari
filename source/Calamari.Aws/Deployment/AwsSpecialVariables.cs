@@ -24,13 +24,13 @@
         {
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
             public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
-            public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
             public const string WaitOption = "Octopus.Action.Aws.Ecs.WaitOption";
 
             public static class Update
             {
                 public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TargetTaskDefinitionName";
                 public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TemplateTaskDefinitionName";
+                public const string ContainerUpdates = "Octopus.Action.Aws.Ecs.Update.ContainerUpdates";
             }
 
             // Deploy ECS step: legacy flat key/value pair. Will consolidate when Deploy migrates.

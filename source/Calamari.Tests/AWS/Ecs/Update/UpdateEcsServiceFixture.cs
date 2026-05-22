@@ -158,7 +158,7 @@ public class UpdateEcsServiceFixture
                 }
             }
         };
-        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers, CalamariContractSerializationSettings.Default));
+        variables.Set(AwsSpecialVariables.Ecs.Update.ContainerUpdates, JsonConvert.SerializeObject(containers, CalamariContractSerializationSettings.Default));
 
         var tags = new[] { new KeyValuePair<string, string>("Environment", "Test") };
         variables.Set(AwsSpecialVariables.ResourceTags, JsonConvert.SerializeObject(tags, CalamariContractSerializationSettings.Default));

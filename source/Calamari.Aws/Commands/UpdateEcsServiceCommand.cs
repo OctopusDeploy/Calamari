@@ -70,7 +70,7 @@ public class UpdateEcsServiceCommand : Command
             templateFamily = targetFamily;
         }
 
-        var containers = variables.GetValueDeserialisedAs<List<ContainerUpdate>>(AwsSpecialVariables.Ecs.Containers);
+        var containers = variables.GetValueDeserialisedAs<List<ContainerUpdate>>(AwsSpecialVariables.Ecs.Update.ContainerUpdates);
         if (containers.Count == 0)
         {
             throw new CommandException("At least one container is required.");
@@ -94,7 +94,7 @@ public class UpdateEcsServiceCommand : Command
         var waitOption = variables.GetValueDeserialisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
         if (waitOption.Type == WaitType.WaitWithTimeout && waitOption.GetTimeoutSpan() is null)
         {
-            throw new CommandException($"Wait option is '{nameof(WaitType.WaitWithTimeout)}' but got invalid timeout '{waitOption.TimeoutMinutes}').");
+            throw new CommandException($"Wait option is '{nameof(WaitType.WaitWithTimeout)}' but got invalid timeout '{waitOption.TimeoutMinutes}'.");
         }
 
         return new EcsUpdateServiceInputs(
