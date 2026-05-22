@@ -118,7 +118,7 @@ namespace Calamari.ArgoCD.Git
 
             if (gitConnection is SshKeyGitConnection)
             {
-                log.Verbose("Git is using SSH authentication, Git vendor functionality will not be available");
+                log.Verbose("Git is using SSH authentication, Git vendor functionality such as PR creation will not be available");
             }
 
             return new RepositoryWrapper(repo,

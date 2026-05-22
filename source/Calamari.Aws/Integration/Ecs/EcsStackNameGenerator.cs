@@ -3,13 +3,19 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Aws.Integration.Ecs;
 
+public interface IEcsStackNameGenerator
+{
+    string Generate(IVariables variables, string clusterName, string serviceName);
+}
+
+
 // Generates a deterministic CFN stack name when the user didn't supply a stack name.
 // Mirrors SPF's getStackName
-public static class EcsStackName
+public class EcsStackNameGenerator : IEcsStackNameGenerator
 {
     const int MaxLength = 128;
 
-    public static string Generate(IVariables variables, string clusterName, string serviceName)
+    public string Generate(IVariables variables, string clusterName, string serviceName)
     {
         var envId = variables.Get("Octopus.Environment.Id");
         var tenantId = variables.Get("Octopus.Deployment.Tenant.Id");

@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.AWS.Ecs;
 
 [TestFixture]
-public class EcsStackNameTests
+public class EcsStackNameGeneratorTests
 {
     [Test]
     public void UntenantedDefault_WhenTenantIdMissing()
@@ -14,7 +14,7 @@ public class EcsStackNameTests
         var variables = new CalamariVariables();
         variables.Set("Octopus.Environment.Id", "env1");
 
-        var name = EcsStackName.Generate(variables, "mycluster", "myservice");
+        var name = new EcsStackNameGenerator().Generate(variables, "mycluster", "myservice");
 
         name.Should().Be("cf-ecs-mycluster-myservice-env1-untenanted");
     }
@@ -26,7 +26,7 @@ public class EcsStackNameTests
         variables.Set("Octopus.Environment.Id", "env1");
         variables.Set("Octopus.Deployment.Tenant.Id", "tenant1");
 
-        var name = EcsStackName.Generate(variables, "mycluster", "myservice");
+        var name = new EcsStackNameGenerator().Generate(variables, "mycluster", "myservice");
 
         name.Should().Be("cf-ecs-mycluster-myservice-env1-tenant1");
     }
@@ -38,7 +38,7 @@ public class EcsStackNameTests
         variables.Set("Octopus.Environment.Id", "env1");
 
         var longService = new string('a', 200);
-        var name = EcsStackName.Generate(variables, "cluster", longService);
+        var name = new EcsStackNameGenerator().Generate(variables, "cluster", longService);
 
         name.Length.Should().Be(128);
         name.Should().StartWith("cf-ecs-cluster-");

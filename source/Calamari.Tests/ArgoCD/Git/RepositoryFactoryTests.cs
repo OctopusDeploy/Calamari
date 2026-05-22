@@ -98,7 +98,6 @@ namespace Calamari.Tests.ArgoCD.Git
         [Test]
         public void CloningSshKeyGitConnectionDoesNotResolveAPullRequestClientAndLogsVerboseMessage()
         {
-            // Arrange
             var filename = "sshTest.txt";
             var content = "ssh test content";
             CreateCommitOnOrigin(branchName, filename, content);
@@ -115,13 +114,12 @@ namespace Calamari.Tests.ArgoCD.Git
             );
 
             // libgit2 skips credential callbacks for local file paths, so this test validates only pull-request-client resolution and verbose logging — not SSH credential validity.
-            // Act
             factoryWithMockedResolver.CloneRepository("Clone_WithSshConnection", sshConnection);
 
             mockResolver.DidNotReceive().TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<System.Threading.CancellationToken>());
 
             log.MessagesVerboseFormatted
-               .Should().Contain(s => s.Contains("SSH authentication") && s.Contains("Git vendor functionality will not be available"));
+               .Should().Contain(s => s.Contains("SSH authentication") && s.Contains(PR creation will not be available"));
         }
 
         void CreateCommitOnOrigin(GitBranchName branchName, string fileName, string content)
