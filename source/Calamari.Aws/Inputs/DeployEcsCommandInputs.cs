@@ -9,8 +9,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.Calamari.Contracts.Aws.Ecs;
 
-using AwsCpuArchitecture = Amazon.CDK.AWS.ECS.CpuArchitecture;
-
 namespace Calamari.Aws.Inputs;
 
 public class DeployEcsCommandInputs
@@ -30,12 +28,12 @@ public class DeployEcsCommandInputs
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.ClusterName);
         requiredVariableKeys.Add(DeploymentEnvironment.Id);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Cpu);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Memory);
         
         // primitives
         // TODO: Type checking
         // TODO: Defaults?
-        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Cpu);
-        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Memory);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.DesiredCount);
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent);
@@ -94,15 +92,15 @@ public class DeployEcsCommandInputs
     
     public string Tenant => variables.Get(DeploymentVariables.Tenant.Id, "");
 
-    public double Cpu => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Cpu));
+    public string Cpu => variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Cpu);
 
-    public double Memory => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Memory));
+    public string Memory => variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Memory);
 
     public double DesiredCount => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount));
     public double MinimumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
     public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
     
-    public bool AutoAssignPublicIp => variables.GetFlag(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp);
+    public string AutoAssignPublicIp => variables.GetFlag(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp) ? "ENABLED" : "DISABLED";
 
     public bool EnableEcsManagedTags => variables.GetFlag(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags);
 
@@ -112,22 +110,22 @@ public class DeployEcsCommandInputs
    
 
     
-    public AwsCpuArchitecture CpuArchitecture
+    public string CpuArchitecture
     {
         get
         {
             var cpuArchValue = variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform);
             return cpuArchValue.ToUpper() switch
                    {
-                       "ARM64" => AwsCpuArchitecture.ARM64,
-                       _       => AwsCpuArchitecture.X86_64  // default
+                       "ARM64" => "ARM64",
+                       _       => "X86_64"  // default
                    };
         }
     }
 
 
-    public List<string> NetworkSecurityGroupIds => variables.GetValueDeserilisedAs<List<string>>(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds);
-    public List<string> SubnetIDs => variables.GetValueDeserilisedAs<List<string>>(AwsSpecialVariables.Ecs.Deploy.SubnetIds);
+    public string[] NetworkSecurityGroupIds => variables.GetValueDeserilisedAs<string[]>(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds);
+    public string[] SubnetIDs => variables.GetValueDeserilisedAs<string[]>(AwsSpecialVariables.Ecs.Deploy.SubnetIds);
 
     public WaitOption WaitOption => variables.GetValueDeserilisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
 

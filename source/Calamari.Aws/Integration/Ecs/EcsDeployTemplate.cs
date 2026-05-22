@@ -1,7 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Amazon.CDK;
-using Amazon.CDK.AWS.EC2;
 using Amazon.CDK.AWS.ECS;
 using Amazon.CDK.AWS.IAM;
 using Calamari.Aws.Inputs;
@@ -11,132 +12,109 @@ namespace Calamari.Aws.Integration.Ecs;
 
 public class EcsDeployTemplate : Stack
 {
+    const string FargateLaunchType = "FARGATE";
+    const string AwsVpcNetworkMode = "awsvpc";
+    const string LinuxOperatingSystemFamily = "LINUX";
+    const string DefaultTaskExecutionPolicyArn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy";
+
     readonly DeployEcsCommandInputs commandInputs;
 
-    public  EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, string id, IStackProps props = null): base(scope, id, props)
+    public EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, string id, IStackProps props = null) : base(scope, id, props)
     {
         this.commandInputs = commandInputs;
-        
-        /***
-         * // This creates a lightweight reference token instead of generating a massive VPC template
-           var cluster = Cluster.FromClusterAttributes(this, "ImportedCluster", new ClusterAttributes
-           {
-               ClusterName = commandInputs.ClusterName,
-               SecurityGroups = new[] { SecurityGroup.FromSecurityGroupId(this, "ClusterSg", "sg-xxxxxxxx") } 
-           });
-         */
-        // var cluster = new Cluster(this, commandInputs.ClusterName); // TODO: Handle deploying to an existing cluster
-        
 
-        var cluster = Cluster.FromClusterAttributes(this,
-                                                    "ImportedCluster",
-                                                    new ClusterAttributes
-                                                    {
-                                                        ClusterName = commandInputs.ClusterName,
-                                                        
-                                                        // We must have this fake VPC otherwise CDK goes 💥
-                                                        Vpc = Vpc.FromVpcAttributes(this, "ClusterVpcContext", new VpcAttributes
-                                                        {
-                                                            VpcId = "vpc-dummy",
-                                                            AvailabilityZones = ["ap-southeast-2a", "ap-southeast-2b"]
-                                                        })
-                                                    });
-       
-        
-        var taskDefinition = new TaskDefinition(this,
-                                                commandInputs.TaskName,
-                                                new TaskDefinitionProps
-                                                {
-                                                    Cpu = commandInputs.Cpu.ToString(CultureInfo.InvariantCulture),
-                                                    MemoryMiB = commandInputs.Memory.ToString(CultureInfo.InvariantCulture),
-                                                    RuntimePlatform = new RuntimePlatform
-                                                    {
-                                                        OperatingSystemFamily = OperatingSystemFamily.LINUX, // Hardcode to Linux as it's all we support
-                                                        CpuArchitecture = commandInputs.CpuArchitecture,
-                                                    },
-                                                    ExecutionRole = ProcessTaskExecutionRole(commandInputs),
-                                                    TaskRole =  string.IsNullOrEmpty(commandInputs.TaskExecutionRole) ? null : Role.FromRoleArn(this, "SuppliedTaskRole", commandInputs.TaskExecutionRole),
-                                                    Volumes = [], //TODO: Read from Variables
-                                                           
-                                                });
+        var executionRoleArn = ProcessTaskExecutionRole(commandInputs);
 
-        // TODO: Add Containers
+        var taskDefinition = new CfnTaskDefinition(this,
+                                                   commandInputs.TaskName,
+                                                   new CfnTaskDefinitionProps
+                                                   {
+                                                       Family = commandInputs.TaskName,
+                                                       Cpu = commandInputs.Cpu,
+                                                       Memory = commandInputs.Memory,
+                                                       NetworkMode = AwsVpcNetworkMode,
+                                                       RequiresCompatibilities = [FargateLaunchType],
+                                                       ExecutionRoleArn = executionRoleArn,
+                                                       TaskRoleArn = string.IsNullOrEmpty(commandInputs.TaskRole) ? null : commandInputs.TaskRole,
+                                                       RuntimePlatform = new CfnTaskDefinition.RuntimePlatformProperty
+                                                       {
+                                                           OperatingSystemFamily = LinuxOperatingSystemFamily,
+                                                           CpuArchitecture = commandInputs.CpuArchitecture
+                                                       },
+                                                       ContainerDefinitions = new[]
+                                                       {
+                                                           // TODO: Read from variables
+                                                           new CfnTaskDefinition.ContainerDefinitionProperty
+                                                           {
+                                                               Name = "placeholder",
+                                                               Image = "index.docker.io/nginx:latest",
+                                                               Essential = true
+                                                           }
+                                                       },
+                                                       Volumes = Array.Empty<CfnTaskDefinition.VolumeProperty>() // TODO: Read from variables
+                                                   });
 
-        taskDefinition.AddContainer("id", new ContainerDefinitionProps
-        {
-            Essential = true,
-            Image = ContainerImage.FromRegistry("index.docker.io/nginx:latest", new RepositoryImageProps())
-        });
-
-        var fargateService = new FargateService(this,
-                                                commandInputs.ServiceName,
-                                                new FargateServiceProps
-                                                {
-                                                    Cluster = cluster,
-                                                    TaskDefinition = taskDefinition,
-                                                    DesiredCount = commandInputs.DesiredCount, 
-                                                    MinHealthyPercent = commandInputs.MinimumHealthyPercentage,
-                                                    MaxHealthyPercent = commandInputs.MaximumHealthyPercentage,
-                                                    AssignPublicIp =  commandInputs.AutoAssignPublicIp,
-                                                    VpcSubnets = new SubnetSelection
-                                                    {
-                                                        Subnets = commandInputs.SubnetIDs.
-                                                                                Select((id, index) => Subnet.FromSubnetId(this, $"Subnet-{index}", id))
-                                                                               .ToArray()
-                                                    },
-                                                    SecurityGroups = commandInputs.NetworkSecurityGroupIds
-                                                                                  .Select((id, index) => SecurityGroup.FromSecurityGroupId(this, $"sg-{index}", id))
-                                                                                  .ToArray(),
-                                                    EnableECSManagedTags =  commandInputs.EnableEcsManagedTags,
-                                                    VolumeConfigurations = [], //TODO: Read from variables
-                                                });
-        
-        // Amazon.CDK.Tags.Of(fargateService).Add("TagName", "TagValue");
-        // fargateService.AddVolume();
-        // fargateService.LoadBalancers = [
-        //
-        //     new CfnService.LoadBalancerProperty()
-        //     {
-        //         
-        //     }
-        // ];
+        _ = new CfnService(this,
+                           commandInputs.ServiceName,
+                           new CfnServiceProps
+                           {
+                               ServiceName = commandInputs.ServiceName,
+                               Cluster = commandInputs.ClusterName,
+                               LaunchType = FargateLaunchType,
+                               TaskDefinition = taskDefinition.Ref,
+                               DesiredCount = commandInputs.DesiredCount,
+                               DeploymentConfiguration = new CfnService.DeploymentConfigurationProperty
+                               {
+                                   MinimumHealthyPercent = commandInputs.MinimumHealthyPercentage,
+                                   MaximumPercent = commandInputs.MaximumHealthyPercentage
+                               },
+                               NetworkConfiguration = new CfnService.NetworkConfigurationProperty
+                               {
+                                   AwsvpcConfiguration = new CfnService.AwsVpcConfigurationProperty
+                                   {
+                                       AssignPublicIp = commandInputs.AutoAssignPublicIp,
+                                       Subnets = commandInputs.SubnetIDs,
+                                       SecurityGroups = commandInputs.NetworkSecurityGroupIds
+                                   }
+                               },
+                               EnableEcsManagedTags = commandInputs.EnableEcsManagedTags,
+                               LoadBalancers = Array.Empty<CfnService.LoadBalancerProperty>(), // TODO: Read from variables
+                               VolumeConfigurations = Array.Empty<CfnService.ServiceVolumeConfigurationProperty>() // TODO: Read from variables
+                           });
     }
 
-    IRole ProcessTaskExecutionRole(DeployEcsCommandInputs inputs)
+    string ProcessTaskExecutionRole(DeployEcsCommandInputs inputs)
     {
-        if (string.IsNullOrEmpty(inputs.TaskExecutionRole))
+        if (!string.IsNullOrEmpty(inputs.TaskExecutionRole))
         {
-            var role = new Role(this, "DefaultTaskExecutionRole", new RoleProps
-            {
-                RoleName = inputs.FallbackTaskExecutionRoleName,
-                AssumedBy = new ServicePrincipal("ecs-tasks.amazonaws.com"),
-                Path = "/",
-                ManagedPolicies = [] //TODO: Populate
-            });
-
-            _ = new CfnParameter(this,
-                                 "AmazonECSTaskExecutionRolePolicyArn",
-                                 new CfnParameterProps
-                                 {
-                                     Type = "String",
-                                     Default = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
-                                 });
-
-            return role;
-
-
+            return inputs.TaskExecutionRole;
         }
 
-        return Role.FromRoleArn(this, "SuppliedTaskExecutionRole", commandInputs.TaskExecutionRole);
+        var role = new CfnRole(this,
+                               "DefaultTaskExecutionRole",
+                               new CfnRoleProps
+                               {
+                                   RoleName = inputs.FallbackTaskExecutionRoleName,
+                                   Path = "/",
+                                   AssumeRolePolicyDocument = new Dictionary<string, object>
+                                   {
+                                       ["Version"] = "2012-10-17",
+                                       ["Statement"] = new[]
+                                       {
+                                           new Dictionary<string, object>
+                                           {
+                                               ["Effect"] = "Allow",
+                                               ["Principal"] = new Dictionary<string, object>
+                                               {
+                                                   ["Service"] = "ecs-tasks.amazonaws.com"
+                                               },
+                                               ["Action"] = "sts:AssumeRole"
+                                           }
+                                       }
+                                   },
+                                   ManagedPolicyArns = new[] { DefaultTaskExecutionPolicyArn }
+                               });
+
+        return role.AttrArn;
     }
-
-    
 }
-
-/*
- *                    
-
-
-   public const string TaskRole =  $"{DeployPrefix}TaskRole";
-   public const string TaskExecutionRole =  $"{DeployPrefix}TaskExecutionRole";
-*/
