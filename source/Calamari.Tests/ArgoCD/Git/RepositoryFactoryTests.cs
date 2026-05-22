@@ -107,11 +107,12 @@ namespace Calamari.Tests.ArgoCD.Git
             var factoryWithMockedResolver = new RepositoryFactory(log, fileSystem, tempDirectory, mockResolver, new SystemClock());
 
             var sshConnection = new SshKeyGitConnection(
-                username: "git",
-                privateKey: "private-key",
-                url: OriginPath,
-                gitReference: branchName,
-                knownHosts: []);
+                Username: "git",
+                PrivateKey: "private-key",
+                Url: OriginPath,
+                GitReference: branchName,
+                KnownHosts: [] // libgit2 skips the certificate callback for local file paths
+            );
 
             // libgit2 skips credential callbacks for local file paths, so this test validates only pull-request-client resolution and verbose logging — not SSH credential validity.
             // Act

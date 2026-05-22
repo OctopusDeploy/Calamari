@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Amazon.ECS.Model;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;

@@ -1,6 +1,8 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Commands;
 
 namespace Calamari.ArgoCD.Git
@@ -57,28 +59,13 @@ namespace Calamari.ArgoCD.Git
         }
     }
 
-    public class SshKeyGitConnection : IGitConnection
-    {
-        public SshKeyGitConnection(
-            string? username,
-            string privateKey,
-            string url,
-            GitReference gitReference,
-            SshKnownHost[] knownHosts)
-        {
-            Username = username;
-            PrivateKey = privateKey;
-            Url = url;
-            GitReference = gitReference;
-            KnownHosts = knownHosts;
-        }
-
-        public string? Username { get; }
-        public string PrivateKey { get; }
-        public string Url { get; }
-        public GitReference GitReference { get; }
-        public SshKnownHost[] KnownHosts { get; }
-    }
+    public record SshKeyGitConnection(
+        string? Username,
+        string PrivateKey,
+        string Url,
+        GitReference GitReference,
+        IReadOnlyList<SshKnownHost> KnownHosts)
+        : IGitConnection;
 
     public record SshKnownHost(string Host, string PublicKey);
 }
