@@ -7,7 +7,6 @@ using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -18,11 +17,15 @@ namespace Calamari.Common.Features.Scripting
     {
         ScriptSyntax[] GetSupportedTypes();
 
+        CommandResult Execute(Script script,
+                              IVariables variables,
+                              ICommandLineRunner commandLineRunner);
+        
         CommandResult Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string>? environmentVars = null);
+            Dictionary<string, string> environmentVars);
     }
 
     public class ScriptEngine : IScriptEngine
@@ -41,11 +44,13 @@ namespace Calamari.Common.Features.Scripting
             return ScriptSyntaxHelper.GetPreferenceOrderedScriptSyntaxesForEnvironment();
         }
 
+        public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner) => Execute(script, variables, commandLineRunner, []);
+        
         public CommandResult Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string>? environmentVars = null)
+            Dictionary<string, string> environmentVars)
         {
             var syntax = script.File.ToScriptType();
             return BuildWrapperChain(syntax, variables, commandLineRunner)
