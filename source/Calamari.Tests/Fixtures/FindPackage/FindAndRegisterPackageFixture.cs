@@ -1,12 +1,19 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
+using Calamari.Commands;
 using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
+using Newtonsoft.Json.Linq;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning;
 
@@ -54,6 +61,10 @@ namespace Calamari.Tests.Fixtures.FindPackage
         {
             if (Directory.Exists(downloadPath))
                 Directory.Delete(downloadPath, true);
+
+            var journalPath = Path.Combine(tentacleHome, "PackageRetentionJournal.json");
+            if (File.Exists(journalPath))
+                File.Delete(journalPath);
         }
 
         CalamariResult FindAndRegisterPackage(string id, string version, string hash, VersionFormat versionFormat = VersionFormat.Semver)
@@ -96,6 +107,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
                 // Verify package was registered with the journal
                 result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", packageId, packageVersion);
+                AssertJournalContainsEntryFor(packageId, VersionFactory.CreateSemanticVersion(packageVersion));
             }
         }
 
@@ -350,6 +362,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", mavenPackageId, packageVersion);
+            AssertJournalContainsEntryFor(mavenPackageId, VersionFactory.CreateMavenVersion(packageVersion));
         }
 
         [Test]
@@ -386,6 +399,52 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
             result.AssertFailure();
             result.AssertErrorOutput("No package hash was specified. Please pass --packageHash YourPackageHash");
+        }
+
+        static void AssertJournalContainsEntryFor(string packageId, IVersion version)
+        {
+            var journalPath = Path.Combine(tentacleHome, "PackageRetentionJournal.json");
+
+            Assert.That(File.Exists(journalPath), Is.True,
+                $"Journal file not found at: {journalPath}");
+
+            var json = File.ReadAllText(journalPath);
+            var root = JObject.Parse(json);
+            var entries = root["JournalEntries"] as JArray ?? new JArray();
+
+            var match = entries.FirstOrDefault(e =>
+                string.Equals((string)e["Package"]?["PackageId"]?["Value"], packageId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals((string)e["Package"]?["Version"]?["Version"], version.ToString(), StringComparison.OrdinalIgnoreCase));
+
+            Assert.That(match, Is.Not.Null,
+                $"Expected a journal entry for {packageId} v{version} but the journal contains: {json}");
+        }
+
+        [Test]
+        public void ShouldNotRegisterWhenFullFilePathIsEmpty()
+        {
+            var log = Substitute.For<ILog>();
+            var journal = Substitute.For<IManagePackageCache>();
+            var fileSystem = Substitute.For<ICalamariFileSystem>();
+            var packageStore = Substitute.For<IPackageStore>();
+
+            var identity = new PackageFileNameMetadata(packageId, VersionFactory.CreateSemanticVersion(packageVersion), VersionFactory.CreateSemanticVersion(packageVersion), ".nupkg");
+            var emptyPathMetadata = new PackagePhysicalFileMetadata(identity, string.Empty, "abc123", 100);
+
+            packageStore.GetPackage(Arg.Any<string>(), Arg.Any<IVersion>(), Arg.Any<string>()).Returns(emptyPathMetadata);
+            fileSystem.GetFileSize(Arg.Any<string>()).Returns(0L);
+
+            var command = new FindAndRegisterPackageCommand(log, packageStore, journal, fileSystem);
+            var exitCode = command.Execute(new[]
+            {
+                "--packageId", packageId,
+                "--packageVersion", packageVersion,
+                "--taskId", "ServerTasks-12345",
+                "--packageHash", "abc123"
+            });
+
+            Assert.AreEqual(0, exitCode);
+            journal.DidNotReceive().RegisterPackageUse(Arg.Any<PackageIdentity>(), Arg.Any<ServerTaskId>(), Arg.Any<ulong>());
         }
     }
 }

@@ -57,6 +57,9 @@ namespace Calamari.Commands
 
         void RegisterPackageUse(PackagePhysicalFileMetadata pkg, IVersion version)
         {
+            if (string.IsNullOrEmpty(pkg.FullFilePath))
+                return;
+
             var package = new PackageIdentity(
                 new PackageId(pkg.PackageId),
                 version,

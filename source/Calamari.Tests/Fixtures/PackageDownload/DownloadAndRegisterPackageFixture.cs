@@ -603,6 +603,23 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertErrorOutput("A username was specified but no password was provided");
         }
 
+        [Test]
+        [RequiresDockerInstalled]
+        public void ShouldNotRegisterDockerImageBecauseFullFilePathIsEmpty()
+        {
+            // DockerImagePackageDownloader produces PackagePhysicalFileMetadata with string.Empty
+            // as FullFilePath. The registration guard should skip journal.RegisterPackageUse in this case.
+            var result = DownloadAndRegisterPackage(
+                "alpine",
+                "3.6.5",
+                "feeds-docker-hub",
+                "https://index.docker.io",
+                feedType: FeedType.Docker);
+
+            result.AssertSuccess();
+            result.AssertNoOutput("Registered package use/lock for alpine");
+        }
+
         CalamariResult DownloadAndRegisterPackage(
             string packageId,
             string packageVersion,
