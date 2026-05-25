@@ -195,6 +195,8 @@ public class CommitToGitCommand : Command
     {
         foreach (var glob in globPatterns)
         {
+            EnsureInputPathIsSafe(glob);
+
             var prefix = GetNonWildcardPrefix(glob);
             foreach (var sourceFile in fileSystem.EnumerateFilesWithGlob(sourceDir, glob))
             {
@@ -205,6 +207,21 @@ public class CommitToGitCommand : Command
                 yield return (sourceFile, destRelative);
             }
         }
+    }
+
+    static void EnsureInputPathIsSafe(string inputPath)
+    {
+        if (string.IsNullOrEmpty(inputPath))
+            return;
+
+        var normalized = inputPath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        if (normalized.StartsWith(Path.AltDirectorySeparatorChar))
+            throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it is an absolute path. Input paths must be relative to the package or git repository source.");
+
+        var segments = normalized.Split(Path.AltDirectorySeparatorChar);
+        if (segments.Any(s => s == ".."))
+            throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it contains a '..' path segment that could reference files outside the input source.");
     }
 
     static string GetNonWildcardPrefix(string globPattern)
