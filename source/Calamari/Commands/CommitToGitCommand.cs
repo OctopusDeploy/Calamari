@@ -214,10 +214,10 @@ public class CommitToGitCommand : Command
         if (string.IsNullOrEmpty(inputPath))
             return;
 
-        var sourceDirFull = Path.GetFullPath(sourceDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        var resolvedFull = Path.GetFullPath(Path.Combine(sourceDir, inputPath));
+        var absoluteSourceDir = Path.GetFullPath(sourceDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var absoluteInputSubPath = Path.GetFullPath(Path.Combine(sourceDir, inputPath));
 
-        if (!resolvedFull.StartsWith(sourceDirFull, StringComparison.Ordinal))
+        if (!absoluteInputSubPath.StartsWith(absoluteSourceDir, StringComparison.Ordinal))
             throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it resolves to a path outside the input source directory.");
     }
 
