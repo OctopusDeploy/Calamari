@@ -405,6 +405,8 @@ public class CommitToGitCommandTest
     [TestCase("../../../etc/passwd", TestName = "Package_RejectsInputPath_StartingWithDotDot")]
     [TestCase("/etc/passwd", TestName = "Package_RejectsInputPath_StartingWithSlash")]
     [TestCase("configs/../../etc/passwd", TestName = "Package_RejectsInputPath_ContainingDotDotSegment")]
+    [TestCase("C:\\Windows\\System32\\config", TestName = "Package_RejectsInputPath_WindowsAbsolutePath")]
+    [TestCase("\\\\server\\share\\secret", TestName = "Package_RejectsInputPath_UncPath")]
     public void RejectsPackageInputFilePathsThatEscapeSourceDirectory(string maliciousInputPath)
     {
         const string packageReferenceName = "my-configs";
@@ -428,6 +430,8 @@ public class CommitToGitCommandTest
     [TestCase("../../../etc/passwd", TestName = "GitDep_RejectsInputPath_StartingWithDotDot")]
     [TestCase("/etc/passwd", TestName = "GitDep_RejectsInputPath_StartingWithSlash")]
     [TestCase("manifests/../../etc/passwd", TestName = "GitDep_RejectsInputPath_ContainingDotDotSegment")]
+    [TestCase("C:\\Windows\\System32\\config", TestName = "GitDep_RejectsInputPath_WindowsAbsolutePath")]
+    [TestCase("\\\\server\\share\\secret", TestName = "GitDep_RejectsInputPath_UncPath")]
     public void RejectsGitDependencyInputFilePathsThatEscapeSourceDirectory(string maliciousInputPath)
     {
         const string gitDependencyName = "my-git-dep";
