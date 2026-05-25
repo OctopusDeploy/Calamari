@@ -18,7 +18,7 @@ namespace Calamari.ArgoCD.Conventions
 
         public bool HasStepBasedHelmValueReferences()
         {
-            return ImageReferences.Any(ir => ir.HelmReference is not null) && UseHelmReferenceFromContainer;
+            return ImageReferences.Any(ir => !ir.HelmReference.IsNullOrEmpty()) && UseHelmReferenceFromContainer;
         }
     }
 }
