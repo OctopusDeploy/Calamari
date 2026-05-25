@@ -5,6 +5,7 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -92,6 +93,31 @@ namespace Calamari.Tests.ArgoCD.Git
             File.Exists(Path.Combine(clonedRepository.WorkingDirectory, filename)).Should().BeTrue();
             var fileContent = File.ReadAllText(Path.Combine(clonedRepository.WorkingDirectory, filename));
             fileContent.Should().Be(originalContent);
+        }
+
+        [Test]
+        public void CloningSshKeyGitConnectionDoesNotResolveAPullRequestClientAndLogsVerboseMessage()
+        {
+            var filename = "sshTest.txt";
+            var content = "ssh test content";
+            CreateCommitOnOrigin(branchName, filename, content);
+
+            var mockResolver = Substitute.For<IGitVendorPullRequestClientResolver>();
+            var factoryWithMockedResolver = new RepositoryFactory(log, fileSystem, tempDirectory, mockResolver, new SystemClock());
+
+            var sshConnection = new SshKeyGitConnection(
+                Username: "git",
+                PrivateKey: "private-key",
+                Url: OriginPath,
+                GitReference: branchName);
+
+            // libgit2 skips credential callbacks for local file paths, so this test validates only pull-request-client resolution and verbose logging — not SSH credential validity.
+            factoryWithMockedResolver.CloneRepository("Clone_WithSshConnection", sshConnection);
+
+            mockResolver.DidNotReceive().TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<System.Threading.CancellationToken>());
+
+            log.MessagesVerboseFormatted
+               .Should().Contain(s => s.Contains("SSH authentication") && s.Contains("PR creation will not be available"));
         }
 
         void CreateCommitOnOrigin(GitBranchName branchName, string fileName, string content)

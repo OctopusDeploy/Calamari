@@ -66,14 +66,8 @@ namespace Calamari.ArgoCD.Git
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
-            if (gitConnection is HttpsGitConnection { Username: not null, Password: not null } https)
-            {
-                options.FetchOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials
-                {
-                    Username = https.Username,
-                    Password = https.Password
-                };
-            }
+            options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
+            options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler();
 
             string repoPath;
             log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
@@ -121,6 +115,11 @@ namespace Calamari.ArgoCD.Git
             var gitVendorApiAdapter = gitConnection is HttpsGitConnection httpsGitConnection
                 ? gitVendorPullRequestClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
                 : null;
+
+            if (gitConnection is SshKeyGitConnection)
+            {
+                log.Verbose("Git is using SSH authentication, Git vendor functionality such as PR creation will not be available");
+            }
 
             return new RepositoryWrapper(repo,
                                          fileSystem,

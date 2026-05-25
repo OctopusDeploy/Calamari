@@ -32,6 +32,7 @@ public class IGitCredentialDtoJsonConverter : JsonConverter<IGitCredentialDto>
         return type switch
         {
             null or GitCredentialDto.DiscriminatorValue => obj.ToObject<GitCredentialDto>(ConcreteSerializer)!,
+            SshKeyGitCredentialDto.DiscriminatorValue => obj.ToObject<SshKeyGitCredentialDto>(ConcreteSerializer)!,
             _ => throw new JsonSerializationException($"Unrecognised credential Type '{type}'.")
         };
     }
