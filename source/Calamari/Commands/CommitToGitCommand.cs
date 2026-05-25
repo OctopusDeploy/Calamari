@@ -214,11 +214,14 @@ public class CommitToGitCommand : Command
         if (string.IsNullOrEmpty(inputPath))
             return;
 
-        if (Path.IsPathRooted(inputPath))
+        // Normalize Windows separators so that Path.IsPathRooted reliably detects
+        // UNC paths (\\server\share) and drive-letter paths (C:\...) on all platforms.
+        var normalized = inputPath.Replace('\\', '/');
+
+        if (Path.IsPathRooted(normalized) || (normalized.Length >= 2 && normalized[1] == ':'))
             throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it is an absolute path. Input paths must be relative to the package or git repository source.");
 
-        var normalized = inputPath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        var segments = normalized.Split(Path.AltDirectorySeparatorChar);
+        var segments = normalized.Split('/');
         if (segments.Any(s => s == ".."))
             throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it contains a '..' path segment that could reference files outside the input source.");
     }

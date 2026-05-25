@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.CommitToGit;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -167,7 +167,13 @@ public class CommitToGitCommandTest
 
         var zipPath = CreateZipWithEntry(packageReferenceName, packageEntryPath, "irrelevant");
 
-        var inputFileSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"{inputGlob}\"],\"DestinationSubFolder\":\"\"}}]";
+        var inputFileSources = SerializeInputFileSources(new PackageDependency
+        {
+            PackageId = packageReferenceName,
+            PackageName = packageReferenceName,
+            InputFilePaths = [inputGlob],
+            DestinationSubFolder = "",
+        });
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
@@ -295,11 +301,9 @@ public class CommitToGitCommandTest
         var zip1Path = CreateZipWithEntry(package1Name, "configs/settings.json", "{}");
         var zip2Path = CreateZipWithEntry(package2Name, "configs/template.yaml", "apiVersion: apps/v1");
 
-        var inputFileSources =
-            $"[" +
-            $"{{\"Type\":\"Package\",\"PackageId\":\"{package1Name}\",\"PackageName\":\"{package1Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}," +
-            $"{{\"Type\":\"Package\",\"PackageId\":\"{package2Name}\",\"PackageName\":\"{package2Name}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}" +
-            $"]";
+        var inputFileSources = SerializeInputFileSources(
+            new PackageDependency { PackageId = package1Name, PackageName = package1Name, InputFilePaths = ["configs/**/*"], DestinationSubFolder = "" },
+            new PackageDependency { PackageId = package2Name, PackageName = package2Name, InputFilePaths = ["configs/**/*"], DestinationSubFolder = "" });
 
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(package1Name), package1Name, false),
@@ -326,7 +330,13 @@ public class CommitToGitCommandTest
 
         var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
 
-        var inputFileSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"{destinationSubFolder}\"}}]";
+        var inputFileSources = SerializeInputFileSources(new PackageDependency
+        {
+            PackageId = packageReferenceName,
+            PackageName = packageReferenceName,
+            InputFilePaths = ["configs/**/*"],
+            DestinationSubFolder = destinationSubFolder,
+        });
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
@@ -414,7 +424,13 @@ public class CommitToGitCommandTest
 
         var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{}");
 
-        var inputFileSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"{maliciousInputPath}\"],\"DestinationSubFolder\":\"\"}}]";
+        var inputFileSources = SerializeInputFileSources(new PackageDependency
+        {
+            PackageId = packageReferenceName,
+            PackageName = packageReferenceName,
+            InputFilePaths = [maliciousInputPath],
+            DestinationSubFolder = "",
+        });
         variables.AddRange([
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
             new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
@@ -569,7 +585,13 @@ public class CommitToGitCommandTest
 
     void AddInputPackageVariables(string packageReferenceName, string zipPath, string destinationPath)
     {
-        var inputFileSources = $"[{{\"Type\":\"Package\",\"PackageId\":\"{packageReferenceName}\",\"PackageName\":\"{packageReferenceName}\",\"InputFilePaths\":[\"configs/**/*\"],\"DestinationSubFolder\":\"\"}}]";
+        var inputFileSources = SerializeInputFileSources(new PackageDependency
+        {
+            PackageId = packageReferenceName,
+            PackageName = packageReferenceName,
+            InputFilePaths = ["configs/**/*"],
+            DestinationSubFolder = "",
+        });
         variables.AddRange([
             // Package to copy into the repository, declared via InputFileSources
             new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
@@ -585,10 +607,12 @@ public class CommitToGitCommandTest
 
     void AddInputGitReferenceVariables(string gitDependencyName, string zipPath, string destinationPath, string destinationSubFolder = "", string[] inputFilePaths = null)
     {
-        var inputFilePathsJson = inputFilePaths != null
-            ? "[" + string.Join(",", inputFilePaths.Select(p => $"\"{p}\"")) + "]"
-            : "[\"**/*\"]";
-        var inputFileSources = $"[{{\"Type\":\"GitRepository\",\"GitDependencyName\":\"{gitDependencyName}\",\"DestinationSubFolder\":\"{destinationSubFolder}\",\"InputFilePaths\":{inputFilePathsJson}}}]";
+        var inputFileSources = SerializeInputFileSources(new GitRepositoryDependency
+        {
+            GitDependencyName = gitDependencyName,
+            DestinationSubFolder = destinationSubFolder,
+            InputFilePaths = inputFilePaths ?? ["**/*"],
+        });
         variables.AddRange([
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.Extract(gitDependencyName), "true", false),
             new CalamariExecutionVariable(Deployment.SpecialVariables.GitResources.OriginalPath(gitDependencyName), zipPath, false),
@@ -596,6 +620,9 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
         ]);
     }
+
+    static string SerializeInputFileSources(params CommitToGitDependency[] sources)
+        => JsonConvert.SerializeObject(sources);
 
     string GetCommittedFileContent(string repoFilePath)
     {
