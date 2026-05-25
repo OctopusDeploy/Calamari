@@ -195,7 +195,7 @@ public class CommitToGitCommand : Command
     {
         foreach (var glob in globPatterns)
         {
-            EnsureInputPathIsSafe(glob);
+            EnsureInputPathIsSafe(sourceDir, glob);
 
             var prefix = GetNonWildcardPrefix(glob);
             foreach (var sourceFile in fileSystem.EnumerateFilesWithGlob(sourceDir, glob))
@@ -209,21 +209,16 @@ public class CommitToGitCommand : Command
         }
     }
 
-    static void EnsureInputPathIsSafe(string inputPath)
+    static void EnsureInputPathIsSafe(string sourceDir, string inputPath)
     {
         if (string.IsNullOrEmpty(inputPath))
             return;
 
-        // Normalize Windows separators so that Path.IsPathRooted reliably detects
-        // UNC paths (\\server\share) and drive-letter paths (C:\...) on all platforms.
-        var normalized = inputPath.Replace('\\', '/');
+        var sourceDirFull = Path.GetFullPath(sourceDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var resolvedFull = Path.GetFullPath(Path.Combine(sourceDir, inputPath));
 
-        if (Path.IsPathRooted(normalized) || (normalized.Length >= 2 && normalized[1] == ':'))
-            throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it is an absolute path. Input paths must be relative to the package or git repository source.");
-
-        var segments = normalized.Split('/');
-        if (segments.Any(s => s == ".."))
-            throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it contains a '..' path segment that could reference files outside the input source.");
+        if (!resolvedFull.StartsWith(sourceDirFull, StringComparison.Ordinal))
+            throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it resolves to a path outside the input source directory.");
     }
 
     static string GetNonWildcardPrefix(string globPattern)

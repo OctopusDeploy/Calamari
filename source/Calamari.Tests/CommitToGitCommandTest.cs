@@ -415,9 +415,36 @@ public class CommitToGitCommandTest
     [TestCase("../../../etc/passwd", TestName = "Package_RejectsInputPath_StartingWithDotDot")]
     [TestCase("/etc/passwd", TestName = "Package_RejectsInputPath_StartingWithSlash")]
     [TestCase("configs/../../etc/passwd", TestName = "Package_RejectsInputPath_ContainingDotDotSegment")]
+    public void RejectsPackageInputFilePathsThatEscapeSourceDirectory(string maliciousInputPath)
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{}");
+
+        var inputFileSources = SerializeInputFileSources(new PackageDependency
+        {
+            PackageId = packageReferenceName,
+            PackageName = packageReferenceName,
+            InputFilePaths = [maliciousInputPath],
+            DestinationSubFolder = "",
+        });
+        variables.AddRange([
+            new CalamariExecutionVariable(PackageVariables.IndexedPackageId(packageReferenceName), packageReferenceName, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedOriginalPath(packageReferenceName), zipPath, false),
+            new CalamariExecutionVariable(PackageVariables.IndexedExtract(packageReferenceName), "True", false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.InputFileSources, inputFileSources, false),
+            new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.DestinationPath, destinationPath, false),
+        ]);
+
+        RunCommitToGit().Should().NotBe(0, $"input path '{maliciousInputPath}' should be rejected because it could reference files outside the input source");
+    }
+
+    [Test]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     [TestCase("C:\\Windows\\System32\\config", TestName = "Package_RejectsInputPath_WindowsAbsolutePath")]
     [TestCase("\\\\server\\share\\secret", TestName = "Package_RejectsInputPath_UncPath")]
-    public void RejectsPackageInputFilePathsThatEscapeSourceDirectory(string maliciousInputPath)
+    public void RejectsPackageInputFilePathsThatEscapeSourceDirectory_Windows(string maliciousInputPath)
     {
         const string packageReferenceName = "my-configs";
         const string destinationPath = "output-dir";
@@ -446,9 +473,22 @@ public class CommitToGitCommandTest
     [TestCase("../../../etc/passwd", TestName = "GitDep_RejectsInputPath_StartingWithDotDot")]
     [TestCase("/etc/passwd", TestName = "GitDep_RejectsInputPath_StartingWithSlash")]
     [TestCase("manifests/../../etc/passwd", TestName = "GitDep_RejectsInputPath_ContainingDotDotSegment")]
+    public void RejectsGitDependencyInputFilePathsThatEscapeSourceDirectory(string maliciousInputPath)
+    {
+        const string gitDependencyName = "my-git-dep";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(gitDependencyName, "manifests/deployment.yaml", "apiVersion: apps/v1");
+        AddInputGitReferenceVariables(gitDependencyName, zipPath, destinationPath, inputFilePaths: new[] { maliciousInputPath });
+
+        RunCommitToGit().Should().NotBe(0, $"input path '{maliciousInputPath}' should be rejected because it could reference files outside the input source");
+    }
+
+    [Test]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     [TestCase("C:\\Windows\\System32\\config", TestName = "GitDep_RejectsInputPath_WindowsAbsolutePath")]
     [TestCase("\\\\server\\share\\secret", TestName = "GitDep_RejectsInputPath_UncPath")]
-    public void RejectsGitDependencyInputFilePathsThatEscapeSourceDirectory(string maliciousInputPath)
+    public void RejectsGitDependencyInputFilePathsThatEscapeSourceDirectory_Windows(string maliciousInputPath)
     {
         const string gitDependencyName = "my-git-dep";
         const string destinationPath = "output-dir";
