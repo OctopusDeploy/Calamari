@@ -31,6 +31,13 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             ScriptSyntax.Bash
         };
 
+        ICommandLineRunner runner;
+        public ScriptEngineFixture()
+        {
+            runner = Substitute.For<ICommandLineRunner>();
+            runner.Execute(Arg.Any<CommandLineInvocation>()).Returns(new CommandResult("foo", 0));
+        }
+        
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void DeterminesCorrectScriptTypePreferenceOrderWindows()
@@ -56,8 +63,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
             var engine = new ScriptEngine(new List<IScriptWrapper> { capturingWrapper }, Substitute.For<ILog>());
             var variables = new CalamariVariables();
-            var runner = Substitute.For<ICommandLineRunner>();
-
+            
             engine.Execute(new Script("test.ps1"), variables, runner);
 
             receivedEnvironmentVars.Should().NotBeNull();
@@ -75,7 +81,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
             var engine = new ScriptEngine(new List<IScriptWrapper> { capturingWrapper }, Substitute.For<ILog>());
             var variables = new CalamariVariables();
-            var runner = Substitute.For<ICommandLineRunner>();
             var envVars = new Dictionary<string, string> { { "AWS_REGION", "us-east-1" } };
 
             engine.Execute(new Script("test.ps1"), variables, runner, envVars);
