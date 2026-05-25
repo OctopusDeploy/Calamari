@@ -99,7 +99,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
             {
                 OnExecute?.Invoke(environmentVars);
-                return new CommandResult("captured", 0);
+                return NextWrapper?.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars) ?? new CommandResult("captured", 0);
             }
         }
 
