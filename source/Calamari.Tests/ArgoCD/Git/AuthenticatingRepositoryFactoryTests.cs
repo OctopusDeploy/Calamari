@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
@@ -8,6 +7,7 @@ using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ArgoCD;
 
@@ -54,10 +54,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         {
             var httpsUrl = RepositoryHelpers.ToFileUri(OriginPath);
             var factory = new AuthenticatingRepositoryFactory(
-                new Dictionary<string, IGitCredentialDto>
-                {
-                    [httpsUrl] = new GitCredentialDto(httpsUrl, "", "")
-                },
+                [new GitCredentialDto(httpsUrl, "", "")],
                 repositoryFactory,
                 log);
 
@@ -70,13 +67,44 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         {
             var originUrl = RepositoryHelpers.ToFileUri(OriginPath);
             var factory = new AuthenticatingRepositoryFactory(
-                new Dictionary<string, IGitCredentialDto>(),
+                [],
                 repositoryFactory,
                 log);
 
             using var wrapper = factory.CloneRepository(originUrl, branchName.ToFriendlyName());
             wrapper.Should().NotBeNull();
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
+        }
+    }
+
+    [TestFixture]
+    public class SshUrlTests : AuthenticatingRepositoryFactoryTestBase
+    {
+        [Test]
+        public void SshCredentialBranch_IsSelectedAndDispatchesSshKeyGitConnection()
+        {
+            // Use an ssh:// URL so the new strict validation allows it, and mock the factory
+            // so no real SSH connection is attempted.
+            const string sshUrl = "ssh://git@github.com/org/repo.git";
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+
+            var factory = new AuthenticatingRepositoryFactory(
+                [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", [])],
+                mockRepoFactory,
+                log);
+
+            factory.CloneRepository(sshUrl, branchName.ToFriendlyName());
+
+            mockRepoFactory.Received()
+                           .CloneRepository(
+                               Arg.Any<string>(),
+                               Arg.Is<IGitConnection>(c => c is SshKeyGitConnection));
+        }
+
+        [Test]
+        public void HttpsCredentialTakesPriorityOverSshWhenBothMatchAnSshUrl()
+        {
+            AssertHttpsCredentialTakesPriorityOverSsh("ssh://git@github.com/org/repo.git");
         }
     }
 
@@ -91,10 +119,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var httpsUrl = "https://github.com/org/repo.git";
 
             var factory = new AuthenticatingRepositoryFactory(
-                new Dictionary<string, IGitCredentialDto>
-                {
-                    [httpsUrl] = new GitCredentialDto(httpsUrl, "user", "pass")
-                },
+                [new GitCredentialDto(httpsUrl, "user", "pass")],
                 repositoryFactory,
                 log);
 
@@ -104,5 +129,32 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             act.Should().Throw<Exception>(); // clone failure expected
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
         }
+
+        [Test]
+        public void HttpsCredentialTakesPriorityOverSshWhenBothMatchAnScpUrl()
+        {
+            AssertHttpsCredentialTakesPriorityOverSsh("git@github.com:org/repo.git");
+        }
+    }
+
+    protected void AssertHttpsCredentialTakesPriorityOverSsh(string url)
+    {
+        var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+
+        // If there are HTTPS and SSH credentials for the same URL, HTTPS wins so API functionality works.
+        IGitCredentialDto[] rawCredentials =
+        [
+            new GitCredentialDto(url, "https-user", "https-pass"),
+            new SshKeyGitCredentialDto(url, "ssh-user", "private-key", [])
+        ];
+
+        var factory = new AuthenticatingRepositoryFactory(rawCredentials, mockRepoFactory, log);
+
+        factory.CloneRepository(url, "main");
+
+        mockRepoFactory.Received()
+                       .CloneRepository(
+                           Arg.Any<string>(),
+                           Arg.Is<IGitConnection>(c => c is HttpsGitConnection));
     }
 }
