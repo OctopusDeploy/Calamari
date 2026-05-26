@@ -214,8 +214,18 @@ public class CommitToGitCommand : Command
         if (string.IsNullOrEmpty(inputPath))
             return;
 
+        // Normalize Windows backslashes so that Path.Combine / Path.GetFullPath on
+        // non-Windows hosts correctly recognise UNC paths (//server/share) as absolute
+        // rather than appending them to sourceDir.
+        var normalized = inputPath.Replace('\\', '/');
+
+        // Path.Combine on non-Windows hosts doesn't treat drive-letter paths (C:/...)
+        // as absolute. Reject them explicitly.
+        if (normalized.Length >= 2 && normalized[1] == ':')
+            throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it is an absolute path. Input paths must be relative to the package or git repository source.");
+
         var absoluteSourceDir = Path.GetFullPath(sourceDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        var absoluteInputSubPath = Path.GetFullPath(Path.Combine(sourceDir, inputPath));
+        var absoluteInputSubPath = Path.GetFullPath(Path.Combine(sourceDir, normalized));
 
         if (!absoluteInputSubPath.StartsWith(absoluteSourceDir, StringComparison.Ordinal))
             throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it resolves to a path outside the input source directory.");
