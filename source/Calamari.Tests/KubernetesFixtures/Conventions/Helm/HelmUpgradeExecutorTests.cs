@@ -79,7 +79,13 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
 
             // Assert
-            var appliedResourcesJson = variables.Get("AppliedResources");
+            commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => 
+                i.Arguments.Contains("get") && 
+                i.Arguments.Contains("manifest") && 
+                i.Arguments.Contains(ReleaseName) &&
+                i.Arguments.Contains($"--revision {RevisionNumber}")));
+
+            var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
             appliedResourcesJson.Should().NotBeNullOrEmpty();
 
             var deserializedResources = JsonConvert.DeserializeAnonymousType(appliedResourcesJson, new[]
@@ -107,52 +113,10 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
 
             // Assert
-            var appliedResourcesJson = variables.Get("AppliedResources");
+            var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
             appliedResourcesJson.Should().BeNull();
             
             commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get manifest")));
-        }
-
-        [Test]
-        public void DoesNotCallGetManifest_WhenFeatureToggleIsDisabled()
-        {
-            // Arrange
-            var variables = CreateVariables();
-
-            SetupHelmUpgradeMock();
-
-            var deployment = CreateRunningDeployment(variables);
-            var executor = CreateExecutor(deployment);
-
-            // Act
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
-
-            // Assert
-            commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get manifest")));
-        }
-
-        [Test]
-        public void CallsGetManifest_WhenFeatureToggleIsEnabled()
-        {
-            // Arrange
-            var variables = CreateVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.ArgoRolloutsSupportFeatureToggle);
-
-            SetupHelmUpgradeMock();
-            SetupHelmGetManifestMock(GetSampleManifest());
-
-            var deployment = CreateRunningDeployment(variables);
-            var executor = CreateExecutor(deployment);
-
-            // Act
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
-
-            // Assert
-            commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => 
-                i.Arguments.Contains("get") && 
-                i.Arguments.Contains("manifest") && 
-                i.Arguments.Contains(ReleaseName) &&
-                i.Arguments.Contains($"--revision {RevisionNumber}")));
         }
 
         [Test]
@@ -172,8 +136,8 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
 
             // Assert
-            log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains("Failed to set applied resources output variable"));
-            var appliedResourcesJson = variables.Get("AppliedResources");
+            log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains($"Failed to get manifest for {ReleaseName} revision {RevisionNumber}"));
+            var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
             appliedResourcesJson.Should().BeNull();
         }
 
@@ -194,7 +158,7 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
 
             // Assert
-            var appliedResourcesJson = variables.Get("AppliedResources");
+            var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
             appliedResourcesJson.Should().BeNull();
             log.MessagesVerboseFormatted.Should().Contain(msg => msg.Contains("empty, skipping applied resources"));
         }

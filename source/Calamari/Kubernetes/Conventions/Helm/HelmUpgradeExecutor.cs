@@ -72,23 +72,25 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
         void SetAppliedResourcesOutputVariable(RunningDeployment deployment, string releaseName, int revisionNumber)
         {
+            string manifest = null;
             try
             {
-                var manifest = helmCli.GetManifest(releaseName, revisionNumber);
-
-                if (string.IsNullOrWhiteSpace(manifest))
-                {
-                    log.Verbose($"Helm manifest for {releaseName} revision {revisionNumber} is empty, skipping applied resources output variable.");
-                    return;
-                }
-
-                var resources = ManifestParser.GetResourcesFromManifest(manifest, namespaceResolver, deployment.Variables, log);
-                AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
+                manifest = helmCli.GetManifest(releaseName, revisionNumber);
             }
             catch (Exception ex)
             {
-                log.Warn($"Failed to set applied resources output variable: {ex.Message}");
+                log.Warn($"Failed to get manifest for {releaseName} revision {revisionNumber}: {ex.Message}");
+                return;
             }
+
+            if (string.IsNullOrWhiteSpace(manifest))
+            {
+                log.Verbose($"Helm manifest for {releaseName} revision {revisionNumber} is empty, skipping applied resources output variable.");
+                return;
+            }
+
+            var resources = ManifestParser.GetResourcesFromManifest(manifest, namespaceResolver, deployment.Variables, log);
+            AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
         }
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment)

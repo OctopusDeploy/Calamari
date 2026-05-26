@@ -392,7 +392,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             // Assert
             result.Should().BeTrue();
-            var appliedResourcesJson = variables.Get("AppliedResources");
+            var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
             appliedResourcesJson.Should().NotBeNullOrEmpty();
 
             var deserializedResources = JsonConvert.DeserializeAnonymousType(appliedResourcesJson, new[]

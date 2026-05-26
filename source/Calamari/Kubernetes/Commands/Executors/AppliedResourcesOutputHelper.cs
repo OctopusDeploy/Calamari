@@ -11,8 +11,8 @@ namespace Calamari.Kubernetes.Commands.Executors
     public static class AppliedResourcesOutputHelper
     {
         public static void SetAppliedResourcesOutputVariable(
-            ILog log, 
-            RunningDeployment deployment, 
+            ILog log,
+            RunningDeployment deployment,
             IEnumerable<ResourceIdentifier> resources)
         {
             if (!OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             var json = JsonConvert.SerializeObject(resourceList);
 
-            log.SetOutputVariable("AppliedResources", json, deployment.Variables);
+            log.SetOutputVariable(SpecialVariables.AppliedResources, json, deployment.Variables);
         }
     }
 }

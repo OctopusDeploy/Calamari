@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
@@ -42,7 +43,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
 
             // Assert
-            var outputVariable = variables.Get("AppliedResources");
+            var outputVariable = variables.Get(SpecialVariables.AppliedResources);
             outputVariable.Should().NotBeNullOrEmpty();
 
             var deserializedResources = JsonConvert.DeserializeAnonymousType(outputVariable, new[]
@@ -84,7 +85,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
 
             // Assert
-            var outputVariable = variables.Get("AppliedResources");
+            var outputVariable = variables.Get(SpecialVariables.AppliedResources);
             outputVariable.Should().BeNull();
         }
 
@@ -103,7 +104,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
 
             // Assert
-            var outputVariable = variables.Get("AppliedResources");
+            var outputVariable = variables.Get(SpecialVariables.AppliedResources);
             outputVariable.Should().NotBeNullOrEmpty();
             outputVariable.Should().Be("[]");
         }
@@ -126,7 +127,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
 
             // Assert
-            var outputVariable = variables.Get("AppliedResources");
+            var outputVariable = variables.Get(SpecialVariables.AppliedResources);
             var deserializedResources = JsonConvert.DeserializeAnonymousType(outputVariable, new[]
             {
                 new { Group = "", Version = "", Kind = "", Name = "", Namespace = "" }
