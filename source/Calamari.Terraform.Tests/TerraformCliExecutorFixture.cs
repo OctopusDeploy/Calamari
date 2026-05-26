@@ -20,6 +20,7 @@ namespace Calamari.Terraform.Tests
         public void Setup()
         {
             variables = Substitute.For<IVariables>();
+            variables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
             commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation => invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v0.15.0")))
                              .Returns(new CommandResult("foo", 0));
@@ -67,6 +68,7 @@ namespace Calamari.Terraform.Tests
         public void InitializePlugins_RetriesOnTransient502Error()
         {
             var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
             var callCount = 0;
             commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
@@ -90,6 +92,7 @@ namespace Calamari.Terraform.Tests
         public void InitializePlugins_DoesNotRetryNonTransientError()
         {
             var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
             var callCount = 0;
             commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
@@ -114,6 +117,7 @@ namespace Calamari.Terraform.Tests
         public void InitializePlugins_ThrowsAfterRetriesExhausted()
         {
             var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
             var callCount = 0;
             commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
