@@ -107,14 +107,12 @@ public static class SshKnownHostsCertificateCheck
         string hostname,
         byte[] presentedSha256)
     {
-        var lookupHost = StripPort(hostname);
-
-        if (!byHost.Contains(lookupHost))
+        if (!byHost.Contains(hostname))
         {
             return Result.UnknownHost;
         }
 
-        var candidates = byHost[lookupHost].Select(entry => FromBase64OrNull(entry.PublicKey)).WhereNotNull().ToArray();
+        var candidates = byHost[hostname].Select(entry => FromBase64OrNull(entry.PublicKey)).WhereNotNull().ToArray();
         if (candidates.Length == 0)
         {
             return Result.MalformedConfiguration;
@@ -123,24 +121,6 @@ public static class SshKnownHostsCertificateCheck
         return candidates.Any(decodedKey => SHA256.HashData(decodedKey).AsSpan().SequenceEqual(presentedSha256))
             ? Result.Trusted
             : Result.KeyMismatch;
-    }
-
-    static string StripPort(string hostname)
-    {
-        if (string.IsNullOrEmpty(hostname))
-        {
-            return hostname;
-        }
-
-        // IPv6 literals are bracketed: "[::1]:22" -> "[::1]".
-        if (hostname[0] == '[')
-        {
-            var close = hostname.IndexOf(']');
-            return close > 0 ? hostname.Substring(0, close + 1) : hostname;
-        }
-
-        var colon = hostname.IndexOf(':');
-        return colon >= 0 ? hostname[..colon] : hostname;
     }
 
     static byte[]? FromBase64OrNull(string publicKey)
