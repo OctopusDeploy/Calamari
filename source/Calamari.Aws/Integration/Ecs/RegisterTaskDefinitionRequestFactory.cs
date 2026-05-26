@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Amazon.ECS.Model;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Aws.Integration.Ecs;
 
@@ -13,8 +15,9 @@ public static class RegisterTaskDefinitionRequestFactory
     public static RegisterTaskDefinitionRequest FromTaskDefinition(
         TaskDefinition source,
         string targetFamily,
-        IReadOnlyList<EcsContainerUpdate> containerUpdates,
-        IReadOnlyList<KeyValuePair<string, string>> tags)
+        IReadOnlyList<ContainerUpdate> containerUpdates,
+        IReadOnlyList<KeyValuePair<string, string>> tags,
+        IVariables variables)
     {
         // Serialize task definition to JSON and then deserialize back to request
         // This avoids us dropping any fields from task definition when performing our update
@@ -24,36 +27,40 @@ public static class RegisterTaskDefinitionRequestFactory
         request.Tags = tags.Select(t => new Tag { Key = t.Key, Value = t.Value }).ToList();
 
         var containerLookup = (request.ContainerDefinitions ?? []).ToDictionary(c => c.Name);
-        foreach (var containerUpdate in containerUpdates)
+        foreach (var update in containerUpdates)
         {
-            if (!containerLookup.TryGetValue(containerUpdate.ContainerName, out var containerToUpdate))
+            if (!containerLookup.TryGetValue(update.ContainerName, out var containerToUpdate))
             {
-                throw new CommandException($"No matching container found for '{containerUpdate.ContainerName}' in template task definition '{source.Family}'.");
+                throw new CommandException($"No matching container found for '{update.ContainerName}' in template task definition '{source.Family}'.");
             }
 
-            if (!string.IsNullOrWhiteSpace(containerUpdate.Image))
+            if (!string.IsNullOrWhiteSpace(update.PackageReference))
             {
-                containerToUpdate.Image = containerUpdate.Image;
+                var image = variables.Get(PackageVariables.IndexedImage(update.PackageReference));
+                if (!string.IsNullOrWhiteSpace(image))
+                {
+                    containerToUpdate.Image = image;
+                }
             }
 
-            ApplyEnvVars(containerToUpdate, containerUpdate.EnvironmentVariables);
-            ApplyEnvFiles(containerToUpdate, containerUpdate.EnvironmentFiles);
+            ApplyEnvVars(containerToUpdate, update.EnvironmentVariables);
+            ApplyEnvFiles(containerToUpdate, update.EnvironmentFiles);
         }
 
         return request;
     }
 
-    static void ApplyEnvVars(ContainerDefinition container, EnvAction<EnvVarItem> action)
+    static void ApplyEnvVars(ContainerDefinition container, EnvAction<TypedKeyValuePair> action)
     {
         if (action is null || action.Items.Count == 0)
         {
             return;
         }
 
-        var plain = action.Items.Where(i => i.Type == EnvVarType.Text)
+        var plain = action.Items.Where(i => i.Type == KeyValueType.Plain)
                           .Select(i => new Amazon.ECS.Model.KeyValuePair { Name = i.Key, Value = i.Value })
                           .ToList();
-        var secrets = action.Items.Where(i => i.Type == EnvVarType.Secret)
+        var secrets = action.Items.Where(i => i.Type == KeyValueType.Secret)
                             .Select(i => new Secret { Name = i.Key, ValueFrom = i.Value })
                             .ToList();
 
@@ -62,7 +69,7 @@ public static class RegisterTaskDefinitionRequestFactory
             container.Environment = plain;
             container.Secrets = secrets;
         }
-        else // Merge
+        else // Append
         {
             var existingEnv = container.Environment ?? [];
             container.Environment = existingEnv
@@ -91,7 +98,7 @@ public static class RegisterTaskDefinitionRequestFactory
         {
             container.EnvironmentFiles = files;
         }
-        else // Merge
+        else // Append
         {
             var existing = container.EnvironmentFiles ?? [];
             container.EnvironmentFiles = existing.Concat(files)

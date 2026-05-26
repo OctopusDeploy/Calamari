@@ -1,6 +1,6 @@
 namespace Octopus.Calamari.Contracts.Aws.Ecs;
 
-public record ContainerDefinition
+public record ContainerSpec
 {
     public string ContainerName { get; init; } = string.Empty;
     public ContainerImageReference ContainerImageReference { get; init; } = new();
