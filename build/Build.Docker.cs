@@ -46,9 +46,11 @@ public partial class Build
                                                                .SetOutput(outputFile));
 
                               //compress with gzip
-                              outputFile.CompressTo($"{outputFile}.gz");
+                              var compressedZipPath = $"{outputFile}.gz";
+                              outputFile.CompressTo(compressedZipPath);
                               
-                              // This file is then uploaded to OctopusDeploy to perform the release process 
+                              // This file is then uploaded to OctopusDeploy to perform the release process
+                              TeamCity.Instance.PublishArtifacts(compressedZipPath);
                           }
                       });
 }
