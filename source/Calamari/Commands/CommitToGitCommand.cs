@@ -195,6 +195,8 @@ public class CommitToGitCommand : Command
     {
         foreach (var glob in globPatterns)
         {
+            EnsureInputPathIsSafe(sourceDir, glob);
+
             var prefix = GetNonWildcardPrefix(glob);
             foreach (var sourceFile in fileSystem.EnumerateFilesWithGlob(sourceDir, glob))
             {
@@ -205,6 +207,18 @@ public class CommitToGitCommand : Command
                 yield return (sourceFile, destRelative);
             }
         }
+    }
+
+    static void EnsureInputPathIsSafe(string sourceDir, string inputPath)
+    {
+        if (string.IsNullOrEmpty(inputPath))
+            return;
+
+        var absoluteSourceDir = Path.GetFullPath(sourceDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var absoluteInputSubPath = Path.GetFullPath(Path.Combine(sourceDir, inputPath));
+
+        if (!absoluteInputSubPath.StartsWith(absoluteSourceDir, StringComparison.Ordinal))
+            throw new CommandException($"InputFilePath '{inputPath}' is not allowed because it resolves to a path outside the input source directory.");
     }
 
     static string GetNonWildcardPrefix(string globPattern)
