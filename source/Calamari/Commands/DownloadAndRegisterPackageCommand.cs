@@ -57,6 +57,8 @@ namespace Calamari.Commands
 
         void RegisterPackageUse(PackagePhysicalFileMetadata pkg, IVersion version)
         {
+            // A package without a path cannot be registered. This check was previously done in Octopus Server
+            // but has been moved here so that registration is fully self-contained within Calamari.
             if (string.IsNullOrEmpty(pkg.FullFilePath))
                 return;
 
