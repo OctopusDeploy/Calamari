@@ -39,10 +39,14 @@
                 public const string ServiceTaskName =  "Octopus.Action.Aws.Ecs.Deploy.ServiceTaskName";
                 public const string TaskRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskRole";
                 public const string TaskExecutionRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskExecutionRole";
-                
                 public const string SecurityGroupIds =  "Octopus.Action.Aws.Ecs.Deploy.SecurityGroupIds";
                 public const string SubnetIds =   "Octopus.Action.Aws.Ecs.Deploy.SubnetIds";
+                public const string LoadBalancerMappings =   "Octopus.Action.Aws.Ecs.Deploy.LoadBalancerMappings";
+                public const string Volumes = "Octopus.Action.Aws.Ecs.Deploy.Volumes";
             }
+            
+            // Not reusing CloudFormation variable here to make it easier to remove all traces of this when we migrate to native ECS API
+            public const string Tags = "Octopus.Action.Aws.Ecs.Tags";
             
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
             public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
