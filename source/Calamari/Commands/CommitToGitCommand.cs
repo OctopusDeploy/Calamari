@@ -165,7 +165,7 @@ public class CommitToGitCommand : Command
         [
             new DelegateInstallConvention(d =>
                                           {
-                                              var destinationPath = repositoryConfig!.DestinationPath;
+                                              var destinationPath = repositoryConfig.DestinationPath;
                                               var destBase = Path.Combine(clonedRepository.WorkingDirectory, destinationPath);
 
                                               foreach (var package in metadataParser.GetPackageDependenciesForCopying(d))
