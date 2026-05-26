@@ -52,4 +52,18 @@ public class CommitToGitConfigFactoryTests
         httpsGitConnection.Password.Should().Be("pwd-from-file");
         httpsGitConnection.Uri.Value.Should().Be(new Uri("https://example.invalid/repo.git"));
     }
+
+    [Test]
+    public void CreateRepositoryConfig_WhenDestinationPathIsMissing_DefaultsToEmptyString()
+    {
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto("MyCred", "https://example.invalid/repo.git", "user", "pwd")));
+        variables.Get(SpecialVariables.Action.Git.DestinationPath).Returns((string)null);
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var config = factory.CreateRepositoryConfig(deployment, loader);
+
+        config.DestinationPath.Should().Be(string.Empty);
+    }
 }

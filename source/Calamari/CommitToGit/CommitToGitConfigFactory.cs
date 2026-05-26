@@ -45,7 +45,7 @@ namespace Calamari.CommitToGit
 
             return new CommitToGitRepositorySettings(connection,
                                                      commitParameters,
-                                                     variables.Get(SpecialVariables.Action.Git.DestinationPath));
+                                                     variables.Get(SpecialVariables.Action.Git.DestinationPath) ?? string.Empty);
         }
 
         string EvaluateNonsensitiveExpression(string expression)
