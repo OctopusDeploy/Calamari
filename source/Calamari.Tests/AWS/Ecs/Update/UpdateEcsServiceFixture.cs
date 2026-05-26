@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
@@ -8,15 +9,14 @@ using Amazon.IdentityManagement;
 using Amazon.Runtime;
 using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
-using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Serialization;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Tests.AWS.Ecs.Update;
@@ -103,8 +103,8 @@ public class UpdateEcsServiceFixture
         var variables = await CreateVariables(serviceName: $"unused-{unique}", newImage: "public.ecr.aws/docker/library/nginx:1.28-alpine");
         // Default behavior collapses TemplateTaskDefinitionName to TargetTaskDefinitionName when
         // the former is empty — so we set both explicitly: a known-good template, a known-missing target.
-        variables.Set(AwsSpecialVariables.Ecs.TemplateTaskDefinitionName, TaskDefinitionFamily);
-        variables.Set(AwsSpecialVariables.Ecs.TargetTaskDefinitionName, missingTarget);
+        variables.Set(AwsSpecialVariables.Ecs.Update.TemplateTaskDefinitionName, TaskDefinitionFamily);
+        variables.Set(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName, missingTarget);
 
         var log = new InMemoryLog();
         var command = new UpdateEcsServiceCommand(log, variables);
@@ -135,21 +135,36 @@ public class UpdateEcsServiceFixture
         variables.Set("Octopus.Action.Name", "Update ECS");
 
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
-        variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
-        variables.Set(AwsSpecialVariables.Ecs.TargetTaskDefinitionName, TaskDefinitionFamily);
+        variables.Set(AwsSpecialVariables.Ecs.Update.ServiceName, serviceName);
+        variables.Set(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName, TaskDefinitionFamily);
 
-        var environment = new EnvAction<EnvVarItem>(EnvActionMode.Replace,
-        [
-            new EnvVarItem(EnvVarType.Text, "LOG_LEVEL", "info"),
-            new EnvVarItem(EnvVarType.Secret, "DB_PASSWORD", "arn:aws:ssm:us-east-1:017645897735:parameter/calamari-ecs-integration-tests-fake")
-        ]);
+        const string packageReference = "web";
+        variables.Set(PackageVariables.IndexedImage(packageReference), newImage);
+
         var containers = new[]
         {
-            new EcsContainerUpdate("web", newImage, environment, null)
+            new ContainerUpdate
+            {
+                ContainerName = "web",
+                PackageReference = packageReference,
+                EnvironmentVariables = new EnvAction<TypedKeyValuePair>
+                {
+                    Action = EnvActionMode.Replace,
+                    Items =
+                    [
+                        new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "LOG_LEVEL", Value = "info" },
+                        new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "DB_PASSWORD", Value = "arn:aws:ssm:us-east-1:017645897735:parameter/calamari-ecs-integration-tests-fake" }
+                    ]
+                }
+            }
         };
-        variables.Set(AwsSpecialVariables.Ecs.Containers, JsonConvert.SerializeObject(containers, JsonSerialization.GetDefaultSerializerSettings()));
+        variables.Set(AwsSpecialVariables.Ecs.Update.ContainerUpdates, JsonConvert.SerializeObject(containers, CalamariContractSerializationSettings.Default));
 
-        variables.Set(AwsSpecialVariables.Ecs.WaitOptionLegacy.Type, "dontWait");
+        var tags = new[] { new KeyValuePair<string, string>("Environment", "Test") };
+        variables.Set(AwsSpecialVariables.ResourceTags, JsonConvert.SerializeObject(tags, CalamariContractSerializationSettings.Default));
+
+        var waitOption = new WaitOption { Type = WaitType.DontWait };
+        variables.Set(AwsSpecialVariables.Ecs.WaitOption, JsonConvert.SerializeObject(waitOption, CalamariContractSerializationSettings.Default));
 
         return variables;
     }

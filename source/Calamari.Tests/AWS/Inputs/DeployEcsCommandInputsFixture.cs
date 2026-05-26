@@ -272,7 +272,7 @@ public class DeployEcsCommandInputsFixture
         var result = inputs.WaitOption;
         
         result.Type.Should().Be(WaitType.WaitUntilCompleted);
-        result.Timeout.Should().BeNull();
+        result.TimeoutMinutes.Should().BeNull();
     }
     
     [Test]
@@ -423,7 +423,7 @@ public class DeployEcsCommandInputsFixture
         const string containerJson = """
                                      [{"containerName":"sample-container","containerImageReference":{"referenceId":"547c5091-b891-4bb2-a582-78489bd9b18c","imageName":"nginx","feedId":"Feeds-1001"},"repositoryAuthentication":{"type":"default"},"containerPortMappings":[{"containerPort":80,"protocol":"tcp"}],"essential":"True","environmentFiles":[],"environmentVariables":[],"networkSettings":{"disableNetworking":false,"dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"False","mountPoints":[],"volumeFrom":[]},"containerLogging":{"type":"manual","logDriver":"none","logOptions":[]},"firelensConfiguration":{"type":"disabled"},"dockerLabels":[],"healthCheck":{"command":[]},"dependencies":[],"ulimits":[]}]
                                      """;
-        var variables = SetupVariable(AwsSpecialVariables.Ecs.Containers, containerJson, false);
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Containers, containerJson, false);
         var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
         
         var containers = inputs.Containers;

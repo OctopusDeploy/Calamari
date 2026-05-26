@@ -43,6 +43,7 @@
                 public const string SubnetIds =   "Octopus.Action.Aws.Ecs.Deploy.SubnetIds";
                 public const string LoadBalancerMappings =   "Octopus.Action.Aws.Ecs.Deploy.LoadBalancerMappings";
                 public const string Volumes = "Octopus.Action.Aws.Ecs.Deploy.Volumes";
+                public const string Containers = "Octopus.Action.Aws.Ecs.Deploy.Containers";
             }
             
             // Not reusing CloudFormation variable here to make it easier to remove all traces of this when we migrate to native ECS API
@@ -52,6 +53,7 @@
             public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
 
             public const string WaitOption = "Octopus.Action.Aws.Ecs.WaitOption";
+            
 
             public static class Update
             {
@@ -59,13 +61,6 @@
                 public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TargetTaskDefinitionName";
                 public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TemplateTaskDefinitionName";
                 public const string ContainerUpdates = "Octopus.Action.Aws.Ecs.Update.ContainerUpdates";
-            }
-
-            // Deploy ECS step: legacy flat key/value pair. Will consolidate when Deploy migrates.
-            public static class WaitOptionLegacy
-            {
-                public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";
-                public const string Timeout = "Octopus.Action.Aws.Ecs.WaitOption.Timeout";
             }
         }
 
