@@ -20,8 +20,8 @@ using Newtonsoft.Json;
 
 namespace Calamari.Aws.Commands;
 
-[Command("deploy-aws-ecs-service", Description = "Deploys a service to an Amazon ECS cluster")]
-public class DeployEcsServiceCommand : Command
+[Command(CommandName, Description = "Deploys a service to an Amazon ECS cluster")]
+public class DeployEcsServiceCommand(ILog log, IVariables variables, IEcsStackNameGenerator stackNameGenerator) : Command
 {
     readonly ILog log;
     readonly IVariables variables;
@@ -39,6 +39,7 @@ public class DeployEcsServiceCommand : Command
         Options.Add("template=", "Path to the CloudFormation template file.", v => templateFile = v);
         Options.Add("templateParameters=", "Path to the CloudFormation template parameters JSON file.", v => templateParameterFile = v);
     }
+    const string CommandName = "deploy-aws-ecs-service";
 
     public override int Execute(string[] commandLineArguments)
     {
