@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -69,9 +69,10 @@ namespace Calamari.Kubernetes.Conventions
                                                var executor = new HelmUpgradeExecutor(log,
                                                                                       fileSystem,
                                                                                       valueSourcesParser,
-                                                                                      helmCli);
+                                                                                      helmCli,
+                                                                                      namespaceResolver);
                                                
-                                               executor.ExecuteHelmUpgrade(deployment, releaseName, helmInstallCompletedCts, helmInstallErrorCts);
+                                               executor.ExecuteHelmUpgrade(deployment, releaseName, newRevisionNumber, helmInstallCompletedCts, helmInstallErrorCts);
                                            });
 
             var manifestAndStatusCheckTask = Task.Run(async () =>
