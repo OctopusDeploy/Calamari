@@ -1,6 +1,5 @@
 using System;
 using Calamari.Aws.Deployment;
-using Calamari.Aws.Inputs;
 using Calamari.Aws.Inputs.Ecs;
 using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Plumbing.Logging;
@@ -11,7 +10,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.Aws.Ecs;
 
-namespace Calamari.Tests.AWS.Inputs;
+namespace Calamari.Tests.AWS.Inputs.Ecs;
 
 [TestFixture]
 public class DeployEcsCommandInputsFixture

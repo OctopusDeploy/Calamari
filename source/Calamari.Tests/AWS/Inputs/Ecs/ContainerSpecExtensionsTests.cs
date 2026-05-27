@@ -1,11 +1,11 @@
+using System;
 using System.Collections.Generic;
-using Calamari.Aws.Inputs;
 using Calamari.Aws.Inputs.Ecs;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.Aws.Ecs;
 
-namespace Calamari.Tests.AWS.Inputs;
+namespace Calamari.Tests.AWS.Inputs.Ecs;
 
 [TestFixture]
 public class ContainerSpecExtensionsTests
