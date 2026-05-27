@@ -104,21 +104,21 @@ public sealed class EcsDeployTemplate : Stack
                                                    commandInputs.TaskName,
                                                    new CfnTaskDefinitionProps
                                                    {
+                                                       ContainerDefinitions = containers,
                                                        Family = taskFamilyParam.ValueAsString,
                                                        Cpu = cpuParam.ValueAsString,
                                                        Memory = memoryParam.ValueAsString,
-                                                       NetworkMode = AwsVpcNetworkMode,
-                                                       RequiresCompatibilities = [FargateLaunchType],
                                                        ExecutionRoleArn = executionRoleRef,
                                                        TaskRoleArn = string.IsNullOrEmpty(commandInputs.TaskRole) ? null : commandInputs.TaskRole,
+                                                       RequiresCompatibilities = [FargateLaunchType],
+                                                       NetworkMode = AwsVpcNetworkMode,
                                                        RuntimePlatform = new CfnTaskDefinition.RuntimePlatformProperty
                                                        {
                                                            OperatingSystemFamily = LinuxOperatingSystemFamily,
                                                            CpuArchitecture = commandInputs.CpuArchitecture
                                                        },
-                                                       ContainerDefinitions = containers,
                                                        Volumes = Array.Empty<CfnTaskDefinition.VolumeProperty>(), // TODO: Read from variables
-                                                       Tags = Array.Empty<CfnTag>()
+                                                       Tags = Array.Empty<CfnTag>() // TODO: Read From Varaibles
                                                    });
 
         var service = new CfnService(this,
@@ -129,6 +129,7 @@ public sealed class EcsDeployTemplate : Stack
                                          LaunchType = FargateLaunchType,
                                          TaskDefinition = taskDefinition.Ref,
                                          DesiredCount = commandInputs.DesiredCount,
+                                         EnableEcsManagedTags = commandInputs.EnableEcsManagedTags,
                                          DeploymentConfiguration = new CfnService.DeploymentConfigurationProperty
                                          {
                                              MinimumHealthyPercent = commandInputs.MinimumHealthyPercentage,
@@ -143,10 +144,11 @@ public sealed class EcsDeployTemplate : Stack
                                                  SecurityGroups = commandInputs.NetworkSecurityGroupIds
                                              }
                                          },
-                                         EnableEcsManagedTags = commandInputs.EnableEcsManagedTags,
-                                         Tags = Array.Empty<CfnTag>()
+                                         LoadBalancers = null, // TODO: read from variables 
+                                         Tags = Array.Empty<CfnTag>() // TODO: Read from Variables
                                      });
-
+        
+        // TODO: Add depdency on Load Balancer if require
         service.AddDependency(taskDefinition);
     }
 
