@@ -130,6 +130,8 @@ public class DeployEcsCommandInputs
     public WaitOption WaitOption => variables.GetValueDeserialisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
 
     public ContainerSpec[] Containers => variables.GetValueDeserialisedAs<ContainerSpec[]>(AwsSpecialVariables.Ecs.Deploy.Containers);
+
+    public KeyValuePair<string, string>[] Tags => variables.GetValueDeserialisedAs<KeyValuePair<string, string>[]>(AwsSpecialVariables.Ecs.Tags);
 }
 
 public record InputsValidityResult(IEnumerable<string> MissingKeys)

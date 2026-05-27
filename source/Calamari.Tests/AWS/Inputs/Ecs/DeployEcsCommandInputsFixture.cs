@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Inputs.Ecs;
 using Calamari.Aws.Integration.Ecs;
@@ -445,7 +447,56 @@ public class DeployEcsCommandInputsFixture
 
     }
 
-    
+    [Test]
+    public void Tags_WithSingleTag_ReturnsDeserialisedList()
+    {
+        const string tagsJson = """[{"key":"Environment","value":"Test"}]""";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, tagsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var tags = inputs.Tags;
+
+        tags.Should().HaveCount(1);
+        tags[0].Key.Should().Be("Environment");
+        tags[0].Value.Should().Be("Test");
+    }
+
+    [Test]
+    public void Tags_WithMultipleTags_PreservesAllEntries()
+    {
+        const string tagsJson = """
+                                [
+                                    {"key":"Environment","value":"Production"},
+                                    {"key":"Owner","value":"team-a"},
+                                    {"key":"CostCenter","value":"1234"}
+                                ]
+                                """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, tagsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var tags = inputs.Tags;
+
+        tags.Should().HaveCount(3);
+        tags.Select(t => t.Key).Should().BeEquivalentTo("Environment", "Owner", "CostCenter");
+        tags.Single(t => t.Key == "Environment").Value.Should().Be("Production");
+        tags.Single(t => t.Key == "Owner").Value.Should().Be("team-a");
+        tags.Single(t => t.Key == "CostCenter").Value.Should().Be("1234");
+    }
+
+    [Test]
+    public void Tags_WithEmptyArray_ReturnsEmptyList()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, "[]", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var tags = inputs.Tags;
+
+        tags.Should().NotBeNull();
+        tags.Should().BeEmpty();
+    }
+
+
+
     // Test Helpers
     static CalamariVariables MinimumRequiredVariableSet()
     {

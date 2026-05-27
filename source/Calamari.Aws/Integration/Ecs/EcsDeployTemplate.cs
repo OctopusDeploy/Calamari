@@ -113,7 +113,7 @@ public sealed class EcsDeployTemplate : Stack
                                                            CpuArchitecture = commandInputs.CpuArchitecture
                                                        },
                                                        Volumes = Array.Empty<CfnTaskDefinition.VolumeProperty>(), // TODO: Read from variables
-                                                       Tags = Array.Empty<CfnTag>() // TODO: Read From Varaibles
+                                                       Tags = commandInputs.Tags.ToCloudFormationTags()
                                                    });
 
         var service = new CfnService(this,
@@ -140,7 +140,7 @@ public sealed class EcsDeployTemplate : Stack
                                              }
                                          },
                                          LoadBalancers = null, // TODO: read from variables 
-                                         Tags = Array.Empty<CfnTag>() // TODO: Read from Variables
+                                         Tags = commandInputs.Tags.ToCloudFormationTags()
                                      });
         
         // TODO: Add depdency on Load Balancer if require
