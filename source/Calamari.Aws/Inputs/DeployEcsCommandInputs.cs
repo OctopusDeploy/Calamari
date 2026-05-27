@@ -47,6 +47,7 @@ public class DeployEcsCommandInputs
         
         // Objects
         requiredVariableKeys.Add(AwsSpecialVariables.Ecs.WaitOption);
+        requiredVariableKeys.Add(AwsSpecialVariables.Ecs.Deploy.Containers);
 
 
     }
@@ -109,9 +110,6 @@ public class DeployEcsCommandInputs
     public string TaskRole => variables.Get(AwsSpecialVariables.Ecs.Deploy.TaskRole, "");
     public string TaskExecutionRole => variables.Get(AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, "");
     
-   
-
-    
     public string CpuArchitecture
     {
         get
@@ -126,12 +124,12 @@ public class DeployEcsCommandInputs
     }
 
 
-    public string[] NetworkSecurityGroupIds => variables.GetValueDeserilisedAs<string[]>(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds);
-    public string[] SubnetIDs => variables.GetValueDeserilisedAs<string[]>(AwsSpecialVariables.Ecs.Deploy.SubnetIds);
+    public string[] NetworkSecurityGroupIds => variables.GetValueDeserialisedAs<string[]>(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds);
+    public string[] SubnetIDs => variables.GetValueDeserialisedAs<string[]>(AwsSpecialVariables.Ecs.Deploy.SubnetIds);
 
-    public WaitOption WaitOption => variables.GetValueDeserilisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
+    public WaitOption WaitOption => variables.GetValueDeserialisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
 
-
+    public ContainerSpec[] Containers => variables.GetValueDeserialisedAs<ContainerSpec[]>(AwsSpecialVariables.Ecs.Deploy.Containers);
 }
 
 public record InputsValidityResult(IEnumerable<string> MissingKeys)
