@@ -40,12 +40,13 @@ public partial class Build
                                                                                                          .SetPlatform(dockerBuildPlatform)
                                                                                                          .SetTag(tag)
                                                                                                          .SetFile(dockerFile)
-                                                                                                         .SetPath(KnownPaths.RootDirectory);
+                                                                                                         .SetPath(KnownPaths.RootDirectory)
+                                                                                                         .EnableLoad();
 
                                                                                               return settings;
                                                                                           });
 
-                                                            var sanitizedTag = tag.Replace("/", "-");
+                                                            var sanitizedTag = tag.Replace("/", "-").Replace(":", ".");
                                                             var outputFile = KnownPaths.PublishDirectory / $"{sanitizedTag}.tar";
 
                                                             //create the publish directory
