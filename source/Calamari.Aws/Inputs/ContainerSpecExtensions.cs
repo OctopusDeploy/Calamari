@@ -40,6 +40,13 @@ public static class ContainerSpecExtensions
 
     }
 
+    public static Dictionary<string, string> ParseEnvironmentVariables(this ContainerSpec containerSpec)
+    {
+        return containerSpec.EnvironmentVariables
+                            .GroupBy(kvp => kvp.Key)
+                            .ToDictionary(g => g.Key, g => g.Last().Value);
+    }
+
     public static CfnTaskDefinition.PortMappingProperty[] ParsePortMappings(this ContainerSpec containerSpec)
     {
         return containerSpec.ContainerPortMappings.Select(pm => new CfnTaskDefinition.PortMappingProperty

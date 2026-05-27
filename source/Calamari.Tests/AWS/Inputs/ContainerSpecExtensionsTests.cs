@@ -253,6 +253,76 @@ public class ContainerSpecExtensionsTests
     }
 
     [Test]
+    public void ParseEnvironmentVariables_WhenNone_ReturnsEmptyDictionary()
+    {
+        var spec = new ContainerSpec();
+
+        var result = spec.ParseEnvironmentVariables();
+
+        result.Should().BeEmpty();
+    }
+
+    [Test]
+    public void ParseEnvironmentVariables_MapsKeysToValues()
+    {
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "LOG_LEVEL", Value = "INFO" },
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "REGION", Value = "us-east-1" }
+            ]
+        };
+
+        var result = spec.ParseEnvironmentVariables();
+
+        result.Should().HaveCount(2);
+        result["LOG_LEVEL"].Should().Be("INFO");
+        result["REGION"].Should().Be("us-east-1");
+    }
+
+    [Test]
+    public void ParseEnvironmentVariables_WithDuplicateKeys_LastValueWins()
+    {
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "LOG_LEVEL", Value = "DEBUG" },
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "LOG_LEVEL", Value = "INFO" },
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "REGION", Value = "us-east-1" }
+            ]
+        };
+
+        var result = spec.ParseEnvironmentVariables();
+
+        result.Should().HaveCount(2);
+        result["LOG_LEVEL"].Should().Be("INFO");
+        result["REGION"].Should().Be("us-east-1");
+    }
+
+    [Test]
+    public void ParseEnvironmentVariables_IncludesSecretAndPlainEntriesAlike()
+    {
+        // The current implementation does not distinguish Plain vs Secret entries —
+        // both end up in the same dictionary. Lock that behaviour in.
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "PLAIN_KEY", Value = "plain-value" },
+                new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "SECRET_KEY", Value = "arn:secret" }
+            ]
+        };
+
+        var result = spec.ParseEnvironmentVariables();
+
+        result.Should().HaveCount(2);
+        result["PLAIN_KEY"].Should().Be("plain-value");
+        result["SECRET_KEY"].Should().Be("arn:secret");
+    }
+
+    [Test]
     public void ParseDockerLabels_WithDuplicateKeys_LastValueWins()
     {
         var spec = new ContainerSpec

@@ -89,10 +89,10 @@ public sealed class EcsDeployTemplate : Stack
             Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => []),
             EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(s => [s], () => []),
       
+            Environment = c.ParseEnvironmentVariables(),
             
             // TODO
             // Secrets = 
-            // Environment Variables
             
             Privileged = false, // SPF never set value for this property, so we use default
             Links = [], // SPF never set value for this property
