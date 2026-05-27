@@ -1,5 +1,5 @@
 using System;
-using Calamari.Aws.Inputs;
+using Calamari.Aws.Inputs.Ecs;
 using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Plumbing.Logging;
 
