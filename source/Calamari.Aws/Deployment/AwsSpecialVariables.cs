@@ -48,10 +48,7 @@
             
             // Not reusing CloudFormation variable here to make it easier to remove all traces of this when we migrate to native ECS API
             public const string Tags = "Octopus.Action.Aws.Ecs.Tags";
-            
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
-            public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
-
             public const string WaitOption = "Octopus.Action.Aws.Ecs.WaitOption";
             
 
