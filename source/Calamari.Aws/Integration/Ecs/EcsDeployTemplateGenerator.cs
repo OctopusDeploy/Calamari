@@ -1,6 +1,7 @@
 using System;
 using Amazon.CDK;
 using Calamari.Aws.Inputs;
+using Calamari.Aws.Inputs.Ecs;
 using Newtonsoft.Json;
 
 namespace Calamari.Aws.Integration.Ecs;

@@ -9,7 +9,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.Calamari.Contracts.Aws.Ecs;
 
-namespace Calamari.Aws.Inputs;
+namespace Calamari.Aws.Inputs.Ecs;
 
 public class DeployEcsCommandInputs
 {

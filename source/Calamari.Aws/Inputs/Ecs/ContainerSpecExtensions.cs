@@ -1,12 +1,12 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using Amazon.CDK.AWS.ECS;
 using Amazon.ECS;
 using Octopus.Calamari.Contracts.Aws.Ecs;
 using LogDriver = Octopus.Calamari.Contracts.Aws.Ecs.LogDriver;
 
-namespace Calamari.Aws.Inputs;
+namespace Calamari.Aws.Inputs.Ecs;
 
 public static class ContainerSpecExtensions
 {

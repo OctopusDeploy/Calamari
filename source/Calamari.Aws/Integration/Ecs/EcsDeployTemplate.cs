@@ -3,8 +3,7 @@ using System.Linq;
 using Amazon.CDK;
 using Amazon.CDK.AWS.ECS;
 using Amazon.CDK.AWS.IAM;
-using Calamari.Aws.Inputs;
-
+using Calamari.Aws.Inputs.Ecs;
 
 namespace Calamari.Aws.Integration.Ecs;
 
