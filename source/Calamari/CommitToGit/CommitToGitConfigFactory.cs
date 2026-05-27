@@ -43,6 +43,7 @@ namespace Calamari.CommitToGit
                                             _ => throw new NotSupportedException($"An unrecognised credential type '{properties.GitCredential.GetType().Name}' was found for '{uriAsString}'"),
                                         };
 
+            //Note: Octopus server removes variables containing empty strings, thus a missing property should default to an empty string.
             return new CommitToGitRepositorySettings(connection,
                                                      commitParameters,
                                                      variables.Get(SpecialVariables.Action.Git.DestinationPath) ?? string.Empty);

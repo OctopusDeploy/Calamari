@@ -56,6 +56,8 @@ public class CommitToGitConfigFactoryTests
     [Test]
     public void CreateRepositoryConfig_WhenDestinationPathIsMissing_DefaultsToEmptyString()
     {
+        //Octopus server removes variables containing empty strings, thus a missing property should default to an empty string.
+        //Thus the TargetRepositorydestinationPath could validly be missing from the variable set, in such case, it should default to an empty string.
         loader.Load<CommitToGitCustomPropertiesDto>()
               .Returns(new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto("MyCred", "https://example.invalid/repo.git", "user", "pwd")));
         variables.Get(SpecialVariables.Action.Git.DestinationPath).Returns((string)null);
