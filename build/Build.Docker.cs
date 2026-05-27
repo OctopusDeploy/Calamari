@@ -64,7 +64,7 @@ public partial class Build
                                                             var compressedZipPath = $"{outputFile}.gz";
 
                                                             //compress with gzip
-                                                            PowerShellTasks.PowerShell(_ => _.SetCommand($"gzip -9 {outputFile}").EnableNoProfile());
+                                                            PowerShellTasks.PowerShell(_ => _.SetCommand($"gzip -9 '{outputFile}'").EnableNoProfile());
 
                                                             // This file is then uploaded to OctopusDeploy to perform the release process
                                                             if (TeamCity.Instance is not null)
