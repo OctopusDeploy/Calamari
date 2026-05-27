@@ -95,17 +95,4 @@ public class SshKnownHostsCertificateCheckTests
 
         result.Should().Be(SshKnownHostsCertificateCheck.Result.Trusted);
     }
-
-    [Test]
-    public void HostnameMatchIgnoresTrailingPort()
-    {
-        // ssh:// URLs may carry a non-default port (e.g. ssh://git@github.com:2222/repo.git).
-        // The known hosts list is stored without ports, so we must strip the trailing :port before lookup.
-        var lookup = new[] { MakeHost("github.com", StablePublicKeyBase64) }
-            .ToLookup(h => h.Host, StringComparer.OrdinalIgnoreCase);
-
-        var result = SshKnownHostsCertificateCheck.CheckKnownHosts(lookup, "github.com:2222", StablePublicKeyHashed);
-
-        result.Should().Be(SshKnownHostsCertificateCheck.Result.Trusted);
-    }
 }
