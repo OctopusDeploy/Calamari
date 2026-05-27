@@ -1,3 +1,4 @@
+using System;
 using Amazon.CDK;
 using Calamari.Aws.Inputs;
 using Newtonsoft.Json;
@@ -32,7 +33,31 @@ public static class EcsDeployTemplateGenerator
             Formatting = Formatting.Indented,
             NullValueHandling = NullValueHandling.Ignore
         };
+        
+        settings.Converters.Add(new WholeDoubleConverter());
 
         return JsonConvert.SerializeObject(stackArtifact.Template, settings);
+    }
+
+    class WholeDoubleConverter : JsonConverter<double?>
+    {
+        public override void WriteJson(JsonWriter writer, double? value, JsonSerializer serializer)
+        {
+            if (value == null)
+                writer.WriteNull();
+            else if (Math.Abs(value.Value - Math.Floor(value.Value)) < double.Epsilon)
+                writer.WriteValue((long)value.Value);
+            else
+                writer.WriteValue(value.Value);
+        }
+
+        public override double? ReadJson(JsonReader reader,
+                                         Type objectType,
+                                         double? existingValue,
+                                         bool hasExistingValue,
+                                         JsonSerializer serializer)
+        {
+            return reader.Value == null ? null : Convert.ToDouble(reader.Value);
+        }
     }
 }
