@@ -28,7 +28,7 @@ public partial class Build
                                                             //Rename any `linux-x64` folders to `linux-amd64`
                                                             Directory.Move(KnownPaths.OutputsDirectory / flavour / "linux-x64",
                                                                            KnownPaths.OutputsDirectory / flavour / "linux-amd64");
-                                                            Log.Information("Renamed 'linux-x64' folder to 'linux-am64'");
+                                                            Log.Information("Renamed 'linux-x64' folder to 'linux-amd64'");
 
                                                             var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
 
@@ -48,8 +48,8 @@ public partial class Build
                                                             var sanitizedTag = tag.Replace("/", "-");
                                                             var outputFile = KnownPaths.PublishDirectory / $"{sanitizedTag}.tar";
 
-                                                            //create the publish file
-                                                            if (Directory.Exists(KnownPaths.PublishDirectory))
+                                                            //create the publish directory
+                                                            if (!Directory.Exists(KnownPaths.PublishDirectory))
                                                             {
                                                                 Directory.CreateDirectory(KnownPaths.PublishDirectory);
                                                             }
