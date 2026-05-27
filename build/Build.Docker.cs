@@ -1,6 +1,7 @@
 ﻿using Calamari.Build.Utilities;
 using JetBrains.Annotations;
 using Nuke.Common.Tools.Docker;
+using Nuke.Common.Tools.PowerShell;
 
 namespace Calamari.Build;
 
@@ -60,9 +61,10 @@ public partial class Build
                                                                                              .SetImages(tag)
                                                                                              .SetOutput(outputFile));
 
-                                                            //compress with gzip
                                                             var compressedZipPath = $"{outputFile}.gz";
-                                                            outputFile.CompressTo(compressedZipPath);
+
+                                                            //compress with gzip
+                                                            PowerShellTasks.PowerShell(_ => _.SetCommand($"gzip -9 {outputFile}").EnableNoProfile());
 
                                                             // This file is then uploaded to OctopusDeploy to perform the release process
                                                             if (TeamCity.Instance is not null)
