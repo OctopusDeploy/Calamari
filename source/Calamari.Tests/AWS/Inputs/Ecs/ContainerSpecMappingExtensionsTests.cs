@@ -8,7 +8,7 @@ using Octopus.Calamari.Contracts.Aws.Ecs;
 namespace Calamari.Tests.AWS.Inputs.Ecs;
 
 [TestFixture]
-public class ContainerSpecExtensionsTests
+public class ContainerSpecMappingExtensionsTests
 {
     [Test]
     public void ParseMountPoints_WhenNoMountPoints_ReturnsEmptyArray()

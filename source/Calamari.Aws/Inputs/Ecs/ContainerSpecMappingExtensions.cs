@@ -8,7 +8,7 @@ using LogDriver = Octopus.Calamari.Contracts.Aws.Ecs.LogDriver;
 
 namespace Calamari.Aws.Inputs.Ecs;
 
-public static class ContainerSpecExtensions
+public static class ContainerSpecMappingExtensions
 {
     
     public static T ConvertedOrDefault<T>(this string value, Func<string, T> converter, Func<T> defaultOverride = null)

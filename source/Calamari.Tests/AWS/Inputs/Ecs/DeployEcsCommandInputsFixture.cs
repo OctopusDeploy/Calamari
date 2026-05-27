@@ -494,7 +494,60 @@ public class DeployEcsCommandInputsFixture
         tags.Should().BeEmpty();
     }
 
+    [Test]
+    public void LoadBalancerMappings_WithSingleMapping_ReturnsDeserialisedArray()
+    {
+        const string mappingsJson = """
+                                    [
+                                        {
+                                            "containerName":"web",
+                                            "containerPort":"80",
+                                            "targetGroupArn":"arn:aws:elasticloadbalancing:us-east-1:123:targetgroup/web/abc"
+                                        }
+                                    ]
+                                    """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, mappingsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
 
+        var mappings = inputs.LoadBalancerMappings;
+
+        mappings.Should().HaveCount(1);
+        mappings[0].ContainerName.Should().Be("web");
+        mappings[0].ContainerPort.Should().Be("80");
+        mappings[0].TargetGroupArn.Should().Be("arn:aws:elasticloadbalancing:us-east-1:123:targetgroup/web/abc");
+    }
+
+    [Test]
+    public void LoadBalancerMappings_WithMultipleMappings_PreservesAllEntries()
+    {
+        const string mappingsJson = """
+                                    [
+                                        {"containerName":"web","containerPort":"80","targetGroupArn":"arn:web"},
+                                        {"containerName":"api","containerPort":"8080","targetGroupArn":"arn:api"}
+                                    ]
+                                    """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, mappingsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var mappings = inputs.LoadBalancerMappings;
+
+        mappings.Should().HaveCount(2);
+        mappings.Select(m => m.ContainerName).Should().BeEquivalentTo("web", "api");
+        mappings.Single(m => m.ContainerName == "web").ContainerPort.Should().Be("80");
+        mappings.Single(m => m.ContainerName == "api").TargetGroupArn.Should().Be("arn:api");
+    }
+
+    [Test]
+    public void LoadBalancerMappings_WithEmptyArray_ReturnsEmpty()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, "[]", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var mappings = inputs.LoadBalancerMappings;
+
+        mappings.Should().NotBeNull();
+        mappings.Should().BeEmpty();
+    }
 
     // Test Helpers
     static CalamariVariables MinimumRequiredVariableSet()

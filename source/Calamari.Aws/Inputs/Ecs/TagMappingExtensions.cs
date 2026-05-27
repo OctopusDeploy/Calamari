@@ -4,7 +4,7 @@ using Amazon.CDK;
 
 namespace Calamari.Aws.Inputs.Ecs;
 
-public static class TagExtensions
+public static class TagMappingExtensions
 {
     public static ICfnTag[] ToCloudFormationTags(this IEnumerable<KeyValuePair<string, string>> tags)
     {

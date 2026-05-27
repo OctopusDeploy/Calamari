@@ -12,7 +12,7 @@ public sealed class EcsDeployTemplate : Stack
     const string FargateLaunchType = "FARGATE";
     const string AwsVpcNetworkMode = "awsvpc";
     const string LinuxOperatingSystemFamily = "LINUX";
-    const string DefaultTaskExecutionPolicyArn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy";
+    
 
     public EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, string id, IStackProps props = null) : base(scope, id, props)
     {
@@ -50,7 +50,7 @@ public sealed class EcsDeployTemplate : Stack
                                                Default = commandInputs.Memory
                                            });
 
-        var executionRoleRef = ProcessTaskExecutionRole(commandInputs);
+        var executionRoleRef = commandInputs.MapTaskExecutionRoleArn(this);
 
         var containers = commandInputs.Containers.Select(c => new CfnTaskDefinition.ContainerDefinitionProperty
         {
@@ -139,51 +139,16 @@ public sealed class EcsDeployTemplate : Stack
                                                  SecurityGroups = commandInputs.NetworkSecurityGroupIds
                                              }
                                          },
-                                         LoadBalancers = null, // TODO: read from variables 
+                                         LoadBalancers = commandInputs.LoadBalancerMappings.ToLoadBalancerProperties(),
                                          Tags = commandInputs.Tags.ToCloudFormationTags()
                                      });
         
         // TODO: Add depdency on Load Balancer if require
+        // if (commandInputs.LoadBalancerMappings.Length > 0)
+        // {
+        //     service.AddDependency();
+        // }
         service.AddDependency(taskDefinition);
     }
-
-    string ProcessTaskExecutionRole(DeployEcsCommandInputs inputs)
-    {
-        if (!string.IsNullOrEmpty(inputs.TaskExecutionRole))
-        {
-            return inputs.TaskExecutionRole;
-        }
-
-        var policyArnParam = new CfnParameter(this,
-                                              "AmazonECSTaskExecutionRolePolicyArn",
-                                              new CfnParameterProps
-                                              {
-                                                  Type = "String",
-                                                  Default = DefaultTaskExecutionPolicyArn
-                                              });
-
-        var role = new CfnRole(this,
-                               inputs.FallbackTaskExecutionRoleName,
-                               new CfnRoleProps
-                               {
-                                   Path = "/",
-                                   ManagedPolicyArns = [policyArnParam.ValueAsString],
-                                   AssumeRolePolicyDocument = new PolicyDocument(new PolicyDocumentProps
-                                   {
-                                       Statements =
-                                       [
-                                           new PolicyStatement(new PolicyStatementProps
-                                           {
-                                               Effect = Effect.ALLOW,
-                                               Principals = [new ServicePrincipal("ecs-tasks.amazonaws.com")],
-                                               Actions = ["sts:AssumeRole"]
-
-                                           })
-                                       ]
-                                   })
-                               });
-                                               
-
-        return role.Ref;
-    }
+    
 }
