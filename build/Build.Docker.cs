@@ -18,12 +18,16 @@ public partial class Build
 
                            foreach (var flavour in flavours)
                            {
+                               Log.Information("Building flavour {Flavour}", flavour);
+                               
                                var compressedArtifactPath = KnownPaths.OutputsDirectory / $"{flavour}.zip";
                                compressedArtifactPath.UncompressTo(KnownPaths.OutputsDirectory / flavour);
+                               Log.Information("Uncompressed {ZipPath} to {FolderPath}", compressedArtifactPath, KnownPaths.OutputsDirectory / flavour);
 
                                //Rename any `linux-x64` folders to `linux-amd64`
                                Directory.Move(KnownPaths.OutputsDirectory / flavour / "linux-x64",
                                               KnownPaths.OutputsDirectory / flavour / "linux-amd64");
+                               Log.Information("Renamed 'linux-x64' folder to 'linux-am64'");
 
                                var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
 
@@ -31,7 +35,7 @@ public partial class Build
                                DockerTasks.DockerBuildxBuild(settings =>
                                                              {
                                                                  settings = settings
-                                                                            .AddBuildArg($"SRC_FOLDER={KnownPaths.OutputsDirectory}", $"DEST_FOLDER={flavour}")
+                                                                            .AddBuildArg($"SRC_FOLDER={KnownPaths.OutputsDirectory / flavour}", $"DEST_FOLDER={flavour}")
                                                                             .SetPlatform(dockerBuildPlatform)
                                                                             .SetTag(tag)
                                                                             .SetFile(dockerFile)
