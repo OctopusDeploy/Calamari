@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using Amazon.CDK;
 using Amazon.CDK.AWS.ECS;
 using Amazon.CDK.AWS.IAM;
@@ -53,6 +53,53 @@ public sealed class EcsDeployTemplate : Stack
 
         var executionRoleRef = ProcessTaskExecutionRole(commandInputs);
 
+        var containers = commandInputs.Containers.Select(c => new CfnTaskDefinition.ContainerDefinitionProperty
+        {
+            Name = c.ContainerName,
+            Image = c.ContainerImageReference.ImageName,
+            Essential = c.Essential.ConvertedOrDefault(bool.Parse),
+            DisableNetworking = c.NetworkSettings.DisableNetworking.ConvertedOrDefault(bool.Parse),
+            WorkingDirectory = c.WorkingDirectory,
+            Memory = c.MemoryLimitHard.ConvertedOrDefault<int?>(s => int.Parse(s)),
+            MemoryReservation = c.MemoryLimitSoft.ConvertedOrDefault<int?>(s => int.Parse(s)),
+            Cpu =  c.Cpus.ConvertedOrDefault<int?>(s => int.Parse(s)),
+            User = c.User,
+            StartTimeout = c.StartTimeout.ConvertedOrDefault<int?>( s => int.Parse(s)),
+            StopTimeout = c.StopTimeout.ConvertedOrDefault<int?>(s => int.Parse(s)),
+            DnsServers = c.NetworkSettings.DnsServers.ToArray(),
+            DnsSearchDomains = c.NetworkSettings.DnsSearchDomains.ToArray(),
+            ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault(bool.Parse),
+            
+            ResourceRequirements = c.ParseResourceRequirements(),
+            DockerLabels = c.ParseDockerLabels(),
+            PortMappings = c.ParsePortMappings(),
+            HealthCheck = c.ParseHealthCheck(),
+            ExtraHosts = c.ParseExtraHosts(),
+            RepositoryCredentials = c.ParseRepositoryCredentials(),
+            Ulimits = c.ParseULimits(),
+            
+            MountPoints = c.ParseMountPoints(),
+            DependsOn = c.ParseDependencies(),
+            VolumesFrom = c.ParseVolumesFrom(),
+            
+            LogConfiguration = c.ParseLogConfiguration(),
+            EnvironmentFiles = c.ParseEnvironmentFiles(),
+            FirelensConfiguration = c.ParseFireLensConfiguration(),
+            
+            Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => []),
+            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(s => [s], () => []),
+      
+            
+            // TODO
+            // Secrets = 
+            // Environment Variables
+            
+            Privileged = false, // SPF never set value for this property, so we use default
+            Links = [], // SPF never set value for this property
+            DockerSecurityOptions = [] // SPF never set value for this property
+            
+        }).ToArray();
+
         var taskDefinition = new CfnTaskDefinition(this,
                                                    commandInputs.TaskName,
                                                    new CfnTaskDefinitionProps
@@ -69,31 +116,7 @@ public sealed class EcsDeployTemplate : Stack
                                                            OperatingSystemFamily = LinuxOperatingSystemFamily,
                                                            CpuArchitecture = commandInputs.CpuArchitecture
                                                        },
-                                                       ContainerDefinitions = new[]
-                                                       {
-                                                           // TODO: Read from variables
-                                                           new CfnTaskDefinition.ContainerDefinitionProperty
-                                                           {
-                                                               Name = "sample-container",
-                                                               Image = "index.docker.io/nginx:1.31",
-                                                               Essential = true,
-                                                               ResourceRequirements = Array.Empty<CfnTaskDefinition.ResourceRequirementProperty>(),
-                                                               EnvironmentFiles = Array.Empty<CfnTaskDefinition.EnvironmentFileProperty>(),
-                                                               DisableNetworking = false,
-                                                               DnsServers = Array.Empty<string>(),
-                                                               DnsSearchDomains = Array.Empty<string>(),
-                                                               ExtraHosts = Array.Empty<CfnTaskDefinition.HostEntryProperty>(),
-                                                               PortMappings = new[]
-                                                               {
-                                                                   new CfnTaskDefinition.PortMappingProperty
-                                                                   {
-                                                                       ContainerPort = 80,
-                                                                       HostPort = 80,
-                                                                       Protocol = "tcp"
-                                                                   }
-                                                               }
-                                                           }
-                                                       },
+                                                       ContainerDefinitions = containers,
                                                        Volumes = Array.Empty<CfnTaskDefinition.VolumeProperty>(), // TODO: Read from variables
                                                        Tags = Array.Empty<CfnTag>()
                                                    });
@@ -147,24 +170,22 @@ public sealed class EcsDeployTemplate : Stack
                                new CfnRoleProps
                                {
                                    Path = "/",
-                                   AssumeRolePolicyDocument = new Dictionary<string, object>
+                                   ManagedPolicyArns = [policyArnParam.ValueAsString],
+                                   AssumeRolePolicyDocument = new PolicyDocument(new PolicyDocumentProps
                                    {
-                                       ["Version"] = "2012-10-17",
-                                       ["Statement"] = new[]
-                                       {
-                                           new Dictionary<string, object>
+                                       Statements =
+                                       [
+                                           new PolicyStatement(new PolicyStatementProps
                                            {
-                                               ["Effect"] = "Allow",
-                                               ["Principal"] = new Dictionary<string, object>
-                                               {
-                                                   ["Service"] = new[] { "ecs-tasks.amazonaws.com" }
-                                               },
-                                               ["Action"] = new[] { "sts:AssumeRole" }
-                                           }
-                                       }
-                                   },
-                                   ManagedPolicyArns = new[] { policyArnParam.ValueAsString }
+                                               Effect = Effect.ALLOW,
+                                               Principals = [new ServicePrincipal("ecs-tasks.amazonaws.com")],
+                                               Actions = ["sts:AssumeRole"]
+
+                                           })
+                                       ]
+                                   })
                                });
+                                               
 
         return role.Ref;
     }
