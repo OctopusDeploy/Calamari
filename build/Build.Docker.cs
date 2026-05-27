@@ -48,6 +48,12 @@ public partial class Build
                                                             var sanitizedTag = tag.Replace("/", "-");
                                                             var outputFile = KnownPaths.PublishDirectory / $"{sanitizedTag}.tar";
 
+                                                            //create the publish file
+                                                            if (Directory.Exists(KnownPaths.PublishDirectory))
+                                                            {
+                                                                Directory.CreateDirectory(KnownPaths.PublishDirectory);
+                                                            }
+
                                                             //save the docker image to a tar file
                                                             DockerTasks.DockerImageSave(_ => _
                                                                                              .SetImages(tag)
