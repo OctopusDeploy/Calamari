@@ -302,10 +302,8 @@ public class ContainerSpecExtensionsTests
     }
 
     [Test]
-    public void ParseEnvironmentVariables_IncludesSecretAndPlainEntriesAlike()
+    public void ParseEnvironmentVariables_ExcludesSecretEntries()
     {
-        // The current implementation does not distinguish Plain vs Secret entries —
-        // both end up in the same dictionary. Lock that behaviour in.
         var spec = new ContainerSpec
         {
             EnvironmentVariables =
@@ -317,9 +315,96 @@ public class ContainerSpecExtensionsTests
 
         var result = spec.ParseEnvironmentVariables();
 
-        result.Should().HaveCount(2);
-        result["PLAIN_KEY"].Should().Be("plain-value");
-        result["SECRET_KEY"].Should().Be("arn:secret");
+        result.Should().HaveCount(1);
+        result.Should().ContainKey("PLAIN_KEY").WhoseValue.Should().Be("plain-value");
+        result.Should().NotContainKey("SECRET_KEY");
+    }
+
+    [Test]
+    public void ParseEnvironmentVariables_DedupeAppliesAfterFilteringSecrets()
+    {
+        // A Secret entry with the same key as a Plain entry must not displace the Plain value.
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "TOKEN", Value = "plain-token" },
+                new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "TOKEN", Value = "arn:secret" }
+            ]
+        };
+
+        var result = spec.ParseEnvironmentVariables();
+
+        result.Should().HaveCount(1);
+        result["TOKEN"].Should().Be("plain-token");
+    }
+
+    [Test]
+    public void ParseSecrets_WhenNone_ReturnsEmptyArray()
+    {
+        var spec = new ContainerSpec();
+
+        var result = spec.ParseSecrets();
+
+        result.Should().BeEmpty();
+    }
+
+    [Test]
+    public void ParseSecrets_OnlyIncludesSecretTypedEntries()
+    {
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "PLAIN_KEY", Value = "plain-value" },
+                new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "SECRET_KEY", Value = "arn:secret" }
+            ]
+        };
+
+        var result = spec.ParseSecrets();
+
+        result.Should().HaveCount(1);
+        result[0].Name.Should().Be("SECRET_KEY");
+        result[0].ValueFrom.Should().Be("arn:secret");
+    }
+
+    [Test]
+    public void ParseSecrets_WithDuplicateSecretKeys_LastValueWins()
+    {
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "TOKEN", Value = "arn:first" },
+                new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "TOKEN", Value = "arn:second" }
+            ]
+        };
+
+        var result = spec.ParseSecrets();
+
+        result.Should().HaveCount(1);
+        result[0].Name.Should().Be("TOKEN");
+        result[0].ValueFrom.Should().Be("arn:second");
+    }
+
+    [Test]
+    public void ParseSecrets_DoesNotConsiderPlainEntriesForDedupe()
+    {
+        // A Plain entry with the same key as a Secret must not displace or merge with the Secret value.
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "TOKEN", Value = "plain-token" },
+                new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "TOKEN", Value = "arn:secret" }
+            ]
+        };
+
+        var result = spec.ParseSecrets();
+
+        result.Should().HaveCount(1);
+        result[0].Name.Should().Be("TOKEN");
+        result[0].ValueFrom.Should().Be("arn:secret");
     }
 
     [Test]

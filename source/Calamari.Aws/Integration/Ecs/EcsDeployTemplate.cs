@@ -70,6 +70,9 @@ public sealed class EcsDeployTemplate : Stack
             DnsSearchDomains = c.NetworkSettings.DnsSearchDomains.ToArray(),
             ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault(bool.Parse),
             
+            Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => []),
+            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(s => [s], () => []),
+            
             ResourceRequirements = c.ParseResourceRequirements(),
             DockerLabels = c.ParseDockerLabels(),
             PortMappings = c.ParsePortMappings(),
@@ -77,22 +80,15 @@ public sealed class EcsDeployTemplate : Stack
             ExtraHosts = c.ParseExtraHosts(),
             RepositoryCredentials = c.ParseRepositoryCredentials(),
             Ulimits = c.ParseULimits(),
-            
             MountPoints = c.ParseMountPoints(),
             DependsOn = c.ParseDependencies(),
             VolumesFrom = c.ParseVolumesFrom(),
-            
             LogConfiguration = c.ParseLogConfiguration(),
             EnvironmentFiles = c.ParseEnvironmentFiles(),
             FirelensConfiguration = c.ParseFireLensConfiguration(),
-            
-            Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => []),
-            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(s => [s], () => []),
       
             Environment = c.ParseEnvironmentVariables(),
-            
-            // TODO
-            // Secrets = 
+            Secrets = c.ParseSecrets(),
             
             Privileged = false, // SPF never set value for this property, so we use default
             Links = [], // SPF never set value for this property

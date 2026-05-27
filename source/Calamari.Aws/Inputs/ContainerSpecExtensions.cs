@@ -43,6 +43,7 @@ public static class ContainerSpecExtensions
     public static Dictionary<string, string> ParseEnvironmentVariables(this ContainerSpec containerSpec)
     {
         return containerSpec.EnvironmentVariables
+                            .Where(tkp => tkp.Type == KeyValueType.Plain)
                             .GroupBy(kvp => kvp.Key)
                             .ToDictionary(g => g.Key, g => g.Last().Value);
     }
@@ -231,5 +232,18 @@ public static class ContainerSpecExtensions
         };
 
         return fireLensConfig;
+    }
+
+    public static CfnTaskDefinition.SecretProperty[] ParseSecrets(this ContainerSpec containerSpec)
+    {
+        return containerSpec.EnvironmentVariables
+                            .Where(tkp => tkp.Type == KeyValueType.Secret)
+                            .GroupBy(kvp => kvp.Key) // Dedupe
+                            .Select(g => new CfnTaskDefinition.SecretProperty()
+                            {
+                                Name = g.Key,
+                                ValueFrom = g.Last().Value
+                            })
+                            .ToArray();
     }
 }
