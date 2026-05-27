@@ -106,6 +106,36 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         {
             AssertHttpsCredentialTakesPriorityOverSsh("ssh://git@github.com/org/repo.git");
         }
+
+        [Test]
+        public void KnownHostsFromDtoAreCarriedOntoSshKeyGitConnection()
+        {
+            const string sshUrl = "ssh://git@github.com/org/repo.git";
+            var knownHosts = new[]
+            {
+                new SshKnownHostDto("github.com", "AAAAB3NzaC1yc2EAAAADAQABAAABAQ=="),
+                new SshKnownHostDto("bitbucket.org", "AAAAC3NzaC1lZDI1NTE5AAAAIA==")
+            };
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+
+            var factory = new AuthenticatingRepositoryFactory(
+                [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", knownHosts)],
+                mockRepoFactory,
+                log);
+
+            factory.CloneRepository(sshUrl, branchName.ToFriendlyName());
+
+            mockRepoFactory.Received()
+                           .CloneRepository(
+                               Arg.Any<string>(),
+                               Arg.Is<IGitConnection>(c =>
+                                   c is SshKeyGitConnection
+                                   && ((SshKeyGitConnection)c).KnownHosts.Count == 2
+                                   && ((SshKeyGitConnection)c).KnownHosts[0].Host == "github.com"
+                                   && ((SshKeyGitConnection)c).KnownHosts[0].PublicKey == "AAAAB3NzaC1yc2EAAAADAQABAAABAQ=="
+                                   && ((SshKeyGitConnection)c).KnownHosts[1].Host == "bitbucket.org"
+                                   && ((SshKeyGitConnection)c).KnownHosts[1].PublicKey == "AAAAC3NzaC1lZDI1NTE5AAAAIA=="));
+        }
     }
 
     [TestFixture]
