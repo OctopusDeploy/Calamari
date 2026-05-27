@@ -248,7 +248,7 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams),
                                       "Simple")
                 .Should()
-                .Contain($"init -no-color -get-plugins=true {additionalParams}");
+                .Contain($"init -get-plugins=true {additionalParams}");
         }
 
         [Test]
@@ -263,7 +263,7 @@ namespace Calamari.Terraform.Tests
                                       },
                                       "Simple")
                 .Should()
-                .Contain("init -no-color -get-plugins=false");
+                .Contain("init -get-plugins=false");
         }
 
         [Test]
@@ -280,10 +280,10 @@ namespace Calamari.Terraform.Tests
         }
 
         [Test]
-        [TestCase(typeof(PlanCommand), "plan -no-color -detailed-exitcode -var my_var=\"Hello world\"")]
-        [TestCase(typeof(ApplyCommand), "apply -no-color -auto-approve -var my_var=\"Hello world\"")]
-        [TestCase(typeof(DestroyPlanCommand), "plan -no-color -detailed-exitcode -destroy -var my_var=\"Hello world\"")]
-        [TestCase(typeof(DestroyCommand), "destroy -auto-approve -no-color -var my_var=\"Hello world\"")]
+        [TestCase(typeof(PlanCommand), "plan -detailed-exitcode -var my_var=\"Hello world\"")]
+        [TestCase(typeof(ApplyCommand), "apply -auto-approve -var my_var=\"Hello world\"")]
+        [TestCase(typeof(DestroyPlanCommand), "plan -detailed-exitcode -destroy -var my_var=\"Hello world\"")]
+        [TestCase(typeof(DestroyCommand), "destroy -auto-approve -var my_var=\"Hello world\"")]
         public void AdditionalActionParams(Type commandType, string expected)
         {
             var command = GetCommandFromType(commandType);
@@ -299,10 +299,10 @@ namespace Calamari.Terraform.Tests
         }
 
         [Test]
-        [TestCase(typeof(PlanCommand), "plan -no-color -detailed-exitcode -var-file=\"example.tfvars\"")]
-        [TestCase(typeof(ApplyCommand), "apply -no-color -auto-approve -var-file=\"example.tfvars\"")]
-        [TestCase(typeof(DestroyPlanCommand), "plan -no-color -detailed-exitcode -destroy -var-file=\"example.tfvars\"")]
-        [TestCase(typeof(DestroyCommand), "destroy -auto-approve -no-color -var-file=\"example.tfvars\"")]
+        [TestCase(typeof(PlanCommand), "plan -detailed-exitcode -var-file=\"example.tfvars\"")]
+        [TestCase(typeof(ApplyCommand), "apply -auto-approve -var-file=\"example.tfvars\"")]
+        [TestCase(typeof(DestroyPlanCommand), "plan -detailed-exitcode -destroy -var-file=\"example.tfvars\"")]
+        [TestCase(typeof(DestroyCommand), "destroy -auto-approve -var-file=\"example.tfvars\"")]
         public void VarFiles(Type commandType, string actual)
         {
             ExecuteAndReturnLogOutput(GetCommandFromType(commandType), _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); }, "WithVariables")
@@ -635,7 +635,7 @@ namespace Calamari.Terraform.Tests
 
             output = await ExecuteAndReturnResult(applyCommand, PopulateVariables, "PlanDetailedExitCode");
             output.FullLog.Should()
-                  .Contain("apply -no-color -auto-approve");
+                  .Contain("apply -auto-approve");
 
             output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
             output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();

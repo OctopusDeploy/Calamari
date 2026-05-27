@@ -42,6 +42,8 @@ namespace Calamari.Kubernetes
         public const string ServerSideApplyEnabled = "Octopus.Action.Kubernetes.ServerSideApply.Enabled";
         public const string ServerSideApplyForceConflicts = "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts";
 
+        public const string AppliedResources = "Octopus.Action.Kubernetes.AppliedResources";
+
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
