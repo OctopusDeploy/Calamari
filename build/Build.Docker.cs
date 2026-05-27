@@ -35,7 +35,7 @@ public partial class Build
                                DockerTasks.DockerBuildxBuild(settings =>
                                                              {
                                                                  settings = settings
-                                                                            .AddBuildArg($"SRC_FOLDER=outputs/{flavour}", $"DEST_FOLDER={flavour}")
+                                                                            .AddBuildArg($"FLAVOUR={flavour}")
                                                                             .SetPlatform(dockerBuildPlatform)
                                                                             .SetTag(tag)
                                                                             .SetFile(dockerFile)
