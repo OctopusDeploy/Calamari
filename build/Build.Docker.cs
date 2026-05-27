@@ -18,6 +18,9 @@ public partial class Build
 
                           foreach (var flavour in flavours)
                           {
+                              var compressedArtifactPath = KnownPaths.OutputsDirectory / $"{flavour}.zip";
+                              compressedArtifactPath.UncompressTo(KnownPaths.OutputsDirectory / flavour);
+
                               //Rename any `linux-x64` folders to `linux-amd64`
                               Directory.Move(KnownPaths.OutputsDirectory / flavour / "linux-x64",
                                              KnownPaths.OutputsDirectory / flavour / "linux-amd64");
