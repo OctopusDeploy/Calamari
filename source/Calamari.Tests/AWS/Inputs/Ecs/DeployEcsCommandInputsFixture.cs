@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Inputs.Ecs;
@@ -520,6 +519,8 @@ public class DeployEcsCommandInputsFixture
             { AwsSpecialVariables.Ecs.Deploy.SubnetIds, """
                                                         ["subnet-0650cd8a2119e8abc"]
                                                         """},
+            
+            {AwsSpecialVariables.Ecs.Deploy.Containers, """[{"containerName":"sample-container","containerImageReference":{"referenceId":"547c5091-b891-4bb2-a582-78489bd9b18c","imageName":"#{Octopus.Action.Package[nginx].Image}","feedId":"Feeds-1001"},"repositoryAuthentication":{"type":"default"},"containerPortMappings":[{"containerPort":80,"protocol":"tcp"}],"essential":"True","environmentFiles":[],"environmentVariables":[],"networkSettings":{"disableNetworking":false,"dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"False","mountPoints":[],"volumeFrom":[]},"containerLogging":{"type":"manual","logDriver":"none","logOptions":[]},"firelensConfiguration":{"type":"disabled"},"dockerLabels":[],"healthCheck":{"command":[]},"dependencies":[],"ulimits":[]}]"""}
 
 
             
