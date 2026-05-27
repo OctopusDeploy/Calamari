@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -70,16 +69,12 @@ namespace Calamari.Terraform.Behaviours
         static IEnumerable<string> GetOutputArgs(RunningDeployment deployment)
         {
             yield return "output";
-            if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
-                yield return "-no-color";
             yield return "-json";
         }
 
         static IEnumerable<string> GetApplyArgs(RunningDeployment deployment, TerraformCliExecutor cli)
         {
             yield return "apply";
-            if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
-                yield return "-no-color";
             yield return "-auto-approve";
             yield return cli.TerraformVariableFiles;
             yield return cli.ActionParams;
