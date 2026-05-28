@@ -150,6 +150,159 @@ namespace Calamari.Tests.ArgoCD
             AssertPullRequestCreatedServiceMessage(pullRequestCreatedServiceMessages, pushResult2);
         }
 
+        [Test]
+        public void WriteManifestUpdateOutput_SingleItems_WritesAllOutputVariables()
+        {
+            // Arrange
+            var gateways = new[] { "gateway-1" };
+            var gitRepos = new[] { "https://github.com/org/repo" };
+            var totalApps = new[] { (QualifiedApplicationName, 3, 2) };
+            var updatedApps = new[] { (QualifiedApplicationName, 2) };
+
+            // Act
+            writer.WriteManifestUpdateOutput(gateways, gitRepos, totalApps, updatedApps);
+
+            // Assert
+            using var _ = new AssertionScope();
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+
+            serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1");
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be(QualifiedApplicationName.ToString());
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("3");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("2");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(QualifiedApplicationName.ToString());
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("2");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().BeNull();
+        }
+
+        [Test]
+        public void WriteManifestUpdateOutput_MultipleItems_WritesCommaSeparatedValues()
+        {
+            // Arrange
+            var gateways = new[] { "gateway-1", "gateway-2" };
+            var gitRepos = new[] { "https://github.com/org/repo-a", "https://github.com/org/repo-b" };
+            var app2 = QualifiedApplicationName.Create("OtherApp", "argocd");
+            var totalApps = new[]
+            {
+                (QualifiedApplicationName, 3, 2),
+                (app2, 1, 1),
+            };
+            var updatedApps = new[]
+            {
+                (QualifiedApplicationName, 2),
+                (app2, 1),
+            };
+
+            // Act
+            writer.WriteManifestUpdateOutput(gateways, gitRepos, totalApps, updatedApps);
+
+            // Assert
+            using var _ = new AssertionScope();
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+
+            serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1, gateway-2");
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo-a, https://github.com/org/repo-b");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("3, 1");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("2, 1");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("2, 1");
+        }
+
+        [Test]
+        public void WriteManifestUpdateOutput_EmptyCollections_WritesEmptyValues()
+        {
+            // Act
+            writer.WriteManifestUpdateOutput([], [], [], []);
+
+            // Assert
+            using var _ = new AssertionScope();
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+
+            serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().BeEmpty();
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().BeEmpty();
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().BeEmpty();
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().BeEmpty();
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().BeEmpty();
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().BeEmpty();
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().BeEmpty();
+        }
+
+        [Test]
+        public void WriteImageUpdateOutput_SingleItems_WritesAllOutputVariablesIncludingUpdatedImages()
+        {
+            // Arrange
+            var gateways = new[] { "gateway-1" };
+            var gitRepos = new[] { "https://github.com/org/repo" };
+            var totalApps = new[] { (QualifiedApplicationName, 3, 2) };
+            var updatedApps = new[] { (QualifiedApplicationName, 2) };
+            const int imagesUpdatedCount = 5;
+
+            // Act
+            writer.WriteImageUpdateOutput(gateways, gitRepos, totalApps, updatedApps, imagesUpdatedCount);
+
+            // Assert
+            using var _ = new AssertionScope();
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+
+            serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1");
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be(QualifiedApplicationName.ToString());
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("3");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("2");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(QualifiedApplicationName.ToString());
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("2");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be("5");
+        }
+
+        [Test]
+        public void WriteImageUpdateOutput_MultipleItems_WritesCommaSeparatedValues()
+        {
+            // Arrange
+            var gateways = new[] { "gateway-1", "gateway-2" };
+            var gitRepos = new[] { "https://github.com/org/repo-a", "https://github.com/org/repo-b" };
+            var app2 = QualifiedApplicationName.Create("OtherApp", "argocd");
+            var totalApps = new[]
+            {
+                (QualifiedApplicationName, 4, 3),
+                (app2, 2, 1),
+            };
+            var updatedApps = new[]
+            {
+                (QualifiedApplicationName, 3),
+                (app2, 1),
+            };
+            const int imagesUpdatedCount = 4;
+
+            // Act
+            writer.WriteImageUpdateOutput(gateways, gitRepos, totalApps, updatedApps, imagesUpdatedCount);
+
+            // Assert
+            using var _ = new AssertionScope();
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+
+            serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1, gateway-2");
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo-a, https://github.com/org/repo-b");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("4, 2");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("3, 1");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("3, 1");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be("4");
+        }
+
+        [Test]
+        public void WriteImageUpdateOutput_ZeroImagesUpdated_WritesZeroForUpdatedImages()
+        {
+            // Act
+            writer.WriteImageUpdateOutput([], [], [], [], 0);
+
+            // Assert
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be("0");
+        }
+
         //Zero = No (but NO COMMIT is part of the forbidden words list)
         static void AssertZeroCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
