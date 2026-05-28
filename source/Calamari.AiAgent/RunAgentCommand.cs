@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Calamari.AiAgent.Behaviours;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 
@@ -9,7 +10,7 @@ namespace Calamari.AiAgent
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            yield break;
+            yield return resolver.Create<InvokeAgentBehaviour>();
         }
     }
 }
