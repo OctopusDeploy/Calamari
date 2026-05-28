@@ -83,7 +83,7 @@ public sealed class EcsDeployTemplate : Stack
             ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault(bool.Parse),
             
             Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => null),
-            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(s => [s], () => null),
+            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(input => input.Split(',').Select(s => s.Trim()).ToArray(), () => null),
             
             ResourceRequirements = c.ParseResourceRequirements(),
             DockerLabels = c.ParseDockerLabels(),
