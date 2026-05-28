@@ -17,9 +17,9 @@ public class RepositoryAdapter
         this.repositoryUpdater = repositoryUpdater;
     }
 
-    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
+    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater, bool requiresPullRequest)
     {
-        using var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision);
+        using var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision, requiresPullRequest);
         var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
         
         if (filesUpdated.HasChanges())

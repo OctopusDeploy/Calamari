@@ -59,7 +59,7 @@ public class ApplicationSourceUpdater
         
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory, pathOverrideFromAnnotation);
 
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater, deploymentConfig.CommitParameters.RequiresPr);
         
         outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
                                                             applicationFromYaml.Metadata.Name,

@@ -89,8 +89,12 @@ public class CommitToGitCommand : Command
 
         var deployment = new RunningDeployment(pathToPackage, variables);
         var repositoryConfig = configFactory.CreateRepositoryConfig(deployment, customPropertiesLoader);
-        var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorPullRequestClientResolver, new SystemClock());
-        using var clonedRepository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), repositoryConfig.GitConnection);
+        var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, new SystemClock());
+
+        var repositoryName = UniqueRepoNameGenerator.Generate();
+        using var clonedRepository = repositoryConfig.CommitParameters.RequiresPr
+            ? repositoryFactory.CloneRepository(repositoryName, repositoryConfig.GitConnection, ResolveVendorPullRequestClient(repositoryConfig.GitConnection as IHttpsGitConnection))
+            : repositoryFactory.CloneRepository(repositoryName, repositoryConfig.GitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
         var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem);
         WriteVariableScriptToFile(deployment);
@@ -107,6 +111,14 @@ public class CommitToGitCommand : Command
         var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
         deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
         return exitCode;
+    }
+
+    IGitVendorPullRequestClient ResolveVendorPullRequestClient(IHttpsGitConnection apiConnection)
+    {
+        var vendorClient = gitVendorPullRequestClientResolver.TryResolve(apiConnection, log, System.Threading.CancellationToken.None).Result;
+        return vendorClient
+               ?? throw new CommandException(
+                   $"Pull request creation is enabled but no Git vendor adapter could be resolved for '{apiConnection.Url}'.");
     }
 
     void ApplyScriptParametersOverride()

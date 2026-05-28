@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
@@ -16,6 +14,7 @@ namespace Calamari.ArgoCD.Git
     public interface IRepositoryFactory
     {
         RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection);
+        RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection, IGitVendorPullRequestClient gitVendorPullRequestClient);
     }
 
     public class RepositoryFactory : IRepositoryFactory
@@ -23,16 +22,17 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
-                                 IClock clock)
+        public RepositoryFactory(
+            ILog log,
+            ICalamariFileSystem fileSystem,
+            string repositoryParentDirectory,
+            IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             this.clock = clock;
 
             LibGit2SharpTransportRegistration.EnsureRegistered();
@@ -51,10 +51,18 @@ namespace Calamari.ArgoCD.Git
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
             fileSystem.CreateDirectory(repositoryPath);
 
-            return CheckoutGitRepository(gitConnection, repositoryPath);
+            return CheckoutGitRepository(gitConnection, repositoryPath, null);
         }
 
-        RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
+        public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection, IGitVendorPullRequestClient gitVendorPullRequestClient)
+        {
+            var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
+            fileSystem.CreateDirectory(repositoryPath);
+
+            return CheckoutGitRepository(gitConnection, repositoryPath, gitVendorPullRequestClient);
+        }
+
+        RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath, IGitVendorPullRequestClient? gitVendorPullRequestClient)
         {
             //if the branch name is head, then we just clone the default
             //if it's not head, then clone the branch immediately
@@ -91,34 +99,24 @@ namespace Calamari.ArgoCD.Git
 
             try
             {
-            //this is required to handle the issue around "HEAD"
-            var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
-            var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
+                //this is required to handle the issue around "HEAD"
+                var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
+                var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
 
-            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
+                log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
 
-            //A local branch is required such that libgit2sharp can create "tracking" data
-            // libgit2sharp does not support pushing from a detached head
-            if (repo.Branches[branchToCheckout.Value] == null)
-            {
-                repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
-            }
+                //A local branch is required such that libgit2sharp can create "tracking" data
+                // libgit2sharp does not support pushing from a detached head
+                if (repo.Branches[branchToCheckout.Value] == null)
+                {
+                    repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
+                }
 
-            LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
+                LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
             }
             catch (LibGit2SharpException e)
             {
                 throw new CommandException($"Failed to checkout branch '{gitConnection.GitReference}' in repository at {gitConnection.Url}. Error: {e.Message}", e);
-            }
-
-            //TODO(tmm): Make this function (and all callers async).
-            var gitVendorApiAdapter = gitConnection is HttpsGitConnection httpsGitConnection
-                ? gitVendorPullRequestClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
-                : null;
-
-            if (gitConnection is SshKeyGitConnection)
-            {
-                log.Verbose("Git is using SSH authentication, Git vendor functionality such as PR creation will not be available");
             }
 
             return new RepositoryWrapper(repo,
@@ -126,7 +124,7 @@ namespace Calamari.ArgoCD.Git
                                          checkoutPath,
                                          log,
                                          gitConnection,
-                                         gitVendorApiAdapter,
+                                         gitVendorPullRequestClient,
                                          clock);
         }
     }

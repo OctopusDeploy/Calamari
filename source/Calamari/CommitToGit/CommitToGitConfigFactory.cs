@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Amazon.ECS.Model;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
@@ -43,6 +42,13 @@ namespace Calamari.CommitToGit
                                             SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString), ssh.KnownHosts.Select(kh => new SshKnownHost(kh.Host, kh.PublicKey)).ToArray()),
                                             _ => throw new NotSupportedException($"An unrecognised credential type '{properties.GitCredential.GetType().Name}' was found for '{uriAsString}'"),
                                         };
+
+            if (requiresPullRequest && connection is not IHttpsGitConnection)
+            {
+                throw new CommandException(
+                    $"Pull request creation is enabled but no username/password credential is available for '{uriAsString}'. "
+                    + "Supply a username/password credential for this repository so the vendor API can be reached.");
+            }
 
             //Note: Octopus server removes variables containing empty strings, thus a missing property should default to an empty string.
             return new CommitToGitRepositorySettings(connection,

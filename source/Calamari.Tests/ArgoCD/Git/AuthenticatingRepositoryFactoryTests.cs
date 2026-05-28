@@ -2,7 +2,9 @@ using System;
 using System.IO;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -23,6 +25,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     protected string tempDirectory;
     protected string OriginPath => Path.Combine(tempDirectory, "origin");
     protected RepositoryFactory repositoryFactory;
+    protected IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
 
     [SetUp]
     public void Init()
@@ -32,11 +35,11 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
+        gitVendorPullRequestClientResolver = Substitute.For<IGitVendorPullRequestClientResolver>();
         repositoryFactory = new RepositoryFactory(
             log,
             fileSystem,
             tempDirectory,
-            new GitVendorPullRequestClientResolver([]),
             new SystemClock());
     }
 
@@ -56,9 +59,10 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new GitCredentialDto(httpsUrl, "", "")],
                 repositoryFactory,
-                log);
+                log,
+                gitVendorPullRequestClientResolver);
 
-            using var wrapper = factory.CloneRepository(httpsUrl, branchName.ToFriendlyName());
+            using var wrapper = factory.CloneRepository(httpsUrl, branchName.ToFriendlyName(), false);
             wrapper.Should().NotBeNull();
         }
 
@@ -69,9 +73,10 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [],
                 repositoryFactory,
-                log);
+                log,
+                gitVendorPullRequestClientResolver);
 
-            using var wrapper = factory.CloneRepository(originUrl, branchName.ToFriendlyName());
+            using var wrapper = factory.CloneRepository(originUrl, branchName.ToFriendlyName(), false);
             wrapper.Should().NotBeNull();
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
         }
@@ -83,17 +88,16 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         [Test]
         public void SshCredentialBranch_IsSelectedAndDispatchesSshKeyGitConnection()
         {
-            // Use an ssh:// URL so the new strict validation allows it, and mock the factory
-            // so no real SSH connection is attempted.
             const string sshUrl = "ssh://git@github.com/org/repo.git";
             var mockRepoFactory = Substitute.For<IRepositoryFactory>();
 
             var factory = new AuthenticatingRepositoryFactory(
                 [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", [])],
                 mockRepoFactory,
-                log);
+                log,
+                gitVendorPullRequestClientResolver);
 
-            factory.CloneRepository(sshUrl, branchName.ToFriendlyName());
+            factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), false);
 
             mockRepoFactory.Received()
                            .CloneRepository(
@@ -102,9 +106,9 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         }
 
         [Test]
-        public void HttpsCredentialTakesPriorityOverSshWhenBothMatchAnSshUrl()
+        public void HttpsAndSshForSameUrl_UsesSshForGitClone()
         {
-            AssertHttpsCredentialTakesPriorityOverSsh("ssh://git@github.com/org/repo.git");
+            AssertSshIsUsedForGitClone("ssh://git@github.com/org/repo.git");
         }
 
         [Test]
@@ -121,9 +125,10 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", knownHosts)],
                 mockRepoFactory,
-                log);
+                log,
+                gitVendorPullRequestClientResolver);
 
-            factory.CloneRepository(sshUrl, branchName.ToFriendlyName());
+            factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), false);
 
             mockRepoFactory.Received()
                            .CloneRepository(
@@ -135,6 +140,67 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
                                    && ((SshKeyGitConnection)c).KnownHosts[0].PublicKey == "AAAAB3NzaC1yc2EAAAADAQABAAABAQ=="
                                    && ((SshKeyGitConnection)c).KnownHosts[1].Host == "bitbucket.org"
                                    && ((SshKeyGitConnection)c).KnownHosts[1].PublicKey == "AAAAC3NzaC1lZDI1NTE5AAAAIA=="));
+        }
+
+        [Test]
+        public void SshOnlyWithPullRequestRequired_ThrowsCommandException()
+        {
+            const string sshUrl = "ssh://git@github.com/org/repo.git";
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+
+            var factory = new AuthenticatingRepositoryFactory(
+                [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", [])],
+                mockRepoFactory,
+                log,
+                gitVendorPullRequestClientResolver);
+
+            var act = () => factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), requiresPullRequest: true);
+
+            act.Should().Throw<CommandException>().WithMessage("*Pull request creation is enabled*");
+        }
+    }
+
+    [TestFixture]
+    public class PullRequestRequiredTests : AuthenticatingRepositoryFactoryTestBase
+    {
+        [Test]
+        public void NoCredentialMatchesUrl_ThrowsCommandException()
+        {
+            const string httpsUrl = "https://github.com/org/repo.git";
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+
+            var factory = new AuthenticatingRepositoryFactory(
+                [],
+                mockRepoFactory,
+                log,
+                gitVendorPullRequestClientResolver);
+
+            var act = () => factory.CloneRepository(httpsUrl, branchName.ToFriendlyName(), requiresPullRequest: true);
+
+            act.Should().Throw<CommandException>().WithMessage("*Pull request creation is enabled*");
+            mockRepoFactory.DidNotReceiveWithAnyArgs().CloneRepository(default, default);
+            mockRepoFactory.DidNotReceiveWithAnyArgs().CloneRepository(default, default, default);
+        }
+
+        [Test]
+        public void VendorAdapterCannotBeResolved_ThrowsCommandException()
+        {
+            const string httpsUrl = "https://example.invalid/org/repo.git";
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+            gitVendorPullRequestClientResolver
+                .TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<System.Threading.CancellationToken>())
+                .Returns((IGitVendorPullRequestClient)null);
+
+            var factory = new AuthenticatingRepositoryFactory(
+                [new GitCredentialDto(httpsUrl, "user", "pass")],
+                mockRepoFactory,
+                log,
+                gitVendorPullRequestClientResolver);
+
+            var act = () => factory.CloneRepository(httpsUrl, branchName.ToFriendlyName(), requiresPullRequest: true);
+
+            act.Should().Throw<CommandException>().WithMessage("*no Git vendor adapter could be resolved*");
+            mockRepoFactory.DidNotReceiveWithAnyArgs().CloneRepository(default, default, default);
         }
     }
 
@@ -151,40 +217,41 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new GitCredentialDto(httpsUrl, "user", "pass")],
                 repositoryFactory,
-                log);
+                log,
+                gitVendorPullRequestClientResolver);
 
             // This will fail to clone (no real repo at this URL) but we can verify it
             // falls through to anonymous because the SCP URL doesn't match the HTTPS URL
-            var act = () => factory.CloneRepository(scpUrl, "main");
+            var act = () => factory.CloneRepository(scpUrl, "main", false);
             act.Should().Throw<Exception>(); // clone failure expected
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
         }
 
         [Test]
-        public void HttpsCredentialTakesPriorityOverSshWhenBothMatchAnScpUrl()
+        public void HttpsAndSshForSameUrl_UsesSshForGitClone_ScpUrl()
         {
-            AssertHttpsCredentialTakesPriorityOverSsh("git@github.com:org/repo.git");
+            AssertSshIsUsedForGitClone("git@github.com:org/repo.git");
         }
     }
 
-    protected void AssertHttpsCredentialTakesPriorityOverSsh(string url)
+    protected void AssertSshIsUsedForGitClone(string url)
     {
         var mockRepoFactory = Substitute.For<IRepositoryFactory>();
 
-        // If there are HTTPS and SSH credentials for the same URL, HTTPS wins so API functionality works.
+        // When both kinds of credential are present for the same URL we route SSH to the git layer.
         IGitCredentialDto[] rawCredentials =
         [
             new GitCredentialDto(url, "https-user", "https-pass"),
             new SshKeyGitCredentialDto(url, "ssh-user", "private-key", [])
         ];
 
-        var factory = new AuthenticatingRepositoryFactory(rawCredentials, mockRepoFactory, log);
+        var factory = new AuthenticatingRepositoryFactory(rawCredentials, mockRepoFactory, log, gitVendorPullRequestClientResolver);
 
-        factory.CloneRepository(url, "main");
+        factory.CloneRepository(url, "main", false);
 
         mockRepoFactory.Received()
                        .CloneRepository(
                            Arg.Any<string>(),
-                           Arg.Is<IGitConnection>(c => c is HttpsGitConnection));
+                           Arg.Is<IGitConnection>(c => c is SshKeyGitConnection));
     }
 }

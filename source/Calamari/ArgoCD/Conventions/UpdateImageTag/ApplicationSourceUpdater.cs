@@ -56,7 +56,7 @@ public class ApplicationSourceUpdater
     {
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
 
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater, deploymentConfig.CommitParameters.RequiresPr);
 
         outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
                                                             applicationFromYaml.Metadata.Name,

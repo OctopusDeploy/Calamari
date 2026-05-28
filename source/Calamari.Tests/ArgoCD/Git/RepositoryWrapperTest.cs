@@ -33,7 +33,6 @@ namespace Calamari.Tests.ArgoCD.Git
 
         IGitConnection gitConnection;
         RepositoryWrapper repository;
-        IGitVendorPullRequestClientResolver gitVendorAgnosticPullRequestClientFactory = Substitute.For<IGitVendorPullRequestClientResolver>();
         IGitVendorPullRequestClient gitVendorPullRequestClient = Substitute.For<IGitVendorPullRequestClient>();
 
         [SetUp]
@@ -52,11 +51,10 @@ namespace Calamari.Tests.ArgoCD.Git
                                                   Arg.Any<GitBranchName>(),
                                                   Arg.Any<CancellationToken>())
                                .Returns(new PullRequest("title", 1, "url"));
-            gitVendorAgnosticPullRequestClientFactory.TryResolve(Arg.Any<HttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
-            
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
+
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new SystemClock());
             gitConnection = new HttpsGitConnection(null, null, OriginPath, branchName);
-            repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
+            repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection, gitVendorPullRequestClient);
         }
 
         [TearDown]
@@ -163,8 +161,8 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin.ApplyTag("1.0.0", bareOrigin.Head.Tip.Sha);
 
             gitConnection = new HttpsGitConnection(null, null, OriginPath, GitReference.CreateFromString("1.0.0"));
-            
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
+
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new SystemClock());
             var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
 
             act.Should()

@@ -15,6 +15,8 @@ namespace Calamari.Tests.CommitToGit;
 [TestFixture]
 public class CommitToGitConfigFactoryTests
 {
+    const string RepoUrl = "https://example.invalid/repo.git";
+
     INonSensitiveVariables nonSensitiveVariables;
     IVariables variables;
     ICustomPropertiesLoader loader;
@@ -28,7 +30,7 @@ public class CommitToGitConfigFactoryTests
         loader = Substitute.For<ICustomPropertiesLoader>();
         factory = new CommitToGitConfigFactory(nonSensitiveVariables);
 
-        variables.Get(SpecialVariables.Action.Git.Url).Returns("https://example.invalid/repo.git");
+        variables.Get(SpecialVariables.Action.Git.Url).Returns(RepoUrl);
         variables.Get(SpecialVariables.Action.Git.Reference).Returns("refs/heads/main");
         nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Action.Git.CommitMessageSummary)
                              .Returns("summary");
@@ -40,7 +42,7 @@ public class CommitToGitConfigFactoryTests
     public void CreateRepositoryConfig_UsesUsernameAndPasswordFromLoadedProperties()
     {
         loader.Load<CommitToGitCustomPropertiesDto>()
-              .Returns(new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto("MyCred", "https://example.invalid/repo.git", "user-from-file", "pwd-from-file")));
+              .Returns(new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto("MyCred", RepoUrl, "user-from-file", "pwd-from-file")));
 
         var deployment = new RunningDeployment(null, variables);
 
@@ -50,7 +52,48 @@ public class CommitToGitConfigFactoryTests
         httpsGitConnection.Should().NotBeNull();
         httpsGitConnection!.Username.Should().Be("user-from-file");
         httpsGitConnection.Password.Should().Be("pwd-from-file");
-        httpsGitConnection.Uri.Value.Should().Be(new Uri("https://example.invalid/repo.git"));
+        httpsGitConnection.Uri.Value.Should().Be(new Uri(RepoUrl));
+    }
+
+    [Test]
+    public void SshGitCredential_ProducesSshKeyGitConnection()
+    {
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(new SshKeyGitCredentialDto("SshCred", RepoUrl, "git", "private-key", [])));
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var config = factory.CreateRepositoryConfig(deployment, loader);
+
+        config.GitConnection.Should().BeOfType<SshKeyGitConnection>();
+    }
+
+    [Test]
+    public void PullRequestRequired_SshOnly_Throws()
+    {
+        variables.GetFlag(SpecialVariables.Action.Git.PullRequest.Create).Returns(true);
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(new SshKeyGitCredentialDto("SshCred", RepoUrl, "git", "private-key", [])));
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var act = () => factory.CreateRepositoryConfig(deployment, loader);
+
+        act.Should().Throw<CommandException>().WithMessage("*Pull request creation is enabled*");
+    }
+
+    [Test]
+    public void PullRequestRequired_HttpsGitCredential_Succeeds()
+    {
+        variables.GetFlag(SpecialVariables.Action.Git.PullRequest.Create).Returns(true);
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto("MyCred", RepoUrl, "u", "p")));
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var config = factory.CreateRepositoryConfig(deployment, loader);
+
+        config.GitConnection.Should().BeOfType<HttpsGitConnection>();
     }
 
     [Test]

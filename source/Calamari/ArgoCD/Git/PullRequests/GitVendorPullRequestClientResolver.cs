@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,10 +9,10 @@ namespace Calamari.ArgoCD.Git.PullRequests
 {
     public interface IGitVendorPullRequestClientResolver
     {
-        Task<IGitVendorPullRequestClient> TryResolve(IHttpsGitConnection repositoryConnection, ILog log,
-                                                     CancellationToken cancellationToken);
+        Task<IGitVendorPullRequestClient?> TryResolve(IHttpsGitConnection repositoryConnection, ILog log,
+                                                      CancellationToken cancellationToken);
     }
-    
+
     public class GitVendorPullRequestClientResolver: IGitVendorPullRequestClientResolver
     {
         readonly IEnumerable<IGitVendorPullRequestClientFactory> clientFactories;
@@ -21,7 +21,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
         {
             this.clientFactories = clientFactories;
         }
- 
+
         public async Task<IGitVendorPullRequestClient?> TryResolve(IHttpsGitConnection repositoryConnection, ILog log,
                                                                    CancellationToken cancellationToken)
         {
