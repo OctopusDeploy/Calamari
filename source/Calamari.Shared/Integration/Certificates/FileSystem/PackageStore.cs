@@ -71,12 +71,21 @@ namespace Calamari.Integration.FileSystem
         {
             fileSystem.EnsureDirectoryExists(GetPackagesDirectory());
 
-            var zipPackages =
+            var allMatchingPackages =
                 from filePath in PackageFiles(packageId)
                 let zip = PackageMetadata(filePath)
-                where zip != null && string.Equals(zip.PackageId, packageId, StringComparison.OrdinalIgnoreCase) && zip.Version.CompareTo(version) <= 0
-                orderby zip.Version descending
-                select new {zip, filePath};
+                where zip != null && string.Equals(zip.PackageId, packageId, StringComparison.OrdinalIgnoreCase)
+                select new { zip, filePath };
+
+            // For SemVer versions, find packages with version <= target ordered by version descending (closest lower version first).
+            // For non-SemVer versions (Docker tags, build numbers etc.) SemVer comparison is meaningless, so fall back to
+            // ordering by file creation time — the most recently cached package is the best delta candidate.
+            var zipPackages = version.Format == VersionFormat.Semver
+                ? allMatchingPackages
+                    .Where(x => x.zip.Version.CompareTo(version) <= 0)
+                    .OrderByDescending(x => x.zip.Version)
+                : allMatchingPackages
+                    .OrderByDescending(x => fileSystem.GetCreationTime(x.filePath));
 
             return
                 from zipPackage in zipPackages.Take(take)
