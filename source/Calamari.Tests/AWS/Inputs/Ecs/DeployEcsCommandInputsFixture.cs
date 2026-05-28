@@ -139,19 +139,6 @@ public class DeployEcsCommandInputsFixture
     }
 
     [Test]
-    public void CfStackArn_ReturnsCorrectlyFormattedArnForStackName()
-    {
-        var variables = MinimumRequiredVariableSet();
-        const string expectedStackName = "MyGeneratedStack";
-        fakeStackNameGenerator.Generate(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(expectedStackName);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
-        
-        var stackArn = inputs.CfStackArn;
-        
-        stackArn.Value.Should().EndWith(expectedStackName);
-    }
-
-    [Test]
     [TestCase(true)]
     [TestCase(false)]
     public void ServiceName_ReturnsServiceTaskNameValueWithPrefix(bool useExpression)
@@ -174,10 +161,24 @@ public class DeployEcsCommandInputsFixture
         const string expectedServiceTaskName = "MyNewEcsServiceTask";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
         var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
-        
+
         var taskName = inputs.TaskName;
-        
+
         taskName.Should().Be("TaskDefinitionmyNewEcsServiceTask");
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void LogGroupName_ReturnsServiceTaskNameValueWithPrefix(bool useExpression)
+    {
+        const string expectedServiceTaskName = "MyNewEcsServiceTask";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var logGroupName = inputs.LogGroupName;
+
+        logGroupName.Should().Be("AwsLogGroupmyNewEcsServiceTask");
     }
 
     [Test]

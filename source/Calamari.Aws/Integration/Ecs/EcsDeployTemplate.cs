@@ -2,7 +2,10 @@ using System;
 using System.Linq;
 using Amazon.CDK;
 using Amazon.CDK.AWS.ECS;
+using Amazon.CDK.AWS.Logs;
+using Calamari.Aws.Deployment;
 using Calamari.Aws.Inputs.Ecs;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Aws.Integration.Ecs;
 
@@ -65,6 +68,7 @@ public sealed class EcsDeployTemplate : Stack
                                                     Default = commandInputs.TaskRole
                                                 });
 
+        
         var containers = commandInputs.Containers.Select(c => new CfnTaskDefinition.ContainerDefinitionProperty
         {
             Name = c.ContainerName,
@@ -100,9 +104,7 @@ public sealed class EcsDeployTemplate : Stack
             FirelensConfiguration = c.ParseFireLensConfiguration(),
             
             Environment = c.ParseEnvironmentVariables(),
-            Secrets = c.ParseSecrets(),
-            
-            
+            Secrets = c.ParseSecrets()
             
             // SPF referenced these properties but never set them.
             // Due to TS vs. CS SDK differences, we don't even mention them,
@@ -113,6 +115,24 @@ public sealed class EcsDeployTemplate : Stack
             // DockerSecurityOptions = null 
             
         }).ToArray();
+
+        if (commandInputs.RequiresLogGroup)
+        {
+            var logGroupNameParam = new CfnParameter(this,
+                                                    "LogGroupName",
+                                                    new CfnParameterProps
+                                                    {
+                                                        Type = "String",
+                                                        Default = $"/ecs/{commandInputs.ServiceTaskName}"
+                                                    });
+
+            _ = new CfnLogGroup(this,
+                               commandInputs.LogGroupName,
+                               new CfnLogGroupProps
+                               {
+                                   LogGroupName = logGroupNameParam.ValueAsString
+                               });
+        }
 
         var taskDefinition = new CfnTaskDefinition(this,
                                                    commandInputs.TaskName,

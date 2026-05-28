@@ -132,6 +132,8 @@ public class DeployEcsCommandInputs
     public string TaskName => $"TaskDefinition{variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName).CamelCase()}";
 
     public string FallbackTaskExecutionRoleName => $"TaskExecutionRole{variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName).CamelCase()}";
+
+    public string LogGroupName => $"AwsLogGroup{variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName).CamelCase()}";
 #pragma warning restore CS0618 // Type or member is obsolete
 }
 
