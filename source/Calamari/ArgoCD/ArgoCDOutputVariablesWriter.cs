@@ -26,7 +26,7 @@ namespace Calamari.ArgoCD
 
         public void WriteSourceUpdateResultOutputWhenPushResultExists(
             string gatewayName,
-            string applicationName,
+            QualifiedApplicationName applicationName,
             int sourceIndex,
             SourceUpdateResult sourceUpdateResult)
         {
@@ -39,7 +39,7 @@ namespace Calamari.ArgoCD
             var appSourceVariables = SpecialVariables.ArgoCD.Output
                                                      .Actions()
                                                      .ArgoCDGateways(gatewayName)
-                                                     .Applications(applicationName)
+                                                     .Applications(applicationName.Value)
                                                      .Sources(sourceIndex);
 
             log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitSha, pushResult.CommitSha);
@@ -91,8 +91,8 @@ namespace Calamari.ArgoCD
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,
                                            IEnumerable<string> gitRepos,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts,
+                                           IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
+                                           IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts,
                                            int imagesUpdatedCount)
         {
             WriteGatewayIds(gateways);
@@ -105,8 +105,8 @@ namespace Calamari.ArgoCD
 
         public void WriteManifestUpdateOutput(IEnumerable<string> gateways,
                                               IEnumerable<string> gitRepos,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts)
+                                              IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
+                                              IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts)
         {
             WriteGatewayIds(gateways);
             WriteGitUris(gitRepos);
@@ -114,7 +114,7 @@ namespace Calamari.ArgoCD
             WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
         }
 
-        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> matchingApplicationsWithSourceCounts)
+        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> matchingApplicationsWithSourceCounts)
         {
             var totalApps = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.ApplicationName));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
@@ -126,7 +126,7 @@ namespace Calamari.ArgoCD
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationMatchingSourceCounts, matchingSourceCounts);
         }
 
-        void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
+        void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
         {
             var updatedApps = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.ApplicationName));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);

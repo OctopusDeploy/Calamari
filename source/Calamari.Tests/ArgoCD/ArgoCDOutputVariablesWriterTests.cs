@@ -2,6 +2,7 @@ using System;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
@@ -19,6 +20,8 @@ namespace Calamari.Tests.ArgoCD
 
         const string GatewayName = "TestGateway";
         const string ApplicationName = "TestApp";
+        const string ApplicationNamespace = "argocd";
+        static readonly QualifiedApplicationName QualifiedApplicationName = QualifiedApplicationName.Create(ApplicationName, ApplicationNamespace);
         const string CommitSha = "1234567890abcdef1234567890abcdef12345678";
         const string ShortSha = "1234567";
         static readonly DateTimeOffset Timestamp = DateTimeOffset.UtcNow;
@@ -43,7 +46,7 @@ namespace Calamari.Tests.ArgoCD
             var sourceUpdateResult = new SourceUpdateResult([], null, [], []);
 
             // Act
-            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, sourceIndex, sourceUpdateResult);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, QualifiedApplicationName, sourceIndex, sourceUpdateResult);
 
             // Assert
             using var _ = new AssertionScope();
@@ -65,7 +68,7 @@ namespace Calamari.Tests.ArgoCD
             var sourceUpdateResult = new SourceUpdateResult([], pullResult, [], []);
 
             // Act
-            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, sourceIndex, sourceUpdateResult);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, QualifiedApplicationName, sourceIndex, sourceUpdateResult);
 
             // Assert
             using var _ = new AssertionScope();
@@ -94,7 +97,7 @@ namespace Calamari.Tests.ArgoCD
             var sourceUpdateResult = new SourceUpdateResult([], pullRequestPushResult, [], []);
 
             // Act
-            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, sourceIndex, sourceUpdateResult);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, QualifiedApplicationName, sourceIndex, sourceUpdateResult);
 
             // Assert
             using var _ = new AssertionScope();
@@ -128,8 +131,8 @@ namespace Calamari.Tests.ArgoCD
             var sourceUpdateResult2 = new SourceUpdateResult([], pushResult2, [], []);
 
             // Act
-            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, 0, sourceUpdateResult1);
-            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, ApplicationName, 1, sourceUpdateResult2);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, QualifiedApplicationName, 0, sourceUpdateResult1);
+            writer.WriteSourceUpdateResultOutputWhenPushResultExists(GatewayName, QualifiedApplicationName, 1, sourceUpdateResult2);
 
             // Assert
             using var _ = new AssertionScope();
@@ -150,16 +153,16 @@ namespace Calamari.Tests.ArgoCD
         //Zero = No (but NO COMMIT is part of the forbidden words list)
         static void AssertZeroCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitSha").Should().BeNull();
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].ShortSha").Should().BeNull();
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitTimestamp").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].CommitSha").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].ShortSha").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].CommitTimestamp").Should().BeNull();
         }
 
         static void AssertCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex, string commitSha = CommitSha, string shortSha = ShortSha)
         {
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitSha").Should().Be(commitSha);
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].ShortSha").Should().Be(shortSha);
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitTimestamp").Should().Be(Timestamp.ToString("o"));
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].CommitSha").Should().Be(commitSha);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].ShortSha").Should().Be(shortSha);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].CommitTimestamp").Should().Be(Timestamp.ToString("o"));
         }
 
         static void AssertNoPullRequestVariables(ServiceMessage[] serviceMessages, int sourceIndex)
@@ -171,9 +174,9 @@ namespace Calamari.Tests.ArgoCD
 
         static void AssertPullRequestVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].PullRequest.Title").Should().Be(PrTitle);
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].PullRequest.Number").Should().Be(PrNumber.ToString());
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].PullRequest.Url").Should().Be(PrUrl);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].PullRequest.Title").Should().Be(PrTitle);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].PullRequest.Number").Should().Be(PrNumber.ToString());
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{QualifiedApplicationName}].Source[{sourceIndex}].PullRequest.Url").Should().Be(PrUrl);
         }
 
         static void AssertPullRequestCreatedServiceMessage(ServiceMessage[] serviceMessages, PullRequestPushResult pushResult)
