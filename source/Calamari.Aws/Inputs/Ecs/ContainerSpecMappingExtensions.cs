@@ -40,12 +40,17 @@ public static class ContainerSpecMappingExtensions
 
     }
 
-    public static Dictionary<string, string> ParseEnvironmentVariables(this ContainerSpec containerSpec)
+    public static CfnTaskDefinition.KeyValuePairProperty[] ParseEnvironmentVariables(this ContainerSpec containerSpec)
     {
         return containerSpec.EnvironmentVariables
                             .Where(tkp => tkp.Type == KeyValueType.Plain)
                             .GroupBy(kvp => kvp.Key)
-                            .ToDictionary(g => g.Key, g => g.Last().Value);
+                            .Select(g => new CfnTaskDefinition.KeyValuePairProperty
+                            {
+                                Name = g.Key,
+                                Value = g.Last().Value,
+                            })
+                            .ToArray();
     }
 
     public static CfnTaskDefinition.PortMappingProperty[] ParsePortMappings(this ContainerSpec containerSpec)
@@ -104,7 +109,7 @@ public static class ContainerSpecMappingExtensions
             }).ToArray();
         }
 
-        return [];
+        return null;
     }
 
     public static CfnTaskDefinition.MountPointProperty[] ParseMountPoints(this ContainerSpec containerSpec)
@@ -120,7 +125,7 @@ public static class ContainerSpecMappingExtensions
                          .ToArray();
         }
 
-        return [];
+        return null;
     }
 
     public static CfnTaskDefinition.ContainerDependencyProperty[] ParseDependencies(this ContainerSpec containerSpec)
@@ -134,7 +139,7 @@ public static class ContainerSpecMappingExtensions
             }).ToArray();
         }
 
-        return [];
+        return null;
     }
     
     public static CfnTaskDefinition.VolumeFromProperty[] ParseVolumesFrom(this ContainerSpec containerSpec)
@@ -236,7 +241,7 @@ public static class ContainerSpecMappingExtensions
 
     public static CfnTaskDefinition.SecretProperty[] ParseSecrets(this ContainerSpec containerSpec)
     {
-        return containerSpec.EnvironmentVariables
+        var secrets =  containerSpec.EnvironmentVariables
                             .Where(tkp => tkp.Type == KeyValueType.Secret)
                             .GroupBy(kvp => kvp.Key) // Dedupe
                             .Select(g => new CfnTaskDefinition.SecretProperty()
@@ -245,5 +250,7 @@ public static class ContainerSpecMappingExtensions
                                 ValueFrom = g.Last().Value
                             })
                             .ToArray();
+        
+        return secrets.Length > 0 ? secrets : null;
     }
 }

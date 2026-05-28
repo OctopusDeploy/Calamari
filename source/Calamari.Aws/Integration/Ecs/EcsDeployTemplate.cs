@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using Amazon.CDK;
 using Amazon.CDK.AWS.ECS;
-using Amazon.CDK.AWS.IAM;
 using Calamari.Aws.Inputs.Ecs;
 
 namespace Calamari.Aws.Integration.Ecs;
@@ -50,7 +49,21 @@ public sealed class EcsDeployTemplate : Stack
                                                Default = commandInputs.Memory
                                            });
 
-        var executionRoleRef = commandInputs.MapTaskExecutionRoleArn(this);
+        var executionRoleArnParam = new CfnParameter(this,
+                                                     "ExecutionRoleArn",
+                                                     new CfnParameterProps
+                                                     {
+                                                         Type = "String",
+                                                         Default = commandInputs.MapTaskExecutionRoleArn(this)
+                                                     });
+
+        var taskRoleArnParam = new CfnParameter(this,
+                                                "TaskRole",
+                                                new CfnParameterProps
+                                                {
+                                                    Type = "String",
+                                                    Default = commandInputs.TaskRole
+                                                });
 
         var containers = commandInputs.Containers.Select(c => new CfnTaskDefinition.ContainerDefinitionProperty
         {
@@ -69,8 +82,8 @@ public sealed class EcsDeployTemplate : Stack
             DnsSearchDomains = c.NetworkSettings.DnsSearchDomains.ToArray(),
             ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault(bool.Parse),
             
-            Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => []),
-            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(s => [s], () => []),
+            Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => null),
+            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(s => [s], () => null),
             
             ResourceRequirements = c.ParseResourceRequirements(),
             DockerLabels = c.ParseDockerLabels(),
@@ -85,13 +98,17 @@ public sealed class EcsDeployTemplate : Stack
             LogConfiguration = c.ParseLogConfiguration(),
             EnvironmentFiles = c.ParseEnvironmentFiles(),
             FirelensConfiguration = c.ParseFireLensConfiguration(),
-      
+            
             Environment = c.ParseEnvironmentVariables(),
             Secrets = c.ParseSecrets(),
             
-            Privileged = false, // SPF never set value for this property, so we use default
-            Links = [], // SPF never set value for this property
-            DockerSecurityOptions = [] // SPF never set value for this property
+            // SPF referenced these properties but never set them.
+            // Due to TS vs. CS SDK differences, we don't even mention them,
+            // so they won't appear in the final template at all.
+            // They appear here for consistency
+            // Privileged = null, 
+            // Links = null, 
+            // DockerSecurityOptions = null 
             
         }).ToArray();
 
@@ -103,8 +120,8 @@ public sealed class EcsDeployTemplate : Stack
                                                        Family = taskFamilyParam.ValueAsString,
                                                        Cpu = cpuParam.ValueAsString,
                                                        Memory = memoryParam.ValueAsString,
-                                                       ExecutionRoleArn = executionRoleRef,
-                                                       TaskRoleArn = string.IsNullOrEmpty(commandInputs.TaskRole) ? null : commandInputs.TaskRole,
+                                                       ExecutionRoleArn = executionRoleArnParam.ValueAsString,
+                                                       TaskRoleArn = taskRoleArnParam.ValueAsString,
                                                        RequiresCompatibilities = [FargateLaunchType],
                                                        NetworkMode = AwsVpcNetworkMode,
                                                        RuntimePlatform = new CfnTaskDefinition.RuntimePlatformProperty

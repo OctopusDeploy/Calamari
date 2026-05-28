@@ -1,9 +1,16 @@
 using System;
 using System.Collections.Generic;
+using Amazon.CDK.AWS.ECS;
 using Calamari.Aws.Inputs.Ecs;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.Aws.Ecs;
+using ContainerDependency = Octopus.Calamari.Contracts.Aws.Ecs.ContainerDependency;
+using ContainerDependencyCondition = Octopus.Calamari.Contracts.Aws.Ecs.ContainerDependencyCondition;
+using ContainerMountPoint = Octopus.Calamari.Contracts.Aws.Ecs.ContainerMountPoint;
+using HealthCheck = Octopus.Calamari.Contracts.Aws.Ecs.HealthCheck;
+using LogDriver = Octopus.Calamari.Contracts.Aws.Ecs.LogDriver;
+using Ulimit = Octopus.Calamari.Contracts.Aws.Ecs.Ulimit;
 
 namespace Calamari.Tests.AWS.Inputs.Ecs;
 
@@ -11,13 +18,13 @@ namespace Calamari.Tests.AWS.Inputs.Ecs;
 public class ContainerSpecMappingExtensionsTests
 {
     [Test]
-    public void ParseMountPoints_WhenNoMountPoints_ReturnsEmptyArray()
+    public void ParseMountPoints_WhenNoMountPoints_ReturnsNull()
     {
         var spec = new ContainerSpec();
 
         var result = spec.ParseMountPoints();
 
-        result.Should().BeEmpty();
+        result.Should().BeNull();
     }
 
     [Test]
@@ -97,13 +104,13 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseDependencies_WhenNoDependencies_ReturnsEmptyArray()
+    public void ParseDependencies_WhenNoDependencies_ReturnsNull()
     {
         var spec = new ContainerSpec();
 
         var result = spec.ParseDependencies();
 
-        result.Should().BeEmpty();
+        result.Should().BeNull();
     }
 
     [Test]
@@ -278,8 +285,8 @@ public class ContainerSpecMappingExtensionsTests
         var result = spec.ParseEnvironmentVariables();
 
         result.Should().HaveCount(2);
-        result["LOG_LEVEL"].Should().Be("INFO");
-        result["REGION"].Should().Be("us-east-1");
+        result.Should().Contain(x => x.Name == "LOG_LEVEL" && x.Value == "INFO");
+        result.Should().Contain(x => x.Name == "REGION" && x.Value == "us-east-1");
     }
 
     [Test]
@@ -298,8 +305,8 @@ public class ContainerSpecMappingExtensionsTests
         var result = spec.ParseEnvironmentVariables();
 
         result.Should().HaveCount(2);
-        result["LOG_LEVEL"].Should().Be("INFO");
-        result["REGION"].Should().Be("us-east-1");
+        result.Should().Contain(x => x.Name == "LOG_LEVEL" && x.Value == "INFO");
+        result.Should().Contain(x => x.Name == "REGION" && x.Value == "us-east-1");
     }
 
     [Test]
@@ -317,8 +324,8 @@ public class ContainerSpecMappingExtensionsTests
         var result = spec.ParseEnvironmentVariables();
 
         result.Should().HaveCount(1);
-        result.Should().ContainKey("PLAIN_KEY").WhoseValue.Should().Be("plain-value");
-        result.Should().NotContainKey("SECRET_KEY");
+        result.Should().Contain(x => x.Name == "PLAIN_KEY" && x.Value == "plain-value");
+        result.Should().NotContain(x => x.Name =="SECRET_KEY");
     }
 
     [Test]
@@ -337,17 +344,17 @@ public class ContainerSpecMappingExtensionsTests
         var result = spec.ParseEnvironmentVariables();
 
         result.Should().HaveCount(1);
-        result["TOKEN"].Should().Be("plain-token");
+        result.Should().Contain(x => x.Name == "TOKEN" && x.Value == "plain-token");
     }
 
     [Test]
-    public void ParseSecrets_WhenNone_ReturnsEmptyArray()
+    public void ParseSecrets_WhenNone_ReturnsNull()
     {
         var spec = new ContainerSpec();
 
         var result = spec.ParseSecrets();
 
-        result.Should().BeEmpty();
+        result.Should().BeNull();
     }
 
     [Test]
@@ -533,13 +540,13 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseULimits_WhenNone_ReturnsEmptyArray()
+    public void ParseULimits_WhenNone_ReturnsNull()
     {
         var spec = new ContainerSpec();
 
         var result = spec.ParseULimits();
 
-        result.Should().BeEmpty();
+        result.Should().BeNull();
     }
 
     [Test]
