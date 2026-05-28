@@ -36,7 +36,7 @@ public class DeployEcsServiceCommand(ILog log, IVariables variables, IEcsStackNa
                                     new SetEcsOutputVariablesConvention(environment,
                                                                         inputs.CfStackName,
                                                                         inputs.ClusterName,
-                                                                        inputs.ServiceName, // TODO: Check with Sathvik about implementation
+                                                                        inputs.ServiceTaskName, 
                                                                         log)
                                 ],
                                 log).RunConventions();
