@@ -101,10 +101,12 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             var v2Path = CreatePackageWithDockerTag("main-9999");
             var v3Path = CreatePackageWithDockerTag("feature-signup-42");
 
-            // Set deterministic creation times: v2 is most recent, then v3, then v1
-            File.SetCreationTimeUtc(v1Path, DateTime.UtcNow.AddMinutes(-30));
-            File.SetCreationTimeUtc(v3Path, DateTime.UtcNow.AddMinutes(-15));
-            File.SetCreationTimeUtc(v2Path, DateTime.UtcNow.AddMinutes(-5));
+            // Set deterministic last-write times: v2 is most recent, then v3, then v1.
+            // Using SetLastWriteTimeUtc rather than SetCreationTimeUtc because creation time
+            // is read-only on Linux filesystems.
+            File.SetLastWriteTimeUtc(v1Path, DateTime.UtcNow.AddMinutes(-30));
+            File.SetLastWriteTimeUtc(v3Path, DateTime.UtcNow.AddMinutes(-15));
+            File.SetLastWriteTimeUtc(v2Path, DateTime.UtcNow.AddMinutes(-5));
 
             using (new TemporaryFile(v1Path))
             using (new TemporaryFile(v2Path))

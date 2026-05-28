@@ -85,7 +85,7 @@ namespace Calamari.Integration.FileSystem
                     .Where(x => x.zip.Version.CompareTo(version) <= 0)
                     .OrderByDescending(x => x.zip.Version)
                 : allMatchingPackages
-                    .OrderByDescending(x => fileSystem.GetCreationTime(x.filePath));
+                    .OrderByDescending(x => fileSystem.GetLastWriteTime(x.filePath));
 
             return
                 from zipPackage in zipPackages.Take(take)

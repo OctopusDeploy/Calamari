@@ -51,6 +51,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         string GetRelativePath(string fromFile, string toFile);
         Stream OpenFileExclusively(string filePath, FileMode fileMode, FileAccess fileAccess);
         DateTime GetCreationTime(string filePath);
+        DateTime GetLastWriteTime(string filePath);
         string GetFileName(string filePath);
         string GetDirectoryName(string directoryPath);
         byte[] ReadAllBytes(string filePath);

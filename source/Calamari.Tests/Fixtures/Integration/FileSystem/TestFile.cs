@@ -15,6 +15,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         public bool Exists(string path) => File.Exists(WithBase(path));
         public byte[] ReadAllBytes(string path) => File.ReadAllBytes(WithBase(path));
         public DateTime GetCreationTime(string filePath) => File.GetCreationTime(WithBase(filePath));
+        public DateTime GetLastWriteTime(string filePath) => File.GetLastWriteTime(WithBase(filePath));
         public Stream Open(string filePath, FileMode fileMode, FileAccess fileAccess, FileShare none) =>
             File.Open(WithBase(filePath), fileMode, fileAccess, none);
         
