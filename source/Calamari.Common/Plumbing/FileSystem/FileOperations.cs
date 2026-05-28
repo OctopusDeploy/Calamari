@@ -15,6 +15,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         void Move(string sourceFile, string destination);
         void SetAttributes(string path, FileAttributes normal);
         DateTime GetCreationTime(string filePath);
+        DateTime GetLastWriteTime(string filePath);
         Stream Open(string filePath, FileMode fileMode, FileAccess fileAccess, FileShare none);
     }
 
@@ -71,6 +72,11 @@ namespace Calamari.Common.Plumbing.FileSystem
         public DateTime GetCreationTime(string path)
         {
             return File.GetCreationTime(path);
+        }
+
+        public DateTime GetLastWriteTime(string path)
+        {
+            return File.GetLastWriteTime(path);
         }
 
         public Stream Open(string path, FileMode mode, FileAccess access, FileShare share)

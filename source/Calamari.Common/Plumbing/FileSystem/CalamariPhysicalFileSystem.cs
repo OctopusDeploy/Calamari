@@ -693,6 +693,11 @@ namespace Calamari.Common.Plumbing.FileSystem
             return File.GetCreationTime(filePath);
         }
 
+        public DateTime GetLastWriteTime(string filePath)
+        {
+            return File.GetLastWriteTime(filePath);
+        }
+
         public string GetFileName(string filePath)
         {
             return new FileInfo(filePath).Name;
