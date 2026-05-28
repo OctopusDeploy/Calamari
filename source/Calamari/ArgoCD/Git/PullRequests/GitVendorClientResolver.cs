@@ -11,37 +11,22 @@ namespace Calamari.ArgoCD.Git.PullRequests
     public interface IGitVendorClientResolver
     {
         /// <summary>
-        /// Resolves the always-available vendor client (Name, commit URL generation).
-        /// Returns null if no factory recognises the connection.
-        /// </summary>
-        Task<IGitVendorClient?> TryResolve(IGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
-
-        /// <summary>
         /// Resolves a pull-request-capable vendor client. Requires an <see cref="IHttpsGitConnection"/> because PR creation needs API credentials.
         /// Returns null if no factory recognises the connection.
         /// </summary>
-        Task<IGitVendorPullRequestClient?> TryResolve(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
+        Task<IGitVendorAuthenticatedClient?> TryResolve(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
     }
 
     public class GitVendorClientResolver : IGitVendorClientResolver
     {
-        readonly IEnumerable<IGitVendorPullRequestClientFactory> clientFactories;
+        readonly IEnumerable<IGitVendorClientFactory> clientFactories;
 
-        public GitVendorClientResolver(IEnumerable<IGitVendorPullRequestClientFactory> clientFactories)
+        public GitVendorClientResolver(IEnumerable<IGitVendorClientFactory> clientFactories)
         {
             this.clientFactories = clientFactories;
         }
 
-        public async Task<IGitVendorClient?> TryResolve(
-            IGitConnection repositoryConnection,
-            ILog log,
-            CancellationToken cancellationToken)
-        {
-            var factory = await ResolveFactory(repositoryConnection.Url, log, cancellationToken);
-            return factory?.Create(repositoryConnection);
-        }
-
-        public async Task<IGitVendorPullRequestClient?> TryResolve(
+        public async Task<IGitVendorAuthenticatedClient?> TryResolve(
             IHttpsGitConnection repositoryConnection,
             ILog log,
             CancellationToken cancellationToken)
@@ -52,7 +37,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
                 : await factory.CreateForPullRequests(repositoryConnection, log, cancellationToken);
         }
 
-        async Task<IGitVendorPullRequestClientFactory?> ResolveFactory(string url, ILog log, CancellationToken cancellationToken)
+        async Task<IGitVendorClientFactory?> ResolveFactory(string url, ILog log, CancellationToken cancellationToken)
         {
             // Avoid using IHttpsGitConnection.Uri here as we do not want to throw if we somehow got here without a
             // valid Uri — if we can gather confidence that this is impossible then we could remove this guard.

@@ -15,8 +15,8 @@ namespace Calamari.ArgoCD
             builder.RegisterType<DeploymentConfigFactory>().AsSelf().InstancePerLifetimeScope();
 
             builder.RegisterAssemblyTypes(GetType().Assembly)
-                   .AssignableTo<IGitVendorPullRequestClientFactory>()
-                   .As<IGitVendorPullRequestClientFactory>()
+                   .AssignableTo<IGitVendorClientFactory>()
+                   .As<IGitVendorClientFactory>()
                    .InstancePerLifetimeScope();
 
             builder.RegisterType<GitVendorClientResolver>().As<IGitVendorClientResolver>().InstancePerLifetimeScope();

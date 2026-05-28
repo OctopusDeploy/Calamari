@@ -6,7 +6,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git.PullRequests
 {
-    public interface IGitVendorPullRequestClientFactory
+    public interface IGitVendorClientFactory
     {
         string Name { get; }
 
@@ -36,6 +36,6 @@ namespace Calamari.ArgoCD.Git.PullRequests
         /// Creates a client that additionally supports pull request creation.
         /// Requires an <see cref="IHttpsGitConnection"/> because PR creation calls the vendor's HTTP API with credentials.
         /// </summary>
-        Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
+        Task<IGitVendorAuthenticatedClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
     }
 }

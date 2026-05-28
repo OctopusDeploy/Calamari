@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD.Git
             return CheckoutGitRepository(gitConnection, repositoryPath, gitVendorPullRequestClient);
         }
 
-        RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath, IGitVendorPullRequestClient? gitVendorPullRequestClient)
+        RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath, IGitVendorAuthenticatedClient? gitVendorPullRequestClient)
         {
             //if the branch name is head, then we just clone the default
             //if it's not head, then clone the branch immediately

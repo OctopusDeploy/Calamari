@@ -152,7 +152,7 @@ namespace Calamari.ArgoCD.Git
             GitBranchName currentBranchName,
             CancellationToken cancellationToken)
         {
-            if (vendorApiClient is not IGitVendorPullRequestClient vendorPullRequestClient)
+            if (vendorApiClient is not IGitVendorAuthenticatedClient vendorPullRequestClient)
             {
                 throw new CommandException("No Git provider can be resolved based on the provided repository details");
             }

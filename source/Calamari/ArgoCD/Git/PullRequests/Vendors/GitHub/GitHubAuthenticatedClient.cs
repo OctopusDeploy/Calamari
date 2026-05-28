@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,11 +6,11 @@ using Octokit;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
-    public class GitHubPullRequestClient: GitHubGitClient, IGitVendorPullRequestClient
+    public class GitHubAuthenticatedClient: GitHubGitClient, IGitVendorAuthenticatedClient
     {
         readonly IGitHubClient client;
 
-        public GitHubPullRequestClient(IGitHubClient client, IHttpsGitConnection repositoryConnection, Uri baseUrl)
+        public GitHubAuthenticatedClient(IGitHubClient client, IHttpsGitConnection repositoryConnection, Uri baseUrl)
             : base(repositoryConnection.Uri.Value, baseUrl)
         {
             this.client = client;

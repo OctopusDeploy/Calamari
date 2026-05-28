@@ -7,7 +7,7 @@ using NGitLab;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
 {
-    public class GitLabPullRequestClientFactory(SelfHostedGitLabInspector selfHostedGitLabInspector) : IGitVendorPullRequestClientFactory
+    public class GitLabClientFactory(SelfHostedGitLabInspector selfHostedGitLabInspector) : IGitVendorClientFactory
     {
         const string CloudHost = "https://gitlab.com";
 
@@ -27,14 +27,14 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
             return new GitLabGitClient(repositoryUri, ResolveBaseUrl(repositoryUri));
         }
 
-        public async Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection,
+        public async Task<IGitVendorAuthenticatedClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection,
                                                                              ILog log,
                                                                              CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             var baseUrl = ResolveBaseUrl(repositoryConnection.Uri.Value);
             var apiClient = new GitLabClient(baseUrl.AbsoluteUri.TrimEnd('/'), repositoryConnection.Password);
-            return new GitLabPullRequestClient(apiClient, repositoryConnection, baseUrl);
+            return new GitLabAuthenticatedClient(apiClient, repositoryConnection, baseUrl);
         }
 
         Uri ResolveBaseUrl(Uri repositoryUri)

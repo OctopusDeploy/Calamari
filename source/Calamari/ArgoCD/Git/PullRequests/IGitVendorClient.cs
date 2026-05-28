@@ -15,8 +15,7 @@ namespace Calamari.ArgoCD.Git.PullRequests
         string GenerateCommitUrl(string commit);
     }
 
-    // TODO: rename to IAuthenticatedGitVendorClient
-    public interface IGitVendorPullRequestClient : IGitVendorClient
+    public interface IGitVendorAuthenticatedClient : IGitVendorClient
     {
         Task<PullRequest> CreatePullRequest(string pullRequestTitle,
                                             string body,

@@ -10,7 +10,7 @@ using Octokit.Internal;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
-    public class GitHubPullRequestClientFactory: IGitVendorPullRequestClientFactory
+    public class GitHubClientFactory: IGitVendorClientFactory
     {
         static readonly Uri BaseUrl = new Uri("https://github.com/");
 
@@ -21,13 +21,13 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
         public IGitVendorClient Create(IGitConnection repositoryConnection)
             => new GitHubGitClient(repositoryConnection.ResolveUri(), BaseUrl);
 
-        public async Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
+        public async Task<IGitVendorAuthenticatedClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
 
             var credentials = new Credentials(repositoryConnection.Username, repositoryConnection.Password);
             var client = CreateGitHubClient(credentials);
-            return new GitHubPullRequestClient(client, repositoryConnection, BaseUrl);
+            return new GitHubAuthenticatedClient(client, repositoryConnection, BaseUrl);
         }
 
         IGitHubClient CreateGitHubClient(Credentials? credentials)

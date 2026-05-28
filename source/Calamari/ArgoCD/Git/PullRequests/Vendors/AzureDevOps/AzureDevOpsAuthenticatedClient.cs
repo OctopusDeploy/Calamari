@@ -9,11 +9,11 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
-	public class AzureDevOpsPullRequestClient : AzureDevOpsGitClient, IGitVendorPullRequestClient
+	public class AzureDevOpsAuthenticatedClient : AzureDevOpsGitClient, IGitVendorAuthenticatedClient
 	{
 		readonly IHttpsGitConnection repositoryConnection;
 
-		public AzureDevOpsPullRequestClient(IHttpsGitConnection repositoryConnection)
+		public AzureDevOpsAuthenticatedClient(IHttpsGitConnection repositoryConnection)
 			: base(repositoryConnection.Uri.Value)
 		{
 			this.repositoryConnection = repositoryConnection;

@@ -5,7 +5,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 {
-    public class BitBucketPullRequestClientFactory: IGitVendorPullRequestClientFactory
+    public class BitBucketClientFactory: IGitVendorClientFactory
     {
         public string Name => BitBucketGitClient.VendorName;
         static Uri baseUrl = new Uri("https://bitbucket.org");
@@ -18,10 +18,10 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
         public IGitVendorClient Create(IGitConnection repositoryConnection)
             => new BitBucketGitClient(repositoryConnection.ResolveUri(), baseUrl);
 
-        public async Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
+        public async Task<IGitVendorAuthenticatedClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
-            return new BitBucketPullRequestClient(repositoryConnection, baseUrl);
+            return new BitBucketAuthenticatedClient(repositoryConnection, baseUrl);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
 {
     [TestFixture]
     [Category(TestCategory.RequiresOpenSsl1_1OrOpenSsl3)]
-    public class GitHubPullRequestClientTests
+    public class GitHubAuthenticatedClientTests
     {
         [Test]
         [Ignore("Test currently used for local development and debugging")]
@@ -40,7 +40,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   defaultBranch,
                                   cloneUsername,
                                   clonePassword,
-                                  (conn) => new BitBucketPullRequestClient(conn, new Uri("https://bitbucket.org")));
+                                  (conn) => new BitBucketAuthenticatedClient(conn, new Uri("https://bitbucket.org")));
         }
         [Test]
         [Ignore("Test currently used for local development and debugging")]
@@ -59,7 +59,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   {
                                       var credentials = new Credentials(cloneUsername, clonePassword);
                                       var client = new GitHubClient(new Connection(new ProductHeaderValue("octopus-deploy-test"))) { Credentials = credentials };
-                                      return new GitHubPullRequestClient(client, conn, new Uri("https://github.com/"));
+                                      return new GitHubAuthenticatedClient(client, conn, new Uri("https://github.com/"));
                                   });
         }
 
@@ -76,7 +76,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   defaultBranch,
                                   cloneUsername,
                                   clonePassword,
-                                  (conn) => new AzureDevOpsPullRequestClient(conn));
+                                  (conn) => new AzureDevOpsAuthenticatedClient(conn));
         }
 
         [Test]
@@ -95,11 +95,11 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   (conn) =>
                                   {
                                       var client = new GitLabClient("https://gitlab.com", clonePassword);
-                                      return new GitLabPullRequestClient(client, conn, new Uri("https://gitlab.com"));
+                                      return new GitLabAuthenticatedClient(client, conn, new Uri("https://gitlab.com"));
                                   });
         }
 
-        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<HttpsGitConnection, IGitVendorPullRequestClient> createVendorApiAdapter)
+        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<HttpsGitConnection, IGitVendorAuthenticatedClient> createVendorApiAdapter)
         {
             using var temporaryFolder = TemporaryDirectory.Create();
 

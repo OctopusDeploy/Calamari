@@ -33,7 +33,7 @@ namespace Calamari.Tests.ArgoCD.Git
 
         IGitConnection gitConnection;
         RepositoryWrapper repository;
-        IGitVendorPullRequestClient gitVendorPullRequestClient = Substitute.For<IGitVendorPullRequestClient>();
+        IGitVendorAuthenticatedClient gitVendorAuthenticatedClient = Substitute.For<IGitVendorAuthenticatedClient>();
 
         [SetUp]
         public void Init()
@@ -45,7 +45,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            gitVendorPullRequestClient.CreatePullRequest(Arg.Any<string>(),
+            gitVendorAuthenticatedClient.CreatePullRequest(Arg.Any<string>(),
                                                   Arg.Any<string>(),
                                                   Arg.Any<GitBranchName>(),
                                                   Arg.Any<GitBranchName>(),
@@ -53,7 +53,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                .Returns(new PullRequest("title", 1, "url"));
 
             var gitVendorPullClientResolver = Substitute.For<IGitVendorClientResolver>();
-            gitVendorPullClientResolver.TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
+            gitVendorPullClientResolver.TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorAuthenticatedClient);
 
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorPullClientResolver, new SystemClock());
             gitConnection = new HttpsGitConnection(null, null, OriginPath, branchName);
@@ -128,7 +128,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                          commitDescription,
                                          prBranch,
                                          CancellationToken.None);
-            await gitVendorPullRequestClient.Received(1)
+            await gitVendorAuthenticatedClient.Received(1)
                                                  .CreatePullRequest(
                                                                     commitSummary,
                                                                     commitDescription,

@@ -9,11 +9,11 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 {
-    public class BitBucketPullRequestClient : BitBucketGitClient, IGitVendorPullRequestClient
+    public class BitBucketAuthenticatedClient : BitBucketGitClient, IGitVendorAuthenticatedClient
     {
         readonly IHttpsGitConnection repositoryConnection;
 
-        public BitBucketPullRequestClient(IHttpsGitConnection repositoryConnection, Uri baseUrl)
+        public BitBucketAuthenticatedClient(IHttpsGitConnection repositoryConnection, Uri baseUrl)
             : base(repositoryConnection.Uri.Value, baseUrl)
         {
             this.repositoryConnection = repositoryConnection;

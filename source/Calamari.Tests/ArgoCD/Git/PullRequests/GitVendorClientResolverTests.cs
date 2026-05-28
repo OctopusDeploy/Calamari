@@ -38,12 +38,12 @@ public class GitVendorClientResolverTests
     GitVendorClientResolver CreateResolverWithAllRealFactories()
     {
         var inspector = new SelfHostedGitLabInspector(cache);
-        var factories = new IGitVendorPullRequestClientFactory[]
+        var factories = new IGitVendorClientFactory[]
         {
-            new GitHubPullRequestClientFactory(),
-            new GitLabPullRequestClientFactory(inspector),
-            new AzureDevOpsPullRequestClientFactory(),
-            new BitBucketPullRequestClientFactory()
+            new GitHubClientFactory(),
+            new GitLabClientFactory(inspector),
+            new AzureDevOpsClientFactory(),
+            new BitBucketClientFactory()
         };
         return new GitVendorClientResolver(factories);
     }
@@ -55,7 +55,7 @@ public class GitVendorClientResolverTests
 
         var client = await resolver.TryResolve(ConnectionFor("https://github.com/org/repo"), log, CancellationToken.None);
 
-        client.Should().BeOfType<GitHubPullRequestClient>();
+        client.Should().BeOfType<GitHubAuthenticatedClient>();
     }
 
     [Test]
@@ -65,7 +65,7 @@ public class GitVendorClientResolverTests
 
         var client = await resolver.TryResolve(ConnectionFor("https://gitlab.com/org/repo"), log, CancellationToken.None);
 
-        client.Should().BeOfType<GitLabPullRequestClient>();
+        client.Should().BeOfType<GitLabAuthenticatedClient>();
     }
 
     [Test]
@@ -75,7 +75,7 @@ public class GitVendorClientResolverTests
 
         var client = await resolver.TryResolve(ConnectionFor("https://dev.azure.com/org/project/_git/repo"), log, CancellationToken.None);
 
-        client.Should().BeOfType<AzureDevOpsPullRequestClient>();
+        client.Should().BeOfType<AzureDevOpsAuthenticatedClient>();
     }
 
     [Test]
@@ -85,13 +85,13 @@ public class GitVendorClientResolverTests
 
         var client = await resolver.TryResolve(ConnectionFor("https://bitbucket.org/org/repo"), log, CancellationToken.None);
 
-        client.Should().BeOfType<BitBucketPullRequestClient>();
+        client.Should().BeOfType<BitBucketAuthenticatedClient>();
     }
 
     [Test]
     public async Task UnrecognisedUrl_ReturnsNull()
     {
-        var factories = new IGitVendorPullRequestClientFactory[] { new NeverMatchesFactory() };
+        var factories = new IGitVendorClientFactory[] { new NeverMatchesFactory() };
         var resolver = new GitVendorClientResolver(factories);
 
         var client = await resolver.TryResolve(ConnectionFor("https://someunknown.example/org/repo"), log, CancellationToken.None);
@@ -103,8 +103,8 @@ public class GitVendorClientResolverTests
     public async Task SelfHostedUrl_WithMatchingSelfHostedFactory_ReturnsExpectedClient()
     {
         var connection = ConnectionFor("https://mygitlab.company.com/org/repo");
-        var expectedClient = Substitute.For<IGitVendorPullRequestClient>();
-        var factory = Substitute.For<IGitVendorPullRequestClientFactory>();
+        var expectedClient = Substitute.For<IGitVendorAuthenticatedClient>();
+        var factory = Substitute.For<IGitVendorClientFactory>();
         factory.CanHandleAsCloudHosted(Arg.Any<Uri>()).Returns(false);
         factory.CanHandleAsSelfHosted(Arg.Any<Uri>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
         factory.CreateForPullRequests(connection, log, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedClient));
@@ -120,12 +120,12 @@ public class GitVendorClientResolverTests
         => new HttpsGitConnection("test-user", "test-token", url, new GitHead());
 
     /// <summary>Factory that never matches — used to test null return when no vendor is recognised.</summary>
-    class NeverMatchesFactory : IGitVendorPullRequestClientFactory
+    class NeverMatchesFactory : IGitVendorClientFactory
     {
         public string Name => "NeverMatches";
         public bool CanHandleAsCloudHosted(Uri repositoryUri) => false;
         public Task<bool> CanHandleAsSelfHosted(Uri repositoryUri, CancellationToken cancellationToken) => Task.FromResult(false);
         public IGitVendorClient Create(IGitConnection repositoryConnection) => throw new NotImplementedException();
-        public Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public Task<IGitVendorAuthenticatedClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken) => throw new NotImplementedException();
     }
 }
