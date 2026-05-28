@@ -8,6 +8,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using NUnit.Framework;
+using Octopus.Versioning;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
@@ -88,6 +89,54 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
                 CollectionAssert.AreEquivalent(new[] { "1.0.0.1" }, packages.Select(c => c.Version.ToString()));
             }
+        }
+
+        [Test]
+        public void NonSemVerVersionsReturnPackagesOrderedByCreationTime()
+        {
+            // For non-SemVer tags (Docker tags, build numbers etc.) version comparison is unreliable.
+            // GetNearestPackages should fall back to file creation time so the most recently
+            // cached package is offered as the delta candidate.
+            var v1Path = CreatePackageWithDockerTag("feature-login-100");
+            var v2Path = CreatePackageWithDockerTag("main-9999");
+            var v3Path = CreatePackageWithDockerTag("feature-signup-42");
+
+            // Set deterministic creation times: v2 is most recent, then v3, then v1
+            File.SetCreationTimeUtc(v1Path, DateTime.UtcNow.AddMinutes(-30));
+            File.SetCreationTimeUtc(v3Path, DateTime.UtcNow.AddMinutes(-15));
+            File.SetCreationTimeUtc(v2Path, DateTime.UtcNow.AddMinutes(-5));
+
+            using (new TemporaryFile(v1Path))
+            using (new TemporaryFile(v2Path))
+            using (new TemporaryFile(v3Path))
+            {
+                var store = new PackageStore(
+                    CreatePackageExtractor(),
+                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                );
+
+                var target = VersionFactory.TryCreateDockerTag("feature-new-99");
+                var packages = store.GetNearestPackages("Acme.Web", target).ToList();
+
+                // All three are returned (no version filter), ordered by creation time descending
+                Assert.That(packages.Count, Is.EqualTo(3));
+                Assert.That(packages[0].Version.ToString(), Is.EqualTo("main-9999"));
+                Assert.That(packages[1].Version.ToString(), Is.EqualTo("feature-signup-42"));
+                Assert.That(packages[2].Version.ToString(), Is.EqualTo("feature-login-100"));
+            }
+        }
+
+        private string CreatePackageWithDockerTag(string version)
+        {
+            var dockerVersion = VersionFactory.TryCreateDockerTag(version)!;
+            var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version, true);
+            var destinationPath = Path.Combine(PackagePath, PackageName.ToCachedFileName("Acme.Web", dockerVersion, ".nupkg"));
+
+            if (File.Exists(destinationPath))
+                File.Delete(destinationPath);
+
+            File.Move(sourcePackage, destinationPath);
+            return destinationPath;
         }
 
         private string CreateEmptyFile(string version)
