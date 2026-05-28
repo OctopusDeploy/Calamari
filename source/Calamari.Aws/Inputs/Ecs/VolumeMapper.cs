@@ -27,7 +27,9 @@ public static class VolumeMappingExtensions
                                      AuthorizationConfig = new CfnTaskDefinition.AuthorizationConfigProperty
                                      {
                                          Iam = v.EfsIamAuthorization.Equals(true.ToString()) ? "ENABLED" : "DISABLED",
-                                         AccessPointId = v.AccessPointId
+                                         //SPF didn't appear to be outputting this, we're adding here because it seems correct to
+                                         // No one ever complained, so we may not have customers leveraging Efs IAM Auth?
+                                         AccessPointId = v.AccessPointId 
                                      },
                                     FilesystemId = v.FileSystemId!,
                                     RootDirectory = v.RootDirectory,
