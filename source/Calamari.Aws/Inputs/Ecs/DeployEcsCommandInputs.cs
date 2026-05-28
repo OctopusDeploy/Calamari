@@ -134,6 +134,8 @@ public class DeployEcsCommandInputs
     public KeyValuePair<string, string>[] Tags => variables.GetValueDeserialisedAs<KeyValuePair<string, string>[]>(AwsSpecialVariables.Ecs.Tags);
     
     public LoadBalancerMapping[] LoadBalancerMappings => variables.GetValueDeserialisedAs<LoadBalancerMapping[]>(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings);
+
+    public Volume[] Volumes => variables.GetValueDeserialisedAs<Volume[]>(AwsSpecialVariables.Ecs.Deploy.Volumes);
 }
 
 public record InputsValidityResult(IEnumerable<string> MissingKeys)

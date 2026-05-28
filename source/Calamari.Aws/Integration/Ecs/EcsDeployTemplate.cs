@@ -131,7 +131,7 @@ public sealed class EcsDeployTemplate : Stack
                                                            OperatingSystemFamily = LinuxOperatingSystemFamily,
                                                            CpuArchitecture = commandInputs.CpuArchitecture
                                                        },
-                                                       Volumes = Array.Empty<CfnTaskDefinition.VolumeProperty>(), // TODO: Read from variables
+                                                       Volumes = commandInputs.Volumes.ParseVolumes(),
                                                        Tags = commandInputs.Tags.ToCloudFormationTags()
                                                    });
 

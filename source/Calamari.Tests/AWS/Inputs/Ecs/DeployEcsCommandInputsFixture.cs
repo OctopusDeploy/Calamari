@@ -549,6 +549,86 @@ public class DeployEcsCommandInputsFixture
         mappings.Should().BeEmpty();
     }
 
+    [Test]
+    public void Volumes_WithSingleEfsVolume_ReturnsDeserialisedArray()
+    {
+        const string volumesJson = """
+                                   [
+                                       {
+                                           "type":"efs",
+                                           "name":"shared-data",
+                                           "fileSystemId":"fs-0123abcd",
+                                           "accessPointId":"fsap-0123abcd",
+                                           "rootDirectory":"/data",
+                                           "encryptionInTransit":"true",
+                                           "efsIamAuthorization":"enabled"
+                                       }
+                                   ]
+                                   """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().HaveCount(1);
+        volumes[0].Type.Should().Be(VolumeType.Efs);
+        volumes[0].Name.Should().Be("shared-data");
+        volumes[0].FileSystemId.Should().Be("fs-0123abcd");
+        volumes[0].AccessPointId.Should().Be("fsap-0123abcd");
+        volumes[0].RootDirectory.Should().Be("/data");
+        volumes[0].EncryptionInTransit.Should().Be("true");
+        volumes[0].EfsIamAuthorization.Should().Be("enabled");
+    }
+
+    [Test]
+    public void Volumes_WithBindVolume_DeserialisesType()
+    {
+        const string volumesJson = """[{"type":"bind","name":"scratch"}]""";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().HaveCount(1);
+        volumes[0].Type.Should().Be(VolumeType.Bind);
+        volumes[0].Name.Should().Be("scratch");
+        volumes[0].FileSystemId.Should().BeNull();
+        volumes[0].AccessPointId.Should().BeNull();
+        volumes[0].RootDirectory.Should().BeNull();
+    }
+
+    [Test]
+    public void Volumes_WithMultipleVolumes_PreservesAllEntries()
+    {
+        const string volumesJson = """
+                                   [
+                                       {"type":"bind","name":"v1"},
+                                       {"type":"efs","name":"v2","fileSystemId":"fs-2"},
+                                       {"type":"bind","name":"v3"}
+                                   ]
+                                   """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().HaveCount(3);
+        volumes.Select(v => v.Name).Should().BeEquivalentTo("v1", "v2", "v3");
+        volumes.Single(v => v.Name == "v2").FileSystemId.Should().Be("fs-2");
+    }
+
+    [Test]
+    public void Volumes_WithEmptyArray_ReturnsEmpty()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, "[]", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().NotBeNull();
+        volumes.Should().BeEmpty();
+    }
+
     // Test Helpers
     static CalamariVariables MinimumRequiredVariableSet()
     {
