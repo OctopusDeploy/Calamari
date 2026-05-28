@@ -59,7 +59,7 @@ public static class ContainerSpecMappingExtensions
                                     {
                                         ContainerPort = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s)),
                                         HostPort = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s)),
-                                        Protocol = pm.Protocol.ToString()
+                                        Protocol = pm.Protocol.ToString().ToLower(),
 
                                     })
                                     .ToArray();
@@ -92,7 +92,8 @@ public static class ContainerSpecMappingExtensions
             ? []
             : [new CfnTaskDefinition.ResourceRequirementProperty
             {
-                Type = ResourceType.GPU
+                Type = ResourceType.GPU,
+                Value = containerSpec.Gpus,
             }];
     }
 
@@ -153,7 +154,7 @@ public static class ContainerSpecMappingExtensions
             }).ToArray();
         }
 
-        return [];
+        return null;
     }
 
     public static CfnTaskDefinition.EnvironmentFileProperty[] ParseEnvironmentFiles(this ContainerSpec containerSpec)

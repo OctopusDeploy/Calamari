@@ -50,7 +50,7 @@ public sealed class EcsDeployTemplate : Stack
                                            });
 
         var executionRoleArnParam = new CfnParameter(this,
-                                                     "ExecutionRoleArn",
+                                                     "TaskExecutionRole",
                                                      new CfnParameterProps
                                                      {
                                                          Type = "String",
@@ -101,6 +101,8 @@ public sealed class EcsDeployTemplate : Stack
             
             Environment = c.ParseEnvironmentVariables(),
             Secrets = c.ParseSecrets(),
+            
+            
             
             // SPF referenced these properties but never set them.
             // Due to TS vs. CS SDK differences, we don't even mention them,
@@ -157,14 +159,9 @@ public sealed class EcsDeployTemplate : Stack
                                              }
                                          },
                                          LoadBalancers = commandInputs.LoadBalancerMappings.ToLoadBalancerProperties(),
-                                         Tags = commandInputs.Tags.ToCloudFormationTags()
+                                         Tags = commandInputs.Tags.ToCloudFormationTags(),
                                      });
         
-        // TODO: Add depdency on Load Balancer if require
-        // if (commandInputs.LoadBalancerMappings.Length > 0)
-        // {
-        //     service.AddDependency();
-        // }
         service.AddDependency(taskDefinition);
     }
     

@@ -179,13 +179,13 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseVolumesFrom_WhenNoVolumesFrom_ReturnsEmptyArray()
+    public void ParseVolumesFrom_WhenNoVolumesFrom_ReturnsNull()
     {
         var spec = new ContainerSpec();
 
         var result = spec.ParseVolumesFrom();
 
-        result.Should().BeEmpty();
+        result.Should().BeNull();
     }
 
     [Test]
