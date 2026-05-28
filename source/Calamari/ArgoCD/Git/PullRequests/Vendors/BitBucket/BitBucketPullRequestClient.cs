@@ -30,9 +30,11 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic ",
-                                                                                       Convert.ToBase64String(Encoding.ASCII.GetBytes($"robert.erez@gmail.com:{repositoryConnection.Password}")));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic ",
+                                                                                            Convert.ToBase64String(Encoding.ASCII.GetBytes($"robert.erez@gmail.com:{repositoryConnection.Password}")));
 
+               // client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
+                //                                                                           Convert.ToBase64String(Encoding.ASCII.GetBytes($"{repositoryConnection.Password}")));
             var pullRequest = new
             {
                 title = pullRequestTitle,

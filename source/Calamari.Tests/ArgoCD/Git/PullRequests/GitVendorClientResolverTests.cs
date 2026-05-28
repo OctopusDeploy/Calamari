@@ -105,7 +105,6 @@ public class GitVendorClientResolverTests
         var connection = ConnectionFor("https://mygitlab.company.com/org/repo");
         var expectedClient = Substitute.For<IGitVendorPullRequestClient>();
         var factory = Substitute.For<IGitVendorPullRequestClientFactory>();
-        factory.Name.Returns("GitLab");
         factory.CanHandleAsCloudHosted(Arg.Any<Uri>()).Returns(false);
         factory.CanHandleAsSelfHosted(Arg.Any<Uri>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
         factory.CreateForPullRequests(connection, log, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedClient));
@@ -120,9 +119,10 @@ public class GitVendorClientResolverTests
     static IHttpsGitConnection ConnectionFor(string url)
         => new HttpsGitConnection("test-user", "test-token", url, new GitHead());
 
+    /// <summary>Factory that never matches — used to test null return when no vendor is recognised.</summary>
     class NeverMatchesFactory : IGitVendorPullRequestClientFactory
     {
-        public string Name => "GitHub";
+        public string Name => "NeverMatches";
         public bool CanHandleAsCloudHosted(Uri repositoryUri) => false;
         public Task<bool> CanHandleAsSelfHosted(Uri repositoryUri, CancellationToken cancellationToken) => Task.FromResult(false);
         public IGitVendorClient Create(IGitConnection repositoryConnection) => throw new NotImplementedException();

@@ -10,7 +10,7 @@ using Octokit.Internal;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
-    public class GitHubPullRequestClientFactory : IGitVendorPullRequestClientFactory
+    public class GitHubPullRequestClientFactory: IGitVendorPullRequestClientFactory
     {
         static readonly Uri BaseUrl = new Uri("https://github.com/");
 

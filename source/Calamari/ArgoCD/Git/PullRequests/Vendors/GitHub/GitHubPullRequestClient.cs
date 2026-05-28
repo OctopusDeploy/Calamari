@@ -6,7 +6,7 @@ using Octokit;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
-    public class GitHubPullRequestClient : GitHubGitClient, IGitVendorPullRequestClient
+    public class GitHubPullRequestClient: GitHubGitClient, IGitVendorPullRequestClient
     {
         readonly IGitHubClient client;
 
@@ -33,6 +33,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
                                                      });
 
             return new PullRequest(pr.Title, pr.Number, pr.HtmlUrl);
+
         }
     }
 }
