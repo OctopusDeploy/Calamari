@@ -92,14 +92,18 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        public void NonSemVerVersionsReturnPackagesOrderedByCreationTime()
+        public void NonSemVerVersionsReturnPackagesOrderedByLastWriteTime()
         {
             // For non-SemVer tags (Docker tags, build numbers etc.) version comparison is unreliable.
-            // GetNearestPackages should fall back to file creation time so the most recently
+            // GetNearestPackages should fall back to file last-write time so the most recently
             // cached package is offered as the delta candidate.
-            var v1Path = CreatePackageWithDockerTag("feature-login-100");
-            var v2Path = CreatePackageWithDockerTag("main-9999");
-            var v3Path = CreatePackageWithDockerTag("feature-signup-42");
+            //
+            // We bypass PackageBuilder.BuildSamplePackage here because `dotnet pack /p:Version=...`
+            // rejects non-SemVer versions. We also use .zip rather than .nupkg so PackageName.FromFile
+            // does not try to read NuGet metadata from the file content.
+            var v1Path = CreateDummyCachedFile("feature-login-100");
+            var v2Path = CreateDummyCachedFile("main-9999");
+            var v3Path = CreateDummyCachedFile("feature-signup-42");
 
             // Set deterministic last-write times: v2 is most recent, then v3, then v1.
             // Using SetLastWriteTimeUtc rather than SetCreationTimeUtc because creation time
@@ -120,7 +124,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 var target = VersionFactory.TryCreateDockerTag("feature-new-99");
                 var packages = store.GetNearestPackages("Acme.Web", target).ToList();
 
-                // All three are returned (no version filter), ordered by creation time descending
+                // All three are returned (no version filter), ordered by last-write time descending
                 Assert.That(packages.Count, Is.EqualTo(3));
                 Assert.That(packages[0].Version.ToString(), Is.EqualTo("main-9999"));
                 Assert.That(packages[1].Version.ToString(), Is.EqualTo("feature-signup-42"));
@@ -128,16 +132,14 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             }
         }
 
-        private string CreatePackageWithDockerTag(string version)
+        private string CreateDummyCachedFile(string version)
         {
             var dockerVersion = VersionFactory.TryCreateDockerTag(version)!;
-            var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version, true);
-            var destinationPath = Path.Combine(PackagePath, PackageName.ToCachedFileName("Acme.Web", dockerVersion, ".nupkg"));
-
-            if (File.Exists(destinationPath))
-                File.Delete(destinationPath);
-
-            File.Move(sourcePackage, destinationPath);
+            // Use .zip rather than .nupkg — .nupkg files trigger NuGet metadata parsing inside
+            // PackageName.FromFile, which would fail on these dummy files. The PackageStore only
+            // reads file metadata (hash, size, last-write time), not the file contents themselves.
+            var destinationPath = Path.Combine(PackagePath, PackageName.ToCachedFileName("Acme.Web", dockerVersion, ".zip"));
+            File.WriteAllText(destinationPath, "dummy content for " + version);
             return destinationPath;
         }
 
