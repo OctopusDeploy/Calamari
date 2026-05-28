@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD
                    .As<IGitVendorPullRequestClientFactory>()
                    .InstancePerLifetimeScope();
 
-            builder.RegisterType<GitVendorPullRequestClientResolver>().As<IGitVendorPullRequestClientResolver>().InstancePerLifetimeScope();
+            builder.RegisterType<GitVendorClientResolver>().As<IGitVendorClientResolver>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDManifestsFileMatcher>().As<IArgoCDManifestsFileMatcher>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDFilesUpdatedReporter>().As<IArgoCDFilesUpdatedReporter>().InstancePerLifetimeScope();
 

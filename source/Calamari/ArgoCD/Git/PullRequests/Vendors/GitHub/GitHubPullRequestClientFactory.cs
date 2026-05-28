@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Net;
 using System.Net.Http;
@@ -10,21 +10,26 @@ using Octokit.Internal;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
-    public class GitHubPullRequestClientFactory: IGitVendorPullRequestClientFactory
+    public class GitHubPullRequestClientFactory : IGitVendorPullRequestClientFactory
     {
-        public string Name => "GitHub";
-        
+        static readonly Uri BaseUrl = new Uri("https://github.com/");
+
+        public string Name => GitHubGitClient.VendorName;
+
         public bool CanHandleAsCloudHosted(Uri repositoryUri) => GitHubRepositoryUriParser.IsGitHub(repositoryUri);
 
-        public async Task<IGitVendorPullRequestClient> Create(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
+        public IGitVendorClient Create(IGitConnection repositoryConnection)
+            => new GitHubGitClient(repositoryConnection.ResolveUri(), BaseUrl);
+
+        public async Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
-            
+
             var credentials = new Credentials(repositoryConnection.Username, repositoryConnection.Password);
             var client = CreateGitHubClient(credentials);
-            return new GitHubPullRequestClient(client, repositoryConnection, new Uri("https://github.com/"));
+            return new GitHubPullRequestClient(client, repositoryConnection, BaseUrl);
         }
-        
+
         IGitHubClient CreateGitHubClient(Credentials? credentials)
         {
             var connection = CreateGitHubConnection();
@@ -34,9 +39,10 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
                 Credentials = credentials
             };
         }
+
         IConnection CreateGitHubConnection()
         {
-            var githubApiUrl = "https://api.github.com"; 
+            var githubApiUrl = "https://api.github.com";
             var clientHandler = new HttpClientHandler
             {
 #pragma warning disable DE0003

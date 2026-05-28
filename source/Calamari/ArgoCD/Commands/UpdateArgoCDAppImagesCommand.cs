@@ -23,7 +23,7 @@ namespace Calamari.ArgoCD.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly DeploymentConfigFactory configFactory;
-        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IGitVendorClientResolver gitVendorClientResolver;
         string customPropertiesFile;
         string customPropertiesPassword;
 
@@ -31,13 +31,13 @@ namespace Calamari.ArgoCD.Commands
                                             IVariables variables,
                                             ICalamariFileSystem fileSystem,
                                             DeploymentConfigFactory configFactory,
-                                            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
+                                            IGitVendorClientResolver gitVendorClientResolver)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.configFactory = configFactory;
-            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
+            this.gitVendorClientResolver = gitVendorClientResolver;
             Options.Add("customPropertiesFile=",
                         "Name of the custom properties file",
                         v => customPropertiesFile = Path.GetFullPath(v));
@@ -59,7 +59,7 @@ namespace Calamari.ArgoCD.Commands
                                                            configFactory,
                                                            new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword, new IGitCredentialDtoJsonConverter()),
                                                            new ArgoCdApplicationManifestParser(),
-                                                           gitVendorPullRequestClientResolver,
+                                                           gitVendorClientResolver,
                                                            clock,
                                                            new ArgoCDFilesUpdatedReporter(log),
                                                            new ArgoCDOutputVariablesWriter(log)),

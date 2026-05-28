@@ -7,22 +7,15 @@ using NGitLab.Models;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
 {
-    public class GitLabPullRequestClient : IGitVendorPullRequestClient
+    public class GitLabPullRequestClient : GitLabGitClient, IGitVendorPullRequestClient
     {
         readonly GitLabClient gitLabClient;
-        readonly Uri baseUrl;
-        readonly string projectPath;
 
         public GitLabPullRequestClient(GitLabClient gitLabClient, IHttpsGitConnection repositoryConnection, Uri baseUrl)
+            : base(repositoryConnection.Uri.Value, baseUrl)
         {
             this.gitLabClient = gitLabClient;
-            this.baseUrl = baseUrl;
-            
-            var parts = repositoryConnection.Uri.Value.ExtractPropertiesFromUrlPath();
-            projectPath = $"{parts[^2]}/{parts[^1]}";
         }
-
-        public string Name => "GitLab";
 
         public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
                                                          string body,
@@ -31,7 +24,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
                                                          CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
-            
+
             var mergeRequest = gitLabClient.GetMergeRequest(projectPath).Create(new MergeRequestCreate()
             {
                 Title = pullRequestTitle,
@@ -40,13 +33,6 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
                 Description = body
             });
             return new PullRequest(mergeRequest.Title, mergeRequest.Iid, mergeRequest.WebUrl);
-        }
-
-        
-        public string GenerateCommitUrl(string commit)
-        {
-            //return gitLabProviderApi.GetCommits(projectPath).GetCommit(commit).WebUrl;
-            return $"{baseUrl.AbsoluteUri}/{projectPath}/-/commit/{commit}";
         }
     }
 }

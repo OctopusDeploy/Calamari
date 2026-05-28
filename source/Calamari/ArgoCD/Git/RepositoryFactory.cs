@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
@@ -14,7 +15,7 @@ namespace Calamari.ArgoCD.Git
     public interface IRepositoryFactory
     {
         RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection);
-        RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection, IGitVendorPullRequestClient gitVendorPullRequestClient);
+        RepositoryWrapper CloneRepositoryWithPullRequestClient(string repositoryName, IGitConnection gitConnection );
     }
 
     public class RepositoryFactory : IRepositoryFactory
@@ -23,17 +24,20 @@ namespace Calamari.ArgoCD.Git
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
         readonly IClock clock;
+        readonly IGitVendorClientResolver gitVendorClientResolver;
 
         public RepositoryFactory(
             ILog log,
             ICalamariFileSystem fileSystem,
             string repositoryParentDirectory,
-            IClock clock)
+            IClock clock,
+            IGitVendorClientResolver gitVendorClientResolver)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
             this.clock = clock;
+            this.gitVendorClientResolver = gitVendorClientResolver;
 
             LibGit2SharpTransportRegistration.EnsureRegistered();
 
@@ -54,10 +58,14 @@ namespace Calamari.ArgoCD.Git
             return CheckoutGitRepository(gitConnection, repositoryPath, null);
         }
 
-        public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection, IGitVendorPullRequestClient gitVendorPullRequestClient)
+        public RepositoryWrapper CloneRepositoryWithPullRequestClient(string repositoryName, IGitConnection gitConnection)
         {
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
             fileSystem.CreateDirectory(repositoryPath);
+
+            var gitVendorPullRequestClient = gitConnection is IHttpsGitConnection httpsGitConnection
+                ? gitVendorClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
+                : throw new CommandException("");
 
             return CheckoutGitRepository(gitConnection, repositoryPath, gitVendorPullRequestClient);
         }
@@ -120,12 +128,12 @@ namespace Calamari.ArgoCD.Git
             }
 
             return new RepositoryWrapper(repo,
-                                         fileSystem,
-                                         checkoutPath,
-                                         log,
-                                         gitConnection,
-                                         gitVendorPullRequestClient,
-                                         clock);
+                fileSystem,
+                checkoutPath,
+                log,
+                gitConnection,
+                gitVendorPullRequestClient,
+                clock);
         }
     }
 }

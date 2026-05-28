@@ -61,7 +61,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
-                Substitute.For<IGitVendorPullRequestClientResolver>(),
+                Substitute.For<IGitVendorClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log));

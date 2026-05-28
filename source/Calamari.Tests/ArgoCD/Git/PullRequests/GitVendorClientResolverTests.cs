@@ -17,7 +17,7 @@ namespace Calamari.Tests.ArgoCD.Git.PullRequests;
 
 [TestFixture]
 [Category("PlatformAgnostic")]
-public class GitPullRequestClientResolverTests
+public class GitVendorClientResolverTests
 {
     ILog log;
     MemoryCache cache;
@@ -35,16 +35,17 @@ public class GitPullRequestClientResolverTests
         cache.Dispose();
     }
 
-    GitVendorPullRequestClientResolver CreateResolverWithAllRealFactories()
+    GitVendorClientResolver CreateResolverWithAllRealFactories()
     {
         var inspector = new SelfHostedGitLabInspector(cache);
-        return new GitVendorPullRequestClientResolver(new IGitVendorPullRequestClientFactory[]
+        var factories = new IGitVendorPullRequestClientFactory[]
         {
             new GitHubPullRequestClientFactory(),
             new GitLabPullRequestClientFactory(inspector),
             new AzureDevOpsPullRequestClientFactory(),
             new BitBucketPullRequestClientFactory()
-        });
+        };
+        return new GitVendorClientResolver(factories);
     }
 
     [Test]
@@ -90,10 +91,8 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task UnrecognisedUrl_ReturnsNull()
     {
-        var resolver = new GitVendorPullRequestClientResolver(new IGitVendorPullRequestClientFactory[]
-        {
-            new NeverMatchesFactory()
-        });
+        var factories = new IGitVendorPullRequestClientFactory[] { new NeverMatchesFactory() };
+        var resolver = new GitVendorClientResolver(factories);
 
         var client = await resolver.TryResolve(ConnectionFor("https://someunknown.example/org/repo"), log, CancellationToken.None);
 
@@ -106,10 +105,12 @@ public class GitPullRequestClientResolverTests
         var connection = ConnectionFor("https://mygitlab.company.com/org/repo");
         var expectedClient = Substitute.For<IGitVendorPullRequestClient>();
         var factory = Substitute.For<IGitVendorPullRequestClientFactory>();
+        factory.Name.Returns("GitLab");
         factory.CanHandleAsCloudHosted(Arg.Any<Uri>()).Returns(false);
         factory.CanHandleAsSelfHosted(Arg.Any<Uri>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
-        factory.Create(connection, log, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedClient));
-        var resolver = new GitVendorPullRequestClientResolver(new[] { factory });
+        factory.CreateForPullRequests(connection, log, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedClient));
+        var factories = new[] { factory };
+        var resolver = new GitVendorClientResolver(factories);
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
 
@@ -119,12 +120,12 @@ public class GitPullRequestClientResolverTests
     static IHttpsGitConnection ConnectionFor(string url)
         => new HttpsGitConnection("test-user", "test-token", url, new GitHead());
 
-    /// <summary>Factory that never matches — used to test null return when no vendor is recognised.</summary>
     class NeverMatchesFactory : IGitVendorPullRequestClientFactory
     {
-        public string Name => "NeverMatches";
+        public string Name => "GitHub";
         public bool CanHandleAsCloudHosted(Uri repositoryUri) => false;
         public Task<bool> CanHandleAsSelfHosted(Uri repositoryUri, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task<IGitVendorPullRequestClient> Create(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public IGitVendorClient Create(IGitConnection repositoryConnection) => throw new NotImplementedException();
+        public Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken) => throw new NotImplementedException();
     }
 }

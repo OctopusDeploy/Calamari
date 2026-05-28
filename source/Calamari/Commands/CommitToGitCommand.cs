@@ -40,14 +40,14 @@ public class CommitToGitCommand : Command
     readonly IDeploymentJournalWriter deploymentJournalWriter;
     readonly INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles;
     readonly ISubstituteInFiles substituteInFiles;
-    readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+    readonly IGitVendorClientResolver gitVendorClientResolver;
     readonly ICalamariFileSystem fileSystem;
     readonly IVariables variables;
     readonly ICommandLineRunner commandLineRunner;
     readonly IScriptEngine scriptEngine;
     readonly CommitToGitConfigFactory configFactory;
 
-    public CommitToGitCommand(ILog log, INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles, ISubstituteInFiles substituteInFiles, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
+    public CommitToGitCommand(ILog log, INonSensitiveSubstituteInFiles nonSensitiveSubstituteInFiles, ISubstituteInFiles substituteInFiles, IGitVendorClientResolver gitVendorClientResolver,
                               ICalamariFileSystem fileSystem,
                               IVariables variables,
                               ICommandLineRunner commandLineRunner,
@@ -64,7 +64,7 @@ public class CommitToGitCommand : Command
         this.log = log;
         this.nonSensitiveSubstituteInFiles = nonSensitiveSubstituteInFiles;
         this.substituteInFiles = substituteInFiles;
-        this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
+        this.gitVendorClientResolver = gitVendorClientResolver;
         this.fileSystem = fileSystem;
         this.variables = variables;
         this.commandLineRunner = commandLineRunner;
@@ -89,11 +89,11 @@ public class CommitToGitCommand : Command
 
         var deployment = new RunningDeployment(pathToPackage, variables);
         var repositoryConfig = configFactory.CreateRepositoryConfig(deployment, customPropertiesLoader);
-        var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, new SystemClock());
+        var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, new SystemClock(), gitVendorClientResolver);
 
         var repositoryName = UniqueRepoNameGenerator.Generate();
         using var clonedRepository = repositoryConfig.CommitParameters.RequiresPr
-            ? repositoryFactory.CloneRepository(repositoryName, repositoryConfig.GitConnection, ResolveVendorPullRequestClient(repositoryConfig.GitConnection as IHttpsGitConnection))
+            ? repositoryFactory.CloneRepositoryWithPullRequestClient(repositoryName, repositoryConfig.GitConnection)
             : repositoryFactory.CloneRepository(repositoryName, repositoryConfig.GitConnection);
         deployment.Variables.Set("Octopus.Calamari.Git.RepositoryPath", clonedRepository.WorkingDirectory);
         var metadataParser = new CommitToGitDependencyMetadataParser(fileSystem);
@@ -111,14 +111,6 @@ public class CommitToGitCommand : Command
         var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
         deploymentJournalWriter.AddJournalEntry(deployment, exitCode == 0, pathToPackage);
         return exitCode;
-    }
-
-    IGitVendorPullRequestClient ResolveVendorPullRequestClient(IHttpsGitConnection apiConnection)
-    {
-        var vendorClient = gitVendorPullRequestClientResolver.TryResolve(apiConnection, log, System.Threading.CancellationToken.None).Result;
-        return vendorClient
-               ?? throw new CommandException(
-                   $"Pull request creation is enabled but no Git vendor adapter could be resolved for '{apiConnection.Url}'.");
     }
 
     void ApplyScriptParametersOverride()

@@ -68,4 +68,18 @@ namespace Calamari.ArgoCD.Git
         : IGitConnection;
 
     public record SshKnownHost(string Host, string PublicKey);
+
+    public static class GitConnectionExtensions
+    {
+        public static Uri ResolveUri(this IGitConnection connection)
+        {
+            if (connection is IHttpsGitConnection https)
+                return https.Uri.Value;
+
+            if (!System.Uri.TryCreate(connection.Url, UriKind.Absolute, out var uri))
+                throw new CommandException($"Repository URL '{connection.Url}' is not a valid absolute URI.");
+
+            return uri;
+        }
+    }
 }

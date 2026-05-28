@@ -35,7 +35,7 @@ namespace Calamari.ArgoCD.Commands
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
-        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IGitVendorClientResolver gitVendorClientResolver;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -49,7 +49,7 @@ namespace Calamari.ArgoCD.Commands
             INonSensitiveSubstituteInFiles substituteInFiles,
             DeploymentConfigFactory configFactory,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
+            IGitVendorClientResolver gitVendorClientResolver)
         {
             this.log = log;
             this.variables = variables;
@@ -58,7 +58,7 @@ namespace Calamari.ArgoCD.Commands
             this.substituteInFiles = substituteInFiles;
             this.configFactory = configFactory;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
-            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
+            this.gitVendorClientResolver = gitVendorClientResolver;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -98,7 +98,7 @@ namespace Calamari.ArgoCD.Commands
                                                                       new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword, new IGitCredentialDtoJsonConverter()),
                                                                       new ArgoCdApplicationManifestParser(),
                                                                       argoCDManifestsFileMatcher,
-                                                                      gitVendorPullRequestClientResolver,
+                                                                      gitVendorClientResolver,
                                                                       clock,
                                                                       new ArgoCDFilesUpdatedReporter(log),
                                                                       new ArgoCDOutputVariablesWriter(log)),

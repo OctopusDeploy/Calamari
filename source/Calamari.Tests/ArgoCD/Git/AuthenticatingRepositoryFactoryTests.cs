@@ -25,7 +25,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     protected string tempDirectory;
     protected string OriginPath => Path.Combine(tempDirectory, "origin");
     protected RepositoryFactory repositoryFactory;
-    protected IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+    protected IGitVendorClientResolver gitVendorClientResolver;
 
     [SetUp]
     public void Init()
@@ -35,12 +35,13 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-        gitVendorPullRequestClientResolver = Substitute.For<IGitVendorPullRequestClientResolver>();
+        gitVendorClientResolver = Substitute.For<IGitVendorClientResolver>();
         repositoryFactory = new RepositoryFactory(
             log,
             fileSystem,
             tempDirectory,
-            new SystemClock());
+            new SystemClock(),
+            gitVendorClientResolver);
     }
 
     [TearDown]
@@ -59,8 +60,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new GitCredentialDto(httpsUrl, "", "")],
                 repositoryFactory,
-                log,
-                gitVendorPullRequestClientResolver);
+                log);
 
             using var wrapper = factory.CloneRepository(httpsUrl, branchName.ToFriendlyName(), false);
             wrapper.Should().NotBeNull();
@@ -73,8 +73,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [],
                 repositoryFactory,
-                log,
-                gitVendorPullRequestClientResolver);
+                log);
 
             using var wrapper = factory.CloneRepository(originUrl, branchName.ToFriendlyName(), false);
             wrapper.Should().NotBeNull();
@@ -94,8 +93,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", [])],
                 mockRepoFactory,
-                log,
-                gitVendorPullRequestClientResolver);
+                log);
 
             factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), false);
 
@@ -125,8 +123,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", knownHosts)],
                 mockRepoFactory,
-                log,
-                gitVendorPullRequestClientResolver);
+                log);
 
             factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), false);
 
@@ -151,8 +148,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", [])],
                 mockRepoFactory,
-                log,
-                gitVendorPullRequestClientResolver);
+                log);
 
             var act = () => factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), requiresPullRequest: true);
 
@@ -172,36 +168,15 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [],
                 mockRepoFactory,
-                log,
-                gitVendorPullRequestClientResolver);
+                log);
 
             var act = () => factory.CloneRepository(httpsUrl, branchName.ToFriendlyName(), requiresPullRequest: true);
 
             act.Should().Throw<CommandException>().WithMessage("*Pull request creation is enabled*");
             mockRepoFactory.DidNotReceiveWithAnyArgs().CloneRepository(default, default);
-            mockRepoFactory.DidNotReceiveWithAnyArgs().CloneRepository(default, default, default);
+            mockRepoFactory.DidNotReceiveWithAnyArgs().CloneRepositoryWithPullRequestClient(default, default);
         }
 
-        [Test]
-        public void VendorAdapterCannotBeResolved_ThrowsCommandException()
-        {
-            const string httpsUrl = "https://example.invalid/org/repo.git";
-            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
-            gitVendorPullRequestClientResolver
-                .TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<System.Threading.CancellationToken>())
-                .Returns((IGitVendorPullRequestClient)null);
-
-            var factory = new AuthenticatingRepositoryFactory(
-                [new GitCredentialDto(httpsUrl, "user", "pass")],
-                mockRepoFactory,
-                log,
-                gitVendorPullRequestClientResolver);
-
-            var act = () => factory.CloneRepository(httpsUrl, branchName.ToFriendlyName(), requiresPullRequest: true);
-
-            act.Should().Throw<CommandException>().WithMessage("*no Git vendor adapter could be resolved*");
-            mockRepoFactory.DidNotReceiveWithAnyArgs().CloneRepository(default, default, default);
-        }
     }
 
     [TestFixture]
@@ -217,8 +192,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             var factory = new AuthenticatingRepositoryFactory(
                 [new GitCredentialDto(httpsUrl, "user", "pass")],
                 repositoryFactory,
-                log,
-                gitVendorPullRequestClientResolver);
+                log);
 
             // This will fail to clone (no real repo at this URL) but we can verify it
             // falls through to anonymous because the SCP URL doesn't match the HTTPS URL
@@ -245,7 +219,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             new SshKeyGitCredentialDto(url, "ssh-user", "private-key", [])
         ];
 
-        var factory = new AuthenticatingRepositoryFactory(rawCredentials, mockRepoFactory, log, gitVendorPullRequestClientResolver);
+        var factory = new AuthenticatingRepositoryFactory(rawCredentials, mockRepoFactory, log);
 
         factory.CloneRepository(url, "main", false);
 

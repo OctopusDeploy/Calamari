@@ -2,12 +2,14 @@ using System;
 using System.Linq;
 using System.Text;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
@@ -60,7 +62,8 @@ public class GitHttpSmartSubTransportTests
             log,
             fileSystem,
             tempDirectory,
-            new SystemClock());
+            new SystemClock(),
+            Substitute.For<IGitVendorClientResolver>());
 
         // The clone will fail because WireMock doesn't speak git protocol,
         // but the HTTP request will have been sent and recorded.
@@ -87,7 +90,8 @@ public class GitHttpSmartSubTransportTests
             log,
             fileSystem,
             tempDirectory,
-            new SystemClock());
+            new SystemClock(),
+            Substitute.For<IGitVendorClientResolver>());
 
         var act = () => repositoryFactory.CloneRepository("test-repo", connection);
         act.Should().Throw<CommandException>();

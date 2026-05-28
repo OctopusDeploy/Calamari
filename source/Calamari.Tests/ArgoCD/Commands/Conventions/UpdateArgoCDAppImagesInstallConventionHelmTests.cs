@@ -66,7 +66,7 @@ image:
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
-                Substitute.For<IGitVendorPullRequestClientResolver>(),
+                Substitute.For<IGitVendorClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log));

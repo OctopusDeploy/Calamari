@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
-        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IGitVendorClientResolver gitVendorClientResolver;
         readonly IClock clock;
         readonly IArgoCDFilesUpdatedReporter reporter;
         readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
@@ -37,7 +37,7 @@ namespace Calamari.ArgoCD.Conventions
             ICustomPropertiesLoader customPropertiesLoader,
             IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
+            IGitVendorClientResolver gitVendorClientResolver,
             IClock clock,
             IArgoCDFilesUpdatedReporter reporter,
             ArgoCDOutputVariablesWriter outputVariablesWriter)
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Conventions
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
-            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
+            this.gitVendorClientResolver = gitVendorClientResolver;
             this.clock = clock;
             this.outputVariablesWriter = outputVariablesWriter;
             this.packageSubfolder = packageSubfolder;
@@ -64,11 +64,12 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryFactory = new RepositoryFactory(log,
                                                           fileSystem,
                                                           deployment.CurrentDirectory,
-                                                          clock);
+                                                          clock,
+                                                          gitVendorClientResolver);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
-            var authenticatingRepositoryFactory = new AuthenticatingRepositoryFactory(argoProperties.Credentials, repositoryFactory, log, gitVendorPullRequestClientResolver);
+            var authenticatingRepositoryFactory = new AuthenticatingRepositoryFactory(argoProperties.Credentials, repositoryFactory, log );
             var deploymentScope = deployment.Variables.GetDeploymentScope();
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);

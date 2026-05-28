@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -9,24 +9,15 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 {
-    public class BitBucketPullRequestClient : IGitVendorPullRequestClient
+    public class BitBucketPullRequestClient : BitBucketGitClient, IGitVendorPullRequestClient
     {
         readonly IHttpsGitConnection repositoryConnection;
-        readonly Uri baseUrl;
 
-        readonly string workspace;
-        readonly string repositorySlug;
         public BitBucketPullRequestClient(IHttpsGitConnection repositoryConnection, Uri baseUrl)
+            : base(repositoryConnection.Uri.Value, baseUrl)
         {
             this.repositoryConnection = repositoryConnection;
-            this.baseUrl = baseUrl;
-
-            var parts = repositoryConnection.Uri.Value.ExtractPropertiesFromUrlPath();
-            workspace = parts[0];
-            repositorySlug = parts[1];
         }
-
-        public string Name => "BitBucket";
 
         public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
                                                          string body,
@@ -34,16 +25,14 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
                                                          GitBranchName destinationBranch,
                                                          CancellationToken cancellationToken)
         {
-            // As Per https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/ 
+            // As Per https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/
             // Bitbucket Cloud requires email address to be used as username for api, but username as username for Git
 
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic ",
-                                                                                            Convert.ToBase64String(Encoding.ASCII.GetBytes($"robert.erez@gmail.com:{repositoryConnection.Password}")));
-            
-               // client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
-                //                                                                           Convert.ToBase64String(Encoding.ASCII.GetBytes($"{repositoryConnection.Password}")));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic ",
+                                                                                       Convert.ToBase64String(Encoding.ASCII.GetBytes($"robert.erez@gmail.com:{repositoryConnection.Password}")));
+
             var pullRequest = new
             {
                 title = pullRequestTitle,
@@ -77,11 +66,6 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception(errorContent);
-        }
-
-        public string GenerateCommitUrl(string commit)
-        {
-            return $"{baseUrl.AbsoluteUri}/{workspace}/{repositorySlug}/commits/{commit}";
         }
     }
 }

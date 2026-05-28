@@ -52,9 +52,12 @@ namespace Calamari.Tests.ArgoCD.Git
                                                   Arg.Any<CancellationToken>())
                                .Returns(new PullRequest("title", 1, "url"));
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new SystemClock());
+            var gitVendorPullClientResolver = Substitute.For<IGitVendorClientResolver>();
+            gitVendorPullClientResolver.TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
+
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new SystemClock(), gitVendorPullClientResolver);
             gitConnection = new HttpsGitConnection(null, null, OriginPath, branchName);
-            repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection, gitVendorPullRequestClient);
+            repository = repositoryFactory.CloneRepositoryWithPullRequestClient(repositoryPath, gitConnection);
         }
 
         [TearDown]
@@ -162,7 +165,7 @@ namespace Calamari.Tests.ArgoCD.Git
 
             gitConnection = new HttpsGitConnection(null, null, OriginPath, GitReference.CreateFromString("1.0.0"));
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new SystemClock());
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new SystemClock(), Substitute.For<IGitVendorClientResolver>());
             var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
 
             act.Should()

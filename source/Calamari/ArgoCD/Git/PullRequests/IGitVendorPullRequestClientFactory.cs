@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,6 +26,16 @@ namespace Calamari.ArgoCD.Git.PullRequests
             return false;
         }
 
-        Task<IGitVendorPullRequestClient> Create(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
+        /// <summary>
+        /// Creates a client that supports the always-available vendor capabilities (Name, commit URL generation).
+        /// Available for any <see cref="IGitConnection"/> — including SSH — because no authenticated API access is required.
+        /// </summary>
+        IGitVendorClient Create(IGitConnection repositoryConnection);
+
+        /// <summary>
+        /// Creates a client that additionally supports pull request creation.
+        /// Requires an <see cref="IHttpsGitConnection"/> because PR creation calls the vendor's HTTP API with credentials.
+        /// </summary>
+        Task<IGitVendorPullRequestClient> CreateForPullRequests(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken);
     }
 }

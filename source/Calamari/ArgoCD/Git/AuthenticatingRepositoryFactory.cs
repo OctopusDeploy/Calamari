@@ -14,14 +14,12 @@ public class AuthenticatingRepositoryFactory
 {
     readonly Dictionary<string, IGitCredentialDto> credentialsByUrl;
     readonly IRepositoryFactory repositoryFactory;
-    readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
     readonly ILog log;
 
     public AuthenticatingRepositoryFactory(
         IReadOnlyCollection<IGitCredentialDto> gitCredentials,
         IRepositoryFactory repositoryFactory,
-        ILog log,
-        IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
+        ILog log)
     {
         // When more than one credential is supplied for the same URL we pick one based on the URL style:
         // SSH/SCP URLs prefer the SSH key credential; everything else prefers a username/password credential.
@@ -29,7 +27,6 @@ public class AuthenticatingRepositoryFactory
 
         this.repositoryFactory = repositoryFactory;
         this.log = log;
-        this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
     }
 
     public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision, bool requiresPullRequest)
@@ -51,10 +48,7 @@ public class AuthenticatingRepositoryFactory
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
-        var vendorClient = gitVendorPullRequestClientResolver.TryResolve(gitConnection as IHttpsGitConnection, log, CancellationToken.None).Result
-                           ?? throw new CommandException($"Pull request creation is enabled but no Git vendor adapter could be resolved for '{requestedUrl}'.");
-
-        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection, vendorClient);
+        return repositoryFactory.CloneRepositoryWithPullRequestClient(UniqueRepoNameGenerator.Generate(), gitConnection);
     }
 
     IGitConnection BuildGitConnection(IGitCredentialDto? credential, string requestedUrl, GitReference gitReference)

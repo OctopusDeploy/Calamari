@@ -20,7 +20,7 @@ namespace Calamari.ArgoCD.Git
         string repoCheckoutDirectoryPath,
         ILog log,
         IGitConnection connection,
-        IGitVendorPullRequestClient? vendorApiAdapter,
+        IGitVendorClient? vendorApiClient,
         IClock clock)
         : IDisposable
     {
@@ -30,7 +30,7 @@ namespace Calamari.ArgoCD.Git
         readonly string repoCheckoutDirectoryPath = repoCheckoutDirectoryPath;
         readonly ILog log = log;
         readonly IGitConnection connection = connection;
-        readonly IGitVendorPullRequestClient? vendorApiAdapter = vendorApiAdapter;
+        readonly IGitVendorClient? vendorApiClient = vendorApiClient;
         readonly IClock clock = clock;
         // ReSharper restore ReplaceWithPrimaryConstructorParameter
 
@@ -112,9 +112,9 @@ namespace Calamari.ArgoCD.Git
 
             var commit = repository.Head.Tip;
 
-            if (vendorApiAdapter != null)
+            if (vendorApiClient != null)
             {
-                var url = vendorApiAdapter.GenerateCommitUrl(commit.Sha);
+                var url = vendorApiClient.GenerateCommitUrl(commit.Sha);
                 log.Info($"Commit {log.FormatLink(url, commit.ShortSha())} pushed");
             }
             else
@@ -152,7 +152,7 @@ namespace Calamari.ArgoCD.Git
             GitBranchName currentBranchName,
             CancellationToken cancellationToken)
         {
-            if (vendorApiAdapter == null)
+            if (vendorApiClient is not IGitVendorPullRequestClient vendorPullRequestClient)
             {
                 throw new CommandException("No Git provider can be resolved based on the provided repository details");
             }
@@ -160,7 +160,7 @@ namespace Calamari.ArgoCD.Git
             try
             {
                 log.Verbose($"Attempting to create pull request to {connection.Url}");
-                var pullRequest = await vendorApiAdapter.CreatePullRequest(summary,
+                var pullRequest = await vendorPullRequestClient.CreatePullRequest(summary,
                     description,
                     pushToBranchName,
                     currentBranchName,
@@ -168,7 +168,7 @@ namespace Calamari.ArgoCD.Git
 
                 log.Info($"Pull Request [{pullRequest.Title} (#{pullRequest.Number})]({pullRequest.Url}) Created");
 
-                return (pullRequest, vendorApiAdapter.Name);
+                return (pullRequest, vendorPullRequestClient.Name);
             }
             catch (LibGit2SharpException e)
             {
