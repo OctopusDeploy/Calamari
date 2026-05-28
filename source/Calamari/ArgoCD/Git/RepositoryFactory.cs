@@ -23,21 +23,21 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IClock clock;
         readonly IGitVendorClientResolver gitVendorClientResolver;
+        readonly IClock clock;
 
         public RepositoryFactory(
             ILog log,
             ICalamariFileSystem fileSystem,
             string repositoryParentDirectory,
-            IClock clock,
-            IGitVendorClientResolver gitVendorClientResolver)
+            IGitVendorClientResolver gitVendorClientResolver,
+            IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.clock = clock;
             this.gitVendorClientResolver = gitVendorClientResolver;
+            this.clock = clock;
 
             LibGit2SharpTransportRegistration.EnsureRegistered();
 

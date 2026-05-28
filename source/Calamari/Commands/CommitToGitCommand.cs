@@ -89,7 +89,7 @@ public class CommitToGitCommand : Command
 
         var deployment = new RunningDeployment(pathToPackage, variables);
         var repositoryConfig = configFactory.CreateRepositoryConfig(deployment, customPropertiesLoader);
-        var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, new SystemClock(), gitVendorClientResolver);
+        var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorClientResolver, new SystemClock());
 
         var repositoryName = UniqueRepoNameGenerator.Generate();
         using var clonedRepository = repositoryConfig.CommitParameters.RequiresPr

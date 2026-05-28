@@ -40,8 +40,8 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
             log,
             fileSystem,
             tempDirectory,
-            new SystemClock(),
-            gitVendorClientResolver);
+            gitVendorClientResolver,
+            new SystemClock());
     }
 
     [TearDown]

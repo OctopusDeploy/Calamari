@@ -38,7 +38,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new SystemClock(), Substitute.For<IGitVendorClientResolver>());
+            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, Substitute.For<IGitVendorClientResolver>(), new SystemClock());
         }
 
         [TearDown]

@@ -62,8 +62,8 @@ public class GitHttpSmartSubTransportTests
             log,
             fileSystem,
             tempDirectory,
-            new SystemClock(),
-            Substitute.For<IGitVendorClientResolver>());
+            Substitute.For<IGitVendorClientResolver>(),
+            new SystemClock());
 
         // The clone will fail because WireMock doesn't speak git protocol,
         // but the HTTP request will have been sent and recorded.
@@ -90,8 +90,8 @@ public class GitHttpSmartSubTransportTests
             log,
             fileSystem,
             tempDirectory,
-            new SystemClock(),
-            Substitute.For<IGitVendorClientResolver>());
+            Substitute.For<IGitVendorClientResolver>(),
+            new SystemClock());
 
         var act = () => repositoryFactory.CloneRepository("test-repo", connection);
         act.Should().Throw<CommandException>();
