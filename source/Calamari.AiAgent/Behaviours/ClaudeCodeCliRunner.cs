@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -44,10 +45,11 @@ namespace Calamari.AiAgent.Behaviours
         {
             var args = BuildArguments(options, workingDir);
 
-            var debugFile = Path.Combine(workingDir, "claude-debug.log");
+            var debugLogPath = Path.Combine(Path.GetTempPath(), $"claude-agent-debug-{Guid.NewGuid():N}.log");     
+            
+            
             args.Append(" --debug-file ");
-            args.Append(EscapeArg(debugFile));
-            log.Verbose($"Claude Code debug log: {debugFile}");
+            args.Append(EscapeArg(debugLogPath));
 
             var startInfo = new ProcessStartInfo
             {
@@ -61,6 +63,9 @@ namespace Calamari.AiAgent.Behaviours
             };
 
             startInfo.Environment["ANTHROPIC_API_KEY"] = options.ApiToken;
+
+            if (options.RunAs != null)
+                ApplyCredentials(startInfo, options.RunAs);
 
             var responseBuilder = new StringBuilder();
             var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder);
@@ -97,18 +102,16 @@ namespace Calamari.AiAgent.Behaviours
                 throw new CommandException($"Claude Code exited with code {process.ExitCode}");
             }
 
-            if (File.Exists(debugFile))
+            if (File.Exists(debugLogPath))
             {
-                var debugContent = await File.ReadAllTextAsync(debugFile);
-                log.Verbose("--- Claude Code debug log ---");
-                log.Verbose(debugContent);
-                log.Verbose("--- End debug log ---");
+                var fileInfo = new FileInfo(debugLogPath);     
+                log.NewOctopusArtifact(debugLogPath, "claude-agent-debug.log", fileInfo.Length);
             }
 
             return responseBuilder.ToString();
         }
 
-        static StringBuilder BuildArguments(ClaudeCodeOptions options, string workingDir)
+        internal static StringBuilder BuildArguments(ClaudeCodeOptions options, string workingDir)
         {
             // https://code.claude.com/docs/en/cli-reference
             var args = new StringBuilder();
@@ -146,14 +149,14 @@ namespace Calamari.AiAgent.Behaviours
             return args;
         }
 
-        static void SetupMcpConfig(string workingDir, IReadOnlyDictionary<string, McpServerConfig> mcpServers)
+        internal static void SetupMcpConfig(string workingDir, IReadOnlyDictionary<string, McpServerConfig> mcpServers)
         {
             var config = new { mcpServers };
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(Path.Combine(workingDir, "mcp-config.json"), json);
         }
 
-        static void SetupSkills(string workingDir)
+        internal static void SetupSkills(string workingDir)
         {
             var skillsDir = Path.Combine(workingDir, ".claude", "skills");
             Directory.CreateDirectory(skillsDir);
@@ -175,6 +178,39 @@ namespace Calamari.AiAgent.Behaviours
 
                 When asked about the deployment context, always call `get_deployment_variables` first to get the actual values rather than guessing.
                 """);
+        }
+
+        internal static void ApplyCredentials(ProcessStartInfo startInfo, ProcessCredentials credentials)
+        {
+            // See ADR: https://github.com/OctopusDeploy/adr/blob/main/team-modern-deployments/calamari-ai-agent/adr-001-use-processstartinfo-username-for-user-impersonation.md
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                startInfo.UserName = credentials.Username;
+                if (!string.IsNullOrEmpty(credentials.Password))
+                    startInfo.PasswordInClearText = credentials.Password;
+                if (!string.IsNullOrEmpty(credentials.Domain))
+                    startInfo.Domain = credentials.Domain;
+            }
+            else
+            {
+                // Wrap in: sudo -u <user> -- env KEY=VAL ... <command> <args>
+                // We use env to pass required variables explicitly rather than sudo -E,
+                // because -E requires SETENV permission in sudoers and can trigger a password
+                // prompt even with NOPASSWD configured.
+                // -- prevents claude's flags from being interpreted as sudo flags.
+                var originalFileName = startInfo.FileName;
+                var originalArgs = startInfo.Arguments;
+
+                var envSection = new StringBuilder();
+                foreach (var key in new[] { "ANTHROPIC_API_KEY"})
+                {
+                    if (startInfo.Environment.TryGetValue(key, out var value) && value != null)
+                        envSection.Append($"{key}={EscapeArg(value)} ");
+                }
+
+                startInfo.FileName = "sudo";
+                startInfo.Arguments = $"-u {credentials.Username} -- env {envSection}{originalFileName} {originalArgs}";
+            }
         }
 
         static string EscapeArg(string arg)
@@ -199,6 +235,14 @@ namespace Calamari.AiAgent.Behaviours
         };
         public IReadOnlyDictionary<string, McpServerConfig> McpServers { get; init; } =
             new Dictionary<string, McpServerConfig>();
+        public ProcessCredentials? RunAs { get; init; }
+    }
+
+    public record ProcessCredentials
+    {
+        public required string Username { get; init; }
+        public string? Password { get; init; }
+        public string? Domain { get; init; }
     }
 
     public record McpServerConfig

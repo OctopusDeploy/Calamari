@@ -43,6 +43,7 @@ namespace Calamari.AiAgent.Behaviours
             log.Info($"Invoking Claude Code CLI with model '{model}'...");
 
             var mcpServers = BuildMcpServers(variables);
+            var runAs = BuildRunAs(variables);
 
             var runner = new ClaudeCodeCliRunner(log);
             var response = await runner.RunAsync(new ClaudeCodeOptions
@@ -53,6 +54,7 @@ namespace Calamari.AiAgent.Behaviours
                 SystemPrompt = variables.Get(SpecialVariables.Action.AiAgent.SystemSkill),
                 MaxTurns = variables.GetInt32(SpecialVariables.Action.AiAgent.MaxTokens),
                 McpServers = mcpServers,
+                RunAs = runAs,
             });
 
             Log.SetOutputVariable(SpecialVariables.Action.AiAgent.Response, response, variables);
@@ -95,6 +97,19 @@ namespace Calamari.AiAgent.Behaviours
             }
 
             return servers;
+        }
+
+        static ProcessCredentials? BuildRunAs(IVariables variables)
+        {
+            var username = variables.Get(SpecialVariables.Action.AiAgent.RunAsUsername);
+            if (string.IsNullOrWhiteSpace(username))
+                return null;
+
+            return new ProcessCredentials
+            {
+                Username = username,
+                Password = variables.Get(SpecialVariables.Action.AiAgent.RunAsPassword),
+            };
         }
     }
 }
