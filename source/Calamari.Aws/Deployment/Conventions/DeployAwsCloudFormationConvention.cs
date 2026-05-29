@@ -31,7 +31,6 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
     readonly Func<IAmazonCloudFormation> clientFactory;
     readonly Func<ICloudFormationRequestBuilder> templateFactory;
     readonly Func<RunningDeployment, StackArn> stackProvider;
-    readonly Func<RunningDeployment, string> roleArnProvider;
     readonly bool waitForComplete;
     readonly string stackName;
     readonly TimeSpan? waitTimeout;
@@ -44,7 +43,6 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
         Func<ICloudFormationRequestBuilder> templateFactory,
         StackEventLogger stackEventLogger,
         Func<RunningDeployment, StackArn> stackProvider,
-        Func<RunningDeployment, string> roleArnProvider,
         bool waitForComplete,
         string stackName,
         AwsEnvironmentGeneration awsEnvironmentGeneration,
@@ -54,7 +52,6 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
         this.clientFactory = clientFactory;
         this.templateFactory = templateFactory;
         this.stackProvider = stackProvider;
-        this.roleArnProvider = roleArnProvider;
         this.waitForComplete = waitForComplete;
         this.stackName = stackName;
         this.awsEnvironmentGeneration = awsEnvironmentGeneration;
