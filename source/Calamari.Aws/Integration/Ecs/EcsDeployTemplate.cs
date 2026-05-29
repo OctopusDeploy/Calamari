@@ -123,7 +123,7 @@ public sealed class EcsDeployTemplate : Stack
                                                     new CfnParameterProps
                                                     {
                                                         Type = "String",
-                                                        Default = $"/ecs/{commandInputs.ServiceTaskName}"
+                                                        Default = commandInputs.DefaultLogGroupPath
                                                     });
 
             _ = new CfnLogGroup(this,
