@@ -59,7 +59,6 @@ public class DeployEcsServiceCommand : Command
                                                                           TemplateFactory,
                                                                           new StackEventLogger(log),
                                                                           _ => stackArn,
-                                                                          _ => null,
                                                                           inputs.WaitForComplete,
                                                                           inputs.StackName,
                                                                           environment,
