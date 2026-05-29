@@ -8,13 +8,13 @@ namespace Calamari.ArgoCD.Git;
 
 public static class LibGit2SharpCredentialsHandlerExtensionMethods
 {
-    public static CredentialsHandler ToLibGit2SharpCredentialHandler(this IGitConnection? connection)
+    public static CredentialsHandler ToLibGit2SharpCredentialHandler(this IGitConnection? connection, ILog log)
     {
         return connection switch
                {
                    HttpsGitConnection { Username: null, Password: null } => Anonymous(),
                    HttpsGitConnection https => UsernamePassword(https),
-                   SshKeyGitConnection sshKey => SshKey(sshKey),
+                   SshKeyGitConnection sshKey => SshKey(sshKey, log),
                    null => Anonymous(),
                    _ => throw new NotSupportedException(),
                };
@@ -34,10 +34,11 @@ public static class LibGit2SharpCredentialsHandlerExtensionMethods
         return null!; // A null CredentialsHandler is valid for LibGit2Sharp
     }
 
-    static CredentialsHandler SshKey(SshKeyGitConnection connection)
+    static CredentialsHandler SshKey(SshKeyGitConnection connection, ILog log)
     {
         return (_, userFromUrl, types) =>
                {
+                   log.Verbose($"Handling SSH key credentials for {connection.Username}");
                    if (!types.HasFlag(SupportedCredentialTypes.SshMemory))
                    {
                        throw new InvalidOperationException("SSH key credentials provided but are not supported by this endpoint.");
