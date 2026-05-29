@@ -19,9 +19,12 @@ namespace Calamari.Aws.Deployment.Conventions;
 public class DeployEcsServiceConvention(DeployEcsCommandInputs commandInputs, AwsEnvironmentGeneration awsEnvironment, ILog log, IVariables variables)
     : IInstallConvention
 {
+    readonly EcsDeployTemplateGenerator templateGenerator = new(commandInputs);
+    
+    
     public void Install(RunningDeployment deployment)
     {
-        var template = EcsDeployTemplateGenerator.GenerateTemplate(commandInputs);
+        var template = templateGenerator.GenerateTemplate();
         var stackEventLogger = new StackEventLogger(log);
 
         var deployCloudFormationConvention = new DeployAwsCloudFormationConvention(ClientFactory,

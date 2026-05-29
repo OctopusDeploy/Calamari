@@ -6,28 +6,25 @@ using Newtonsoft.Json;
 
 namespace Calamari.Aws.Integration.Ecs;
 
-public static class EcsDeployTemplateGenerator
+public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
 {
-    public static string GenerateTemplate(DeployEcsCommandInputs commandInputs)
+    readonly App app = new();
+    readonly IStackProps stackProps = new StackProps
     {
-        var stackName = commandInputs.CfStackName;
-
-        var app = new App();
-
-        var stackProps = new StackProps
+        Synthesizer = new DefaultStackSynthesizer(new DefaultStackSynthesizerProps
         {
-            Synthesizer = new DefaultStackSynthesizer(new DefaultStackSynthesizerProps
-            {
-                // This flag kills the Rules assertion section and the bootstrap version parameter completely
-                GenerateBootstrapVersionRule = false
-            })
-        };
-
-        _ = new EcsDeployTemplate(commandInputs, app, stackName, stackProps);
+            // This flag kills the Rules assertion section and the bootstrap version parameter completely
+            GenerateBootstrapVersionRule = false
+        })
+    };
+    
+    public string GenerateTemplate()
+    {
+        _ = new EcsDeployTemplate(commandInputs, app, commandInputs.CfStackName, stackProps);
 
         var assembly = app.Synth();
 
-        var stackArtifact = assembly.GetStackByName(stackName);
+        var stackArtifact = assembly.GetStackByName(commandInputs.CfStackName);
 
         var settings = new JsonSerializerSettings
         {
@@ -39,6 +36,7 @@ public static class EcsDeployTemplateGenerator
 
         return JsonConvert.SerializeObject(stackArtifact.Template, settings);
     }
+    
 
     class WholeDoubleConverter : JsonConverter<double?>
     {
