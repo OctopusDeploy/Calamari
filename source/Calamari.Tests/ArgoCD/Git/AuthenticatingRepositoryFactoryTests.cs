@@ -110,8 +110,8 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         // SSH not currently functional on Windows
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void KnownHostsFromDtoAreCarriedOntoSshKeyGitConnection()
         {
             const string sshUrl = "ssh://git@github.com/org/repo.git";
