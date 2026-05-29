@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Octopus.Calamari.Contracts.ArgoCD;
 
@@ -29,6 +31,15 @@ public class AuthenticatingRepositoryFactory
     public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
+
+        if (gitCredential is SshKeyGitCredentialDto && CalamariEnvironment.IsRunningOnWindows)
+        {
+            throw new CommandException(
+                $"Cannot clone '{requestedUrl}' using an SSH key credential: "
+                + "SSH git credentials are not supported when Calamari is running on Windows. "
+                + "Supply a username/password credential for this repository, or run the deployment on a Linux worker.");
+        }
+
         switch (gitCredential)
         {
             case GitCredentialDto passwordCredential:
