@@ -116,6 +116,8 @@ public class DeployEcsCommandInputs
 
     public bool RequiresLogGroup => Containers.Any(c => c.ContainerLogging.Type == ContainerLoggingType.Auto);
 
+    public bool ShouldWaitForDeploymentCompletion => WaitOption.Type == WaitType.WaitUntilCompleted || WaitOption.Type == WaitType.WaitWithTimeout;
+
     public InputsValidityResult Validate()
     {
         var variableNames = variables.GetNames();

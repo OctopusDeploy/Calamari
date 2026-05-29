@@ -277,6 +277,26 @@ public class DeployEcsCommandInputsFixture
         result.Type.Should().Be(WaitType.WaitUntilCompleted);
         result.TimeoutMinutes.Should().BeNull();
     }
+
+    [Test]
+    public void ShouldWaitForDeploymentCompletion_WhenDontWait_ReturnsFalse()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, """{ "type": "dontWait" }""", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        inputs.ShouldWaitForDeploymentCompletion.Should().BeFalse();
+    }
+
+    [Test]
+    [TestCase("waitUntilCompleted")]
+    [TestCase("waitWithTimeout")]
+    public void ShouldWaitForDeploymentCompletion_WhenWaiting_ReturnsTrue(string waitType)
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, $$"""{ "type": "{{waitType}}", "timeoutMinutes": "30" }""", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+
+        inputs.ShouldWaitForDeploymentCompletion.Should().BeTrue();
+    }
     
     [Test]
     [TestCase(true)]
