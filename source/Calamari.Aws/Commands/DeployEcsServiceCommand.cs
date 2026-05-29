@@ -27,12 +27,11 @@ public class DeployEcsServiceCommand(ILog log, IVariables variables, IEcsStackNa
             throw new CommandException($"Invalid inputs provided to {CommandName}");
         }
 
-        var cloudFormationDeploymentConvention = new DeployEcsCloudFormationTemplateConventionFactory(inputs, log).GetDeployConvention();
 
         new ConventionProcessor(new RunningDeployment(variables),
                                 [
                                     new LogAwsUserInfoConvention(environment),
-                                    cloudFormationDeploymentConvention,
+                                    new DeployEcsServiceConvention(inputs, environment, log, variables),
                                     new SetEcsOutputVariablesConvention(environment,
                                                                         inputs.CfStackName,
                                                                         inputs.ClusterName,

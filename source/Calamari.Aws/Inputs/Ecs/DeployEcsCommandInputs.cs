@@ -69,6 +69,8 @@ public class DeployEcsCommandInputs
         }
     }
 
+    public StackArn CfStackArn => new StackArn(CfStackName);
+
     public string Environment => variables.GetMandatoryVariable(DeploymentEnvironment.Id);
 
     public string Tenant => variables.Get(DeploymentVariables.Tenant.Id, "");
