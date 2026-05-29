@@ -18,4 +18,21 @@ namespace Calamari.AiAgent
             }
         }
     }
+
+    public static class AiAgentServiceMessageNames
+    {
+        public const string Name = "ai-agent-usage";
+
+        public const string CostUsdAttribute = "costUsd";
+        public const string TotalCostUsdAttribute = "totalCostUsd";
+        public const string DurationMsAttribute = "durationMs";
+        public const string DurationApiMsAttribute = "durationApiMs";
+        public const string NumTurnsAttribute = "numTurns";
+        public const string InputTokensAttribute = "inputTokens";
+        public const string OutputTokensAttribute = "outputTokens";
+        public const string CacheReadInputTokensAttribute = "cacheReadInputTokens";
+        public const string CacheCreationInputTokensAttribute = "cacheCreationInputTokens";
+        public const string ModelAttribute = "model";
+        public const string ProviderAttribute = "provider";
+    }
 }

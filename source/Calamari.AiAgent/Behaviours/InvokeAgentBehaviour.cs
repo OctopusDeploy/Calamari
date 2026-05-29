@@ -28,7 +28,8 @@ namespace Calamari.AiAgent.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return true;
+            var provider = context.Variables.Get(SpecialVariables.Action.AiAgent.Provider);
+            return provider == "Anthropic" || provider == "OpenAI";
         }
 
         public async Task Execute(RunningDeployment context)
@@ -118,9 +119,6 @@ namespace Calamari.AiAgent.Behaviours
                 log.Info($"Octopus MCP server connected. {tools.Count} tools available.");
                 
             }
-
-            tools.Add(new HostedWebSearchTool());
-            tools.Add(new HostedFileSearchTool());
 
             tools.Add(AIFunctionFactory.Create(() =>
                 {
