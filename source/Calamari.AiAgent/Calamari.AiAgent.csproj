@@ -23,4 +23,8 @@
         <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="Calamari.AiAgent.Tests" />
+    </ItemGroup>
+
 </Project>

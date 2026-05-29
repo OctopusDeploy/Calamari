@@ -28,8 +28,9 @@ namespace Calamari.AiAgent.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            var provider = context.Variables.Get(SpecialVariables.Action.AiAgent.Provider);
-            return provider == "Anthropic" || provider == "OpenAI";
+            return false;
+            //var provider = context.Variables.Get(SpecialVariables.Action.AiAgent.Provider);
+            //return provider == "Anthropic" || provider == "OpenAI";
         }
 
         public async Task Execute(RunningDeployment context)
@@ -50,7 +51,7 @@ namespace Calamari.AiAgent.Behaviours
 
             log.Info($"Invoking AI agent with model '{model}'...");
 
-            var provider = variables.Get(SpecialVariables.Action.AiAgent.Provider);
+            var provider = "Anthropic";//variables.Get(SpecialVariables.Action.AiAgent.Provider);
             IChatClient chatClient;
             if (provider == "Anthropic")
             {

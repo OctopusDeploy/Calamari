@@ -24,7 +24,17 @@ namespace Calamari.AiAgent.Behaviours
 
         public void ProcessLine(string json)
         {
-            using var doc = JsonDocument.Parse(json);
+            JsonDocument doc;
+            try
+            {
+                doc = JsonDocument.Parse(json);
+            }
+            catch (JsonException)
+            {
+                return;
+            }
+
+            using var _ = doc;
             var typeString = doc.RootElement.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
 
             if (typeString == null || !TryParseEventType(typeString, out var eventType))
@@ -120,16 +130,16 @@ namespace Calamari.AiAgent.Behaviours
                     case ContentBlockType.ToolUse:
                     {
                         var block = element.Deserialize<ToolUseContentBlock>(JsonOptions);
-                        log.Info($"[tool] {block?.Name}");
-                        if (block?.Input.HasValue == true)
-                            log.Verbose($"[tool] {block.Name} input: {block.Input}");
+                        log.Verbose(block?.Input.HasValue == true ?
+                                        $"[tool] {block.Name} input: {block.Input}" :
+                                        $"[tool] {block?.Name}");
                         break;
                     }
 
                     case ContentBlockType.ServerToolUse:
                     {
                         var block = element.Deserialize<ServerToolUseContentBlock>(JsonOptions);
-                        log.Info($"[server_tool] {block?.Name}");
+                        log.Verbose($"[server_tool] {block?.Name}");
                         break;
                     }
 
@@ -143,10 +153,9 @@ namespace Calamari.AiAgent.Behaviours
                     case ContentBlockType.ToolResult:
                     {
                         var block = element.Deserialize<ToolResultContentBlock>(JsonOptions);
-                        if (block?.IsError == true)
-                            log.Warn($"[tool_result] {block.ToolUseId} failed: {block.Content}");
-                        else
-                            log.Verbose($"[tool_result] {block?.Name} completed");
+                        log.Verbose(block?.IsError == true ?
+                                        $"[tool_result] {block.ToolUseId} failed: {block.Content}" :
+                                        $"[tool_result] {block?.Name} completed");
                         break;
                     }
                 }
@@ -181,6 +190,12 @@ namespace Calamari.AiAgent.Behaviours
 
         void HandleResultEvent(ResultStreamEvent evt)
         {
+            if (evt.Result != null && responseBuilder.Length == 0)
+            {
+                responseBuilder.Append(evt.Result);
+                log.Info(evt.Result);
+            }
+
             var properties = new Dictionary<string, string>();
 
             if (evt.CostUsd.HasValue)
