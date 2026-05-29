@@ -40,11 +40,15 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
 
             if (IsUnstructuredText(valueToUpdate))
             {
+<<<<<<< HEAD
                 if (valueToUpdate == newImageTag.ContainerReference.Tag)
                 {
                     alreadyUpToDate.Add(newImageTag.ContainerReference.FriendlyName());
                 }
                 else
+=======
+                if (valueToUpdate != newImageTag.ContainerReference.Tag)
+>>>>>>> release/2026.1
                 {
                     updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newImageTag.ContainerReference.Tag);
                     imagesUpdated.Add(newImageTag.ContainerReference.FriendlyName());

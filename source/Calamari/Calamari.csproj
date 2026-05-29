@@ -46,6 +46,7 @@
       <NoWarn>NU1902</NoWarn>
     </PackageReference>
     <PackageReference Include="System.Text.Json" Version="9.0.16" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Autofac" Version="4.8.0" />

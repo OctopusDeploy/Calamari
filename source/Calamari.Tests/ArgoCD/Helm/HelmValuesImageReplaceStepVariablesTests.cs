@@ -52,7 +52,10 @@ image:
 
         using var scope = new AssertionScope();
         result.UpdatedImageReferences.Should().BeEmpty();
+<<<<<<< HEAD
         result.AlreadyUpToDateImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
+=======
+>>>>>>> release/2026.1
     }
 
     [Test]
@@ -92,7 +95,10 @@ image:
 
         using var scope = new AssertionScope();
         result.UpdatedImageReferences.Should().BeEmpty();
+<<<<<<< HEAD
         result.AlreadyUpToDateImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
+=======
+>>>>>>> release/2026.1
     }
 
     [Test]
@@ -136,7 +142,10 @@ image:
 
         using var scope = new AssertionScope();
         result.UpdatedImageReferences.Should().BeEmpty();
+<<<<<<< HEAD
         result.AlreadyUpToDateImages.Should().BeEmpty();
+=======
+>>>>>>> release/2026.1
     }
 
     [Test]
