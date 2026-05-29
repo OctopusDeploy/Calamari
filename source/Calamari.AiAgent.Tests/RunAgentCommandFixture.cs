@@ -81,4 +81,38 @@ public class RunAgentCommandFixture
         result.WasSuccessful.Should().BeTrue();
         result.FullLog.Should().Contain("Paris");
     }
+
+    [Test]
+    [Category("PlatformAgnostic")]
+    public async Task ClaudeCode_SucceedsWithSimplePrompt()
+    {
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+                                             .WithArrange(context =>
+                                                          {
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "What is the capital of France? Reply with just the city name.");
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.Provider, "ClaudeCode");
+                                                          })
+                                             .Execute(assertWasSuccess: false);
+
+        result.WasSuccessful.Should().BeTrue();
+        result.FullLog.Should().Contain("Paris");
+    }
+    
+    [Test]
+    [Category("PlatformAgnostic")]
+    public async Task ClaudeCode_SucceedsWithHttpRequest()
+    {
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+                                             .WithArrange(context =>
+                                                          {
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "Call the whatsMyIp website to echo out my ip address");
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.Provider, "ClaudeCode");
+                                                          })
+                                             .Execute(assertWasSuccess: false);
+
+        result.WasSuccessful.Should().BeTrue();
+        //result.FullLog.Should().Contain("Paris");
+    }
 }
