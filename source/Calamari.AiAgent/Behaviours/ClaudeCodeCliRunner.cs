@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -26,6 +30,7 @@ namespace Calamari.AiAgent.Behaviours
             try
             {
                 SetupSkills(workingDir);
+                SetupMcpConfig(workingDir, options.McpServers);
                 return await RunInDirectoryAsync(options, workingDir);
             }
             finally
@@ -37,7 +42,7 @@ namespace Calamari.AiAgent.Behaviours
 
         async Task<string> RunInDirectoryAsync(ClaudeCodeOptions options, string workingDir)
         {
-            var args = BuildArguments(options);
+            var args = BuildArguments(options, workingDir);
 
             var debugFile = Path.Combine(workingDir, "claude-debug.log");
             args.Append(" --debug-file ");
@@ -103,9 +108,9 @@ namespace Calamari.AiAgent.Behaviours
             return responseBuilder.ToString();
         }
 
-        static StringBuilder BuildArguments(ClaudeCodeOptions options)
+        static StringBuilder BuildArguments(ClaudeCodeOptions options, string workingDir)
         {
-            //https://code.claude.com/docs/en/cli-reference
+            // https://code.claude.com/docs/en/cli-reference
             var args = new StringBuilder();
             args.Append("-p ");
             args.Append(EscapeArg(options.Prompt));
@@ -114,8 +119,20 @@ namespace Calamari.AiAgent.Behaviours
             args.Append(" --output-format stream-json");
             args.Append(" --verbose");
             args.Append(" --permission-mode dontAsk");
-            args.Append(" --allowedTools Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch");
             args.Append(" --no-session-persistence");
+
+            // MCP isolation: only use servers we explicitly provide
+            var mcpConfigPath = Path.Combine(workingDir, "mcp-config.json");
+            args.Append(" --strict-mcp-config");
+            args.Append(" --mcp-config ");
+            args.Append(EscapeArg(mcpConfigPath));
+
+            // Tool whitelist
+            if (options.AllowedTools.Count > 0)
+            {
+                args.Append(" --allowedTools ");
+                args.Append(string.Join(",", options.AllowedTools));
+            }
 
             if (options.MaxTurns.HasValue)
                 args.Append($" --max-turns {options.MaxTurns.Value}");
@@ -127,6 +144,13 @@ namespace Calamari.AiAgent.Behaviours
             }
 
             return args;
+        }
+
+        static void SetupMcpConfig(string workingDir, IReadOnlyDictionary<string, McpServerConfig> mcpServers)
+        {
+            var config = new { mcpServers };
+            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(Path.Combine(workingDir, "mcp-config.json"), json);
         }
 
         static void SetupSkills(string workingDir)
@@ -169,5 +193,26 @@ namespace Calamari.AiAgent.Behaviours
         public required string Model { get; init; }
         public string? SystemPrompt { get; init; }
         public int? MaxTurns { get; init; }
+        public IReadOnlyList<string> AllowedTools { get; init; } = new[]
+        {
+            "Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch"
+        };
+        public IReadOnlyDictionary<string, McpServerConfig> McpServers { get; init; } =
+            new Dictionary<string, McpServerConfig>();
+    }
+
+    public record McpServerConfig
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; init; } = "stdio";
+
+        [JsonPropertyName("command")]
+        public required string Command { get; init; }
+
+        [JsonPropertyName("args")]
+        public IReadOnlyList<string>? Args { get; init; }
+
+        [JsonPropertyName("env")]
+        public IReadOnlyDictionary<string, string>? Env { get; init; }
     }
 }

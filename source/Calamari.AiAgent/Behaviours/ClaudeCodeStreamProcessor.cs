@@ -25,25 +25,46 @@ namespace Calamari.AiAgent.Behaviours
         public void ProcessLine(string json)
         {
             using var doc = JsonDocument.Parse(json);
-            var type = doc.RootElement.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
+            var typeString = doc.RootElement.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
 
-            switch (type)
+            if (typeString == null || !TryParseEventType(typeString, out var eventType))
             {
-                case "system":
+                log.Verbose($"[stream] unhandled event type '{typeString}'");
+                return;
+            }
+
+            switch (eventType)
+            {
+                case StreamEventType.System:
                     HandleSystemEvent(JsonSerializer.Deserialize<SystemStreamEvent>(json, JsonOptions)!);
                     break;
-                case "assistant":
+                case StreamEventType.Assistant:
                     HandleMessageEvent(JsonSerializer.Deserialize<AssistantStreamEvent>(json, JsonOptions)?.Message);
                     break;
-                case "user":
+                case StreamEventType.User:
                     HandleUserMessage(JsonSerializer.Deserialize<UserStreamEvent>(json, JsonOptions)?.Message);
                     break;
-                case "result":
+                case StreamEventType.Result:
                     HandleResultEvent(JsonSerializer.Deserialize<ResultStreamEvent>(json, JsonOptions)!);
                     break;
-                default:
-                    log.Verbose($"[stream] unhandled event type '{type}'");
-                    break;
+            }
+        }
+
+        static bool TryParseEventType(string value, out StreamEventType result)
+        {
+            return value switch
+            {
+                "system" => Assign(StreamEventType.System, out result),
+                "assistant" => Assign(StreamEventType.Assistant, out result),
+                "user" => Assign(StreamEventType.User, out result),
+                "result" => Assign(StreamEventType.Result, out result),
+                _ => Assign(default, out result, false),
+            };
+
+            static bool Assign(StreamEventType val, out StreamEventType result, bool success = true)
+            {
+                result = val;
+                return success;
             }
         }
 
@@ -67,11 +88,17 @@ namespace Calamari.AiAgent.Behaviours
 
             foreach (var element in message.Content)
             {
-                var blockType = element.TryGetProperty("type", out var bt) ? bt.GetString() : null;
+                var blockTypeStr = element.TryGetProperty("type", out var bt) ? bt.GetString() : null;
+
+                if (blockTypeStr == null || !TryParseContentBlockType(blockTypeStr, out var blockType))
+                {
+                    log.Verbose($"[message] unhandled block type: {blockTypeStr}");
+                    continue;
+                }
 
                 switch (blockType)
                 {
-                    case "text":
+                    case ContentBlockType.Text:
                     {
                         var block = element.Deserialize<TextContentBlock>(JsonOptions);
                         responseBuilder.Append(block?.Text);
@@ -79,18 +106,18 @@ namespace Calamari.AiAgent.Behaviours
                         break;
                     }
 
-                    case "thinking":
+                    case ContentBlockType.Thinking:
                     {
                         var block = element.Deserialize<ThinkingContentBlock>(JsonOptions);
                         log.Verbose($"[thinking] {block?.Thinking}");
                         break;
                     }
 
-                    case "redacted_thinking":
+                    case ContentBlockType.RedactedThinking:
                         log.Verbose("[thinking] <redacted>");
                         break;
 
-                    case "tool_use":
+                    case ContentBlockType.ToolUse:
                     {
                         var block = element.Deserialize<ToolUseContentBlock>(JsonOptions);
                         log.Info($"[tool] {block?.Name}");
@@ -99,37 +126,51 @@ namespace Calamari.AiAgent.Behaviours
                         break;
                     }
 
-                    case "server_tool_use":
+                    case ContentBlockType.ServerToolUse:
                     {
                         var block = element.Deserialize<ServerToolUseContentBlock>(JsonOptions);
-                     //   log.Info($"[server_tool] {block?.Name}");
+                        log.Info($"[server_tool] {block?.Name}");
                         break;
                     }
 
-                    case "server_tool_result":
+                    case ContentBlockType.ServerToolResult:
                     {
                         var block = element.Deserialize<ServerToolResultContentBlock>(JsonOptions);
-                       // log.Verbose($"[server_tool] {block?.Name} completed");
+                        log.Verbose($"[server_tool] {block?.Name} completed");
                         break;
                     }
 
-                    case "tool_result":
+                    case ContentBlockType.ToolResult:
                     {
                         var block = element.Deserialize<ToolResultContentBlock>(JsonOptions);
-                        /*
                         if (block?.IsError == true)
                             log.Warn($"[tool_result] {block.ToolUseId} failed: {block.Content}");
                         else
                             log.Verbose($"[tool_result] {block?.Name} completed");
-                        */
                         break;
-                     
                     }
-
-                    default:
-                        log.Verbose($"[message] unhandled block type: {blockType}");
-                        break;
                 }
+            }
+        }
+
+        static bool TryParseContentBlockType(string value, out ContentBlockType result)
+        {
+            return value switch
+            {
+                "text" => Assign(ContentBlockType.Text, out result),
+                "thinking" => Assign(ContentBlockType.Thinking, out result),
+                "redacted_thinking" => Assign(ContentBlockType.RedactedThinking, out result),
+                "tool_use" => Assign(ContentBlockType.ToolUse, out result),
+                "tool_result" => Assign(ContentBlockType.ToolResult, out result),
+                "server_tool_use" => Assign(ContentBlockType.ServerToolUse, out result),
+                "server_tool_result" => Assign(ContentBlockType.ServerToolResult, out result),
+                _ => Assign(default, out result, false),
+            };
+
+            static bool Assign(ContentBlockType val, out ContentBlockType result, bool success = true)
+            {
+                result = val;
+                return success;
             }
         }
 
@@ -139,37 +180,6 @@ namespace Calamari.AiAgent.Behaviours
         }
 
         void HandleResultEvent(ResultStreamEvent evt)
-        {
-            if (evt.Result != null && responseBuilder.Length == 0)
-            {
-                responseBuilder.Append(evt.Result);
-                log.Info(evt.Result);
-            }
-
-            if (evt.CostUsd.HasValue)
-                log.Info($"Cost: ${evt.CostUsd.Value:F4} USD");
-
-            if (evt.TotalCostUsd.HasValue)
-                log.Info($"Total cost: ${evt.TotalCostUsd.Value:F4} USD");
-
-            if (evt.DurationMs.HasValue)
-                log.Info($"Duration: {evt.DurationMs.Value / 1000.0:F1}s");
-
-            if (evt.DurationApiMs.HasValue)
-                log.Verbose($"API duration: {evt.DurationApiMs.Value / 1000.0:F1}s");
-
-            if (evt.NumTurns.HasValue)
-                log.Info($"Turns: {evt.NumTurns.Value}");
-
-            if (evt.Usage is { } usage)
-            {
-                log.Info($"Tokens — input: {usage.InputTokens ?? 0}, output: {usage.OutputTokens ?? 0}, cache read: {usage.CacheReadInputTokens ?? 0}, cache creation: {usage.CacheCreationInputTokens ?? 0}");
-            }
-
-            EmitUsageServiceMessage(evt);
-        }
-
-        void EmitUsageServiceMessage(ResultStreamEvent evt)
         {
             var properties = new Dictionary<string, string>();
 
