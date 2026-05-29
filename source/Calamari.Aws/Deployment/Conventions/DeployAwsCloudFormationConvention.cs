@@ -219,7 +219,7 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
 
     /// <summary>
     /// Not all exceptions are bad. Some just mean there is nothing to do, which is fine.
-    /// This method will ignore expected exceptions, and rethrow any that are really issues.
+    /// This method will ignore expected exceptions and rethrow any that are really issues.
     /// </summary>
     /// <param name="ex">The exception we need to deal with</param>
     /// <exception cref="AmazonCloudFormationException">The supplied exception if it really is an error</exception>
