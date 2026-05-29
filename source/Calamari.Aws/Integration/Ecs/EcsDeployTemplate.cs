@@ -1,9 +1,8 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using Amazon.CDK;
 using Amazon.CDK.AWS.ECS;
 using Amazon.CDK.AWS.Logs;
-using Calamari.Aws.Deployment;
 using Calamari.Aws.Inputs.Ecs;
 using Octopus.Calamari.Contracts.Aws.Ecs;
 
@@ -16,59 +15,32 @@ public sealed class EcsDeployTemplate : Stack
     const string LinuxOperatingSystemFamily = "LINUX";
     
 
-    public EcsDeployTemplate(DeployEcsCommandInputs commandInputs, App scope, string id, IStackProps props = null) : base(scope, id, props)
+    public EcsDeployTemplate(DeployEcsCommandInputs commandInputs,
+                             IReadOnlyList<(string Name, string Value)> parameters,
+                             App scope,
+                             string id,
+                             IStackProps props = null) : base(scope, id, props)
     {
         TemplateOptions.TemplateFormatVersion = "2010-09-09";
 
-        var clusterNameParam = new CfnParameter(this,
-                                                "ClusterName",
-                                                new CfnParameterProps
-                                                {
-                                                    Type = "String",
-                                                    Default =  commandInputs.ClusterName
-                                                });
+        var paramRefs = parameters.ToDictionary(
+                                                p => p.Name,
+                                                p => new CfnParameter(this,
+                                                                      p.Name,
+                                                                      new CfnParameterProps
+                                                                      {
+                                                                          Type = "String",
+                                                                          Default = p.Value
+                                                                      }));
 
-        var taskFamilyParam = new CfnParameter(this,
-                                               "TaskDefinitionName",
-                                               new CfnParameterProps
-                                               {
-                                                   Type = "String",
-                                                   Default = commandInputs.ServiceTaskName
-                                               });
+        // ExecutionRoleArn: parameter when user-supplied (in `paramRefs`), in-template
+        // role otherwise. The role can't be known at request time because CFN creates
+        // it during the same deploy, so it can't sit behind a parameter override.
+        var executionRoleArnRef = paramRefs.TryGetValue(EcsTemplateParameterNames.TaskExecutionRole, out var execRoleParam)
+            ? execRoleParam.ValueAsString
+            : commandInputs.MapTaskExecutionRoleArn(this);
 
-        var cpuParam = new CfnParameter(this,
-                                        "TaskDefinitionCPU",
-                                        new CfnParameterProps
-                                        {
-                                            Type = "String",
-                                            Default = commandInputs.Cpu
-                                        });
 
-        var memoryParam = new CfnParameter(this,
-                                           "TaskDefinitionMemory",
-                                           new CfnParameterProps
-                                           {
-                                               Type = "String",
-                                               Default = commandInputs.Memory
-                                           });
-
-        var executionRoleArnParam = new CfnParameter(this,
-                                                     "TaskExecutionRole",
-                                                     new CfnParameterProps
-                                                     {
-                                                         Type = "String",
-                                                         Default = commandInputs.MapTaskExecutionRoleArn(this)
-                                                     });
-
-        var taskRoleArnParam = new CfnParameter(this,
-                                                "TaskRole",
-                                                new CfnParameterProps
-                                                {
-                                                    Type = "String",
-                                                    Default = commandInputs.TaskRole
-                                                });
-
-        
         var containers = commandInputs.Containers.Select(c => new CfnTaskDefinition.ContainerDefinitionProperty
         {
             Name = c.ContainerName,
@@ -118,19 +90,11 @@ public sealed class EcsDeployTemplate : Stack
 
         if (commandInputs.RequiresLogGroup)
         {
-            var logGroupNameParam = new CfnParameter(this,
-                                                    "LogGroupName",
-                                                    new CfnParameterProps
-                                                    {
-                                                        Type = "String",
-                                                        Default = commandInputs.DefaultLogGroupPath
-                                                    });
-
             _ = new CfnLogGroup(this,
                                commandInputs.LogGroupName,
                                new CfnLogGroupProps
                                {
-                                   LogGroupName = logGroupNameParam.ValueAsString
+                                   LogGroupName = paramRefs[EcsTemplateParameterNames.LogGroupName].ValueAsString
                                });
         }
 
@@ -139,11 +103,11 @@ public sealed class EcsDeployTemplate : Stack
                                                    new CfnTaskDefinitionProps
                                                    {
                                                        ContainerDefinitions = containers,
-                                                       Family = taskFamilyParam.ValueAsString,
-                                                       Cpu = cpuParam.ValueAsString,
-                                                       Memory = memoryParam.ValueAsString,
-                                                       ExecutionRoleArn = executionRoleArnParam.ValueAsString,
-                                                       TaskRoleArn = taskRoleArnParam.ValueAsString,
+                                                       Family = paramRefs[EcsTemplateParameterNames.TaskDefinitionName].ValueAsString,
+                                                       Cpu = paramRefs[EcsTemplateParameterNames.TaskDefinitionCpu].ValueAsString,
+                                                       Memory = paramRefs[EcsTemplateParameterNames.TaskDefinitionMemory].ValueAsString,
+                                                       ExecutionRoleArn = executionRoleArnRef,
+                                                       TaskRoleArn = paramRefs[EcsTemplateParameterNames.TaskRole].ValueAsString,
                                                        RequiresCompatibilities = [FargateLaunchType],
                                                        NetworkMode = AwsVpcNetworkMode,
                                                        RuntimePlatform = new CfnTaskDefinition.RuntimePlatformProperty
@@ -159,7 +123,7 @@ public sealed class EcsDeployTemplate : Stack
                                      commandInputs.ServiceName,
                                      new CfnServiceProps
                                      {
-                                         Cluster = clusterNameParam.ValueAsString,
+                                         Cluster = paramRefs[EcsTemplateParameterNames.ClusterName].ValueAsString,
                                          LaunchType = FargateLaunchType,
                                          TaskDefinition = taskDefinition.Ref,
                                          DesiredCount = commandInputs.DesiredCount,

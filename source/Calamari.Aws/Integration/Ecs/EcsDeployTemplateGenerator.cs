@@ -1,10 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Amazon.CDK;
-using Calamari.Aws.Inputs;
+using Amazon.CloudFormation.Model;
 using Calamari.Aws.Inputs.Ecs;
+using Calamari.Common.Util;
 using Newtonsoft.Json;
 
 namespace Calamari.Aws.Integration.Ecs;
+
+public record GeneratedTemplate(string Body, IReadOnlyList<Parameter> Parameters);
+
+public class ListTemplateInputs<TInput>(IEnumerable<TInput> inputs) : ITemplateInputs<TInput>
+{
+    public IEnumerable<TInput> Inputs { get; } = inputs.ToList();
+}
 
 public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
 {
@@ -17,13 +27,14 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
             GenerateBootstrapVersionRule = false
         })
     };
-    
-    public string GenerateTemplate()
+
+    public GeneratedTemplate Generate()
     {
-        _ = new EcsDeployTemplate(commandInputs, app, commandInputs.CfStackName, stackProps);
+        var parameters = BuildParameters();
+
+        _ = new EcsDeployTemplate(commandInputs, parameters, app, commandInputs.CfStackName, stackProps);
 
         var assembly = app.Synth();
-
         var stackArtifact = assembly.GetStackByName(commandInputs.CfStackName);
 
         var settings = new JsonSerializerSettings
@@ -31,12 +42,42 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
             Formatting = Formatting.Indented,
             NullValueHandling = NullValueHandling.Ignore
         };
-        
         settings.Converters.Add(new WholeDoubleConverter());
 
-        return JsonConvert.SerializeObject(stackArtifact.Template, settings);
+        var body = JsonConvert.SerializeObject(stackArtifact.Template, settings);
+
+        return new GeneratedTemplate(
+            body,
+            parameters.Select(p => new Parameter { ParameterKey = p.Name, ParameterValue = p.Value }).ToList());
     }
-    
+
+    List<(string Name, string Value)> BuildParameters()
+    {
+        var list = new List<(string Name, string Value)>
+        {
+            (EcsTemplateParameterNames.ClusterName,          commandInputs.ClusterName),
+            (EcsTemplateParameterNames.TaskDefinitionName,   commandInputs.ServiceTaskName),
+            (EcsTemplateParameterNames.TaskDefinitionCpu,    commandInputs.Cpu),
+            (EcsTemplateParameterNames.TaskDefinitionMemory, commandInputs.Memory),
+            (EcsTemplateParameterNames.TaskRole,             commandInputs.TaskRole),
+        };
+
+        // Only declared when the user supplied a concrete ARN — otherwise the role
+        // is created in-template and referenced via Ref (no parameter needed).
+        if (!string.IsNullOrEmpty(commandInputs.TaskExecutionRole))
+        {
+            list.Add((EcsTemplateParameterNames.TaskExecutionRole, commandInputs.TaskExecutionRole));
+        }
+
+
+        if (commandInputs.RequiresLogGroup)
+        {
+            list.Add((EcsTemplateParameterNames.LogGroupName, commandInputs.DefaultLogGroupPath));
+        }
+            
+
+        return list;
+    }
 
     class WholeDoubleConverter : JsonConverter<double?>
     {
