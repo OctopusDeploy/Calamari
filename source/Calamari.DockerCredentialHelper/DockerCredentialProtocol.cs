@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text.Json;
 using Calamari.Common.Features.Docker;
@@ -29,9 +30,20 @@ namespace Calamari.DockerCredentialHelper
             }
         }
 
+        // Docker sends a JSON object on stdin for 'store'.
         int Store(TextReader input, TextWriter error, string encryptionPassword, string dockerConfigPath)
         {
-            var request = JsonSerializer.Deserialize<StoreRequest>(input.ReadToEnd());
+            StoreRequest? request;
+            try
+            {
+                request = JsonSerializer.Deserialize<StoreRequest>(input.ReadToEnd());
+            }
+            catch (Exception)
+            {
+                error.WriteLine("Invalid store request");
+                return 1;
+            }
+
             if (request == null || string.IsNullOrEmpty(request.ServerURL))
             {
                 error.WriteLine("Invalid store request");
@@ -42,6 +54,7 @@ namespace Calamari.DockerCredentialHelper
             return 0;
         }
 
+        // Docker sends a bare server URL line on stdin for 'get' and 'erase'.
         int Get(TextReader input, TextWriter output, TextWriter error, string encryptionPassword, string dockerConfigPath)
         {
             var serverUrl = input.ReadLine()?.Trim();

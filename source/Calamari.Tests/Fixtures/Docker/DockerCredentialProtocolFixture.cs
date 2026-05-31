@@ -75,5 +75,22 @@ namespace Calamari.Tests.Fixtures.Docker
             Assert.That(exit, Is.EqualTo(1));
             Assert.That(error.ToString(), Does.Contain("Invalid operation"));
         }
+
+        [Test]
+        public void Store_WithMalformedJson_ReturnsExitOneAndError()
+        {
+            var error = new StringWriter();
+            var exit = protocol.Run("store", new StringReader("not json"), new StringWriter(), error, Password, configPath);
+
+            Assert.That(exit, Is.EqualTo(1));
+            Assert.That(error.ToString(), Does.Contain("Invalid store request"));
+        }
+
+        [Test]
+        public void Store_WithEmptyInput_ReturnsExitOne()
+        {
+            var exit = protocol.Run("store", new StringReader(""), new StringWriter(), new StringWriter(), Password, configPath);
+            Assert.That(exit, Is.EqualTo(1));
+        }
     }
 }
