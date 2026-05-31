@@ -14,6 +14,10 @@ namespace Calamari.DockerCredentialHelper
             }
 
             var operation = args[0];
+            // This helper is only ever invoked by Docker during a Calamari package acquisition.
+            // Calamari sets DOCKER_CONFIG (where the encrypted .cred files live) and
+            // OCTOPUS_CREDENTIAL_PASSWORD (the decryption key) before invoking Docker, and Docker
+            // passes the environment through to this process. Both are therefore required.
             var encryptionPassword = Environment.GetEnvironmentVariable("OCTOPUS_CREDENTIAL_PASSWORD");
             var dockerConfigPath = Environment.GetEnvironmentVariable("DOCKER_CONFIG");
 
