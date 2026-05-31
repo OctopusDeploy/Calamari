@@ -117,6 +117,26 @@ public partial class Build
 
                            await Task.WhenAll(publishTasks);
 
+                           // Overlay the standalone Docker credential helper into each Calamari runtime folder
+                           // so Docker can invoke `docker-credential-octopus` directly from the deployed package.
+                           var calamariProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari");
+                           var helperProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari.DockerCredentialHelper");
+                           if (calamariProject != null && helperProject != null)
+                           {
+                               foreach (var rid in GetRuntimeIdentifiers(calamariProject))
+                               {
+                                   var calamariRidDirectory = KnownPaths.PublishDirectory / "Calamari" / rid;
+                                   Log.Information("Overlaying docker-credential-octopus into {Directory}", calamariRidDirectory);
+                                   DotNetPublish(s => s
+                                                      .SetConfiguration(Configuration)
+                                                      .SetProject(helperProject)
+                                                      .SetFramework(Frameworks.Net80)
+                                                      .SetRuntime(rid)
+                                                      .SetSelfContained(OperatingSystem.IsWindows())
+                                                      .SetOutput(calamariRidDirectory));
+                               }
+                           }
+
                            // Sign and compress tasks
                            Log.Information("Signing published binaries...");
                            var signTasks = outputPaths
