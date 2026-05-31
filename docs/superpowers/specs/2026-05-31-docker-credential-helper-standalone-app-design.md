@@ -99,20 +99,25 @@ To verify during implementation:
 - The overlay does not clobber Calamari's own DLLs with differing builds (same source/config/RID
   → should match).
 - The helper apphost survives consolidation + compression into the final package.
+- The copy from the helper published output to the calamari location should verify files are identical when copying
 
 ## Login-failure fallback
 
 Keep a fallback so a misbehaving helper degrades to today's behavior rather than failing a
-deployment, **simplified** from the PR:
+deployment:
 
-- While the helper is enabled, the trigger is simply a **non-zero `docker login` exit code**
-  (no string-matching on Docker's `"Error saving credentials"` message, which varies by
-  version/locale).
-- On failure: clean up the helper config and retry `docker login` **once** without the helper.
+- While the helper is enabled, a **non-zero `docker login` exit code** triggers fallback handling.
+- On a non-zero exit, attempt to match the known credential-helper error in the captured login
+  output (e.g. Docker's `"Error saving credentials"`). This match is **diagnostic only** — it
+  lets us log *why* we fell back when the cause is recognizable.
+- **Whether or not the string matches, the non-zero exit triggers the fallback**: clean up the
+  helper config and retry `docker login` **once** without the helper. The string match never
+  gates the fallback; it only distinguishes a known credential-helper failure from an unknown one.
 
-Because the trigger is the exit code alone, the stdout-capture path is **dropped**:
-`InMemoryCommandOutputSink` is removed and the `CommandLineRunner` optional-sink change is
-reverted. (The invasive logging changes were never part of this fallback.)
+Because we still inspect login output for the diagnostic match, the stdout-capture path is
+**retained**: the contained, backwards-compatible `CommandLineRunner` optional-sink change and
+`InMemoryCommandOutputSink` stay. (The invasive startup/logging changes are still reverted —
+they were never part of this fallback.)
 
 ## Reverts from the current PR
 
@@ -124,8 +129,10 @@ These are removed entirely:
 - `Program.cs` / `CalamariFlavourProgram.cs` changes (DeferredLogger wiring)
 - `docker-credential-octopus.ps1` / `docker-credential-octopus.sh` wrapper scripts
 - The `OCTOPUS_CALAMARI_EXECUTABLE` env var and `GetCalamariExecutablePath()` logic
-- `source/Calamari.Common/Features/Processes/InMemoryCommandOutputSink.cs` and the
-  `CommandLineRunner` optional-sink change (no longer needed; fallback triggers on exit code)
+
+`InMemoryCommandOutputSink` and the `CommandLineRunner` optional-sink change are **retained** —
+the fallback's diagnostic string match still needs to inspect login output (see Login-failure
+fallback above).
 
 ## Testing
 
