@@ -1,4 +1,5 @@
-﻿using Calamari.Build.Utilities;
+﻿using System.IO.Compression;
+using Calamari.Build.Utilities;
 using JetBrains.Annotations;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.PowerShell;
@@ -42,6 +43,8 @@ public partial class Build
                                                                                                          .SetTag(tag)
                                                                                                          .SetFile(dockerFile)
                                                                                                          .SetPath(KnownPaths.RootDirectory)
+                                                                                                         // This is required so we can save below.
+                                                                                                         // Otherwise, the image just remains in the build cache
                                                                                                          .EnableLoad();
 
                                                                                               return settings;
@@ -61,11 +64,15 @@ public partial class Build
                                                                                              .SetImages(tag)
                                                                                              .SetOutput(outputFile));
 
-                                                            var compressedZipPath = $"{outputFile}.gz";
 
                                                             //compress with gzip
-                                                            PowerShellTasks.PowerShell(_ => _.SetCommand($"Compress-Archive -Path '{outputFile}' -DestinationPath '{compressedZipPath}'"));
+                                                            PowerShellTasks.PowerShell(_ => _
+                                                                                            .EnableNoProfile()
+                                                                                            .SetCommand($"gzip -k -9 -f '{outputFile}'"));
 
+                                                            //gzip always uses the .gz suffix
+                                                            var compressedZipPath = $"{outputFile}.gz";
+                                                            
                                                             // This file is then uploaded to OctopusDeploy to perform the release process
                                                             if (TeamCity.Instance is not null)
                                                             {
