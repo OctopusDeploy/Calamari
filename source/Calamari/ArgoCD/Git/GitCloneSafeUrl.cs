@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Calamari.ArgoCD.Git;
 
@@ -24,11 +25,20 @@ public static class GitCloneSafeUrl
     /// </summary>
     /// <param name="uri">A, potentially invalid <see cref="Uri"/> object</param>
     /// <returns>A URI that, if is SSH, is well formed<see cref="Uri"/> object</returns>
-    public static Uri FromString(string uri)
+    /// <remarks>
+    /// This is invoked during yaml deserialisation, and may be applied to repoURLs which will never actually be cloned
+    /// during step execution (eg sources which have not been scoped to the step).
+    /// </remarks>
+    public static string ConvertToUriString(string uri)
     {
         if (!uri.StartsWith(StandardSshScpPrefix))
         {
-            return new Uri(uri);
+            // argo does not (always?) add a protocol to helm chart sources.
+            if (!uri.Contains(Uri.SchemeDelimiter))
+            {
+                uri = $"oci://{uri}";
+            }
+            return new Uri(uri).AbsoluteUri;
         }
 
         var scpAddress = uri.Substring(StandardSshScpPrefix.Length);
@@ -45,6 +55,6 @@ public static class GitCloneSafeUrl
             Host = host,
             Path = path
         };
-        return uriBuilder.Uri;
+        return uriBuilder.Uri.AbsoluteUri;
     }
 }

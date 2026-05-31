@@ -211,7 +211,7 @@ namespace Calamari.Integration.Packages.Download
                 Prefix = prefix
             };
             var response = await client.ListObjectsAsync(request, cancellationToken);
-            return response.S3Objects.Count == 1 ? response.S3Objects[0].Key : null;
+            return response.S3Objects?.Count == 1 ? response.S3Objects[0].Key : null;
         }
     }
 }

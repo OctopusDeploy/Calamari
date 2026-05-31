@@ -1,12 +1,6 @@
-﻿namespace Calamari.Aws.Integration.CloudFormation
-{
-    public class StackArn
-    {
-        public StackArn(string value)
-        {
-            Value = value;
-        }
+﻿namespace Calamari.Aws.Integration.CloudFormation;
 
-        public string Value { get; }
-    }
+public class StackArn(string value)
+{
+    public string Value { get; } = value;
 }

@@ -1,12 +1,6 @@
-﻿namespace Calamari.Aws.Integration.CloudFormation
-{
-    public class ChangeSetArn
-    {
-        public string Value { get; }
+﻿namespace Calamari.Aws.Integration.CloudFormation;
 
-        public ChangeSetArn(string value)
-        {
-            Value = value;
-        }
-    }
+public class ChangeSetArn(string value)
+{
+    public string Value { get; } = value;
 }

@@ -82,6 +82,9 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.Npm:
                     downloader = new NpmPackageDownloader(log, fileSystem);
                     break;
+                case FeedType.PyPi:
+                    downloader = new PyPiPackageDownloader(log, fileSystem);
+                    break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }

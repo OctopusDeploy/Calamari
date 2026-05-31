@@ -11,6 +11,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
+using Calamari.CommitToGit;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
@@ -29,6 +30,9 @@ using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
+using Calamari.Common.Plumbing.Pipeline;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
 
@@ -47,11 +51,31 @@ namespace Calamari
 
         public int Execute(params string[] args)
         {
+            // Backward compatibility fix for v4 collections to ensure they are not null
+            // from https://docs.aws.amazon.com/sdk-for-net/v4/developer-guide/net-dg-v4.html#net-dg-v4-collections
+            Amazon.AWSConfigs.InitializeCollections = true;
             return Run(args);
         }
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
+            // Handle Pipeline commands such as Target Discovery
+            if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
+            {
+                try
+                {                
+                    var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
+                    var variables = container.Resolve<IVariables>();
+                    pipeline.Execute(container, variables).GetAwaiter().GetResult();
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
+                }
+            }
+
+
             var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
 
             var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -104,8 +128,6 @@ namespace Calamari
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
 
-            builder.RegisterAssemblyModules(assembliesToRegister);
-
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<IKubernetesDiscoverer>()
                    .As<IKubernetesDiscoverer>();
@@ -121,12 +143,26 @@ namespace Calamari
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithInputs>();
 
+            // Register Pipeline commands
+            builder.RegisterAssemblyTypes(assembliesToRegister)
+                   .AssignableTo<PipelineCommand>()
+                   .WithMetadataFrom<CommandAttribute>()
+                   .Where(t => t.GetCustomAttribute<CommandAttribute>() is not null)
+                   .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>()!.Name);
+            
+
             builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();
 
+
+            var moduleAssemblies = GetModuleAssemblies().ToArray();
+            builder.RegisterAssemblyModules(moduleAssemblies);
+
             builder.RegisterModule<ArgoCDModule>();
+            builder.RegisterModule<CommitToGitModule>();
+            builder.RegisterModule<PackageRetentionModule>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()
@@ -135,6 +171,12 @@ namespace Calamari
             yield return typeof(AwsSpecialVariables).Assembly;
             //Calamari.Azure, this includes AzureOidcAccount
             yield return typeof(AzureKubernetesDiscoverer).Assembly;
+        }
+
+        // This is for safety, for the time being, so we don't inadvertently register something we shouldn't;
+        IEnumerable<Assembly> GetModuleAssemblies()
+        {
+            yield return typeof(AwsSpecialVariables).Assembly;
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()

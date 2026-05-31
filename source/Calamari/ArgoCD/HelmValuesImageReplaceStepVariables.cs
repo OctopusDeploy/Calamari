@@ -23,6 +23,7 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
     public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
         var imagesUpdated = new HashSet<string>();
+        var alreadyUpToDate = new HashSet<string>();
         var updatedYaml = yamlContent;
         var originalYamlParser = new HelmYamlParser(yamlContent); // Parse and track the original yaml so that content can be read from it.
         var flattenedYamlPathDictionary = HelmValuesEditor.GenerateVariableDictionary(originalYamlParser);
@@ -36,10 +37,14 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
                 log.Verbose($"{helmReference} for image {newImageTag.ContainerReference.FriendlyName()} was not found in your values file.");
                 continue;
             }
-                
+
             if (IsUnstructuredText(valueToUpdate))
             {
-                if (valueToUpdate != newImageTag.ContainerReference.Tag)
+                if (valueToUpdate == newImageTag.ContainerReference.Tag)
+                {
+                    alreadyUpToDate.Add(newImageTag.ContainerReference.FriendlyName());
+                }
+                else
                 {
                     updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newImageTag.ContainerReference.Tag);
                     imagesUpdated.Add(newImageTag.ContainerReference.FriendlyName());
@@ -57,6 +62,10 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
                         updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newValue);
                         imagesUpdated.Add(newValue);
                     }
+                    else
+                    {
+                        alreadyUpToDate.Add(cir.FriendlyName());
+                    }
                 }
                 else
                 {
@@ -64,7 +73,7 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
                 }
             }
         }
-        return new ImageReplacementResult(updatedYaml, imagesUpdated);
+        return new ImageReplacementResult(updatedYaml, imagesUpdated, alreadyUpToDate);
     }
 
     bool IsUnstructuredText(string content)
