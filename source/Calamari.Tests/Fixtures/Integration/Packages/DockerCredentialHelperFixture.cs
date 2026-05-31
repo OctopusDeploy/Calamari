@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void StoreCredentials_CreatesEncryptedCredentialFile()
         {
             // Act
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
             credentialHelper.StoreCredentials(TestServerUrl, TestUsername, TestPassword, TestEncryptionPassword, dockerConfigPath);
 
             // Assert
@@ -61,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void GetCredentials_RetrievesStoredCredentials()
         {
             // Arrange
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
             credentialHelper.StoreCredentials(TestServerUrl, TestUsername, TestPassword, TestEncryptionPassword, dockerConfigPath);
 
             // Act
@@ -77,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void GetCredentials_WithWrongPassword_ReturnsNull()
         {
             // Arrange
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
             credentialHelper.StoreCredentials(TestServerUrl, TestUsername, TestPassword, TestEncryptionPassword, dockerConfigPath);
 
             // Act
@@ -91,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void GetCredentials_WithNonExistentCredentials_ReturnsNull()
         {
             // Act
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
             var retrievedCredential = credentialHelper.GetCredentials("https://nonexistent.registry.com", TestEncryptionPassword, dockerConfigPath);
 
             // Assert
@@ -102,7 +102,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void EraseCredentials_RemovesStoredCredentials()
         {
             // Arrange
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
             credentialHelper.StoreCredentials(TestServerUrl, TestUsername, TestPassword, TestEncryptionPassword, dockerConfigPath);
             var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
             Directory.GetFiles(credentialsDir, "*.cred").Should().HaveCount(1);
@@ -124,7 +124,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 ["docker.io"] = "octopus",
                 ["myregistry.com"] = "octopus"
             };
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
 
             // Act
             var configPath = credentialHelper.CreateDockerConfig(dockerConfigPath, credHelpers);
@@ -144,7 +144,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void CleanupCredentials_RemovesCredentialsDirectory()
         {
             // Arrange
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
             credentialHelper.StoreCredentials(TestServerUrl, TestUsername, TestPassword, TestEncryptionPassword, dockerConfigPath);
             var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
             Directory.Exists(credentialsDir).Should().BeTrue();
@@ -166,7 +166,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 ("https://myregistry.com", "myuser", "mypass"),
                 ("https://another.registry.io", "anotheruser", "anotherpass")
             };
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
 
             // Act - Store multiple credentials
             foreach (var (serverUrl, username, password) in servers)
@@ -199,7 +199,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 "https://registry/with/slashes",
                 "https://registry.with.dots.and:8443/path"
             };
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
 
             // Act & Assert
             foreach (var serverUrl in serverUrls)
@@ -218,7 +218,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             // Arrange
             const string sensitivePassword = "SuperSecretPassword123!@#";
-            var credentialHelper = new DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
+            var credentialHelper = new Calamari.Integration.Packages.Download.DockerCredentialHelper(fileSystem, Substitute.For<ILog>());
             
             // Act
             credentialHelper.StoreCredentials(TestServerUrl, TestUsername, sensitivePassword, TestEncryptionPassword, dockerConfigPath);
@@ -242,7 +242,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange & Act
             var dockerHubUri = new Uri("https://index.docker.io");
             
-            var result = DockerCredentialHelper.GetServerUrlForCredentialHelper(dockerHubUri, "index.docker.io");
+            var result = Calamari.Integration.Packages.Download.DockerCredentialHelper.GetServerUrlForCredentialHelper(dockerHubUri, "index.docker.io");
             
             // Assert
             result.Should().Be("https://index.docker.io/v1/");
@@ -254,7 +254,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange & Act
             var customUri = new Uri("https://myregistry.com:8080");
             
-            var result = DockerCredentialHelper.GetServerUrlForCredentialHelper(customUri, "index.docker.io");
+            var result = Calamari.Integration.Packages.Download.DockerCredentialHelper.GetServerUrlForCredentialHelper(customUri, "index.docker.io");
             
             // Assert
             result.Should().Be("https://myregistry.com:8080");
