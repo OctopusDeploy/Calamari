@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using Nuke.Common.ProjectModel;
 
@@ -119,22 +121,23 @@ public partial class Build
 
                            // Overlay the standalone Docker credential helper into each Calamari runtime folder
                            // so Docker can invoke `docker-credential-octopus` directly from the deployed package.
-                           var calamariProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari");
-                           var helperProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari.DockerCredentialHelper");
-                           if (calamariProject != null && helperProject != null)
+                           var calamariProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari")
+                                                 ?? throw new InvalidOperationException("Could not find the 'Calamari' project to overlay the Docker credential helper into.");
+                           var helperProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari.DockerCredentialHelper")
+                                               ?? throw new InvalidOperationException("Could not find the 'Calamari.DockerCredentialHelper' project.");
+                           foreach (var rid in GetRuntimeIdentifiers(calamariProject))
                            {
-                               foreach (var rid in GetRuntimeIdentifiers(calamariProject))
-                               {
-                                   var calamariRidDirectory = KnownPaths.PublishDirectory / "Calamari" / rid;
-                                   Log.Information("Overlaying docker-credential-octopus into {Directory}", calamariRidDirectory);
-                                   DotNetPublish(s => s
-                                                      .SetConfiguration(Configuration)
-                                                      .SetProject(helperProject)
-                                                      .SetFramework(Frameworks.Net80)
-                                                      .SetRuntime(rid)
-                                                      .SetSelfContained(OperatingSystem.IsWindows())
-                                                      .SetOutput(calamariRidDirectory));
-                               }
+                               var calamariRidDirectory = KnownPaths.PublishDirectory / "Calamari" / rid;
+                               Log.Information("Overlaying docker-credential-octopus into {Directory}", calamariRidDirectory);
+                               // SetSelfContained mirrors PublishPackageAsync: a non-Windows self-contained publish
+                               // breaks the local build, so it's only self-contained on Windows.
+                               DotNetPublish(s => s
+                                                  .SetConfiguration(Configuration)
+                                                  .SetProject(helperProject)
+                                                  .SetFramework(Frameworks.Net80)
+                                                  .SetRuntime(rid)
+                                                  .SetSelfContained(OperatingSystem.IsWindows())
+                                                  .SetOutput(calamariRidDirectory));
                            }
 
                            // Sign and compress tasks
