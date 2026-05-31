@@ -62,5 +62,17 @@ namespace Calamari.Tests.Fixtures.Docker
 
             Assert.That(store.Get("https://example.com", "password123", configPath), Is.Null);
         }
+
+        [Test]
+        public void Get_WithCorruptCredentialFile_ReturnsNull()
+        {
+            var serverUrl = "https://example.com";
+            var credentialsDir = Path.Combine(configPath, "credentials");
+            Directory.CreateDirectory(credentialsDir);
+            File.WriteAllBytes(Path.Combine(credentialsDir, DockerCredentialStore.GetCredentialFileName(serverUrl)), new byte[] { 1, 2, 3, 4, 5 });
+
+            var store = new DockerCredentialStore();
+            Assert.That(store.Get(serverUrl, "password123", configPath), Is.Null);
+        }
     }
 }

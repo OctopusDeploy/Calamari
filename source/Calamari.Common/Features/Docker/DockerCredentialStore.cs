@@ -38,7 +38,8 @@ namespace Calamari.Common.Features.Docker
                 var credentialJson = encryptor.Decrypt(encryptedBytes);
                 return JsonSerializer.Deserialize<DockerCredential>(credentialJson);
             }
-            catch
+            // A missing, corrupt, or wrong-password credential is treated as "not found".
+            catch (Exception)
             {
                 return null;
             }
