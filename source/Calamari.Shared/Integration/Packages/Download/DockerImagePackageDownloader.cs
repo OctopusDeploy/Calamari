@@ -62,7 +62,7 @@ namespace Calamari.Integration.Packages.Download
             this.log = log;
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
             this.useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables);
-            this.dockerCredentialHelper = new DockerCredentialHelper(fileSystem, log);
+            this.dockerCredentialHelper = new DockerCredentialHelper(log);
         }
 
         (string Username, string Password, Uri FeedUri) GetContainerRegistryLoginDetails(string feedTypeStr, string username, string password, Uri feedUri)
@@ -155,25 +155,30 @@ namespace Calamari.Integration.Packages.Download
             return $"{feedUri.Host}:{feedUri.Port}";
         }
 
-        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> dictionary)
+        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> dictionary, bool allowCredentialHelperFallback = true)
         {
             var envVars = new Dictionary<string, string>(dictionary);
             envVars["DockerUsername"] = username;
             envVars["DockerPassword"] = password;
             envVars["FeedUri"] = feed;
-            
+
             var (result, stdOut) = ExecuteScript("DockerLogin", envVars);
             if (result == null)
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
             {
-                if (useCredentialHelper && result.Errors != null && stdOut.Contains("Error saving credentials"))
+                if (useCredentialHelper && allowCredentialHelperFallback)
                 {
-                    log.Verbose("Docker login failed due to credential helper error, retrying without credential helper");
+                    // The string match is diagnostic only — we fall back on any non-zero exit.
+                    var knownHelperError = stdOut.Contains("Error saving credentials");
+                    log.Verbose(knownHelperError
+                                    ? "Docker login failed due to a credential helper error; retrying without the credential helper."
+                                    : "Docker login failed while the credential helper was enabled; retrying without the credential helper.");
                     dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
-                    PerformLogin(username, password, feed, dictionary);
+                    PerformLogin(username, password, feed, dictionary, allowCredentialHelperFallback: false);
                     return;
                 }
+
                 throw new CommandException("Unable to log in Docker registry");
             }
         }
