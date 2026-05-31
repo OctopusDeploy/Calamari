@@ -9,6 +9,7 @@ namespace Calamari.Common.Features.Processes
         readonly StringBuilder stdOut = new StringBuilder();
         readonly StringBuilder stdErr = new StringBuilder();
         public string StdOut => stdOut.ToString();
+        public string StdErr => stdErr.ToString();
 
         public void WriteInfo(string line)
         {

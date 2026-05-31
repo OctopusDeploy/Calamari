@@ -162,7 +162,7 @@ namespace Calamari.Integration.Packages.Download
             envVars["DockerPassword"] = password;
             envVars["FeedUri"] = feed;
 
-            var (result, stdOut) = ExecuteScript("DockerLogin", envVars);
+            var (result, output) = ExecuteScript("DockerLogin", envVars);
             if (result == null)
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
@@ -170,7 +170,7 @@ namespace Calamari.Integration.Packages.Download
                 if (useCredentialHelper && allowCredentialHelperFallback)
                 {
                     // The string match is diagnostic only — we fall back on any non-zero exit.
-                    var knownHelperError = stdOut.Contains("Error saving credentials");
+                    var knownHelperError = output.Contains("Error saving credentials");
                     log.Verbose(knownHelperError
                                     ? "Docker login failed due to a credential helper error; retrying without the credential helper."
                                     : "Docker login failed while the credential helper was enabled; retrying without the credential helper.");
@@ -222,7 +222,8 @@ namespace Calamari.Integration.Packages.Download
 
                 var inMemorySink = new InMemoryCommandOutputSink();
                 var commandLineRunner = new CommandLineRunner(log, clone, inMemorySink);
-                return (scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables), inMemorySink.StdOut);
+                var commandResult = scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
+                return (commandResult, inMemorySink.StdOut + inMemorySink.StdErr);
             }
         }
 

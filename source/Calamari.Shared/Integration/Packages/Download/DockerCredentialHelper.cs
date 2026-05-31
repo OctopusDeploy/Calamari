@@ -60,15 +60,19 @@ namespace Calamari.Integration.Packages.Download
         {
             try
             {
-                var dockerConfigPath = environmentVariables["DOCKER_CONFIG"];
+                if (environmentVariables.TryGetValue("DOCKER_CONFIG", out var dockerConfigPath))
+                {
+                    var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
+                    if (Directory.Exists(credentialsDir))
+                        Directory.Delete(credentialsDir, recursive: true);
 
-                var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
-                if (Directory.Exists(credentialsDir))
-                    Directory.Delete(credentialsDir, recursive: true);
+                    var configFilePath = Path.Combine(dockerConfigPath, "config.json");
+                    if (File.Exists(configFilePath))
+                        File.Delete(configFilePath);
+                }
 
-                var configFilePath = Path.Combine(dockerConfigPath, "config.json");
-                if (File.Exists(configFilePath))
-                    File.Delete(configFilePath);
+                environmentVariables.Remove("OCTOPUS_CREDENTIAL_PASSWORD");
+                RemoveDirectoryFromPath(environmentVariables, AppContext.BaseDirectory);
             }
             catch (Exception ex)
             {
@@ -87,7 +91,7 @@ namespace Calamari.Integration.Packages.Download
 
         public static string GetServerUrlForCredentialHelper(Uri feedUri, string dockerHubRegistry)
         {
-            if (feedUri.Host.Equals(dockerHubRegistry))
+            if (feedUri.Host.Equals(dockerHubRegistry, StringComparison.OrdinalIgnoreCase))
                 return "https://index.docker.io/v1/";
 
             return feedUri.GetLeftPart(UriPartial.Authority);
@@ -105,7 +109,7 @@ namespace Calamari.Integration.Packages.Download
         static Dictionary<string, string> BuildCredHelpers(Uri feedUri, string dockerHubRegistry)
         {
             var credHelpers = new Dictionary<string, string>();
-            if (feedUri.Host.Equals(dockerHubRegistry))
+            if (feedUri.Host.Equals(dockerHubRegistry, StringComparison.OrdinalIgnoreCase))
             {
                 credHelpers["index.docker.io"] = CredentialHelperName;
                 credHelpers["docker.io"] = CredentialHelperName;
@@ -131,6 +135,16 @@ namespace Calamari.Integration.Packages.Download
 
             if (!currentPath.Split(pathSeparator.ToCharArray()).Contains(directory))
                 environmentVariables["PATH"] = $"{directory}{pathSeparator}{currentPath}";
+        }
+
+        static void RemoveDirectoryFromPath(Dictionary<string, string> environmentVariables, string directory)
+        {
+            if (!environmentVariables.TryGetValue("PATH", out var currentPath))
+                return;
+
+            var pathSeparator = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
+            var parts = currentPath.Split(pathSeparator.ToCharArray()).Where(p => p != directory);
+            environmentVariables["PATH"] = string.Join(pathSeparator, parts);
         }
     }
 
