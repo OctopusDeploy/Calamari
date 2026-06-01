@@ -55,7 +55,7 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseMountPoints_WithEmptyReadonly_DefaultsToFalse()
+    public void ParseMountPoints_WithEmptyReadonly_IsNull()
     {
         var spec = new ContainerSpec
         {
@@ -238,7 +238,7 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseVolumesFrom_WithEmptyReadonly_DefaultsToFalse()
+    public void ParseVolumesFrom_WithEmptyReadonly_IsNull()
     {
         var spec = new ContainerSpec
         {
