@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Features.Docker;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
@@ -16,17 +15,14 @@ namespace Calamari.Integration.Packages.Download
         const string CredentialHelperName = "octopus";
 
         readonly ILog log;
-        readonly DockerCredentialStore store = new DockerCredentialStore();
 
         public DockerCredentialHelper(ILog log)
         {
             this.log = log;
         }
 
-        public bool SetupCredentialHelper(Dictionary<string, string> environmentVariables,
+        public void SetupCredentialHelper(Dictionary<string, string> environmentVariables,
                                           Uri feedUri,
-                                          string username,
-                                          string password,
                                           string dockerHubRegistry)
         {
             try
@@ -34,7 +30,7 @@ namespace Calamari.Integration.Packages.Download
                 var dockerConfigPath = environmentVariables["DOCKER_CONFIG"];
                 Directory.CreateDirectory(dockerConfigPath);
 
-                // Protect the stored credentials with an ephemeral, per-acquisition password.
+                // Protect the credentials Docker will store with an ephemeral, per-acquisition password.
                 // This mirrors how Calamari's script bootstrappers encrypt sensitive variables for a
                 // child process (AesEncryption.RandomString + AesEncryption.ForScripts): the password
                 // only needs to survive for this acquisition, is handed to docker-credential-octopus via
@@ -45,18 +41,15 @@ namespace Calamari.Integration.Packages.Download
                 AddDirectoryToPath(environmentVariables, AppContext.BaseDirectory);
                 environmentVariables["OCTOPUS_CREDENTIAL_PASSWORD"] = encryptionPassword;
 
-                var serverUrl = GetServerUrlForCredentialHelper(feedUri, dockerHubRegistry);
-                store.Store(serverUrl, username, password, encryptionPassword, dockerConfigPath);
-
+                // No need to pre-store the credential: `docker login` invokes the helper's `store`
+                // operation itself (with the key Docker also uses for the later `get`).
                 CreateDockerConfig(dockerConfigPath, BuildCredHelpers(feedUri, dockerHubRegistry));
 
-                log.Verbose($"Configured Docker credential helper for {serverUrl}");
-                return true;
+                log.Verbose($"Configured Docker credential helper for {GetServerUrlForCredentialHelper(feedUri, dockerHubRegistry)}");
             }
             catch (Exception ex)
             {
                 log.Warn($"Failed to setup credential helper: {ex.Message}");
-                return false;
             }
         }
 
