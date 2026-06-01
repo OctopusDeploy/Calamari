@@ -22,13 +22,15 @@ public partial class Build
                            {
                                Logging.InBlock(flavour, () =>
                                                         {
+                                                            var flavourFolder = KnownPaths.OutputsDirectory / flavour;
+                                                            
                                                             var compressedArtifactPath = KnownPaths.OutputsDirectory / $"{flavour}.zip";
-                                                            compressedArtifactPath.UncompressTo(KnownPaths.OutputsDirectory / flavour);
-                                                            Log.Information("Uncompressed {ZipPath} to {FolderPath}", compressedArtifactPath, KnownPaths.OutputsDirectory / flavour);
+                                                            compressedArtifactPath.UncompressTo(flavourFolder);
+                                                            Log.Information("Uncompressed {ZipPath} to {FolderPath}", compressedArtifactPath, flavourFolder);
 
                                                             //Rename any `linux-x64` folders to `linux-amd64`
-                                                            Directory.Move(KnownPaths.OutputsDirectory / flavour / "linux-x64",
-                                                                KnownPaths.OutputsDirectory / flavour / "linux-amd64");
+                                                            Directory.Move(flavourFolder / "linux-x64",
+                                                                flavourFolder / "linux-amd64");
                                                             Log.Information("Renamed 'linux-x64' folder to 'linux-amd64'");
 
                                                             var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
@@ -53,10 +55,7 @@ public partial class Build
                                                             var outputFile = KnownPaths.PublishDirectory / $"{sanitizedTag}.tar";
 
                                                             //create the publish directory
-                                                            if (!Directory.Exists(KnownPaths.PublishDirectory))
-                                                            {
-                                                                Directory.CreateDirectory(KnownPaths.PublishDirectory);
-                                                            }
+                                                            Directory.CreateDirectory(KnownPaths.PublishDirectory);
 
                                                             //save the docker image to a tar file
                                                             DockerTasks.DockerImageSave(_ => _
