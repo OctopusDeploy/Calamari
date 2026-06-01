@@ -38,6 +38,9 @@ namespace Calamari.Integration.Packages.Download
                 var encryptionPassword = AesEncryption.RandomString(16);
 
                 // docker-credential-octopus ships alongside Calamari in the app base directory.
+                // Zipping the package (System.IO.Compression) drops the Unix executable bit, so restore
+                // it — otherwise Docker's PATH lookup ignores the file ("executable file not found in $PATH").
+                EnsureCredentialHelperIsExecutable();
                 AddDirectoryToPath(environmentVariables, AppContext.BaseDirectory);
                 environmentVariables["OCTOPUS_CREDENTIAL_PASSWORD"] = encryptionPassword;
 
@@ -136,6 +139,19 @@ namespace Calamari.Integration.Packages.Download
             var pathSeparator = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
             var parts = currentPath.Split(pathSeparator.ToCharArray()).Where(p => p != directory);
             environmentVariables["PATH"] = string.Join(pathSeparator, parts);
+        }
+
+        static void EnsureCredentialHelperIsExecutable()
+        {
+            if (CalamariEnvironment.IsRunningOnWindows)
+                return;
+
+            var helperPath = Path.Combine(AppContext.BaseDirectory, "docker-credential-octopus");
+            if (!File.Exists(helperPath))
+                return;
+
+            var mode = File.GetUnixFileMode(helperPath);
+            File.SetUnixFileMode(helperPath, mode | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
         }
     }
 
