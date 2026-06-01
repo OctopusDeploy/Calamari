@@ -24,7 +24,7 @@ namespace Calamari.Common.Features.Packages
             this.forceUtf8ZipFiles = forceUtf8ZipFiles;
         }
 
-        public string[] Extensions => new[] { ".zip" };
+        public string[] Extensions => new[] { ".zip", ".whl" };
 
         public int Extract(string packageFile, string directory)
         {

@@ -35,6 +35,8 @@ namespace Calamari.ArgoCD.Git
             this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             this.clock = clock;
 
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             // Calamari runs as a single-purpose process per deployment step and always receives
             // explicit credentials. Clear the search paths for all global config levels so libgit2
             // cannot load ~/.gitconfig or /etc/gitconfig and pick up a credential helper (e.g.
@@ -64,14 +66,8 @@ namespace Calamari.ArgoCD.Git
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
-            if (gitConnection.Username != null && gitConnection.Password != null)
-            {
-                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
-                {
-                    Username = gitConnection.Username!,
-                    Password = gitConnection.Password!
-                };
-            }
+            options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
+            options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler(log);
 
             string repoPath;
             log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
@@ -79,7 +75,7 @@ namespace Calamari.ArgoCD.Git
             {
                 try
                 {
-                    repoPath = Repository.Clone(gitConnection.Url.AbsoluteUri, checkoutPath, options);
+                    repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
                     timedOp.Complete();
                 }
                 catch (Exception e)
@@ -98,16 +94,16 @@ namespace Calamari.ArgoCD.Git
             //this is required to handle the issue around "HEAD"
             var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
             var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
-            
+
             log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
-            
+
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
             if (repo.Branches[branchToCheckout.Value] == null)
             {
                 repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
             }
-            
+
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
             }
             catch (LibGit2SharpException e)
@@ -116,7 +112,15 @@ namespace Calamari.ArgoCD.Git
             }
 
             //TODO(tmm): Make this function (and all callers async).
-            var gitVendorApiAdapter = gitVendorPullRequestClientResolver.TryResolve(gitConnection, log, CancellationToken.None).Result;
+            var gitVendorApiAdapter = gitConnection is HttpsGitConnection httpsGitConnection
+                ? gitVendorPullRequestClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
+                : null;
+
+            if (gitConnection is SshKeyGitConnection)
+            {
+                log.Verbose("Git is using SSH authentication, Git vendor functionality such as PR creation will not be available");
+            }
+
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,

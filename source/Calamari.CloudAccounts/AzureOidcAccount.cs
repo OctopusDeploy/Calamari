@@ -1,15 +1,5 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Rest;
 using Newtonsoft.Json;
-using NetWebRequest = System.Net.WebRequest;
-using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
 namespace Calamari.CloudAccounts
 {
@@ -71,29 +61,6 @@ namespace Calamari.CloudAccounts
                     // The double slash is intentional for public cloud.
                     return "https://management.azure.com//.default";
             }
-        }
-
-        public IAzure CreateAzureClient()
-        {
-            var environment = string.IsNullOrEmpty(AzureEnvironment) || AzureEnvironment == "AzureCloud"
-                ? AzureEnvironmentEnum.AzureGlobalCloud
-                : AzureEnvironmentEnum.FromName(AzureEnvironment) ??
-                  throw new InvalidOperationException($"Unknown environment name {AzureEnvironment}");
-
-            var accessToken = this.GetAuthorizationToken(CancellationToken.None).GetAwaiter().GetResult();
-            var credentials = new AzureCredentials(
-                                                   new TokenCredentials(accessToken),
-                                                   new TokenCredentials(accessToken),
-                                                   TenantId,
-                                                   environment);
-
-            // to ensure the Azure API uses the appropriate web proxy
-            var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
-
-            return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                            .WithHttpClient(client)
-                            .Authenticate(credentials)
-                            .WithSubscription(SubscriptionNumber);
         }
     }
 }

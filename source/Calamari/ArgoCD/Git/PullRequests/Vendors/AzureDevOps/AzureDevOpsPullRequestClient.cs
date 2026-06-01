@@ -13,13 +13,15 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 	{
 		const string CloudHost = "dev.azure.com";
 		
-		readonly IRepositoryConnection repositoryConnection;
+		readonly IHttpsGitConnection repositoryConnection;
 
-		public AzureDevOpsPullRequestClient(IRepositoryConnection repositoryConnection)
+		public AzureDevOpsPullRequestClient(IHttpsGitConnection repositoryConnection)
 		{
 			this.repositoryConnection = repositoryConnection;
 		}
-		
+
+		public string Name => "AzureDevOps";
+
 		public async Task<PullRequest> CreatePullRequest(string pullRequestTitle,
 		                                                 string body,
 		                                                 GitBranchName sourceBranch,
@@ -32,7 +34,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 			                                                                           Convert.ToBase64String(Encoding.ASCII.GetBytes($"{repositoryConnection.Username}:{repositoryConnection.Password}")));
 
 			
-			var (organizationName, projectName, repositoryName) = AzureDevOpsRepositoryUriParser.Parse(repositoryConnection.Url);
+			var (organizationName, projectName, repositoryName) = AzureDevOpsRepositoryUriParser.Parse(repositoryConnection.Uri.Value);
 			var apiUrl = $"https://{CloudHost}/{organizationName}/{projectName}/_apis/git/repositories/{repositoryName}/pullrequests?api-version=7.1";
 
 			var pullRequest = new
@@ -63,7 +65,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 
 		public string GenerateCommitUrl(string commit)
 		{
-			var (organizationName, projectName, repositoryName) = AzureDevOpsRepositoryUriParser.Parse(repositoryConnection.Url);
+			var (organizationName, projectName, repositoryName) = AzureDevOpsRepositoryUriParser.Parse(repositoryConnection.Uri.Value);
 			return $"https://{CloudHost}/{organizationName}/{projectName}/_git/{repositoryName}/commit/{commit}";
 		}
 	}

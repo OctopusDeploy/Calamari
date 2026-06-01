@@ -126,10 +126,10 @@ namespace Calamari.Kubernetes.Authentication
 
         string GetKubeCtlAuthApiVersion()
         {
-            var kubectlVersion = kubectl.GetVersion();
+            var versionOutput = kubectl.GetVersion();
 
             //v1alpha1 was deprecated in 1.24 of K8s
-            return kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
+            return versionOutput != null && versionOutput.KubectlVersion > new SemanticVersion("1.23.6")
                 ? "client.authentication.k8s.io/v1beta1"
                 : "client.authentication.k8s.io/v1alpha1";
         }

@@ -24,6 +24,7 @@ namespace Calamari.Kubernetes
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
         public const string KustomizeOverlayPath = "Octopus.Action.Kubernetes.Kustomize.OverlayPath";
+        public const string KustomizeLoadRestrictorNone = "Octopus.Action.Kubernetes.Kustomize.LoadRestrictorNone";
 
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
@@ -40,6 +41,8 @@ namespace Calamari.Kubernetes
 
         public const string ServerSideApplyEnabled = "Octopus.Action.Kubernetes.ServerSideApply.Enabled";
         public const string ServerSideApplyForceConflicts = "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts";
+
+        public const string AppliedResources = "Octopus.Action.Kubernetes.AppliedResources";
 
         public static class Helm
         {
@@ -128,6 +131,8 @@ namespace Calamari.Kubernetes
                                 public string PullRequestTitle => $"{qualifiedPrefix}.PullRequest.Title";
                                 public string PullRequestNumber => $"{qualifiedPrefix}.PullRequest.Number";
                                 public string PullRequestUrl => $"{qualifiedPrefix}.PullRequest.Url";
+                                public string PullRequestReplacedFiles =>  $"{qualifiedPrefix}.PullRequest.ReplacedFiles";
+                                public string PullRequestPatchedFiles =>  $"{qualifiedPrefix}.PullRequest.PatchedFiles";
                             }
                         }
                     }

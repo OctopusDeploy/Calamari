@@ -91,15 +91,14 @@ namespace Calamari.ArgoCD
                 }
 
                 //update or insert the newTag node
-                var newTagNode = imageNode.GetChildNodeIfExists<YamlScalarNode>(NewTagNodeKey);
-                if (newTagNode != null)
+                if (matchedUpdate.ExistingTagNode != null)
                 {
                     if (!matchedUpdate.Comparison.TagMatch)
                     {
-                        newTagNode.Value = matchedUpdate.Reference.Tag;
-                        if (newTagNode.Style != ScalarStyle.SingleQuoted && newTagNode.Style != ScalarStyle.DoubleQuoted)
+                        matchedUpdate.ExistingTagNode.Value = matchedUpdate.Reference.Tag;
+                        if (matchedUpdate.ExistingTagNode.Style != ScalarStyle.SingleQuoted && matchedUpdate.ExistingTagNode.Style != ScalarStyle.DoubleQuoted)
                         {
-                            newTagNode.Style = ScalarStyle.DoubleQuoted;
+                            matchedUpdate.ExistingTagNode.Style = ScalarStyle.DoubleQuoted;
                         }
                         replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                     }
@@ -143,13 +142,17 @@ namespace Calamari.ArgoCD
             }
 
             var newNameNode = imageNode.GetChildNodeIfExists<YamlScalarNode>(NewNameNodeKey);
+            var existingTagNode = imageNode.GetChildNodeIfExists<YamlScalarNode>(NewTagNodeKey);
 
             //if the newName node exists, we use that value as the container name, rather than the name node
             var testName = newNameNode?.Value ?? name;
 
-            var currentReference = ContainerImageReference.FromReferenceString(testName, defaultRegistry);
-            
-            return imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference)))
+            // Include the existing newTag so TagMatch reflects whether the YAML already has the correct tag
+            var testReference = existingTagNode?.Value is { } currentTag ? $"{testName}:{currentTag}" : testName;
+
+            var currentReference = ContainerImageReference.FromReferenceString(testReference, defaultRegistry);
+
+            return imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference), existingTagNode))
                                               .FirstOrDefault(i => i.Comparison.MatchesImage());
         }
 
@@ -183,7 +186,7 @@ namespace Calamari.ArgoCD
                    .Insert(originalImagesSequenceStartIndex, updatedImagesYaml);
         }
         
-        record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
+        record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison, YamlScalarNode? ExistingTagNode);
     }
 }
 
