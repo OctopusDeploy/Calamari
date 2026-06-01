@@ -31,18 +31,6 @@ public class AuthenticatingRepositoryFactory
     public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
-
-        var isSsh = gitCredential is SshKeyGitCredentialDto ? "isSshKey" : "notSsh";
-        log.Info($"DEBUG - running on {Environment.OSVersion.Platform} ({CalamariEnvironment.IsRunningOnWindows}) ({isSsh})");
-
-        if (gitCredential is SshKeyGitCredentialDto && CalamariEnvironment.IsRunningOnWindows)
-        {
-            throw new CommandException(
-                $"Cannot clone '{requestedUrl}' using an SSH key credential: "
-                + "SSH git credentials are not supported when Calamari is running on Windows. "
-                + "Supply a username/password credential for this repository, or run the deployment on a Linux worker.");
-        }
-
         switch (gitCredential)
         {
             case GitCredentialDto passwordCredential:
