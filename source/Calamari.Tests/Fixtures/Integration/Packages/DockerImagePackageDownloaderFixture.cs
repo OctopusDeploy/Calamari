@@ -26,12 +26,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     [TestFixture]
     public class DockerImagePackageDownloaderFixture
     {
-        string authFeedUri;
-        string feedUsername;
-        string feedPassword;
-        string dockerHubFeedUri;
-        string dockerTestUsername;
-        string dockerTestPassword;
+        string authFeedUri; 
+        string feedUsername; 
+        string feedPassword; 
+        string dockerHubFeedUri; 
+        string dockerTestUsername; 
+        string dockerTestPassword;  
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
@@ -79,7 +79,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 version,
                 "docker-feed",
                 new Uri(dockerHubFeedUri),
-                dockerTestUsername,
+                dockerTestUsername, 
                 dockerTestPassword,
                 true,
                 1,
@@ -99,8 +99,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new SemanticVersion("1.1"),
                 "docker-feed",
                 new Uri(authFeedUri),
-                feedUsername,
-                feedPassword,
+                feedUsername,feedPassword,
                 true, 1,
                 TimeSpan.FromSeconds(3));
 
@@ -115,16 +114,16 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var memoryLog = new InMemoryLog();
             var downloader = GetDownloader(memoryLog);
-
+            
             var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo",
                 new SemanticVersion("1.1"), "docker-feed",
                 new Uri(authFeedUri),
                 "Nonexistantuser", "SuperDooper",
-                true,
+                true, 
                 //we don't want to perform too many of these otherwise jfrog / artifactory gets sad at us
                 2,
                 TimeSpan.FromSeconds(5)));
-
+            
             StringAssert.Contains("Unable to log in Docker registry", exception.Message);
             memoryLog.Messages
                      .Where(msg => msg.Level == InMemoryLog.Level.Verbose)
@@ -140,22 +139,22 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void CachedDockerHubPackage_DoesNotGenerateImageNotCachedMessage(string image, string tag)
         {
             PreCacheImage(image, tag, dockerHubFeedUri, dockerTestUsername, dockerTestPassword);
-
+            
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
-            downloader.DownloadPackage(image,
-                                       new SemanticVersion(tag),
-                                       "docker-feed",
-                                       new Uri(dockerHubFeedUri),
-                                       dockerTestUsername,
-                                       dockerTestPassword,
-                                       true,
-                                       1,
+            downloader.DownloadPackage(image, 
+                                       new SemanticVersion(tag), 
+                                       "docker-feed", 
+                                       new Uri(dockerHubFeedUri), 
+                                       dockerTestUsername, 
+                                       dockerTestPassword, 
+                                       true, 
+                                       1, 
                                        TimeSpan.FromSeconds(3));
 
             Assert.False(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
         }
-
+        
         [Test]
         [RequiresDockerInstalled]
         public void CachedNonDockerHubPackage_DoesNotGenerateImageNotCachedMessage()
@@ -172,14 +171,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                        "docker-feed", 
                                        new Uri(authFeedUri), 
                                        feedUsername,
-                                       feedPassword,
-                                       true,
-                                       1,
+                                       feedPassword,  
+                                       true, 
+                                       1, 
                                        TimeSpan.FromSeconds(3));
 
             Assert.False(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
         }
-
+        
         [Test]
         [RequiresDockerInstalled]
         [TestCase("octopusdeploy/kubernetes-agent-tools-base", "1.33")]
@@ -188,22 +187,22 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
-
+            
             RemoveCachedImage(image, tag);
 
-            downloader.DownloadPackage(image,
-                                       new SemanticVersion(tag),
-                                       "docker-feed",
-                                       new Uri(dockerHubFeedUri),
-                                       dockerTestUsername,
-                                       dockerTestPassword,
-                                       true,
-                                       1,
+            downloader.DownloadPackage(image, 
+                                       new SemanticVersion(tag), 
+                                       "docker-feed", 
+                                       new Uri(dockerHubFeedUri), 
+                                       dockerTestUsername, 
+                                       dockerTestPassword, 
+                                       true, 
+                                       1, 
                                        TimeSpan.FromSeconds(3));
 
             Assert.True(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
         }
-
+        
         [Test]
         [RequiresDockerInstalled]
         public void NotCachedNonDockerHubPackage_GeneratesImageNotCachedMessage()
@@ -214,17 +213,17 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var imageFullName = $"{feed.Authority}/{image}";
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
-
+            
             RemoveCachedImage(imageFullName, tag);
 
-            downloader.DownloadPackage(image,
-                                       new SemanticVersion(tag),
-                                       "docker-feed",
-                                       feed,
-                                       feedUsername,
-                                       feedPassword,
-                                       true,
-                                       1,
+            downloader.DownloadPackage(image, 
+                                       new SemanticVersion(tag), 
+                                       "docker-feed", 
+                                       feed, 
+                                       feedUsername, 
+                                       feedPassword, 
+                                       true, 
+                                       1, 
                                        TimeSpan.FromSeconds(3));
 
             Assert.True(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{imageFullName}:{tag}' may not be cached")));
@@ -263,22 +262,22 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         static void PreCacheImage(string packageId, string tag, string feedUri, string username, string password)
         {
-            GetDownloader(new SilentLog()).DownloadPackage(packageId,
-                                                           new SemanticVersion(tag),
-                                                           "docker-feed",
-                                                           new Uri(feedUri),
-                                                           username,
-                                                           password,
-                                                           true,
-                                                           1,
+            GetDownloader(new SilentLog()).DownloadPackage(packageId, 
+                                                           new SemanticVersion(tag), 
+                                                           "docker-feed", 
+                                                           new Uri(feedUri), 
+                                                           username, 
+                                                           password, 
+                                                           true, 
+                                                           1, 
                                                            TimeSpan.FromSeconds(3));
         }
 
         static void RemoveCachedImage(string image, string tag)
         {
-            SilentProcessRunner.ExecuteCommand("docker",
+            SilentProcessRunner.ExecuteCommand("docker", 
                                                $"rmi {image}:{tag}",
-                                               ".",
+                                               ".", 
                                                new Dictionary<string, string>(),
                                                (output) => { },
                                                (error) => { });
