@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Common.Commands;
-using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Octopus.Calamari.Contracts.ArgoCD;
 
