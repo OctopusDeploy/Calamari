@@ -71,10 +71,7 @@ public partial class Build
                                                             var compressedZipPath = $"{outputFile}.gz";
 
                                                             // This file is then uploaded to OctopusDeploy to perform the release process
-                                                            if (TeamCity.Instance is not null)
-                                                            {
-                                                                TeamCity.Instance.PublishArtifacts(compressedZipPath);
-                                                            }
+                                                            TeamCity.Instance?.PublishArtifacts(compressedZipPath);
                                                         });
                            }
                        });
