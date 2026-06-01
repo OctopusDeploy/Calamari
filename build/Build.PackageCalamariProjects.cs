@@ -173,9 +173,9 @@ public partial class Build
     }
 
     // Copies the helper's published files into Calamari's runtime folder. Files Calamari already
-    // ships (the shared runtime, Calamari.Common, etc.) must be byte-identical — if a shared
+    // ships (the shared runtime, Calamari.Common, etc.) must match by version — if a shared
     // dependency has diverged between the two projects we fail loudly rather than silently
-    // overwriting Calamari's copy.
+    // overwriting Calamari's copy. Files Calamari already has are left untouched.
     static void OverlayHelperIntoCalamari(AbsolutePath helperDirectory, AbsolutePath calamariDirectory, string rid)
     {
         var source = helperDirectory.ToString();
@@ -188,8 +188,8 @@ public partial class Build
 
             if (File.Exists(destinationFile))
             {
-                if (!FilesAreIdentical(sourceFile, destinationFile))
-                    throw new Exception($"Cannot overlay docker-credential-octopus for {rid}: '{relativePath}' differs from Calamari's copy. " +
+                if (!FilesAreEquivalent(sourceFile, destinationFile))
+                    throw new Exception($"Cannot overlay docker-credential-octopus for {rid}: '{relativePath}' differs in version from Calamari's copy. " +
                                         "A shared dependency has diverged between Calamari and Calamari.DockerCredentialHelper.");
                 continue;
             }
@@ -203,11 +203,18 @@ public partial class Build
         }
     }
 
-    static bool FilesAreIdentical(string first, string second)
+    // Shared dependencies must match by file version. We deliberately don't compare raw bytes:
+    // two independent (deterministic) builds of the same managed assembly still differ in their
+    // module version id (MVID), so only a version mismatch indicates a genuinely divergent dependency.
+    static bool FilesAreEquivalent(string first, string second)
     {
-        if (new FileInfo(first).Length != new FileInfo(second).Length)
-            return false;
+        var firstVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(first).FileVersion;
+        var secondVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(second).FileVersion;
 
-        return File.ReadAllBytes(first).SequenceEqual(File.ReadAllBytes(second));
+        if (!string.IsNullOrEmpty(firstVersion) || !string.IsNullOrEmpty(secondVersion))
+            return firstVersion == secondVersion;
+
+        // No version metadata (e.g. data files) — fall back to a size comparison.
+        return new FileInfo(first).Length == new FileInfo(second).Length;
     }
 }
