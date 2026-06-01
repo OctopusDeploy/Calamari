@@ -104,7 +104,7 @@ namespace Calamari.Integration.Packages.Download
 
             if (useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
             {
-                strategy.Execute(() => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, variables, feedUri, username, password, DockerHubRegistry));
+                strategy.Execute(() => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, feedUri, username, password, DockerHubRegistry));
             } 
             strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
 

@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Docker;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
 namespace Calamari.Integration.Packages.Download
@@ -24,7 +24,6 @@ namespace Calamari.Integration.Packages.Download
         }
 
         public bool SetupCredentialHelper(Dictionary<string, string> environmentVariables,
-                                          IVariables variables,
                                           Uri feedUri,
                                           string username,
                                           string password,
@@ -35,7 +34,12 @@ namespace Calamari.Integration.Packages.Download
                 var dockerConfigPath = environmentVariables["DOCKER_CONFIG"];
                 Directory.CreateDirectory(dockerConfigPath);
 
-                var encryptionPassword = GetEncryptionPassword(variables);
+                // Protect the stored credentials with an ephemeral, per-acquisition password.
+                // This mirrors how Calamari's script bootstrappers encrypt sensitive variables for a
+                // child process (AesEncryption.RandomString + AesEncryption.ForScripts): the password
+                // only needs to survive for this acquisition, is handed to docker-credential-octopus via
+                // OCTOPUS_CREDENTIAL_PASSWORD, and the encrypted .cred files are deleted in cleanup.
+                var encryptionPassword = AesEncryption.RandomString(16);
 
                 // docker-credential-octopus is published alongside Calamari, so it lives in the app base directory.
                 AddDirectoryToPath(environmentVariables, AppContext.BaseDirectory);
@@ -95,15 +99,6 @@ namespace Calamari.Integration.Packages.Download
                 return "https://index.docker.io/v1/";
 
             return feedUri.GetLeftPart(UriPartial.Authority);
-        }
-
-        static string GetEncryptionPassword(IVariables variables)
-        {
-            // NOTE: carried over from PR #1542 — confirm the correct sensitive-variable password
-            // source during review (see spec "Open implementation notes").
-            return variables.Get("Octopus.Action.Package.DownloadOnTentacle")
-                   ?? variables.Get("SensitiveVariablesPassword")
-                   ?? "DefaultFallbackPassword";
         }
 
         static Dictionary<string, string> BuildCredHelpers(Uri feedUri, string dockerHubRegistry)
