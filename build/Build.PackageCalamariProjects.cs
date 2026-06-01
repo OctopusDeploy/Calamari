@@ -193,8 +193,11 @@ public partial class Build
 
             if (File.Exists(destinationFile))
             {
-                if (!FilesAreEquivalent(sourceFile, destinationFile))
-                    throw new Exception($"Cannot overlay docker-credential-octopus for {rid}: '{relativePath}' differs in version from Calamari's copy. " +
+                var helperVersion = DescribeVersion(sourceFile);
+                var calamariVersion = DescribeVersion(destinationFile);
+                if (helperVersion != calamariVersion)
+                    throw new Exception($"Cannot overlay docker-credential-octopus for {rid}: '{relativePath}' differs from Calamari's copy " +
+                                        $"(helper has {helperVersion}, Calamari has {calamariVersion}). " +
                                         "A shared dependency has diverged between Calamari and Calamari.DockerCredentialHelper.");
                 continue;
             }
@@ -208,18 +211,13 @@ public partial class Build
         }
     }
 
-    // Shared dependencies must match by file version. We deliberately don't compare raw bytes:
-    // two independent (deterministic) builds of the same managed assembly still differ in their
-    // module version id (MVID), so only a version mismatch indicates a genuinely divergent dependency.
-    static bool FilesAreEquivalent(string first, string second)
+    // Describes a file for comparison purposes. We deliberately don't compare raw bytes: two
+    // independent (deterministic) builds of the same managed assembly still differ in their module
+    // version id (MVID), so only a version mismatch indicates a genuinely divergent dependency.
+    // Files without version metadata (e.g. data files) fall back to a size descriptor.
+    static string DescribeVersion(string path)
     {
-        var firstVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(first).FileVersion;
-        var secondVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(second).FileVersion;
-
-        if (!string.IsNullOrEmpty(firstVersion) || !string.IsNullOrEmpty(secondVersion))
-            return firstVersion == secondVersion;
-
-        // No version metadata (e.g. data files) — fall back to a size comparison.
-        return new FileInfo(first).Length == new FileInfo(second).Length;
+        var version = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).FileVersion;
+        return string.IsNullOrEmpty(version) ? $"{new FileInfo(path).Length} bytes" : $"version {version}";
     }
 }
