@@ -104,6 +104,8 @@ public partial class Build
                            {
                                var stagingDirectory = KnownPaths.PublishDirectory / "Calamari.DockerCredentialHelper" / rid;
                                Log.Information("Publishing docker-credential-octopus for {Rid}", rid);
+                               // Trimming / single-file / invariant-globalization are applied here (not in the
+                               // csproj) so they don't leak into how Calamari.Tests consumes the project reference.
                                DotNetPublish(s => s
                                                   .SetConfiguration(Configuration)
                                                   .SetProject(helperProject)
@@ -112,6 +114,8 @@ public partial class Build
                                                   .SetVersion(NugetVersion.Value)
                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                   .EnableSelfContained()
+                                                  .EnablePublishSingleFile()
+                                                  .EnablePublishTrimmed()
                                                   .SetOutput(stagingDirectory));
 
                                var calamariRidDirectory = (KnownPaths.PublishDirectory / "Calamari" / rid).ToString();
