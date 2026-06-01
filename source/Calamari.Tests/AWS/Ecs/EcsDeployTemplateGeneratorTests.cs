@@ -130,6 +130,37 @@ public class EcsDeployTemplateGeneratorTests
         JToken.DeepEquals(resultJson, expectedJson).Should().BeTrue();
     }
 
+    [Test]
+    public void WithComplexStep_MatchesExpectedSpfOutput()
+    {
+        var expectedJson = ReadFromFile("complexSpfOutputTemplate.json");
+
+        var variables = new CalamariVariables
+        {
+            {"Octopus.Action.Aws.Ecs.Deploy.CFStackName", "test-stack"},
+            {"Octopus.Action.Aws.Ecs.Deploy.DesiredCount","2"},
+            {"Octopus.Action.Aws.Ecs.Deploy.MinimumHealthPercent","150"},
+            {"Octopus.Action.Aws.Ecs.Deploy.MaximumHealthPercent","300"},
+            {"Octopus.Action.Aws.Ecs.Deploy.Cpu","256"},
+            {"Octopus.Action.Aws.Ecs.Deploy.Memory","512"},
+            {"Octopus.Action.Aws.Ecs.Deploy.RuntimeArchitecturePlatform","X86_64"},
+            {"Octopus.Action.Aws.Ecs.Deploy.AutoAssignPublicIp","True"},
+            {"Octopus.Action.Aws.Ecs.Deploy.EnableEcsManagedTags","True"},
+            {"Octopus.Action.Aws.Ecs.Deploy.ServiceTaskName","test-big-cf-template"},
+            {"Octopus.Action.Aws.Ecs.Deploy.TaskRole","arn:aws:iam::120766170633:role/ecsTaskExecutionRole"},
+            {"Octopus.Action.Aws.Ecs.Deploy.TaskExecutionRole","arn:aws:iam::120766170633:role/ecsTaskExecutionRole"},
+            {"Octopus.Action.Aws.Ecs.Deploy.SubnetIds","[\"subnet-0650cd8a2119e8xxx\"]"},
+            {"Octopus.Action.Aws.Ecs.Deploy.SecurityGroupIds","[\"sg-0d5e06a4bde84dxxx\"]"},
+            {"Octopus.Action.Aws.Ecs.Deploy.LoadBalancerMappings","[]"},
+            {"Octopus.Action.Aws.Ecs.Deploy.Volumes","[{\"type\":\"Efs\",\"name\":\"efs-volume\",\"fileSystemId\":\"efs-fs-id\",\"accessPointId\":\"/data\",\"rootDirectory\":\"/root\",\"encryptionInTransit\":\"True\",\"efsIamAuthorization\":\"True\"}]"},
+            {"Octopus.Action.Aws.Ecs.Tags","[{\"key\":\"my-tag\",\"value\":\"a great test value\"}]"},
+            {"Octopus.Action.Aws.Ecs.WaitOption", "{\"type\":\"DontWait\",\"timeoutMinutes\":\"30\"}"},
+            {"Octopus.Action.Aws.Ecs.Deploy.Containers", """[{"containerName":"web-server","containerImageReference":{"referenceId":"939a08a0-7dd9-471d-ac31-ac8e29eb04ff","imageName":"#{Octopus.Action[Deploy Amazon ECS Service - clone (1)].Package[nginx].Image}","feedId":"Feeds-1061"},"repositoryAuthentication":{"type":"Default"},"memoryLimitSoft":"47","memoryLimitHard":"200","containerPortMappings":[{"containerPort":"80","protocol":"Tcp"},{"containerPort":"443","protocol":"Tcp"}],"cpus":"2","essential":"True","entryPoint":"sh, -c","command":"echo 'Deployment successful","workingDirectory":"/tmp","environmentFiles":["jttestc668db76/test/keyarm-packagev1.0.3.zip"],"environmentVariables":[{"type":"Plain","key":"containerenv","value":"some-otherovalue"}],"networkSettings":{"disableNetworking":"False","dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"True","mountPoints":[{"sourceVolume":"efs-volume","containerPath":"/etc","readonly":"False"}],"volumeFrom":[{"sourceContainer":"efs-volume","readonly":"True"}]},"containerLogging":{"type":"Auto","logOptions":[]},"firelensConfiguration":{"type":"Enabled","firelensType":"Fluentd","enableEcsLogMetadata":"True","customConfigSource":{"type":"File","filePath":"/home/config"}},"dockerLabels":[{"key":"some-label","value":"label-value"}],"user":"test-user","healthCheck":{"command":["curl -f http://localhost/ || exit 1"],"interval":"240","retries":"7","startPeriod":"179","timeout":"54"},"dependencies":[],"startTimeout":"40","stopTimeout":"60","ulimits":[{"limitName":"core","hardLimit":"12","softLimit":"10"}]}] """},
+        };
+        
+        var resultJson = GenerateTemplateFromVariables(variables);
+        JToken.DeepEquals(resultJson, expectedJson).Should().BeTrue();
+    }
     JObject GenerateTemplateFromVariables(CalamariVariables variables)
     {
         var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
