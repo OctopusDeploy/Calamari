@@ -32,108 +32,107 @@
       "Properties": {
         "ContainerDefinitions": [
           {
+            "Name": "web-server-spf",
+            "Image": "docker.io/nginx:1.29",
+            "Essential": true,
             "DisableNetworking": false,
-            "DnsSearchDomains": [],
             "DnsServers": [],
+            "DnsSearchDomains": [],
+            "ReadonlyRootFilesystem": false,
+            "ResourceRequirements": [],
+            "PortMappings": [
+              {
+                "ContainerPort": 80.0,
+                "HostPort": 80.0,
+                "Protocol": "tcp"
+              }
+            ],
+            "ExtraHosts": [],
+            "EnvironmentFiles": [],
             "Environment": [
               {
                 "Name": "env",
                 "Value": "TestEnvironment"
               }
-            ],
-            "EnvironmentFiles": [],
-            "Essential": true,
-            "ExtraHosts": [],
-            "Image": "docker.io/nginx:1.29",
-            "Name": "web-server-spf",
-            "PortMappings": [
-              {
-                "ContainerPort": 80,
-                "HostPort": 80,
-                "Protocol": "tcp"
-              }
-            ],
-            "ReadonlyRootFilesystem": false,
-            "ResourceRequirements": []
+            ]
           }
         ],
-        "Cpu": {
-          "Ref": "TaskDefinitionCPU"
-        },
-        "ExecutionRoleArn": {
-          "Ref": "TaskExecutionRole"
-        },
         "Family": {
           "Ref": "TaskDefinitionName"
+        },
+        "Cpu": {
+          "Ref": "TaskDefinitionCPU"
         },
         "Memory": {
           "Ref": "TaskDefinitionMemory"
         },
-        "NetworkMode": "awsvpc",
+        "ExecutionRoleArn": {
+          "Ref": "TaskExecutionRole"
+        },
+        "TaskRoleArn": {
+          "Ref": "TaskRole"
+        },
         "RequiresCompatibilities": [
           "FARGATE"
         ],
+        "NetworkMode": "awsvpc",
         "RuntimePlatform": {
-          "CpuArchitecture": "X86_64",
-          "OperatingSystemFamily": "LINUX"
+          "OperatingSystemFamily": "LINUX",
+          "CpuArchitecture": "X86_64"
         },
+        "Volumes": [],
         "Tags": [
-          {
-            "Key": "createdBy",
-            "Value": "test-project"
-          },
           {
             "Key": "owner",
             "Value": "spfdeployment"
+          },
+          {
+            "Key": "createdBy",
+            "Value": "test-project"
           }
-        ],
-        "TaskRoleArn": {
-          "Ref": "TaskRole"
-        }
+        ]
       }
     },
     "ServicetestOctopusSpfdeployedTask": {
       "Type": "AWS::ECS::Service",
+      "DependsOn": "TaskDefinitiontestOctopusSpfdeployedTask",
       "Properties": {
         "Cluster": {
           "Ref": "ClusterName"
         },
-        "DeploymentConfiguration": {
-          "MaximumPercent": 200,
-          "MinimumHealthyPercent": 100
-        },
-        "DesiredCount": 1,
-        "EnableECSManagedTags": false,
         "LaunchType": "FARGATE",
+        "TaskDefinition": {
+          "Ref": "TaskDefinitiontestOctopusSpfdeployedTask"
+        },
+        "DesiredCount": 1.0,
+        "EnableECSManagedTags": false,
+        "DeploymentConfiguration": {
+          "MinimumHealthyPercent": 100.0,
+          "MaximumPercent": 200.0
+        },
         "NetworkConfiguration": {
           "AwsvpcConfiguration": {
             "AssignPublicIp": "ENABLED",
-            "SecurityGroups": [
-              "sg-0d5e06a4bde84d1d"
-            ],
             "Subnets": [
               "subnet-0650cd8a2119e829c",
               "subnet-0067a165dd462cb39"
+            ],
+            "SecurityGroups": [
+              "sg-0d5e06a4bde84d1d"
             ]
           }
         },
         "Tags": [
           {
-            "Key": "createdBy",
-            "Value": "test-project"
-          },
-          {
             "Key": "owner",
             "Value": "spfdeployment"
+          },
+          {
+            "Key": "createdBy",
+            "Value": "test-project"
           }
-        ],
-        "TaskDefinition": {
-          "Ref": "TaskDefinitiontestOctopusSpfdeployedTask"
-        }
-      },
-      "DependsOn": [
-        "TaskDefinitiontestOctopusSpfdeployedTask"
-      ]
+        ]
+      }
     }
   }
 }

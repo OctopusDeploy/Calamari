@@ -1,172 +1,208 @@
-using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using Amazon.CDK;
-using Amazon.CDK.AWS.ECS;
-using Amazon.CDK.AWS.Logs;
 using Calamari.Aws.Inputs.Ecs;
+using Octopus.Calamari.Contracts.Aws.Ecs;
+using Cfn = Calamari.Aws.Integration.Ecs.Deploy.Cfn;
 
 namespace Calamari.Aws.Integration.Ecs.Deploy;
 
-public sealed class EcsDeployTemplate : Stack
+// Strongly-typed CloudFormation template builder for an ECS Fargate service deploy.
+// Composes a `Cfn.Template` graph from `DeployEcsCommandInputs` + the parameter list,
+// delegating per-shape mapping to the `Inputs.Ecs.*` extension methods.
+sealed class EcsDeployTemplate
 {
     const string FargateLaunchType = "FARGATE";
     const string AwsVpcNetworkMode = "awsvpc";
     const string LinuxOperatingSystemFamily = "LINUX";
+    const string DefaultTaskExecutionPolicyArn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy";
+    const string TaskExecutionPolicyArnParameterName = "AmazonECSTaskExecutionRolePolicyArn";
 
-    readonly Dictionary<string, CfnParameter> paramRefs;
+    readonly DeployEcsCommandInputs commandInputs;
+    readonly IReadOnlyList<IEcsTemplateParameter> parameters;
+    readonly HashSet<string> registeredParameterNames;
+    readonly bool createsInTemplateExecutionRole;
 
-    public EcsDeployTemplate(DeployEcsCommandInputs commandInputs,
-                             IReadOnlyList<IEcsTemplateParameter> parameters,
-                             App scope,
-                             string id,
-                             IStackProps props = null) : base(scope, id, props)
+    public EcsDeployTemplate(DeployEcsCommandInputs commandInputs, IReadOnlyList<IEcsTemplateParameter> parameters)
     {
-        TemplateOptions.TemplateFormatVersion = "2010-09-09";
+        this.commandInputs = commandInputs;
+        this.parameters = parameters;
+        registeredParameterNames = parameters.Select(p => p.Name).ToHashSet();
+        // No user-supplied execution role → template creates one in-stack and adds an
+        // extra CFN parameter for the managed-policy ARN.
+        createsInTemplateExecutionRole = !registeredParameterNames.Contains(EcsTemplateParameterNames.TaskExecutionRole);
+    }
 
-        paramRefs = parameters.ToDictionary(
-                                            p => p.Name,
-                                            p => new CfnParameter(this,
-                                                                  p.Name,
-                                                                  new CfnParameterProps
-                                                                  {
-                                                                      Type = p.CfnType,
-                                                                      Default = p.Default
-                                                                  }));
+    public Cfn.Template Build() => new()
+    {
+        Parameters = BuildParametersSection(),
+        Resources = BuildResourcesSection()
+    };
 
-        // ExecutionRoleArn: parameter when user-supplied (in `paramRefs`), in-template
-        // role otherwise. The role can't be known at request time because CFN creates
-        // it during the same deploy, so it can't sit behind a parameter override.
-        var executionRoleArnRef = paramRefs.TryGetValue(EcsTemplateParameterNames.TaskExecutionRole, out var execRoleParam)
-            ? execRoleParam.ValueAsString
-            : commandInputs.MapTaskExecutionRoleArn(this);
+    Dictionary<string, Cfn.ParameterDef> BuildParametersSection()
+    {
+        var section = parameters.ToDictionary(
+            p => p.Name,
+            p => new Cfn.ParameterDef { Type = p.CfnType, Default = p.Default });
 
-        // For Auto-logging containers we need to point awslogs at the LogGroupName parameter
-        // and the deploy region. LogGroupName is only registered when any container is Auto
-        // (RequiresLogGroup), so accessing it outside that branch would throw — null is fine
-        // because ParseLogConfiguration only consults it in the Auto path.
-        var logGroupNameRef = commandInputs.RequiresLogGroup
-            ? paramRefs[EcsTemplateParameterNames.LogGroupName].ValueAsString
-            : null;
-        
-        // Stack.Region is a CDK token that synthesises to { Ref: AWS::Region } —
-        // the CFN pseudo-parameter that resolves to the deploy region at runtime.
-        var awsRegionRef = Region;
-
-        var containers = commandInputs.Containers.Select(c => new CfnTaskDefinition.ContainerDefinitionProperty
+        if (createsInTemplateExecutionRole)
         {
-            Name = c.ContainerName,
-            Image = c.ContainerImageReference.ImageName,
-            Essential = c.Essential.ConvertedOrDefault(bool.Parse),
-            DisableNetworking = c.NetworkSettings.DisableNetworking.ConvertedOrDefault(bool.Parse),
-            WorkingDirectory = c.WorkingDirectory,
-            Memory = c.MemoryLimitHard.ConvertedOrDefault<double?>(s => double.Parse(s)),
-            MemoryReservation = c.MemoryLimitSoft.ConvertedOrDefault<double?>(s => double.Parse(s)),
-            Cpu =  c.Cpus.ConvertedOrDefault<double?>(s => int.Parse(s)),
-            User = c.User,
-            StartTimeout = c.StartTimeout.ConvertedOrDefault<double?>( s => double.Parse(s)),
-            StopTimeout = c.StopTimeout.ConvertedOrDefault<double?>(s => double.Parse(s)),
-            DnsServers = c.NetworkSettings.DnsServers.ToArray(),
-            DnsSearchDomains = c.NetworkSettings.DnsSearchDomains.ToArray(),
-            ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault(bool.Parse),
-            
-            Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => null),
-            EntryPoint =  c.EntryPoint.ConvertedOrDefault<string[]>(input => input.Split(',').Select(s => s.Trim()).ToArray(), () => null),
-            
-            ResourceRequirements = c.ParseResourceRequirements(),
-            DockerLabels = c.ParseDockerLabels(),
-            PortMappings = c.ParsePortMappings(),
-            HealthCheck = c.ParseHealthCheck(),
-            ExtraHosts = c.ParseExtraHosts(),
-            RepositoryCredentials = c.ParseRepositoryCredentials(),
-            Ulimits = c.ParseULimits(),
-            MountPoints = c.ParseMountPoints(),
-            DependsOn = c.ParseDependencies(),
-            VolumesFrom = c.ParseVolumesFrom(),
-            LogConfiguration = c.ParseLogConfiguration(logGroupNameRef, awsRegionRef),
-            EnvironmentFiles = c.ParseEnvironmentFiles(),
-            FirelensConfiguration = c.ParseFireLensConfiguration(),
-            
-            Environment = c.ParseEnvironmentVariables(),
-            Secrets = c.ParseSecrets()
-            
-            // SPF referenced these properties but never set them.
-            // Due to TS vs. CS SDK differences, we don't even mention them,
-            // so they won't appear in the final template at all.
-            // They appear here for consistency
-            // Privileged = null, 
-            // Links = null, 
-            // DockerSecurityOptions = null 
-            
-        }).ToArray();
+            section[TaskExecutionPolicyArnParameterName] = new Cfn.ParameterDef
+            {
+                Type = "String",
+                Default = DefaultTaskExecutionPolicyArn
+            };
+        }
+
+        return section;
+    }
+
+    Dictionary<string, Cfn.Resource> BuildResourcesSection()
+    {
+        var section = new Dictionary<string, Cfn.Resource>();
+
+        if (createsInTemplateExecutionRole)
+        {
+            section[commandInputs.FallbackTaskExecutionRoleName] = Cfn.Resource.IamRole(BuildExecutionRoleProperties());
+        }
 
         if (commandInputs.RequiresLogGroup)
         {
-            _ = new CfnLogGroup(this,
-                               commandInputs.LogGroupName,
-                               new CfnLogGroupProps
-                               {
-                                   LogGroupName = paramRefs[EcsTemplateParameterNames.LogGroupName].ValueAsString
-                               });
+            section[commandInputs.LogGroupName] = Cfn.Resource.LogGroup(new Cfn.LogGroupProperties
+            {
+                LogGroupName = new Cfn.Ref(EcsTemplateParameterNames.LogGroupName)
+            });
         }
 
-        var taskDefinition = new CfnTaskDefinition(this,
-                                                   commandInputs.TaskName,
-                                                   new CfnTaskDefinitionProps
-                                                   {
-                                                       ContainerDefinitions = containers,
-                                                       Family = paramRefs[EcsTemplateParameterNames.TaskDefinitionName].ValueAsString,
-                                                       Cpu = paramRefs[EcsTemplateParameterNames.TaskDefinitionCpu].ValueAsString,
-                                                       Memory = paramRefs[EcsTemplateParameterNames.TaskDefinitionMemory].ValueAsString,
-                                                       ExecutionRoleArn = executionRoleArnRef,
-                                                       TaskRoleArn = ParamOr(EcsTemplateParameterNames.TaskRole, commandInputs.TaskRole),
-                                                       RequiresCompatibilities = [FargateLaunchType],
-                                                       NetworkMode = AwsVpcNetworkMode,
-                                                       RuntimePlatform = new CfnTaskDefinition.RuntimePlatformProperty
-                                                       {
-                                                           OperatingSystemFamily = LinuxOperatingSystemFamily,
-                                                           CpuArchitecture = commandInputs.CpuArchitecture
-                                                       },
-                                                       Volumes = commandInputs.Volumes.ParseVolumes(),
-                                                       Tags = commandInputs.Tags.ToCloudFormationTags()
-                                                   });
+        section[commandInputs.TaskName] = Cfn.Resource.TaskDefinition(BuildTaskDefinitionProperties());
+        section[commandInputs.ServiceName] = Cfn.Resource.Service(commandInputs.TaskName, BuildServiceProperties());
 
-        var service = new CfnService(this,
-                                     commandInputs.ServiceName,
-                                     new CfnServiceProps
-                                     {
-                                         Cluster = paramRefs[EcsTemplateParameterNames.ClusterName].ValueAsString,
-                                         LaunchType = FargateLaunchType,
-                                         TaskDefinition = taskDefinition.Ref,
-                                         DesiredCount = ParamOr(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount),
-                                         EnableEcsManagedTags = commandInputs.EnableEcsManagedTags,
-                                         DeploymentConfiguration = new CfnService.DeploymentConfigurationProperty
-                                         {
-                                             MinimumHealthyPercent = ParamOr(EcsTemplateParameterNames.MinimumHealthPercent, commandInputs.MinimumHealthyPercentage),
-                                             MaximumPercent = ParamOr(EcsTemplateParameterNames.MaximumHealthPercent, commandInputs.MaximumHealthyPercentage)
-                                         },
-                                         NetworkConfiguration = new CfnService.NetworkConfigurationProperty
-                                         {
-                                             AwsvpcConfiguration = new CfnService.AwsVpcConfigurationProperty
-                                             {
-                                                 AssignPublicIp = commandInputs.AutoAssignPublicIp,
-                                                 Subnets = commandInputs.SubnetIDs,
-                                                 SecurityGroups = commandInputs.NetworkSecurityGroupIds
-                                             }
-                                         },
-                                         LoadBalancers = commandInputs.LoadBalancerMappings.ToLoadBalancerProperties(),
-                                         Tags = commandInputs.Tags.ToCloudFormationTags(),
-                                     });
-        
-        service.AddDependency(taskDefinition);
+        return section;
     }
 
-    // Conditionally-registered parameters (only present when the input was customised
-    // away from the default): fall back to the literal commandInputs value when absent.
-    // Resources then render either { Ref: ... } or the inline value accordingly.
-    string ParamOr(string key, string literal) =>
-        paramRefs.TryGetValue(key, out var p) ? p.ValueAsString : literal;
+    Cfn.IamRoleProperties BuildExecutionRoleProperties() => new()
+    {
+        Path = "/",
+        ManagedPolicyArns = [new Cfn.Ref(TaskExecutionPolicyArnParameterName)],
+        AssumeRolePolicyDocument = new Cfn.AssumeRolePolicyDocument
+        {
+            Version = "2012-10-17",
+            Statement =
+            [
+                new Cfn.AssumeRoleStatement
+                {
+                    Effect = "Allow",
+                    Principal = new Cfn.AssumeRolePrincipal { Service = ["ecs-tasks.amazonaws.com"] },
+                    Action = ["sts:AssumeRole"]
+                }
+            ]
+        }
+    };
 
-    double ParamOr(string key, double literal) =>
-        paramRefs.TryGetValue(key, out var p) ? p.ValueAsNumber : literal;
+    Cfn.TaskDefinitionProperties BuildTaskDefinitionProperties()
+    {
+        // For Auto-logging containers we point awslogs at the LogGroupName parameter
+        // and the deploy region. LogGroupName is only registered when any container is Auto
+        // (RequiresLogGroup), so the Ref is only valid in that case — null is fine because
+        // ParseLogConfiguration only consults it in the Auto path.
+        Cfn.Value<string> logGroupNameRef = commandInputs.RequiresLogGroup
+            ? new Cfn.Ref(EcsTemplateParameterNames.LogGroupName)
+            : null;
+        Cfn.Value<string> awsRegionRef = new Cfn.Ref("AWS::Region");
+
+        Cfn.Value<string> executionRoleArn = createsInTemplateExecutionRole
+            ? new Cfn.Ref(commandInputs.FallbackTaskExecutionRoleName)
+            : new Cfn.Ref(EcsTemplateParameterNames.TaskExecutionRole);
+
+        return new Cfn.TaskDefinitionProperties
+        {
+            ContainerDefinitions    = commandInputs.Containers.Select(c => BuildContainerDefinition(c, logGroupNameRef, awsRegionRef)).ToArray(),
+            Family                  = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionName),
+            Cpu                     = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionCpu),
+            Memory                  = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionMemory),
+            ExecutionRoleArn        = executionRoleArn,
+            TaskRoleArn             = StringRefOr(EcsTemplateParameterNames.TaskRole, commandInputs.TaskRole),
+            RequiresCompatibilities = [FargateLaunchType],
+            NetworkMode             = AwsVpcNetworkMode,
+            RuntimePlatform         = new Cfn.RuntimePlatform
+            {
+                OperatingSystemFamily = LinuxOperatingSystemFamily,
+                CpuArchitecture       = commandInputs.CpuArchitecture
+            },
+            Volumes = commandInputs.Volumes.ParseVolumes(),
+            Tags    = commandInputs.Tags.ToCloudFormationTags()
+        };
+    }
+
+    Cfn.ServiceProperties BuildServiceProperties() => new()
+    {
+        Cluster              = new Cfn.Ref(EcsTemplateParameterNames.ClusterName),
+        LaunchType           = FargateLaunchType,
+        TaskDefinition       = new Cfn.Ref(commandInputs.TaskName),
+        DesiredCount         = NumberRefOr(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount),
+        EnableEcsManagedTags = commandInputs.EnableEcsManagedTags,
+        DeploymentConfiguration = new Cfn.DeploymentConfiguration
+        {
+            MinimumHealthyPercent = NumberRefOr(EcsTemplateParameterNames.MinimumHealthPercent, commandInputs.MinimumHealthyPercentage),
+            MaximumPercent        = NumberRefOr(EcsTemplateParameterNames.MaximumHealthPercent, commandInputs.MaximumHealthyPercentage)
+        },
+        NetworkConfiguration = new Cfn.NetworkConfiguration
+        {
+            AwsvpcConfiguration = new Cfn.AwsvpcConfiguration
+            {
+                AssignPublicIp = commandInputs.AutoAssignPublicIp,
+                Subnets        = commandInputs.SubnetIDs,
+                SecurityGroups = commandInputs.NetworkSecurityGroupIds
+            }
+        },
+        LoadBalancers = commandInputs.LoadBalancerMappings.ToLoadBalancerProperties(),
+        Tags          = commandInputs.Tags.ToCloudFormationTags()
+    };
+
+    static Cfn.ContainerDefinition BuildContainerDefinition(
+        ContainerSpec c,
+        Cfn.Value<string> logGroupNameRef,
+        Cfn.Value<string> awsRegionRef) => new()
+    {
+        Name                   = c.ContainerName,
+        Image                  = c.ContainerImageReference.ImageName,
+        Essential              = c.Essential.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
+        DisableNetworking      = c.NetworkSettings.DisableNetworking.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
+        WorkingDirectory       = string.IsNullOrEmpty(c.WorkingDirectory) ? null : c.WorkingDirectory,
+        Memory                 = c.MemoryLimitHard.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        MemoryReservation      = c.MemoryLimitSoft.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        Cpu                    = c.Cpus.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        User                   = string.IsNullOrEmpty(c.User) ? null : c.User,
+        StartTimeout           = c.StartTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        StopTimeout            = c.StopTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        // SPF always emits these arrays even when empty — preserve that shape.
+        DnsServers             = c.NetworkSettings.DnsServers.ToArray(),
+        DnsSearchDomains       = c.NetworkSettings.DnsSearchDomains.ToArray(),
+        ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
+        Command                = c.Command.ConvertedOrDefault<string[]>(s => [s], () => null),
+        EntryPoint             = c.EntryPoint.ConvertedOrDefault<string[]>(s => s.Split(',').Select(x => x.Trim()).ToArray(), () => null),
+        ResourceRequirements   = c.ParseResourceRequirements(),
+        DockerLabels           = c.ParseDockerLabels(),
+        PortMappings           = c.ParsePortMappings(),
+        HealthCheck            = c.ParseHealthCheck(),
+        ExtraHosts             = c.ParseExtraHosts(),
+        RepositoryCredentials  = c.ParseRepositoryCredentials(),
+        Ulimits                = c.ParseULimits(),
+        MountPoints            = c.ParseMountPoints(),
+        DependsOn              = c.ParseDependencies(),
+        VolumesFrom            = c.ParseVolumesFrom(),
+        LogConfiguration       = c.ParseLogConfiguration(logGroupNameRef, awsRegionRef),
+        EnvironmentFiles       = c.ParseEnvironmentFiles(),
+        FirelensConfiguration  = c.ParseFireLensConfiguration(),
+        Environment            = c.ParseEnvironmentVariables(),
+        Secrets                = c.ParseSecrets()
+    };
+
+    // Conditionally-registered parameters: when the parameter exists, emit a Ref so CFN
+    // parameter overrides at deploy time take effect; otherwise inline the literal.
+    Cfn.Value<string> StringRefOr(string parameterName, string literal) =>
+        registeredParameterNames.Contains(parameterName) ? new Cfn.Ref(parameterName) : literal;
+
+    Cfn.Value<double> NumberRefOr(string parameterName, double literal) =>
+        registeredParameterNames.Contains(parameterName) ? new Cfn.Ref(parameterName) : literal;
 }

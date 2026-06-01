@@ -1,10 +1,9 @@
 using System;
-using Amazon.CDK.AWS.ECS;
 using Calamari.Aws.Inputs.Ecs;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.Aws.Ecs;
-using Volume = Octopus.Calamari.Contracts.Aws.Ecs.Volume;
+using InputVolume = Octopus.Calamari.Contracts.Aws.Ecs.Volume;
 
 namespace Calamari.Tests.AWS.Inputs.Ecs;
 
@@ -14,7 +13,7 @@ public class VolumeMappingExtensionsTests
     [Test]
     public void ParseVolumes_WhenEmpty_ReturnsNull()
     {
-        var result = Array.Empty<Volume>().ParseVolumes();
+        var result = Array.Empty<InputVolume>().ParseVolumes();
 
         result.Should().BeNull();
     }
@@ -24,14 +23,14 @@ public class VolumeMappingExtensionsTests
     {
         var volumes = new[]
         {
-            new Volume { Type = VolumeType.Bind, Name = "scratch" }
+            new InputVolume { Type = VolumeType.Bind, Name = "scratch" }
         };
 
         var result = volumes.ParseVolumes();
 
         result.Should().HaveCount(1);
-        result[0].Name.Should().Be("scratch");
-        result[0].EfsVolumeConfiguration.Should().BeNull();
+        result![0].Name.Should().Be("scratch");
+        result[0].EFSVolumeConfiguration.Should().BeNull();
     }
 
     [Test]
@@ -39,7 +38,7 @@ public class VolumeMappingExtensionsTests
     {
         var volumes = new[]
         {
-            new Volume
+            new InputVolume
             {
                 Type = VolumeType.Efs,
                 Name = "shared-data",
@@ -56,16 +55,15 @@ public class VolumeMappingExtensionsTests
         result.Should().HaveCount(1);
         result![0].Name.Should().Be("shared-data");
 
-        var efs = result[0].EfsVolumeConfiguration.Should()
-                           .BeOfType<CfnTaskDefinition.EFSVolumeConfigurationProperty>().Subject;
-        efs.FilesystemId.Should().Be("fs-0123abcd");
+        var efs = result[0].EFSVolumeConfiguration;
+        efs.Should().NotBeNull();
+        efs!.FilesystemId.Should().Be("fs-0123abcd");
         efs.RootDirectory.Should().Be("/data");
         efs.TransitEncryption.Should().Be("ENABLED");
 
-        var auth = efs.AuthorizationConfig.Should()
-                      .BeOfType<CfnTaskDefinition.AuthorizationConfigProperty>().Subject;
-        auth.Iam.Should().Be("ENABLED");
-        auth.AccessPointId.Should().Be("fsap-0123abcd");
+        efs.AuthorizationConfig.Should().NotBeNull();
+        efs.AuthorizationConfig!.Iam.Should().Be("ENABLED");
+        efs.AuthorizationConfig.AccessPointId.Should().Be("fsap-0123abcd");
     }
 
     [Test]
@@ -73,7 +71,7 @@ public class VolumeMappingExtensionsTests
     {
         var volumes = new[]
         {
-            new Volume
+            new InputVolume
             {
                 Type = VolumeType.Efs,
                 Name = "shared-data",
@@ -85,12 +83,9 @@ public class VolumeMappingExtensionsTests
 
         var result = volumes.ParseVolumes();
 
-        var efs = result![0].EfsVolumeConfiguration.Should()
-                            .BeOfType<CfnTaskDefinition.EFSVolumeConfigurationProperty>().Subject;
-        efs.TransitEncryption.Should().Be("DISABLED");
-        efs.AuthorizationConfig.Should()
-                               .BeOfType<CfnTaskDefinition.AuthorizationConfigProperty>()
-                               .Which.Iam.Should().Be("DISABLED");
+        var efs = result![0].EFSVolumeConfiguration;
+        efs!.TransitEncryption.Should().Be("DISABLED");
+        efs.AuthorizationConfig!.Iam.Should().Be("DISABLED");
     }
 
     [Test]
@@ -99,7 +94,7 @@ public class VolumeMappingExtensionsTests
         // The implementation compares to true.ToString() == "True" — lowercase "true" should not enable.
         var volumes = new[]
         {
-            new Volume
+            new InputVolume
             {
                 Type = VolumeType.Efs,
                 Name = "shared-data",
@@ -111,12 +106,9 @@ public class VolumeMappingExtensionsTests
 
         var result = volumes.ParseVolumes();
 
-        var efs = result![0].EfsVolumeConfiguration.Should()
-                            .BeOfType<CfnTaskDefinition.EFSVolumeConfigurationProperty>().Subject;
-        efs.TransitEncryption.Should().Be("DISABLED");
-        efs.AuthorizationConfig.Should()
-                               .BeOfType<CfnTaskDefinition.AuthorizationConfigProperty>()
-                               .Which.Iam.Should().Be("DISABLED");
+        var efs = result![0].EFSVolumeConfiguration;
+        efs!.TransitEncryption.Should().Be("DISABLED");
+        efs.AuthorizationConfig!.Iam.Should().Be("DISABLED");
     }
 
     [Test]
@@ -124,16 +116,16 @@ public class VolumeMappingExtensionsTests
     {
         var volumes = new[]
         {
-            new Volume { Type = VolumeType.Efs, Name = "efs-1", FileSystemId = "fs-1", EncryptionInTransit = "True", EfsIamAuthorization = "True" },
-            new Volume { Type = VolumeType.Bind, Name = "bind-1" },
-            new Volume { Type = VolumeType.Efs, Name = "efs-2", FileSystemId = "fs-2", EncryptionInTransit = "True", EfsIamAuthorization = "True" },
-            new Volume { Type = VolumeType.Bind, Name = "bind-2" }
+            new InputVolume { Type = VolumeType.Efs, Name = "efs-1", FileSystemId = "fs-1", EncryptionInTransit = "True", EfsIamAuthorization = "True" },
+            new InputVolume { Type = VolumeType.Bind, Name = "bind-1" },
+            new InputVolume { Type = VolumeType.Efs, Name = "efs-2", FileSystemId = "fs-2", EncryptionInTransit = "True", EfsIamAuthorization = "True" },
+            new InputVolume { Type = VolumeType.Bind, Name = "bind-2" }
         };
 
         var result = volumes.ParseVolumes();
 
         result.Should().HaveCount(4);
-        result[0].Name.Should().Be("bind-1");
+        result![0].Name.Should().Be("bind-1");
         result[1].Name.Should().Be("bind-2");
         result[2].Name.Should().Be("efs-1");
         result[3].Name.Should().Be("efs-2");

@@ -1,22 +1,22 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using Amazon.CDK.AWS.ECS;
 using Octopus.Calamari.Contracts.Aws.Ecs;
+using Cfn = Calamari.Aws.Integration.Ecs.Deploy.Cfn;
 
 namespace Calamari.Aws.Inputs.Ecs;
 
 public static class LoadBalancerMappingExtensions
 {
-    public static CfnService.LoadBalancerProperty[] ToLoadBalancerProperties(this IEnumerable<LoadBalancerMapping> loadBalancerMappings)
+    public static Cfn.LoadBalancer[] ToLoadBalancerProperties(this IEnumerable<LoadBalancerMapping> loadBalancerMappings)
     {
-        var lbMappings =  loadBalancerMappings.Select(lbm => new CfnService.LoadBalancerProperty
-                                   {
-                                        ContainerName =  lbm.ContainerName,
-                                        ContainerPort = lbm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s)),
-                                        TargetGroupArn =  lbm.TargetGroupArn,
-                                   })
-                                   .ToArray();
+        var mappings = loadBalancerMappings.Select(lbm => new Cfn.LoadBalancer
+        {
+            ContainerName  = lbm.ContainerName,
+            ContainerPort  = lbm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+            TargetGroupArn = lbm.TargetGroupArn
+        }).ToArray();
 
-        return lbMappings.Length == 0 ? null : lbMappings;
+        return mappings.Length == 0 ? null : mappings;
     }
 }

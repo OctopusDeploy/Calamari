@@ -1,45 +1,39 @@
 using System.Linq;
-using Amazon.CDK.AWS.ECS;
 using Octopus.Calamari.Contracts.Aws.Ecs;
-using Volume = Octopus.Calamari.Contracts.Aws.Ecs.Volume;
+using Cfn = Calamari.Aws.Integration.Ecs.Deploy.Cfn;
+using InputVolume = Octopus.Calamari.Contracts.Aws.Ecs.Volume;
 
 namespace Calamari.Aws.Inputs.Ecs;
 
 public static class VolumeMappingExtensions
 {
-    public static CfnTaskDefinition.VolumeProperty[] ParseVolumes(this Volume[] volumes)
+    // SPF always emits Volumes as an array — empty becomes [] not omitted.
+    public static Cfn.Volume[] ParseVolumes(this InputVolume[] volumes)
     {
-        if (volumes.Length > 0)
-        {
-            var boundVolumes =  volumes
-                                .Where(v => v.Type ==  VolumeType.Bind).Select(v => new CfnTaskDefinition.VolumeProperty()
-                                {
-                                    Name =  v.Name,
-                                   
-                                }).ToArray();
-            var efsVolumes = volumes
-                             .Where(v => v.Type == VolumeType.Efs)
-                             .Select(v => new CfnTaskDefinition.VolumeProperty
-                             {
-                                 Name = v.Name,
-                                 EfsVolumeConfiguration = new CfnTaskDefinition.EFSVolumeConfigurationProperty
-                                 {
-                                     AuthorizationConfig = new CfnTaskDefinition.AuthorizationConfigProperty
-                                     {
-                                         Iam = v.EfsIamAuthorization.Equals(true.ToString()) ? "ENABLED" : "DISABLED",
-                                         //SPF didn't appear to be outputting this, we're adding here because it seems correct to
-                                         // No one ever complained, so we may not have customers leveraging Efs IAM Auth?
-                                         AccessPointId = v.AccessPointId 
-                                     },
-                                    FilesystemId = v.FileSystemId!,
-                                    RootDirectory = v.RootDirectory,
-                                    TransitEncryption = v.EncryptionInTransit.Equals(true.ToString()) ? "ENABLED" :  "DISABLED", 
-                                 }
-                             })
-                             .ToArray();
-            return boundVolumes.Concat(efsVolumes).ToArray();
-        }
+        if (volumes.Length == 0) return [];
 
-        return null;
+        var boundVolumes = volumes.Where(v => v.Type == VolumeType.Bind)
+                                  .Select(v => new Cfn.Volume { Name = v.Name });
+
+        var efsVolumes = volumes.Where(v => v.Type == VolumeType.Efs)
+                                .Select(v => new Cfn.Volume
+                                {
+                                    Name = v.Name,
+                                    EFSVolumeConfiguration = new Cfn.EfsVolumeConfiguration
+                                    {
+                                        FilesystemId      = v.FileSystemId!,
+                                        RootDirectory     = v.RootDirectory,
+                                        TransitEncryption = v.EncryptionInTransit.Equals(true.ToString()) ? "ENABLED" : "DISABLED",
+                                        AuthorizationConfig = new Cfn.AuthorizationConfig
+                                        {
+                                            Iam = v.EfsIamAuthorization.Equals(true.ToString()) ? "ENABLED" : "DISABLED",
+                                            // SPF didn't appear to be outputting this; we add it because it seems correct.
+                                            // No customer has complained, so we may not have anyone leveraging EFS IAM Auth.
+                                            AccessPointId = v.AccessPointId
+                                        }
+                                    }
+                                });
+
+        return boundVolumes.Concat(efsVolumes).ToArray();
     }
 }

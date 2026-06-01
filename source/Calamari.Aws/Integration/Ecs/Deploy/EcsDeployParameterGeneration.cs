@@ -9,7 +9,7 @@ namespace Calamari.Aws.Integration.Ecs.Deploy;
 public interface IEcsTemplateParameter
 {
     string Name { get; }
-    // Typed value handed to CDK's CfnParameter Default — preserves the underlying
+    // Typed value handed to the CFN template's parameter Default — preserves the underlying
     // type so a Number param emits a JSON number literal, not a quoted string.
     object Default { get; }
     // String form for the AWS SDK Parameter override list — required to be a string

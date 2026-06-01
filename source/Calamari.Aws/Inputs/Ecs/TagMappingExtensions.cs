@@ -1,18 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using Amazon.CDK;
+using Cfn = Calamari.Aws.Integration.Ecs.Deploy.Cfn;
 
 namespace Calamari.Aws.Inputs.Ecs;
 
 public static class TagMappingExtensions
 {
-    public static ICfnTag[] ToCloudFormationTags(this IEnumerable<KeyValuePair<string, string>> tags)
-    {
-        return tags.Select(t => new CfnTag
-            {
-                Key = t.Key,
-                Value = t.Value
-            })
-            .ToArray<ICfnTag>();
-    }
+    // SPF always emits Tags as an array — empty becomes [] not omitted.
+    public static Cfn.Tag[] ToCloudFormationTags(this IEnumerable<KeyValuePair<string, string>> tags) =>
+        tags.Select(t => new Cfn.Tag { Key = t.Key, Value = t.Value }).ToArray();
 }

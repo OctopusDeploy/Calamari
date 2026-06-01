@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Amazon.CDK.AWS.ECS;
 using Calamari.Aws.Inputs.Ecs;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.Aws.Ecs;
+using Cfn = Calamari.Aws.Integration.Ecs.Deploy.Cfn;
 using ContainerDependency = Octopus.Calamari.Contracts.Aws.Ecs.ContainerDependency;
 using ContainerDependencyCondition = Octopus.Calamari.Contracts.Aws.Ecs.ContainerDependencyCondition;
 using ContainerMountPoint = Octopus.Calamari.Contracts.Aws.Ecs.ContainerMountPoint;
@@ -738,13 +738,12 @@ public class ContainerSpecMappingExtensionsTests
 
         result.Should().NotBeNull();
         result!.LogDriver.Should().Be("awslogs");
-        result.Options.Should().BeOfType<Dictionary<string, string>>()
-              .Which.Should().BeEquivalentTo(new Dictionary<string, string>
-              {
-                  { "awslogs-group",         TestLogGroupRef },
-                  { "awslogs-region",        TestRegionRef },
-                  { "awslogs-stream-prefix", "ecs" }
-              });
+        result.Options.Should().BeEquivalentTo(new Dictionary<string, Cfn.Value<string>>
+        {
+            { "awslogs-group",         TestLogGroupRef },
+            { "awslogs-region",        TestRegionRef },
+            { "awslogs-stream-prefix", "ecs" }
+        });
     }
 
     [Test]
@@ -804,17 +803,15 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseLogConfiguration(TestLogGroupRef, TestRegionRef);
 
-        result!.Options.Should().BeOfType<Dictionary<string, string>>()
-              .Which.Should().BeEquivalentTo(new Dictionary<string, string>
-              {
-                  { "awslogs-region", "us-east-1" },
-                  { "awslogs-group", "my-group" }
-              });
-        result.SecretOptions.Should().BeOfType<Dictionary<string, string>>()
-              .Which.Should().BeEquivalentTo(new Dictionary<string, string>
-              {
-                  { "secret-token", "arn:secret" }
-              });
+        result!.Options.Should().BeEquivalentTo(new Dictionary<string, Cfn.Value<string>>
+        {
+            { "awslogs-region", "us-east-1" },
+            { "awslogs-group",  "my-group" }
+        });
+        result.SecretOptions.Should().BeEquivalentTo(new[]
+        {
+            new Cfn.Secret { Name = "secret-token", ValueFrom = "arn:secret" }
+        });
     }
 
     [Test]
@@ -877,9 +874,8 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseFireLensConfiguration();
 
-        result!.Options.Should().BeOfType<Dictionary<string, string>>()
-              .Which.Should().ContainKey("enable-ecs-log-metadata")
-              .WhoseValue.Should().Be("false");
+        result!.Options.Should().ContainKey("enable-ecs-log-metadata")
+                                .WhoseValue.Should().Be("false");
     }
 
     [Test]
@@ -898,9 +894,8 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseFireLensConfiguration();
 
-        var options = (Dictionary<string, string>)result!.Options;
-        options.Should().NotContainKey("config-file-type");
-        options.Should().NotContainKey("config-file-value");
+        result!.Options.Should().NotContainKey("config-file-type");
+        result.Options.Should().NotContainKey("config-file-value");
     }
 
     [Test]
@@ -925,8 +920,7 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseFireLensConfiguration();
 
-        var options = (Dictionary<string, string>)result!.Options;
-        options.Should().Contain("config-file-type", expected);
-        options.Should().Contain("config-file-value", "/etc/fluent.conf");
+        result!.Options.Should().Contain("config-file-type", expected);
+        result.Options.Should().Contain("config-file-value", "/etc/fluent.conf");
     }
 }

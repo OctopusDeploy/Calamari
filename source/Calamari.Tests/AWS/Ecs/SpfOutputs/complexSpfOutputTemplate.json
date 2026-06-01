@@ -26,15 +26,15 @@
     },
     "DesiredCount": {
       "Type": "Number",
-      "Default": 2
+      "Default": 2.0
     },
     "MinimumHealthPercent": {
       "Type": "Number",
-      "Default": 150
+      "Default": 150.0
     },
     "MaximumHealthPercent": {
       "Type": "Number",
-      "Default": 300
+      "Default": 300.0
     },
     "LogGroupName": {
       "Type": "String",
@@ -55,52 +55,73 @@
       "Properties": {
         "ContainerDefinitions": [
           {
+            "Name": "web-server",
+            "Image": "#{Octopus.Action[Deploy Amazon ECS Service - clone (1)].Package[nginx].Image}",
+            "Essential": true,
+            "DisableNetworking": false,
+            "WorkingDirectory": "/tmp",
+            "Memory": 200.0,
+            "MemoryReservation": 47.0,
+            "Cpu": 2.0,
+            "User": "test-user",
+            "StartTimeout": 40.0,
+            "StopTimeout": 60.0,
+            "DnsServers": [],
+            "DnsSearchDomains": [],
+            "ReadonlyRootFilesystem": true,
             "Command": [
               "echo 'Deployment successful"
             ],
-            "Cpu": 2,
-            "DisableNetworking": false,
-            "DnsSearchDomains": [],
-            "DnsServers": [],
-            "DockerLabels": {
-              "some-label": "label-value"
-            },
             "EntryPoint": [
               "sh",
               "-c"
             ],
-            "Environment": [
-              {
-                "Name": "containerenv",
-                "Value": "some-otherovalue"
-              }
-            ],
-            "EnvironmentFiles": [
-              {
-                "Type": "s3",
-                "Value": "jttestc668db76/test/keyarm-packagev1.0.3.zip"
-              }
-            ],
-            "Essential": true,
-            "ExtraHosts": [],
-            "FirelensConfiguration": {
-              "Options": {
-                "enable-ecs-log-metadata": "true",
-                "config-file-type": "file",
-                "config-file-value": "/home/config"
-              },
-              "Type": "fluentd"
+            "ResourceRequirements": [],
+            "DockerLabels": {
+              "some-label": "label-value"
             },
+            "PortMappings": [
+              {
+                "ContainerPort": 80.0,
+                "HostPort": 80.0,
+                "Protocol": "tcp"
+              },
+              {
+                "ContainerPort": 443.0,
+                "HostPort": 443.0,
+                "Protocol": "tcp"
+              }
+            ],
             "HealthCheck": {
               "Command": [
                 "curl -f http://localhost/ || exit 1"
               ],
-              "Interval": 240,
-              "Retries": 7,
-              "StartPeriod": 179,
-              "Timeout": 54
+              "Interval": 240.0,
+              "Retries": 7.0,
+              "StartPeriod": 179.0,
+              "Timeout": 54.0
             },
-            "Image": "#{Octopus.Action[Deploy Amazon ECS Service - clone (1)].Package[nginx].Image}",
+            "ExtraHosts": [],
+            "Ulimits": [
+              {
+                "Name": "core",
+                "HardLimit": 12.0,
+                "SoftLimit": 10.0
+              }
+            ],
+            "MountPoints": [
+              {
+                "SourceVolume": "efs-volume",
+                "ContainerPath": "/etc",
+                "ReadOnly": false
+              }
+            ],
+            "VolumesFrom": [
+              {
+                "SourceContainer": "efs-volume",
+                "ReadOnly": true
+              }
+            ],
             "LogConfiguration": {
               "LogDriver": "awslogs",
               "Options": {
@@ -113,121 +134,104 @@
                 "awslogs-stream-prefix": "ecs"
               }
             },
-            "Memory": 200,
-            "MemoryReservation": 47,
-            "MountPoints": [
+            "EnvironmentFiles": [
               {
-                "ContainerPath": "/etc",
-                "ReadOnly": false,
-                "SourceVolume": "efs-volume"
+                "Type": "s3",
+                "Value": "jttestc668db76/test/keyarm-packagev1.0.3.zip"
               }
             ],
-            "Name": "web-server",
-            "PortMappings": [
-              {
-                "ContainerPort": 80,
-                "HostPort": 80,
-                "Protocol": "tcp"
-              },
-              {
-                "ContainerPort": 443,
-                "HostPort": 443,
-                "Protocol": "tcp"
+            "FirelensConfiguration": {
+              "Type": "fluentd",
+              "Options": {
+                "enable-ecs-log-metadata": "true",
+                "config-file-type": "file",
+                "config-file-value": "/home/config"
               }
-            ],
-            "ReadonlyRootFilesystem": true,
-            "ResourceRequirements": [],
-            "StartTimeout": 40,
-            "StopTimeout": 60,
-            "Ulimits": [
+            },
+            "Environment": [
               {
-                "HardLimit": 12,
-                "Name": "core",
-                "SoftLimit": 10
+                "Name": "containerenv",
+                "Value": "some-otherovalue"
               }
-            ],
-            "User": "test-user",
-            "VolumesFrom": [
-              {
-                "ReadOnly": true,
-                "SourceContainer": "efs-volume"
-              }
-            ],
-            "WorkingDirectory": "/tmp"
+            ]
           }
         ],
-        "Cpu": {
-          "Ref": "TaskDefinitionCPU"
-        },
-        "ExecutionRoleArn": {
-          "Ref": "TaskExecutionRole"
-        },
         "Family": {
           "Ref": "TaskDefinitionName"
+        },
+        "Cpu": {
+          "Ref": "TaskDefinitionCPU"
         },
         "Memory": {
           "Ref": "TaskDefinitionMemory"
         },
-        "NetworkMode": "awsvpc",
+        "ExecutionRoleArn": {
+          "Ref": "TaskExecutionRole"
+        },
+        "TaskRoleArn": {
+          "Ref": "TaskRole"
+        },
         "RequiresCompatibilities": [
           "FARGATE"
         ],
+        "NetworkMode": "awsvpc",
         "RuntimePlatform": {
-          "CpuArchitecture": "X86_64",
-          "OperatingSystemFamily": "LINUX"
+          "OperatingSystemFamily": "LINUX",
+          "CpuArchitecture": "X86_64"
         },
+        "Volumes": [
+          {
+            "Name": "efs-volume",
+            "EFSVolumeConfiguration": {
+              "FilesystemId": "efs-fs-id",
+              "RootDirectory": "/root",
+              "TransitEncryption": "ENABLED",
+              "AuthorizationConfig": {
+                "IAM": "ENABLED",
+                "AccessPointId": "/data"
+              }
+            }
+          }
+        ],
         "Tags": [
           {
             "Key": "my-tag",
             "Value": "a great test value"
-          }
-        ],
-        "TaskRoleArn": {
-          "Ref": "TaskRole"
-        },
-        "Volumes": [
-          {
-            "EFSVolumeConfiguration": {
-              "AuthorizationConfig": {
-                "AccessPointId": "/data",
-                "IAM": "ENABLED"
-              },
-              "FilesystemId": "efs-fs-id",
-              "RootDirectory": "/root",
-              "TransitEncryption": "ENABLED"
-            },
-            "Name": "efs-volume"
           }
         ]
       }
     },
     "ServicetestBigCfTemplate": {
       "Type": "AWS::ECS::Service",
+      "DependsOn": "TaskDefinitiontestBigCfTemplate",
       "Properties": {
         "Cluster": {
           "Ref": "ClusterName"
         },
-        "DeploymentConfiguration": {
-          "MaximumPercent": {
-            "Ref": "MaximumHealthPercent"
-          },
-          "MinimumHealthyPercent": {
-            "Ref": "MinimumHealthPercent"
-          }
+        "LaunchType": "FARGATE",
+        "TaskDefinition": {
+          "Ref": "TaskDefinitiontestBigCfTemplate"
         },
         "DesiredCount": {
           "Ref": "DesiredCount"
         },
         "EnableECSManagedTags": true,
-        "LaunchType": "FARGATE",
+        "DeploymentConfiguration": {
+          "MinimumHealthyPercent": {
+            "Ref": "MinimumHealthPercent"
+          },
+          "MaximumPercent": {
+            "Ref": "MaximumHealthPercent"
+          }
+        },
         "NetworkConfiguration": {
           "AwsvpcConfiguration": {
             "AssignPublicIp": "ENABLED",
-            "SecurityGroups": [
-              "sg-0d5e06a4bde84dxxx"
-            ],
             "Subnets": [
               "subnet-0650cd8a2119e8xxx"
+            ],
+            "SecurityGroups": [
+              "sg-0d5e06a4bde84dxxx"
             ]
           }
         },
@@ -236,13 +240,8 @@
             "Key": "my-tag",
             "Value": "a great test value"
           }
-        ],
-        "TaskDefinition": {
-          "Ref": "TaskDefinitiontestBigCfTemplate"
-        }
-      },
-      "DependsOn": ["TaskDefinitiontestBigCfTemplate"]
-      
+        ]
+      }
     }
   }
 }
