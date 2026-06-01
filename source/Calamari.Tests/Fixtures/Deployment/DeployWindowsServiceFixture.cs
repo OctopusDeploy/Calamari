@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.Versioning;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -11,6 +12,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [SupportedOSPlatform("Windows")]
     public class DeployWindowsServiceFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => "Acme.Service";

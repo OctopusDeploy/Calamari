@@ -85,6 +85,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureWebApp.NetCoreShim", "Calamari.AzureWebApp.NetCoreShim\Calamari.AzureWebApp.NetCoreShim.csproj", "{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.DockerCredentialHelper", "Calamari.DockerCredentialHelper\Calamari.DockerCredentialHelper.csproj", "{0B18FB56-E53B-4AA4-85D6-E2E89CBA8742}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Contracts", "Calamari.Contracts\Calamari.Contracts.csproj", "{13583496-C3D2-4ADE-9087-65583326C469}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -218,6 +219,14 @@ Global
 		{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.Build.0 = Release|Any CPU
+								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.Build.0 = Debug|Any CPU
+								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.ActiveCfg = Release|Any CPU
+								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.Build.0 = Release|Any CPU
+								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.Build.0 = Debug|Any CPU
+								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.ActiveCfg = Release|Any CPU
+								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -226,6 +235,10 @@ Global
 		{0B18FB56-E53B-4AA4-85D6-E2E89CBA8742}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B18FB56-E53B-4AA4-85D6-E2E89CBA8742}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B18FB56-E53B-4AA4-85D6-E2E89CBA8742}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13583496-C3D2-4ADE-9087-65583326C469}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13583496-C3D2-4ADE-9087-65583326C469}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13583496-C3D2-4ADE-9087-65583326C469}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13583496-C3D2-4ADE-9087-65583326C469}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

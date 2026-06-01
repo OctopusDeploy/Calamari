@@ -23,15 +23,13 @@ namespace Calamari.Kubernetes.Integration
     {
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
-        readonly IVariables variables;
         bool isCustomExecutable;
 
         public HelmCli(ILog log, ICommandLineRunner commandLineRunner, RunningDeployment runningDeployment, ICalamariFileSystem fileSystem)
-            : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables)
+            : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables, runningDeployment.Variables)
         {
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
-            variables = runningDeployment.Variables;
             ExecutableLocation = SetExecutable();
         }
 
@@ -116,7 +114,7 @@ namespace Calamari.Kubernetes.Integration
 
             return result.Output.MergeInfoLogs();
         }
-        
+
         public CommandResult Upgrade(string releaseName, string packagePath, IEnumerable<string> upgradeArgs)
         {
             var buildArgs = new List<string>

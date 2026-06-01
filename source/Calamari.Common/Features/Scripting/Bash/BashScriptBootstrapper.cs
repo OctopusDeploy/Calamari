@@ -48,8 +48,12 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
 
-            builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
-            builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
+            builder.Replace("#### BashParametersArrayFeatureToggle ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? "true" : "false");
+            if (FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables))
+            {
+                builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
+                builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
+            }
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))

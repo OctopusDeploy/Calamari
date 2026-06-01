@@ -9,6 +9,7 @@
         SkunkworksFeatureToggle,
         OidcAccountsFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
-        ForceUtf8ZipFileDecodingFeatureToggle
+        ForceUtf8ZipFileDecodingFeatureToggle,
+        BashParametersArrayFeatureToggle
     }
 }

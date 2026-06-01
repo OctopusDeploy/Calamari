@@ -18,6 +18,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         ExtractPackage extractPackage;
         ICalamariFileSystem fileSystem;
         static readonly PathToPackage PathToPackage = new PathToPackage(TestEnvironment.ConstructRootedPath("Acme.Web.1.0.0.zip"));
+        static readonly PathToPackage PathToPackageWithLeadingZeros = new PathToPackage(TestEnvironment.ConstructRootedPath("Acme.Core.1.0.01.nupkg"));
+        static readonly PathToPackage PathToPackageWithMetadata = new PathToPackage(TestEnvironment.ConstructRootedPath("Acme.Core.1.0.1+ace8cda.nupkg"));
 
         [SetUp]
         public void SetUp()
@@ -96,7 +98,6 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Acme.Web", "1.0.0_3")));
         }
-        
 
         [Test]
         public void ShouldExtractToEnvironmentSpecificFolderIfProvided()

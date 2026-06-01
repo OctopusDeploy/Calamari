@@ -91,9 +91,12 @@ namespace Calamari.Commands
             var embeddedResources = new AssemblyEmbeddedResources();
 
             var iis = new InternetInformationServer();
-            featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore, log), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
 
-            if (!CalamariEnvironment.IsRunningOnWindows)
+            if (OperatingSystem.IsWindows())
+            {
+                featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore, log), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
+            }
+            else
             {
                 featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem, log));
             }

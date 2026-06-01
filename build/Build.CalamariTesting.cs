@@ -31,6 +31,24 @@ partial class Build
                               .Execute();
                       });
 
+    // Temporary redirect so I can merge this PR without breaking Teamcity builds
+    [PublicAPI]
+    Target LinuxSpecificTestingWithoutOpenSsl3 =>
+        target => target.DependsOn(LinuxSpecificTestingWithoutWithoutOpenSsl11OrOpenSsl3);
+
+    [PublicAPI]
+    Target LinuxSpecificTestingWithoutWithoutOpenSsl11OrOpenSsl3 =>
+        target => target
+            .Executes(async () =>
+                      {
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
+
+                          CreateTestRun("Binaries/Calamari.Tests.dll")
+                              .WithDotNetPath(dotnetPath)
+                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != RequiresOpenSsl1_1OrOpenSsl3")
+                              .Execute();
+                      });
+
     [PublicAPI]
     Target OncePerWindowsOrLinuxTesting =>
         target => target

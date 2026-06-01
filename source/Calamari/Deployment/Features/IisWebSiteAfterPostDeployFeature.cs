@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
@@ -11,7 +12,7 @@ using Calamari.Integration.Iis;
 
 namespace Calamari.Deployment.Features
 {
-#pragma warning disable CA1416
+    [SupportedOSPlatform("Windows")]
     public class IisWebSiteAfterPostDeployFeature : IisWebSiteFeature
     {
         readonly IWindowsX509CertificateStore windowsX509CertificateStore;
@@ -101,5 +102,4 @@ namespace Calamari.Deployment.Features
             return Regex.Replace(username, "\\.\\\\(.*)", "$1", RegexOptions.None);
         }
     }
-#pragma warning restore CA1416
 }
