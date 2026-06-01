@@ -102,35 +102,41 @@ namespace Calamari.Integration.Packages.Download
 
             var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
 
-            if (useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+            try
             {
-                strategy.Execute(() => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, feedUri, DockerHubRegistry));
-            } 
-            strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+                if (useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                {
+                    strategy.Execute(() => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, feedUri, DockerHubRegistry));
+                }
+                strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
 
-            const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
-            var imageNotCachedMessage =
-                "The docker image '{0}' may not be cached." + " Please note images that have not been cached may take longer to be acquired than expected." + " Your deployment will begin as soon as all images have been pulled." + $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
+                const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
+                var imageNotCachedMessage =
+                    "The docker image '{0}' may not be cached." + " Please note images that have not been cached may take longer to be acquired than expected." + " Your deployment will begin as soon as all images have been pulled." + $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
 
-            if (!IsImageCached(fullImageName))
-            {
-                log.InfoFormat(imageNotCachedMessage, fullImageName);
+                if (!IsImageCached(fullImageName))
+                {
+                    log.InfoFormat(imageNotCachedMessage, fullImageName);
+                }
+
+                strategy.Execute(() => PerformPull(fullImageName, environmentVariables));
+
+                var (hash, size) = GetImageDetails(fullImageName);
+
+                return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
             }
-
-            strategy.Execute(() => PerformPull(fullImageName, environmentVariables));
-
-            var (hash, size) = GetImageDetails(fullImageName);
-            
-            // Cleanup credential helper files if used
-            if (useCredentialHelper)
+            finally
             {
-                dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
-            }
+                // Always remove the temporary Docker config and any credential-helper artifacts,
+                // even if login/pull/inspect throws, so credentials are never left on disk.
+                if (useCredentialHelper)
+                {
+                    dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
+                }
 
-            if (fileSystem.DirectoryExists(DockerConfigFolder))
-                fileSystem.DeleteDirectory(DockerConfigFolder);
-            
-            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
+                if (fileSystem.DirectoryExists(DockerConfigFolder))
+                    fileSystem.DeleteDirectory(DockerConfigFolder);
+            }
         }
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
