@@ -156,3 +156,10 @@ public record InputsValidityResult(IEnumerable<string> MissingKeys)
         }
     }
 }
+
+public static class EcsInputDefaults
+{
+    public const double DesiredCount = 1;
+    public const double MinimumHealthPercent = 100;
+    public const double MaximumHealthPercent = 200;
+}

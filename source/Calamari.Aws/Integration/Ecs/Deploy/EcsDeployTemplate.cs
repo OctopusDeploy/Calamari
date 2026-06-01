@@ -1,37 +1,38 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Amazon.CDK;
 using Amazon.CDK.AWS.ECS;
 using Amazon.CDK.AWS.Logs;
 using Calamari.Aws.Inputs.Ecs;
-using Octopus.Calamari.Contracts.Aws.Ecs;
 
-namespace Calamari.Aws.Integration.Ecs;
+namespace Calamari.Aws.Integration.Ecs.Deploy;
 
 public sealed class EcsDeployTemplate : Stack
 {
     const string FargateLaunchType = "FARGATE";
     const string AwsVpcNetworkMode = "awsvpc";
     const string LinuxOperatingSystemFamily = "LINUX";
-    
+
+    readonly Dictionary<string, CfnParameter> paramRefs;
 
     public EcsDeployTemplate(DeployEcsCommandInputs commandInputs,
-                             IReadOnlyList<(string Name, string Value)> parameters,
+                             IReadOnlyList<IEcsTemplateParameter> parameters,
                              App scope,
                              string id,
                              IStackProps props = null) : base(scope, id, props)
     {
         TemplateOptions.TemplateFormatVersion = "2010-09-09";
 
-        var paramRefs = parameters.ToDictionary(
-                                                p => p.Name,
-                                                p => new CfnParameter(this,
-                                                                      p.Name,
-                                                                      new CfnParameterProps
-                                                                      {
-                                                                          Type = "String",
-                                                                          Default = p.Value
-                                                                      }));
+        paramRefs = parameters.ToDictionary(
+                                            p => p.Name,
+                                            p => new CfnParameter(this,
+                                                                  p.Name,
+                                                                  new CfnParameterProps
+                                                                  {
+                                                                      Type = p.CfnType,
+                                                                      Default = p.Default
+                                                                  }));
 
         // ExecutionRoleArn: parameter when user-supplied (in `paramRefs`), in-template
         // role otherwise. The role can't be known at request time because CFN creates
@@ -40,6 +41,17 @@ public sealed class EcsDeployTemplate : Stack
             ? execRoleParam.ValueAsString
             : commandInputs.MapTaskExecutionRoleArn(this);
 
+        // For Auto-logging containers we need to point awslogs at the LogGroupName parameter
+        // and the deploy region. LogGroupName is only registered when any container is Auto
+        // (RequiresLogGroup), so accessing it outside that branch would throw — null is fine
+        // because ParseLogConfiguration only consults it in the Auto path.
+        var logGroupNameRef = commandInputs.RequiresLogGroup
+            ? paramRefs[EcsTemplateParameterNames.LogGroupName].ValueAsString
+            : null;
+        
+        // Stack.Region is a CDK token that synthesises to { Ref: AWS::Region } —
+        // the CFN pseudo-parameter that resolves to the deploy region at runtime.
+        var awsRegionRef = Region;
 
         var containers = commandInputs.Containers.Select(c => new CfnTaskDefinition.ContainerDefinitionProperty
         {
@@ -71,7 +83,7 @@ public sealed class EcsDeployTemplate : Stack
             MountPoints = c.ParseMountPoints(),
             DependsOn = c.ParseDependencies(),
             VolumesFrom = c.ParseVolumesFrom(),
-            LogConfiguration = c.ParseLogConfiguration(),
+            LogConfiguration = c.ParseLogConfiguration(logGroupNameRef, awsRegionRef),
             EnvironmentFiles = c.ParseEnvironmentFiles(),
             FirelensConfiguration = c.ParseFireLensConfiguration(),
             
@@ -107,7 +119,7 @@ public sealed class EcsDeployTemplate : Stack
                                                        Cpu = paramRefs[EcsTemplateParameterNames.TaskDefinitionCpu].ValueAsString,
                                                        Memory = paramRefs[EcsTemplateParameterNames.TaskDefinitionMemory].ValueAsString,
                                                        ExecutionRoleArn = executionRoleArnRef,
-                                                       TaskRoleArn = paramRefs[EcsTemplateParameterNames.TaskRole].ValueAsString,
+                                                       TaskRoleArn = ParamOr(EcsTemplateParameterNames.TaskRole, commandInputs.TaskRole),
                                                        RequiresCompatibilities = [FargateLaunchType],
                                                        NetworkMode = AwsVpcNetworkMode,
                                                        RuntimePlatform = new CfnTaskDefinition.RuntimePlatformProperty
@@ -126,12 +138,12 @@ public sealed class EcsDeployTemplate : Stack
                                          Cluster = paramRefs[EcsTemplateParameterNames.ClusterName].ValueAsString,
                                          LaunchType = FargateLaunchType,
                                          TaskDefinition = taskDefinition.Ref,
-                                         DesiredCount = commandInputs.DesiredCount,
+                                         DesiredCount = ParamOr(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount),
                                          EnableEcsManagedTags = commandInputs.EnableEcsManagedTags,
                                          DeploymentConfiguration = new CfnService.DeploymentConfigurationProperty
                                          {
-                                             MinimumHealthyPercent = commandInputs.MinimumHealthyPercentage,
-                                             MaximumPercent = commandInputs.MaximumHealthyPercentage
+                                             MinimumHealthyPercent = ParamOr(EcsTemplateParameterNames.MinimumHealthPercent, commandInputs.MinimumHealthyPercentage),
+                                             MaximumPercent = ParamOr(EcsTemplateParameterNames.MaximumHealthPercent, commandInputs.MaximumHealthyPercentage)
                                          },
                                          NetworkConfiguration = new CfnService.NetworkConfigurationProperty
                                          {
@@ -148,5 +160,13 @@ public sealed class EcsDeployTemplate : Stack
         
         service.AddDependency(taskDefinition);
     }
-    
+
+    // Conditionally-registered parameters (only present when the input was customised
+    // away from the default): fall back to the literal commandInputs value when absent.
+    // Resources then render either { Ref: ... } or the inline value accordingly.
+    string ParamOr(string key, string literal) =>
+        paramRefs.TryGetValue(key, out var p) ? p.ValueAsString : literal;
+
+    double ParamOr(string key, double literal) =>
+        paramRefs.TryGetValue(key, out var p) ? p.ValueAsNumber : literal;
 }

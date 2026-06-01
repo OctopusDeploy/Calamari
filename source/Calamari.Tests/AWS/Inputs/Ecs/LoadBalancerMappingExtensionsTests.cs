@@ -10,11 +10,11 @@ namespace Calamari.Tests.AWS.Inputs.Ecs;
 public class LoadBalancerMappingExtensionsTests
 {
     [Test]
-    public void ToLoadBalancerProperties_WhenEmpty_ReturnsEmptyArray()
+    public void ToLoadBalancerProperties_WhenEmpty_ReturnsNull()
     {
         var result = Array.Empty<LoadBalancerMapping>().ToLoadBalancerProperties();
 
-        result.Should().BeEmpty();
+        result.Should().BeNull();
     }
 
     [Test]

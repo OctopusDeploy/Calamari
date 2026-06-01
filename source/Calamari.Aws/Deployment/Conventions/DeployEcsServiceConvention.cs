@@ -5,6 +5,7 @@ using Calamari.Aws.Inputs.Ecs;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Integration.Ecs;
+using Calamari.Aws.Integration.Ecs.Deploy;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;

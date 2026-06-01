@@ -161,6 +161,9 @@
         <None Update="Fixtures\DotnetScript\Scripts\ThrowsException.csx">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="AWS\Ecs\SpfOutputs\*.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
     <ItemGroup>
         <None Remove="TestResults\**"/>

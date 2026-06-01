@@ -4,17 +4,12 @@ using System.Linq;
 using Amazon.CDK;
 using Amazon.CloudFormation.Model;
 using Calamari.Aws.Inputs.Ecs;
-using Calamari.Common.Util;
 using Newtonsoft.Json;
 
-namespace Calamari.Aws.Integration.Ecs;
+namespace Calamari.Aws.Integration.Ecs.Deploy;
 
 public record GeneratedTemplate(string Body, IReadOnlyList<Parameter> Parameters);
 
-public class ListTemplateInputs<TInput>(IEnumerable<TInput> inputs) : ITemplateInputs<TInput>
-{
-    public IEnumerable<TInput> Inputs { get; } = inputs.ToList();
-}
 
 public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
 {
@@ -51,33 +46,59 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
             parameters.Select(p => new Parameter { ParameterKey = p.Name, ParameterValue = p.Value }).ToList());
     }
 
-    List<(string Name, string Value)> BuildParameters()
+    List<IEcsTemplateParameter> BuildParameters()
     {
-        var list = new List<(string Name, string Value)>
+        var list = new List<IEcsTemplateParameter>
         {
-            (EcsTemplateParameterNames.ClusterName,          commandInputs.ClusterName),
-            (EcsTemplateParameterNames.TaskDefinitionName,   commandInputs.ServiceTaskName),
-            (EcsTemplateParameterNames.TaskDefinitionCpu,    commandInputs.Cpu),
-            (EcsTemplateParameterNames.TaskDefinitionMemory, commandInputs.Memory),
-            (EcsTemplateParameterNames.TaskRole,             commandInputs.TaskRole),
+            EcsTemplateParameter.Of(EcsTemplateParameterNames.ClusterName,          commandInputs.ClusterName),
+            EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionName,   commandInputs.ServiceTaskName),
+            EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionCpu,    commandInputs.Cpu),
+            EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionMemory, commandInputs.Memory),
         };
+
+        // The remaining parameters are only registered when the user-supplied value
+        // differs from the default — matching SPF, which keeps the template lean
+        // when defaults are in use and parameterises only what's been customised.
+
+        if (!string.IsNullOrEmpty(commandInputs.TaskRole))
+        {
+            list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskRole, commandInputs.TaskRole));
+        }
 
         // Only declared when the user supplied a concrete ARN — otherwise the role
         // is created in-template and referenced via Ref (no parameter needed).
         if (!string.IsNullOrEmpty(commandInputs.TaskExecutionRole))
         {
-            list.Add((EcsTemplateParameterNames.TaskExecutionRole, commandInputs.TaskExecutionRole));
+            list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskExecutionRole, commandInputs.TaskExecutionRole));
         }
 
+        if (DiffersFromDefault(commandInputs.DesiredCount, EcsInputDefaults.DesiredCount))
+        {
+            list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount));
+        }
+
+        if (DiffersFromDefault(commandInputs.MinimumHealthyPercentage, EcsInputDefaults.MinimumHealthPercent))
+        {
+            list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.MinimumHealthPercent, commandInputs.MinimumHealthyPercentage));
+        }
+
+        if (DiffersFromDefault(commandInputs.MaximumHealthyPercentage, EcsInputDefaults.MaximumHealthPercent))
+        {
+            list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.MaximumHealthPercent, commandInputs.MaximumHealthyPercentage));
+        }
 
         if (commandInputs.RequiresLogGroup)
         {
-            list.Add((EcsTemplateParameterNames.LogGroupName, commandInputs.DefaultLogGroupPath));
+            list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.LogGroupName, commandInputs.DefaultLogGroupPath));
         }
-            
 
         return list;
     }
+
+    // Direct `!=` on doubles is unreliable across precision and NaN; compare via
+    // epsilon-based equality (matches the WholeDoubleConverter convention below).
+    static bool DiffersFromDefault(double value, double @default) =>
+        Math.Abs(value - @default) > double.Epsilon;
 
     class WholeDoubleConverter : JsonConverter<double?>
     {

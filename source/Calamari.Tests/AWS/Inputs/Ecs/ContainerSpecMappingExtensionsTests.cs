@@ -261,13 +261,31 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseEnvironmentVariables_WhenNone_ReturnsEmptyDictionary()
+    public void ParseEnvironmentVariables_WhenNone_ReturnsNull()
     {
         var spec = new ContainerSpec();
 
         var result = spec.ParseEnvironmentVariables();
 
-        result.Should().BeEmpty();
+        result.Should().BeNull();
+    }
+
+    [Test]
+    public void ParseEnvironmentVariables_WhenOnlySecretEntries_ReturnsNull()
+    {
+        // Plain entries are filtered to produce the array; if filtering yields nothing
+        // the method returns null (not an empty array).
+        var spec = new ContainerSpec
+        {
+            EnvironmentVariables =
+            [
+                new TypedKeyValuePair { Type = KeyValueType.Secret, Key = "SECRET_KEY", Value = "arn:secret" }
+            ]
+        };
+
+        var result = spec.ParseEnvironmentVariables();
+
+        result.Should().BeNull();
     }
 
     [Test]
@@ -413,6 +431,16 @@ public class ContainerSpecMappingExtensionsTests
         result.Should().HaveCount(1);
         result[0].Name.Should().Be("TOKEN");
         result[0].ValueFrom.Should().Be("arn:secret");
+    }
+
+    [Test]
+    public void ParseDockerLabels_WhenNone_ReturnsNull()
+    {
+        var spec = new ContainerSpec();
+
+        var result = spec.ParseDockerLabels();
+
+        result.Should().BeNull();
     }
 
     [Test]
@@ -651,49 +679,89 @@ public class ContainerSpecMappingExtensionsTests
         result[1].Value.Should().Be("arn:aws:s3:::my-bucket/env-two");
     }
 
-    [Test]
-    public void ParseLogConfiguration_WhenLogDriverNull_ReturnsNull()
-    {
-        var spec = new ContainerSpec
-        {
-            ContainerLogging = new ContainerLogging { LogDriver = null }
-        };
-
-        var result = spec.ParseLogConfiguration();
-
-        result.Should().BeNull();
-    }
+    const string TestLogGroupRef = "log-group-ref";
+    const string TestRegionRef   = "region-ref";
 
     [Test]
-    public void ParseLogConfiguration_WhenLogDriverNone_ReturnsNull()
+    public void ParseLogConfiguration_WhenManualAndLogDriverNull_ReturnsNull()
     {
         var spec = new ContainerSpec
         {
             ContainerLogging = new ContainerLogging
             {
-                LogDriver = LogDriver.None,
-                Type = ContainerLoggingType.Manual
+                Type = ContainerLoggingType.Manual,
+                LogDriver = null
             }
         };
 
-        var result = spec.ParseLogConfiguration();
+        var result = spec.ParseLogConfiguration(TestLogGroupRef, TestRegionRef);
 
         result.Should().BeNull();
     }
 
     [Test]
-    public void ParseLogConfiguration_WhenAuto_ForcesAwsLogsDriver()
+    public void ParseLogConfiguration_WhenManualAndLogDriverNone_ReturnsNull()
     {
+        var spec = new ContainerSpec
+        {
+            ContainerLogging = new ContainerLogging
+            {
+                Type = ContainerLoggingType.Manual,
+                LogDriver = LogDriver.None
+            }
+        };
+
+        var result = spec.ParseLogConfiguration(TestLogGroupRef, TestRegionRef);
+
+        result.Should().BeNull();
+    }
+
+    [Test]
+    public void ParseLogConfiguration_WhenAuto_EmitsAwsLogsWithStandardOptions()
+    {
+        // Auto ignores any LogDriver/LogOptions on the spec; it always emits awslogs
+        // pointing at the supplied log group and region.
         var spec = new ContainerSpec
         {
             ContainerLogging = new ContainerLogging
             {
                 Type = ContainerLoggingType.Auto,
-                LogDriver = LogDriver.Splunk
+                LogDriver = LogDriver.Splunk,                        // ignored
+                LogOptions =
+                [
+                    new TypedKeyValuePair { Type = KeyValueType.Plain, Key = "ignored", Value = "value" }
+                ]
             }
         };
 
-        var result = spec.ParseLogConfiguration();
+        var result = spec.ParseLogConfiguration(TestLogGroupRef, TestRegionRef);
+
+        result.Should().NotBeNull();
+        result!.LogDriver.Should().Be("awslogs");
+        result.Options.Should().BeOfType<Dictionary<string, string>>()
+              .Which.Should().BeEquivalentTo(new Dictionary<string, string>
+              {
+                  { "awslogs-group",         TestLogGroupRef },
+                  { "awslogs-region",        TestRegionRef },
+                  { "awslogs-stream-prefix", "ecs" }
+              });
+    }
+
+    [Test]
+    public void ParseLogConfiguration_WhenAutoAndLogDriverNull_StillEmitsAwsLogs()
+    {
+        // Regression guard: previous implementation early-returned null if LogDriver
+        // wasn't set, which silently dropped Auto containers' log config.
+        var spec = new ContainerSpec
+        {
+            ContainerLogging = new ContainerLogging
+            {
+                Type = ContainerLoggingType.Auto,
+                LogDriver = null
+            }
+        };
+
+        var result = spec.ParseLogConfiguration(TestLogGroupRef, TestRegionRef);
 
         result.Should().NotBeNull();
         result!.LogDriver.Should().Be("awslogs");
@@ -711,13 +779,13 @@ public class ContainerSpecMappingExtensionsTests
             }
         };
 
-        var result = spec.ParseLogConfiguration();
+        var result = spec.ParseLogConfiguration(TestLogGroupRef, TestRegionRef);
 
         result!.LogDriver.Should().Be("splunk");
     }
 
     [Test]
-    public void ParseLogConfiguration_SplitsPlainAndSecretOptions()
+    public void ParseLogConfiguration_WhenManual_SplitsPlainAndSecretOptions()
     {
         var spec = new ContainerSpec
         {
@@ -734,7 +802,7 @@ public class ContainerSpecMappingExtensionsTests
             }
         };
 
-        var result = spec.ParseLogConfiguration();
+        var result = spec.ParseLogConfiguration(TestLogGroupRef, TestRegionRef);
 
         result!.Options.Should().BeOfType<Dictionary<string, string>>()
               .Which.Should().BeEquivalentTo(new Dictionary<string, string>

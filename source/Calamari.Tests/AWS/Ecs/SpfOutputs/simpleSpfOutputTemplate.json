@@ -1,0 +1,139 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "ClusterName": {
+      "Type": "String",
+      "Default": "TestCluster"
+    },
+    "TaskDefinitionName": {
+      "Type": "String",
+      "Default": "test-octopus-spfdeployed-task"
+    },
+    "TaskDefinitionCPU": {
+      "Type": "String",
+      "Default": "256"
+    },
+    "TaskDefinitionMemory": {
+      "Type": "String",
+      "Default": "512"
+    },
+    "TaskRole": {
+      "Type": "String",
+      "Default": "arn:aws:iam::720766170633:role/ecsTaskExecutionRole"
+    },
+    "TaskExecutionRole": {
+      "Type": "String",
+      "Default": "arn:aws:iam::720766170633:role/ecsTaskExecutionRole"
+    }
+  },
+  "Resources": {
+    "TaskDefinitiontestOctopusSpfdeployedTask": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "DisableNetworking": false,
+            "DnsSearchDomains": [],
+            "DnsServers": [],
+            "Environment": [
+              {
+                "Name": "env",
+                "Value": "TestEnvironment"
+              }
+            ],
+            "EnvironmentFiles": [],
+            "Essential": true,
+            "ExtraHosts": [],
+            "Image": "docker.io/nginx:1.29",
+            "Name": "web-server-spf",
+            "PortMappings": [
+              {
+                "ContainerPort": 80,
+                "HostPort": 80,
+                "Protocol": "tcp"
+              }
+            ],
+            "ReadonlyRootFilesystem": false,
+            "ResourceRequirements": []
+          }
+        ],
+        "Cpu": {
+          "Ref": "TaskDefinitionCPU"
+        },
+        "ExecutionRoleArn": {
+          "Ref": "TaskExecutionRole"
+        },
+        "Family": {
+          "Ref": "TaskDefinitionName"
+        },
+        "Memory": {
+          "Ref": "TaskDefinitionMemory"
+        },
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "X86_64",
+          "OperatingSystemFamily": "LINUX"
+        },
+        "Tags": [
+          {
+            "Key": "createdBy",
+            "Value": "test-project"
+          },
+          {
+            "Key": "owner",
+            "Value": "spfdeployment"
+          }
+        ],
+        "TaskRoleArn": {
+          "Ref": "TaskRole"
+        }
+      }
+    },
+    "ServicetestOctopusSpfdeployedTask": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "Cluster": {
+          "Ref": "ClusterName"
+        },
+        "DeploymentConfiguration": {
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 100
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "ENABLED",
+            "SecurityGroups": [
+              "sg-0d5e06a4bde84d1d"
+            ],
+            "Subnets": [
+              "subnet-0650cd8a2119e829c",
+              "subnet-0067a165dd462cb39"
+            ]
+          }
+        },
+        "Tags": [
+          {
+            "Key": "createdBy",
+            "Value": "test-project"
+          },
+          {
+            "Key": "owner",
+            "Value": "spfdeployment"
+          }
+        ],
+        "TaskDefinition": {
+          "Ref": "TaskDefinitiontestOctopusSpfdeployedTask"
+        }
+      },
+      "DependsOn": [
+        "TaskDefinitiontestOctopusSpfdeployedTask"
+      ]
+    }
+  }
+}

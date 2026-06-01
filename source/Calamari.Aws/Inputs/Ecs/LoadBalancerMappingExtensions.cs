@@ -9,12 +9,14 @@ public static class LoadBalancerMappingExtensions
 {
     public static CfnService.LoadBalancerProperty[] ToLoadBalancerProperties(this IEnumerable<LoadBalancerMapping> loadBalancerMappings)
     {
-        return loadBalancerMappings.Select(lbm => new CfnService.LoadBalancerProperty
+        var lbMappings =  loadBalancerMappings.Select(lbm => new CfnService.LoadBalancerProperty
                                    {
                                         ContainerName =  lbm.ContainerName,
                                         ContainerPort = lbm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s)),
                                         TargetGroupArn =  lbm.TargetGroupArn,
                                    })
                                    .ToArray();
+
+        return lbMappings.Length == 0 ? null : lbMappings;
     }
 }

@@ -35,14 +35,15 @@ public static class ContainerSpecMappingExtensions
     public static Dictionary<string, string> ParseDockerLabels(this ContainerSpec containerSpec)
     {
         // Grouping Handle potential duplicates
-        return containerSpec.DockerLabels
+        var dockerLabels =  containerSpec.DockerLabels
                                                   .GroupBy(kvp => kvp.Key).ToDictionary(g => g.Key, g => g.Last().Value);
+        return dockerLabels.Count == 0 ? null : dockerLabels;
 
     }
 
     public static CfnTaskDefinition.KeyValuePairProperty[] ParseEnvironmentVariables(this ContainerSpec containerSpec)
     {
-        return containerSpec.EnvironmentVariables
+        var environmentVariables = containerSpec.EnvironmentVariables
                             .Where(tkp => tkp.Type == KeyValueType.Plain)
                             .GroupBy(kvp => kvp.Key)
                             .Select(g => new CfnTaskDefinition.KeyValuePairProperty
@@ -51,6 +52,9 @@ public static class ContainerSpecMappingExtensions
                                 Value = g.Last().Value,
                             })
                             .ToArray();
+        
+        return environmentVariables.Length == 0 ? null : environmentVariables;
+        
     }
 
     public static CfnTaskDefinition.PortMappingProperty[] ParsePortMappings(this ContainerSpec containerSpec)
@@ -172,46 +176,47 @@ public static class ContainerSpecMappingExtensions
         return [];
     }
 
-    public static CfnTaskDefinition.LogConfigurationProperty ParseLogConfiguration(this ContainerSpec containerSpec)
+    public static CfnTaskDefinition.LogConfigurationProperty ParseLogConfiguration(
+        this ContainerSpec containerSpec,
+        string logGroupNameRef,
+        string awsRegionRef)
     {
-        if (containerSpec.ContainerLogging.LogDriver.HasValue)
+        switch (containerSpec.ContainerLogging.Type)
         {
-            if (containerSpec.ContainerLogging.LogDriver is LogDriver.None)
-            {
-                return null;
-            }
-
-            var logDriver = LogDriver.None;
-            switch (containerSpec.ContainerLogging.Type)
-            {
-                case ContainerLoggingType.Auto:
-                    logDriver = LogDriver.AwsLogs;
-                    break;
-                case ContainerLoggingType.Manual:
-                default:
+            case ContainerLoggingType.Auto:
+                // Auto = "wire it up for me". LogDriver/LogOptions on the spec are ignored;
+                // we emit the standard awslogs configuration pointing at the task's log group.
+                return new CfnTaskDefinition.LogConfigurationProperty
                 {
-                    if(containerSpec.ContainerLogging.LogDriver.HasValue)
+                    LogDriver = LogDriver.AwsLogs.ToString().ToLowerInvariant(),
+                    Options = new Dictionary<string, string>
                     {
-                        logDriver = containerSpec.ContainerLogging.LogDriver.Value;
+                        { "awslogs-group",         logGroupNameRef },
+                        { "awslogs-region",        awsRegionRef },
+                        { "awslogs-stream-prefix", "ecs" }
                     }
-                    break;
+                };
+
+            case ContainerLoggingType.Manual:
+            default:
+                // Manual: honour the user's chosen driver and options. None / unset = no log config.
+                if (!containerSpec.ContainerLogging.LogDriver.HasValue
+                    || containerSpec.ContainerLogging.LogDriver is LogDriver.None)
+                {
+                    return null;
                 }
-            }
-            return new CfnTaskDefinition.LogConfigurationProperty
-            {
-                LogDriver = logDriver.ToString().ToLowerInvariant(),
-                Options = containerSpec.ContainerLogging.LogOptions
-                                       .Where(lo => lo.Type == KeyValueType.Plain)
-                                       .ToDictionary(opt => opt.Key, opt => opt.Value),
-                SecretOptions = containerSpec.ContainerLogging.LogOptions
-                                             .Where(lo => lo.Type == KeyValueType.Secret)
-                                             .ToDictionary(opt => opt.Key, opt => opt.Value),
 
-                
-            };
+                return new CfnTaskDefinition.LogConfigurationProperty
+                {
+                    LogDriver = containerSpec.ContainerLogging.LogDriver.Value.ToString().ToLowerInvariant(),
+                    Options = containerSpec.ContainerLogging.LogOptions
+                                           .Where(lo => lo.Type == KeyValueType.Plain)
+                                           .ToDictionary(opt => opt.Key, opt => opt.Value),
+                    SecretOptions = containerSpec.ContainerLogging.LogOptions
+                                                 .Where(lo => lo.Type == KeyValueType.Secret)
+                                                 .ToDictionary(opt => opt.Key, opt => opt.Value),
+                };
         }
-
-        return null;
     }
 
     public static CfnTaskDefinition.FirelensConfigurationProperty ParseFireLensConfiguration(this ContainerSpec containerSpec)
@@ -223,7 +228,7 @@ public static class ContainerSpecMappingExtensions
 
         var options = new Dictionary<string, string>
         {
-            { "enable-ecs-log-metadata", containerSpec.FirelensConfiguration.EnableEcsLogMetadata }
+            { "enable-ecs-log-metadata", containerSpec.FirelensConfiguration.EnableEcsLogMetadata.ToLowerInvariant() }
         };
         if (containerSpec.FirelensConfiguration.CustomConfigSource is { Type: not FireLensCustomConfigSourceType.None })
         {
