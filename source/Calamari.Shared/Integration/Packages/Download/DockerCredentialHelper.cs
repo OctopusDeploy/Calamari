@@ -14,13 +14,7 @@ namespace Calamari.Integration.Packages.Download
         // Docker resolves credential helpers by the binary name `docker-credential-<name>`.
         const string CredentialHelperName = "octopus";
 
-        // docker-credential-octopus is published into this subfolder next to Calamari.
-        // Must match the publish location in build/Build.PackageCalamariProjects.cs.
-        const string CredentialHelperDirectoryName = "docker-credential-helper";
-
         readonly ILog log;
-
-        static string CredentialHelperDirectory => Path.Combine(AppContext.BaseDirectory, CredentialHelperDirectoryName);
 
         public DockerCredentialHelper(ILog log)
         {
@@ -43,8 +37,8 @@ namespace Calamari.Integration.Packages.Download
                 // OCTOPUS_CREDENTIAL_PASSWORD, and the encrypted .cred files are deleted in cleanup.
                 var encryptionPassword = AesEncryption.RandomString(16);
 
-                // docker-credential-octopus lives in its own self-contained subfolder next to Calamari.
-                AddDirectoryToPath(environmentVariables, CredentialHelperDirectory);
+                // docker-credential-octopus ships alongside Calamari in the app base directory.
+                AddDirectoryToPath(environmentVariables, AppContext.BaseDirectory);
                 environmentVariables["OCTOPUS_CREDENTIAL_PASSWORD"] = encryptionPassword;
 
                 // No need to pre-store the credential: `docker login` invokes the helper's `store`
@@ -78,7 +72,7 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 environmentVariables.Remove("OCTOPUS_CREDENTIAL_PASSWORD");
-                RemoveDirectoryFromPath(environmentVariables, CredentialHelperDirectory);
+                RemoveDirectoryFromPath(environmentVariables, AppContext.BaseDirectory);
             }
             catch (Exception ex)
             {
