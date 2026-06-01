@@ -104,11 +104,24 @@ namespace Calamari.Integration.Packages.Download
 
             try
             {
-                if (useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                var credentialHelperConfigured = useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password);
+                if (credentialHelperConfigured)
                 {
                     strategy.Execute(() => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, feedUri, DockerHubRegistry));
                 }
-                strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+
+                try
+                {
+                    strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+                }
+                catch (CommandException) when (credentialHelperConfigured)
+                {
+                    // The credential-helper login failed (after retries); tear the helper down and
+                    // retry login once without it, falling back to Docker's default credential store.
+                    log.Verbose("Docker login failed while the credential helper was enabled; retrying without the credential helper.");
+                    dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
+                    strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+                }
 
                 const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
                 var imageNotCachedMessage =
@@ -161,7 +174,7 @@ namespace Calamari.Integration.Packages.Download
             return $"{feedUri.Host}:{feedUri.Port}";
         }
 
-        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> dictionary, bool allowCredentialHelperFallback = true)
+        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> dictionary)
         {
             var envVars = new Dictionary<string, string>(dictionary);
             envVars["DockerUsername"] = username;
@@ -173,17 +186,9 @@ namespace Calamari.Integration.Packages.Download
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
             {
-                if (useCredentialHelper && allowCredentialHelperFallback)
-                {
-                    // The string match is diagnostic only — we fall back on any non-zero exit.
-                    var knownHelperError = output.Contains("Error saving credentials");
-                    log.Verbose(knownHelperError
-                                    ? "Docker login failed due to a credential helper error; retrying without the credential helper."
-                                    : "Docker login failed while the credential helper was enabled; retrying without the credential helper.");
-                    dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
-                    PerformLogin(username, password, feed, dictionary, allowCredentialHelperFallback: false);
-                    return;
-                }
+                // Diagnostic only: surface the most common credential-helper failure when we see it.
+                if (useCredentialHelper && output.Contains("Error saving credentials"))
+                    log.Verbose("Docker login failed due to a credential helper error.");
 
                 throw new CommandException("Unable to log in Docker registry");
             }

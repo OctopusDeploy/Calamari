@@ -101,18 +101,23 @@ public partial class Build
                            foreach (var rid in GetRuntimeIdentifiers(calamariProject))
                            {
                                var calamariRidDirectory = KnownPaths.PublishDirectory / "Calamari" / rid;
-                               Log.Information("Overlaying docker-credential-octopus into {Directory}", calamariRidDirectory);
+                               var helperRidDirectory = KnownPaths.PublishDirectory / "Calamari.DockerCredentialHelper" / rid;
+
                                // Must be self-contained to match PublishPackageAsync's EnableSelfContained:
                                // Calamari ships its own runtime, and a framework-dependent helper apphost would
                                // not use those loose runtime files, so it would fail to start on targets without
-                               // a registered .NET runtime.
+                               // a registered .NET runtime. Publish to a separate folder first, then overlay it
+                               // into Calamari's folder, verifying that any shared files are byte-identical.
                                DotNetPublish(s => s
                                                   .SetConfiguration(Configuration)
                                                   .SetProject(helperProject)
                                                   .SetFramework(Frameworks.Net80)
                                                   .SetRuntime(rid)
                                                   .EnableSelfContained()
-                                                  .SetOutput(calamariRidDirectory));
+                                                  .SetOutput(helperRidDirectory));
+
+                               OverlayHelperIntoCalamari(helperRidDirectory, calamariRidDirectory, rid);
+                               helperRidDirectory.DeleteDirectory();
                            }
 
                            // Sign and compress tasks
@@ -165,5 +170,44 @@ public partial class Build
         }
 
         await Task.Run(() => compressionSource.CompressTo($"{KnownPaths.ArtifactsDirectory / project.Name}.zip"));
+    }
+
+    // Copies the helper's published files into Calamari's runtime folder. Files Calamari already
+    // ships (the shared runtime, Calamari.Common, etc.) must be byte-identical — if a shared
+    // dependency has diverged between the two projects we fail loudly rather than silently
+    // overwriting Calamari's copy.
+    static void OverlayHelperIntoCalamari(AbsolutePath helperDirectory, AbsolutePath calamariDirectory, string rid)
+    {
+        var source = helperDirectory.ToString();
+        var destination = calamariDirectory.ToString();
+
+        foreach (var sourceFile in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(source, sourceFile);
+            var destinationFile = Path.Combine(destination, relativePath);
+
+            if (File.Exists(destinationFile))
+            {
+                if (!FilesAreIdentical(sourceFile, destinationFile))
+                    throw new Exception($"Cannot overlay docker-credential-octopus for {rid}: '{relativePath}' differs from Calamari's copy. " +
+                                        "A shared dependency has diverged between Calamari and Calamari.DockerCredentialHelper.");
+                continue;
+            }
+
+            var destinationFileDirectory = Path.GetDirectoryName(destinationFile);
+            if (destinationFileDirectory != null)
+                Directory.CreateDirectory(destinationFileDirectory);
+
+            Log.Information("Adding {RelativePath} to Calamari/{Rid}", relativePath, rid);
+            File.Copy(sourceFile, destinationFile);
+        }
+    }
+
+    static bool FilesAreIdentical(string first, string second)
+    {
+        if (new FileInfo(first).Length != new FileInfo(second).Length)
+            return false;
+
+        return File.ReadAllBytes(first).SequenceEqual(File.ReadAllBytes(second));
     }
 }

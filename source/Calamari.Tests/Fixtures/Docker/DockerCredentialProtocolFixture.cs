@@ -92,5 +92,15 @@ namespace Calamari.Tests.Fixtures.Docker
             var exit = protocol.Run("store", new StringReader(""), new StringWriter(), new StringWriter(), Password, configPath);
             Assert.That(exit, Is.EqualTo(1));
         }
+
+        [Test]
+        public void List_ReturnsEmptyJsonObjectAndExitZero()
+        {
+            var output = new StringWriter();
+            var exit = protocol.Run("list", new StringReader(""), output, new StringWriter(), Password, configPath);
+
+            Assert.That(exit, Is.EqualTo(0));
+            Assert.That(output.ToString().Trim(), Is.EqualTo("{}"));
+        }
     }
 }

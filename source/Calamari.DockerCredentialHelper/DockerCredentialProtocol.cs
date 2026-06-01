@@ -24,10 +24,20 @@ namespace Calamari.DockerCredentialHelper
                     return Get(input, output, error, encryptionPassword, dockerConfigPath);
                 case "erase":
                     return Erase(input, dockerConfigPath);
+                case "list":
+                    return List(output);
                 default:
-                    error.WriteLine($"Invalid operation: {operation}. Valid operations are: store, get, erase");
+                    error.WriteLine($"Invalid operation: {operation}. Valid operations are: store, get, erase, list");
                     return 1;
             }
+        }
+
+        // Docker's 'list' expects a JSON map of ServerURL -> Username. We don't enumerate stored
+        // credentials (they're short-lived, per-acquisition), so we report none.
+        int List(TextWriter output)
+        {
+            output.WriteLine("{}");
+            return 0;
         }
 
         // Docker sends a JSON object on stdin for 'store'.
