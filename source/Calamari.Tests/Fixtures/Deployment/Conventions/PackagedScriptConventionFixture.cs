@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Deployment;
