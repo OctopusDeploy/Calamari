@@ -1,5 +1,4 @@
-﻿using System.IO.Compression;
-using Calamari.Build.Utilities;
+﻿using Calamari.Build.Utilities;
 using JetBrains.Annotations;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.PowerShell;
@@ -29,7 +28,7 @@ public partial class Build
 
                                                             //Rename any `linux-x64` folders to `linux-amd64`
                                                             Directory.Move(KnownPaths.OutputsDirectory / flavour / "linux-x64",
-                                                                           KnownPaths.OutputsDirectory / flavour / "linux-amd64");
+                                                                KnownPaths.OutputsDirectory / flavour / "linux-amd64");
                                                             Log.Information("Renamed 'linux-x64' folder to 'linux-amd64'");
 
                                                             var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
@@ -64,7 +63,6 @@ public partial class Build
                                                                                              .SetImages(tag)
                                                                                              .SetOutput(outputFile));
 
-
                                                             //compress with gzip
                                                             PowerShellTasks.PowerShell(_ => _
                                                                                             .EnableNoProfile()
@@ -72,7 +70,7 @@ public partial class Build
 
                                                             //gzip always uses the .gz suffix
                                                             var compressedZipPath = $"{outputFile}.gz";
-                                                            
+
                                                             // This file is then uploaded to OctopusDeploy to perform the release process
                                                             if (TeamCity.Instance is not null)
                                                             {
