@@ -75,7 +75,7 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseMountPoints();
 
-        result[0].ReadOnly.Should().Be(false);
+        result[0].ReadOnly.Should().BeNull();
     }
 
     [Test]
@@ -257,7 +257,7 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseVolumesFrom();
 
-        result[0].ReadOnly.Should().Be(false);
+        result[0].ReadOnly.Should().BeNull();
     }
 
     [Test]
@@ -499,6 +499,16 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
+    public void ParsePortMappings_WhenEmpty_ReturnsEmptyArray()
+    {
+        var spec = new ContainerSpec();
+
+        var result = spec.ParsePortMappings();
+
+        result.Should().BeEmpty();
+    }
+
+    [Test]
     public void ParsePortMappings_MapsContainerPortAndProtocol()
     {
         var spec = new ContainerSpec
@@ -514,7 +524,7 @@ public class ContainerSpecMappingExtensionsTests
         result.Should().HaveCount(1);
         result[0].ContainerPort.Should().Be(8080);
         result[0].HostPort.Should().Be(8080);
-        result[0].Protocol.Should().Be("Tcp");
+        result[0].Protocol.Should().Be("tcp");
     }
 
     [Test]
@@ -593,6 +603,16 @@ public class ContainerSpecMappingExtensionsTests
         result.Should().HaveCount(1);
         result[0].HardLimit.Should().Be(65536);
         result[0].SoftLimit.Should().Be(1024);
+    }
+
+    [Test]
+    public void ParseExtraHosts_WhenEmpty_ReturnsEmptyArray()
+    {
+        var spec = new ContainerSpec();
+
+        var result = spec.ParseExtraHosts();
+
+        result.Should().BeEmpty();
     }
 
     [Test]

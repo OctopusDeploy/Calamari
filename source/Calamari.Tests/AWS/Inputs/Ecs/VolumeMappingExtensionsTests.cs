@@ -11,11 +11,11 @@ namespace Calamari.Tests.AWS.Inputs.Ecs;
 public class VolumeMappingExtensionsTests
 {
     [Test]
-    public void ParseVolumes_WhenEmpty_ReturnsNull()
+    public void ParseVolumes_WhenEmpty_ReturnsEmptyArray()
     {
         var result = Array.Empty<InputVolume>().ParseVolumes();
 
-        result.Should().BeNull();
+        result.Should().BeEmpty();
     }
 
     [Test]
