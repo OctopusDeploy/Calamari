@@ -23,8 +23,7 @@ public class DeployEcsServiceCommand(ILog log, IVariables variables, IEcsStackNa
         var inputValidity = inputs.Validate();
         if (!inputValidity.IsValid)
         {
-            // TODO: Better implementation
-            throw new CommandException($"Invalid inputs provided to {CommandName}");
+            throw new CommandException(inputValidity.MissingKeyList);
         }
 
 

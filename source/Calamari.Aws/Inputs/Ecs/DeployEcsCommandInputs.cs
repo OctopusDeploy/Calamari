@@ -118,7 +118,7 @@ public class DeployEcsCommandInputs
 
     public bool RequiresLogGroup => Containers.Any(c => c.ContainerLogging.Type == ContainerLoggingType.Auto);
 
-    public bool ShouldWaitForDeploymentCompletion => WaitOption.Type == WaitType.WaitUntilCompleted || WaitOption.Type == WaitType.WaitWithTimeout;
+    public bool ShouldWaitForDeploymentCompletion => WaitOption.Type is WaitType.WaitUntilCompleted or WaitType.WaitWithTimeout;
 
     public InputsValidityResult Validate()
     {
@@ -146,4 +146,13 @@ public class DeployEcsCommandInputs
 public record InputsValidityResult(IEnumerable<string> MissingKeys)
 {
     public bool IsValid => !MissingKeys.Any();
+    
+    public string MissingKeyList {
+        get
+        {
+            var title = $"The following Property keys were missing{Environment.NewLine}";
+            var body = string.Join(Environment.NewLine, MissingKeys.Select(p => $"- {p}"));
+            return title + body;
+        }
+    }
 }
