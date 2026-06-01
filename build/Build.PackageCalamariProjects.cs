@@ -113,6 +113,11 @@ public partial class Build
                                                   .SetProject(helperProject)
                                                   .SetFramework(Frameworks.Net80)
                                                   .SetRuntime(rid)
+                                                  // Stamp the same version as Calamari so the shared Calamari.Common.dll
+                                                  // the helper bundles matches the copy Calamari ships (otherwise the
+                                                  // helper's deps.json expects a different version at runtime).
+                                                  .SetVersion(NugetVersion.Value)
+                                                  .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                   .EnableSelfContained()
                                                   .SetOutput(helperRidDirectory));
 
