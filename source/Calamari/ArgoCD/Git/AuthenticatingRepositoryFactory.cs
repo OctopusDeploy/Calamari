@@ -32,6 +32,9 @@ public class AuthenticatingRepositoryFactory
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
 
+        var isSsh = gitCredential is SshKeyGitCredentialDto ? "isSshKey" : "notSsh";
+        log.Info($"DEBUG - running on {Environment.OSVersion.Platform} ({CalamariEnvironment.IsRunningOnWindows}) ({isSsh})");
+
         if (gitCredential is SshKeyGitCredentialDto && CalamariEnvironment.IsRunningOnWindows)
         {
             throw new CommandException(
