@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using Calamari.Common.Features.Docker;
 
 namespace Calamari.DockerCredentialHelper
 {
@@ -46,7 +45,7 @@ namespace Calamari.DockerCredentialHelper
             StoreRequest? request;
             try
             {
-                request = JsonSerializer.Deserialize<StoreRequest>(input.ReadToEnd());
+                request = JsonSerializer.Deserialize(input.ReadToEnd(), CredentialJsonContext.Default.StoreRequest);
             }
             catch (Exception)
             {
@@ -82,7 +81,7 @@ namespace Calamari.DockerCredentialHelper
             }
 
             var response = new GetResponse { ServerURL = serverUrl, Username = credential.Username, Secret = credential.Secret };
-            output.WriteLine(JsonSerializer.Serialize(response));
+            output.WriteLine(JsonSerializer.Serialize(response, CredentialJsonContext.Default.GetResponse));
             return 0;
         }
 
@@ -92,20 +91,6 @@ namespace Calamari.DockerCredentialHelper
             if (!string.IsNullOrEmpty(serverUrl))
                 store.Erase(serverUrl, dockerConfigPath);
             return 0;
-        }
-
-        class StoreRequest
-        {
-            public string ServerURL { get; set; } = string.Empty;
-            public string Username { get; set; } = string.Empty;
-            public string Secret { get; set; } = string.Empty;
-        }
-
-        class GetResponse
-        {
-            public string ServerURL { get; set; } = string.Empty;
-            public string Username { get; set; } = string.Empty;
-            public string Secret { get; set; } = string.Empty;
         }
     }
 }

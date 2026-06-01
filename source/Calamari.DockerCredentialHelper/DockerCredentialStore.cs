@@ -2,9 +2,8 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using Calamari.Common.Plumbing.Extensions;
 
-namespace Calamari.Common.Features.Docker
+namespace Calamari.DockerCredentialHelper
 {
     public class DockerCredentialStore
     {
@@ -16,7 +15,7 @@ namespace Calamari.Common.Features.Docker
             Directory.CreateDirectory(credentialsDir);
 
             var credential = new DockerCredential { Username = username, Secret = secret };
-            var credentialJson = JsonSerializer.Serialize(credential);
+            var credentialJson = JsonSerializer.Serialize(credential, CredentialJsonContext.Default.DockerCredential);
 
             var encryptor = AesEncryption.ForScripts(encryptionPassword);
             var encryptedBytes = encryptor.Encrypt(credentialJson);
@@ -36,7 +35,7 @@ namespace Calamari.Common.Features.Docker
                 var encryptedBytes = File.ReadAllBytes(filePath);
                 var encryptor = AesEncryption.ForScripts(encryptionPassword);
                 var credentialJson = encryptor.Decrypt(encryptedBytes);
-                return JsonSerializer.Deserialize<DockerCredential>(credentialJson);
+                return JsonSerializer.Deserialize(credentialJson, CredentialJsonContext.Default.DockerCredential);
             }
             // A missing, corrupt, or wrong-password credential is treated as "not found".
             catch (Exception)
@@ -61,11 +60,5 @@ namespace Calamari.Common.Features.Docker
                                       .Replace("=", "");
             return $"{base64Server}.cred";
         }
-    }
-
-    public class DockerCredential
-    {
-        public string Username { get; set; } = string.Empty;
-        public string Secret { get; set; } = string.Empty;
     }
 }

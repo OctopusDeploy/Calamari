@@ -92,37 +92,31 @@ public partial class Build
 
                            await Task.WhenAll(ridTasks);
 
-                           // Overlay the standalone Docker credential helper into each Calamari runtime folder
-                           // so Docker can invoke `docker-credential-octopus` directly from the deployed package.
+                           // Publish the standalone docker-credential-octopus into its own self-contained
+                           // subfolder beside Calamari. It shares no files with Calamari, so there's nothing
+                           // to overlay or reconcile; the downloader adds this folder to PATH so Docker can
+                           // invoke the helper. The folder name must match CredentialHelperDirectoryName in
+                           // DockerCredentialHelper.cs.
                            var calamariProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari")
-                                                 ?? throw new InvalidOperationException("Could not find the 'Calamari' project to overlay the Docker credential helper into.");
+                                                 ?? throw new InvalidOperationException("Could not find the 'Calamari' project.");
                            var helperProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari.DockerCredentialHelper")
                                                ?? throw new InvalidOperationException("Could not find the 'Calamari.DockerCredentialHelper' project.");
                            foreach (var rid in GetRuntimeIdentifiers(calamariProject))
                            {
-                               var calamariRidDirectory = KnownPaths.PublishDirectory / "Calamari" / rid;
-                               var helperRidDirectory = KnownPaths.PublishDirectory / "Calamari.DockerCredentialHelper" / rid;
-
-                               // Must be self-contained to match PublishPackageAsync's EnableSelfContained:
-                               // Calamari ships its own runtime, and a framework-dependent helper apphost would
-                               // not use those loose runtime files, so it would fail to start on targets without
-                               // a registered .NET runtime. Publish to a separate folder first, then overlay it
-                               // into Calamari's folder, verifying that any shared files are byte-identical.
+                               var helperDirectory = KnownPaths.PublishDirectory / "Calamari" / rid / "docker-credential-helper";
+                               Log.Information("Publishing docker-credential-octopus into {Directory}", helperDirectory);
                                DotNetPublish(s => s
                                                   .SetConfiguration(Configuration)
                                                   .SetProject(helperProject)
                                                   .SetFramework(Frameworks.Net80)
                                                   .SetRuntime(rid)
-                                                  // Stamp the same version as Calamari so the shared Calamari.Common.dll
-                                                  // the helper bundles matches the copy Calamari ships (otherwise the
-                                                  // helper's deps.json expects a different version at runtime).
                                                   .SetVersion(NugetVersion.Value)
                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                   .EnableSelfContained()
-                                                  .SetOutput(helperRidDirectory));
+                                                  .SetOutput(helperDirectory));
 
-                               OverlayHelperIntoCalamari(helperRidDirectory, calamariRidDirectory, rid);
-                               helperRidDirectory.DeleteDirectory();
+                               // Sign the helper binary alongside Calamari's other binaries.
+                               outputPaths.Add(helperDirectory);
                            }
 
                            // Sign and compress tasks
@@ -175,49 +169,5 @@ public partial class Build
         }
 
         await Task.Run(() => compressionSource.CompressTo($"{KnownPaths.ArtifactsDirectory / project.Name}.zip"));
-    }
-
-    // Copies the helper's published files into Calamari's runtime folder. Files Calamari already
-    // ships (the shared runtime, Calamari.Common, etc.) must match by version — if a shared
-    // dependency has diverged between the two projects we fail loudly rather than silently
-    // overwriting Calamari's copy. Files Calamari already has are left untouched.
-    static void OverlayHelperIntoCalamari(AbsolutePath helperDirectory, AbsolutePath calamariDirectory, string rid)
-    {
-        var source = helperDirectory.ToString();
-        var destination = calamariDirectory.ToString();
-
-        foreach (var sourceFile in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
-        {
-            var relativePath = Path.GetRelativePath(source, sourceFile);
-            var destinationFile = Path.Combine(destination, relativePath);
-
-            if (File.Exists(destinationFile))
-            {
-                var helperVersion = DescribeVersion(sourceFile);
-                var calamariVersion = DescribeVersion(destinationFile);
-                if (helperVersion != calamariVersion)
-                    throw new Exception($"Cannot overlay docker-credential-octopus for {rid}: '{relativePath}' differs from Calamari's copy " +
-                                        $"(helper has {helperVersion}, Calamari has {calamariVersion}). " +
-                                        "A shared dependency has diverged between Calamari and Calamari.DockerCredentialHelper.");
-                continue;
-            }
-
-            var destinationFileDirectory = Path.GetDirectoryName(destinationFile);
-            if (destinationFileDirectory != null)
-                Directory.CreateDirectory(destinationFileDirectory);
-
-            Log.Information("Adding {RelativePath} to Calamari/{Rid}", relativePath, rid);
-            File.Copy(sourceFile, destinationFile);
-        }
-    }
-
-    // Describes a file for comparison purposes. We deliberately don't compare raw bytes: two
-    // independent (deterministic) builds of the same managed assembly still differ in their module
-    // version id (MVID), so only a version mismatch indicates a genuinely divergent dependency.
-    // Files without version metadata (e.g. data files) fall back to a size descriptor.
-    static string DescribeVersion(string path)
-    {
-        var version = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).FileVersion;
-        return string.IsNullOrEmpty(version) ? $"{new FileInfo(path).Length} bytes" : $"version {version}";
     }
 }

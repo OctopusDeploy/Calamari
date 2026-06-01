@@ -1,5 +1,4 @@
 using System;
-using Calamari.Common.Features.Docker;
 
 namespace Calamari.DockerCredentialHelper
 {

@@ -1,5 +1,4 @@
 using System.IO;
-using Calamari.Common.Features.Docker;
 using Calamari.DockerCredentialHelper;
 using NUnit.Framework;
 
