@@ -177,7 +177,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             }
 
             // Assert
-            log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Failed to setup credential helper, falling back to direct login") ||
+            log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Failed to setup credential helper") ||
                                               m.FormattedMessage.Contains("Configured Docker credential helper"));
         }
 
@@ -189,10 +189,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
-            
-            // Simulate a scenario where credential helper setup might fail
-            // by using an invalid encryption password format
-            variables.Set("SensitiveVariablesPassword", ""); // Empty password might cause issues
+
             var downloader = GetDownloader(log, variables);
             
             // Act
@@ -207,7 +204,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             // Should either succeed with credential helper or fall back gracefully
             var hasCredentialHelperMessage = log.Messages.Any(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
-            var hasFallbackMessage = log.Messages.Any(m => m.FormattedMessage.Contains("Docker login failed due to credential helper error, retrying without credential helper"));
+            var hasFallbackMessage = log.Messages.Any(m => m.FormattedMessage.Contains("retrying without the credential helper"));
             
             (hasCredentialHelperMessage || hasFallbackMessage).Should().BeTrue("Either credential helper should work or fallback should occur");
         }

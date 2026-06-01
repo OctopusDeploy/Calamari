@@ -68,7 +68,10 @@ namespace Calamari.Integration.Packages.Download
                 {
                     var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
                     if (Directory.Exists(credentialsDir))
+                    {
                         Directory.Delete(credentialsDir, recursive: true);
+                        log.Verbose("Cleaned up Docker credential files");
+                    }
 
                     var configFilePath = Path.Combine(dockerConfigPath, "config.json");
                     if (File.Exists(configFilePath))

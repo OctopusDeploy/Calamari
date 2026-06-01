@@ -102,14 +102,16 @@ public partial class Build
                            {
                                var calamariRidDirectory = KnownPaths.PublishDirectory / "Calamari" / rid;
                                Log.Information("Overlaying docker-credential-octopus into {Directory}", calamariRidDirectory);
-                               // SetSelfContained mirrors PublishPackageAsync: a non-Windows self-contained publish
-                               // breaks the local build, so it's only self-contained on Windows.
+                               // Must be self-contained to match PublishPackageAsync's EnableSelfContained:
+                               // Calamari ships its own runtime, and a framework-dependent helper apphost would
+                               // not use those loose runtime files, so it would fail to start on targets without
+                               // a registered .NET runtime.
                                DotNetPublish(s => s
                                                   .SetConfiguration(Configuration)
                                                   .SetProject(helperProject)
                                                   .SetFramework(Frameworks.Net80)
                                                   .SetRuntime(rid)
-                                                  .SetSelfContained(OperatingSystem.IsWindows())
+                                                  .EnableSelfContained()
                                                   .SetOutput(calamariRidDirectory));
                            }
 
