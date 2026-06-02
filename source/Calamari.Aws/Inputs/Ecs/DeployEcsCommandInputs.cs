@@ -13,14 +13,14 @@ namespace Calamari.Aws.Inputs.Ecs;
 
 public class DeployEcsCommandInputs
 {
-    readonly CalamariVariables variables;
+    readonly IVariables variables;
     readonly IEcsStackNameGenerator stackNameGenerator;
     readonly ILog log;
     readonly HashSet<string> requiredVariableKeys = [];
 
     public DeployEcsCommandInputs(IVariables variables, IEcsStackNameGenerator stackNameGenerator, ILog log)
     {
-        this.variables = variables as CalamariVariables;
+        this.variables = variables;
         this.stackNameGenerator = stackNameGenerator;
         this.log = log;
 
