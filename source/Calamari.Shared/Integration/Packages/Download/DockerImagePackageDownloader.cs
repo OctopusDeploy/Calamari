@@ -116,9 +116,10 @@ namespace Calamari.Integration.Packages.Download
                 }
                 catch (CommandException) when (credentialHelperConfigured)
                 {
-                    // The credential-helper login failed (after retries); tear the helper down and
-                    // retry login once without it, falling back to Docker's default credential store.
-                    log.Verbose("Docker login failed while the credential helper was enabled; retrying without the credential helper.");
+                    // The credential-helper login failed (after retries); tear the helper down and retry
+                    // login once without it. Warn, because this defeats the point of the helper: the
+                    // credentials will be stored unencrypted by Docker for this acquisition.
+                    log.Warn("Docker login with the credential helper failed; retrying without the credential helper (credentials will be stored unencrypted for this acquisition).");
                     dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
                     strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
                 }

@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 
 namespace Calamari.DockerCredentialHelper
 {
@@ -34,8 +36,15 @@ namespace Calamari.DockerCredentialHelper
 
             try
             {
+                // Read/write the protocol streams as UTF-8 explicitly. Docker exchanges UTF-8 JSON over
+                // stdin/stdout; relying on Console's default encoding would mangle non-ASCII credentials
+                // on platforms whose console code page isn't UTF-8 (e.g. Windows).
+                var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+                using var input = new StreamReader(Console.OpenStandardInput(), utf8);
+                using var output = new StreamWriter(Console.OpenStandardOutput(), utf8) { AutoFlush = true };
+
                 var protocol = new DockerCredentialProtocol(new DockerCredentialStore());
-                return protocol.Run(operation, Console.In, Console.Out, Console.Error, encryptionPassword, dockerConfigPath);
+                return protocol.Run(operation, input, output, Console.Error, encryptionPassword, dockerConfigPath);
             }
             catch (Exception ex)
             {

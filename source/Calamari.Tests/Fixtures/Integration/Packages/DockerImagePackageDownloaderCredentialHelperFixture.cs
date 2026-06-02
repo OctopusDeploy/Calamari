@@ -68,8 +68,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             // Verify credential helper was configured
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
+            // "Cleaned up Docker credential files" is only logged when the helper's `store` actually
+            // created the credentials directory, so this proves the helper ran (not the fallback).
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Cleaned up Docker credential files"));
-            
+
+            // The credential helper must have been used, NOT the plaintext fallback.
+            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("retrying without the credential helper"));
+
             // Verify no unencrypted credential warnings in the log
             log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Your password will be stored unencrypted in octo-docker-configs/config.json"));
         }
