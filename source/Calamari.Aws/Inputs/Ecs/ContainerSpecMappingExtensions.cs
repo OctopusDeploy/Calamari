@@ -14,7 +14,9 @@ public static class ContainerSpecMappingExtensions
     {
         return defaultOverride != null
             ? string.IsNullOrEmpty(value) ? defaultOverride() : converter(value)
-            : string.IsNullOrEmpty(value) ? default : converter(value);
+            : string.IsNullOrEmpty(value)
+                ? default
+                : converter(value);
     }
 
     public static Cfn.HealthCheck ParseHealthCheck(this ContainerSpec containerSpec)
@@ -23,11 +25,11 @@ public static class ContainerSpecMappingExtensions
 
         return new Cfn.HealthCheck
         {
-            Command     = containerSpec.HealthCheck.Command.ToArray(),
-            Interval    = containerSpec.HealthCheck.Interval.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-            Retries     = containerSpec.HealthCheck.Retries.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+            Command = containerSpec.HealthCheck.Command.ToArray(),
+            Interval = containerSpec.HealthCheck.Interval.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+            Retries = containerSpec.HealthCheck.Retries.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
             StartPeriod = containerSpec.HealthCheck.StartPeriod.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-            Timeout     = containerSpec.HealthCheck.Timeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+            Timeout = containerSpec.HealthCheck.Timeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
         };
     }
 
@@ -52,19 +54,21 @@ public static class ContainerSpecMappingExtensions
     // SPF always emits PortMappings as an array — empty becomes [] not omitted.
     public static Cfn.PortMapping[] ParsePortMappings(this ContainerSpec containerSpec) =>
         containerSpec.ContainerPortMappings.Select(pm => new Cfn.PortMapping
-        {
-            ContainerPort = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-            HostPort      = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-            Protocol      = pm.Protocol.ToString().ToLowerInvariant()
-        }).ToArray();
+                     {
+                         ContainerPort = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+                         HostPort = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+                         Protocol = pm.Protocol.ToString().ToLowerInvariant()
+                     })
+                     .ToArray();
 
     // SPF always emits ExtraHosts as an array — empty becomes [] not omitted.
     public static Cfn.ExtraHost[] ParseExtraHosts(this ContainerSpec containerSpec) =>
         containerSpec.NetworkSettings.ExtraHosts.Select(eh => new Cfn.ExtraHost
-        {
-            Hostname  = string.IsNullOrEmpty(eh.Hostname) ? null : eh.Hostname,
-            IpAddress = string.IsNullOrEmpty(eh.IpAddress) ? null : eh.IpAddress,
-        }).ToArray();
+                     {
+                         Hostname = string.IsNullOrEmpty(eh.Hostname) ? null : eh.Hostname,
+                         IpAddress = string.IsNullOrEmpty(eh.IpAddress) ? null : eh.IpAddress,
+                     })
+                     .ToArray();
 
     public static Cfn.RepositoryCredentials ParseRepositoryCredentials(this ContainerSpec containerSpec) =>
         containerSpec.RepositoryAuthentication.Type switch
@@ -87,11 +91,12 @@ public static class ContainerSpecMappingExtensions
         if (containerSpec.Ulimits.Count == 0) return null;
 
         return containerSpec.Ulimits.Select(ul => new Cfn.Ulimit
-        {
-            Name      = ul.LimitName,
-            HardLimit = double.Parse(ul.HardLimit, CultureInfo.InvariantCulture),
-            SoftLimit = double.Parse(ul.SoftLimit, CultureInfo.InvariantCulture)
-        }).ToArray();
+                            {
+                                Name = ul.LimitName,
+                                HardLimit = double.Parse(ul.HardLimit, CultureInfo.InvariantCulture),
+                                SoftLimit = double.Parse(ul.SoftLimit, CultureInfo.InvariantCulture)
+                            })
+                            .ToArray();
     }
 
     public static Cfn.MountPoint[] ParseMountPoints(this ContainerSpec containerSpec)
@@ -99,11 +104,12 @@ public static class ContainerSpecMappingExtensions
         if (containerSpec.ContainerStorage.MountPoints.Count == 0) return null;
 
         return containerSpec.ContainerStorage.MountPoints.Select(mp => new Cfn.MountPoint
-        {
-            SourceVolume  = string.IsNullOrEmpty(mp.SourceVolume) ? null : mp.SourceVolume,
-            ContainerPath = string.IsNullOrEmpty(mp.ContainerPath) ? null : mp.ContainerPath,
-            ReadOnly      = mp.Readonly.ConvertedOrDefault<bool?>(s => bool.Parse(s))
-        }).ToArray();
+                            {
+                                SourceVolume = string.IsNullOrEmpty(mp.SourceVolume) ? null : mp.SourceVolume,
+                                ContainerPath = string.IsNullOrEmpty(mp.ContainerPath) ? null : mp.ContainerPath,
+                                ReadOnly = mp.Readonly.ConvertedOrDefault<bool?>(s => bool.Parse(s))
+                            })
+                            .ToArray();
     }
 
     public static Cfn.ContainerDependency[] ParseDependencies(this ContainerSpec containerSpec)
@@ -111,10 +117,11 @@ public static class ContainerSpecMappingExtensions
         if (containerSpec.Dependencies.Count == 0) return null;
 
         return containerSpec.Dependencies.Select(d => new Cfn.ContainerDependency
-        {
-            ContainerName = string.IsNullOrEmpty(d.ContainerName) ? null : d.ContainerName,
-            Condition     = d.Condition.ToString().ToUpperInvariant(),
-        }).ToArray();
+                            {
+                                ContainerName = string.IsNullOrEmpty(d.ContainerName) ? null : d.ContainerName,
+                                Condition = d.Condition.ToString().ToUpperInvariant(),
+                            })
+                            .ToArray();
     }
 
     public static Cfn.VolumeFrom[] ParseVolumesFrom(this ContainerSpec containerSpec)
@@ -122,19 +129,21 @@ public static class ContainerSpecMappingExtensions
         if (containerSpec.ContainerStorage.VolumeFrom.Count == 0) return null;
 
         return containerSpec.ContainerStorage.VolumeFrom.Select(vf => new Cfn.VolumeFrom
-        {
-            SourceContainer = string.IsNullOrEmpty(vf.SourceContainer) ? null : vf.SourceContainer,
-            ReadOnly        = vf.Readonly.ConvertedOrDefault<bool?>(s => bool.Parse(s))
-        }).ToArray();
+                            {
+                                SourceContainer = string.IsNullOrEmpty(vf.SourceContainer) ? null : vf.SourceContainer,
+                                ReadOnly = vf.Readonly.ConvertedOrDefault<bool?>(s => bool.Parse(s))
+                            })
+                            .ToArray();
     }
 
     // SPF always emits EnvironmentFiles as an array — empty becomes [] not omitted.
     public static Cfn.EnvironmentFile[] ParseEnvironmentFiles(this ContainerSpec containerSpec) =>
         containerSpec.EnvironmentFiles.Select(ef => new Cfn.EnvironmentFile
-        {
-            Type  = "s3", // Hardcoded until we support other options
-            Value = ef
-        }).ToArray();
+                     {
+                         Type = "s3", // Hardcoded until we support other options
+                         Value = ef
+                     })
+                     .ToArray();
 
     // logGroupNameRef and awsRegionRef are passed as Cfn.Value<string> so callers can hand
     // in either a literal or a Ref intrinsic. The Auto path consumes them; Manual ignores.
@@ -153,8 +162,8 @@ public static class ContainerSpecMappingExtensions
                     LogDriver = LogDriver.AwsLogs.ToString().ToLowerInvariant(),
                     Options = new Dictionary<string, Cfn.Value<string>>
                     {
-                        { "awslogs-group",         logGroupNameRef },
-                        { "awslogs-region",        awsRegionRef },
+                        { "awslogs-group", logGroupNameRef },
+                        { "awslogs-region", awsRegionRef },
                         { "awslogs-stream-prefix", "ecs" }
                     }
                 };
@@ -195,13 +204,13 @@ public static class ContainerSpecMappingExtensions
 
         if (containerSpec.FirelensConfiguration.CustomConfigSource is { Type: not FireLensCustomConfigSourceType.None } src)
         {
-            options.Add("config-file-type",  src.Type.ToString().ToLowerInvariant());
+            options.Add("config-file-type", src.Type.ToString().ToLowerInvariant());
             options.Add("config-file-value", src.FilePath);
         }
 
         return new Cfn.FirelensConfiguration
         {
-            Type    = containerSpec.FirelensConfiguration.FirelensType?.ToString().ToLowerInvariant(),
+            Type = containerSpec.FirelensConfiguration.FirelensType?.ToString().ToLowerInvariant(),
             Options = options
         };
     }
@@ -215,5 +224,4 @@ public static class ContainerSpecMappingExtensions
                                    .ToArray();
         return secrets.Length == 0 ? null : secrets;
     }
-
 }
