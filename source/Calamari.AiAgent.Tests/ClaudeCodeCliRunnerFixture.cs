@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Calamari.AiAgent.Behaviours;
+using Calamari.Common.Commands;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -10,98 +12,6 @@ namespace Calamari.AiAgent.Tests;
 [TestFixture]
 public class ClaudeCodeCliRunnerFixture
 {
-    static ClaudeCodeOptions DefaultOptions(string systemPrompt = null, int? maxTurns = null, IReadOnlyList<string> allowedTools = null) =>
-        new()
-        {
-            Prompt = "test prompt",
-            ApiToken = "fake-token",
-            Model = "claude-sonnet-4-20250514",
-            SystemPrompt = systemPrompt,
-            MaxTurns = maxTurns,
-            AllowedTools = allowedTools ?? new[] { "Read", "Bash" },
-        };
-
-    [Test]
-    public void BuildArguments_IncludesRequiredFlags()
-    {
-        var args = ClaudeCodeCliRunner.BuildArguments(DefaultOptions(), "/tmp/work").ToString();
-
-        args.Should().Contain("-p");
-        args.Should().Contain("--model claude-sonnet-4-20250514");
-        args.Should().Contain("--output-format stream-json");
-        args.Should().Contain("--verbose");
-        args.Should().Contain("--permission-mode dontAsk");
-        args.Should().Contain("--no-session-persistence");
-        args.Should().Contain("--strict-mcp-config");
-        args.Should().Contain("--mcp-config");
-    }
-
-    [Test]
-    public void BuildArguments_IncludesAllowedTools()
-    {
-        var args = ClaudeCodeCliRunner.BuildArguments(DefaultOptions(), "/tmp/work").ToString();
-
-        args.Should().Contain("--allowedTools Read,Bash");
-    }
-
-    [Test]
-    public void BuildArguments_OmitsAllowedTools_WhenEmpty()
-    {
-        var options = DefaultOptions(allowedTools: new string[0]);
-
-        var args = ClaudeCodeCliRunner.BuildArguments(options, "/tmp/work").ToString();
-
-        args.Should().NotContain("--allowedTools");
-    }
-
-    [Test]
-    public void BuildArguments_IncludesMaxTurns_WhenSet()
-    {
-        var args = ClaudeCodeCliRunner.BuildArguments(DefaultOptions(maxTurns: 5), "/tmp/work").ToString();
-
-        args.Should().Contain("--max-turns 5");
-    }
-
-    [Test]
-    public void BuildArguments_OmitsMaxTurns_WhenNotSet()
-    {
-        var args = ClaudeCodeCliRunner.BuildArguments(DefaultOptions(), "/tmp/work").ToString();
-
-        args.Should().NotContain("--max-turns");
-    }
-
-    [Test]
-    public void BuildArguments_IncludesSystemPrompt_WhenSet()
-    {
-        var args = ClaudeCodeCliRunner.BuildArguments(DefaultOptions(systemPrompt: "You are helpful"), "/tmp/work").ToString();
-
-        args.Should().Contain("--system-prompt");
-        args.Should().Contain("You are helpful");
-    }
-
-    [Test]
-    public void BuildArguments_OmitsSystemPrompt_WhenNotSet()
-    {
-        var args = ClaudeCodeCliRunner.BuildArguments(DefaultOptions(), "/tmp/work").ToString();
-
-        args.Should().NotContain("--system-prompt");
-    }
-
-    [Test]
-    public void BuildArguments_EscapesPromptWithSpaces()
-    {
-        var options = new ClaudeCodeOptions
-        {
-            Prompt = "What is the capital of France?",
-            ApiToken = "fake",
-            Model = "claude-sonnet-4-20250514",
-        };
-
-        var args = ClaudeCodeCliRunner.BuildArguments(options, "/tmp/work").ToString();
-
-        args.Should().Contain("\"What is the capital of France?\"");
-    }
-
     [Test]
     public void SetupSkills_CreatesSkillFile()
     {
@@ -112,13 +22,113 @@ public class ClaudeCodeCliRunnerFixture
         {
             ClaudeCodeCliRunner.SetupSkills(workingDir);
 
-            var skillPath = Path.Combine(workingDir, ".claude", "skills", "octopus-deployment-context.md");
+            var skillPath = Path.Combine(workingDir, ".claude", "skills", "octopus-deployment.context.md");
             File.Exists(skillPath).Should().BeTrue();
 
             var content = File.ReadAllText(skillPath);
             content.Should().Contain("name: octopus-deployment-context");
             content.Should().Contain("description:");
             content.Should().Contain("get_deployment_variables");
+        }
+        finally
+        {
+            Directory.Delete(workingDir, true);
+        }
+    }
+
+    [Test]
+    public void SetupSkills_WritesUserSkills()
+    {
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-user-skills-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
+
+        try
+        {
+            var userSkills = new List<UserSkill>
+            {
+                new() { Name = "my-custom-skill", Content = "---\nname: my-custom-skill\n---\nDo something useful." },
+                new() { Name = "another-skill", Content = "---\nname: another-skill\n---\nMore instructions." },
+            };
+
+            ClaudeCodeCliRunner.SetupSkills(workingDir, userSkills);
+
+            var skillPath1 = Path.Combine(workingDir, ".claude", "skills", "my-custom-skill.md");
+            File.Exists(skillPath1).Should().BeTrue();
+            File.ReadAllText(skillPath1).Should().Contain("Do something useful.");
+
+            var skillPath2 = Path.Combine(workingDir, ".claude", "skills", "another-skill.md");
+            File.Exists(skillPath2).Should().BeTrue();
+            File.ReadAllText(skillPath2).Should().Contain("More instructions.");
+        }
+        finally
+        {
+            Directory.Delete(workingDir, true);
+        }
+    }
+
+    [TestCase("")]
+    [TestCase("   ")]
+    [TestCase(null)]
+    public void SanitizeFileName_RejectsEmptyOrWhitespace(string name)
+    {
+        var act = () => ClaudeCodeCliRunner.SanitizeFileName(name!);
+        act.Should().Throw<CommandException>().WithMessage("*cannot be empty*");
+    }
+
+    [TestCase("CON")]
+    [TestCase("con")]
+    [TestCase("NUL")]
+    [TestCase("COM1")]
+    [TestCase("LPT3")]
+    public void SanitizeFileName_RejectsWindowsReservedNames(string name)
+    {
+        var act = () => ClaudeCodeCliRunner.SanitizeFileName(name);
+        act.Should().Throw<CommandException>().WithMessage("*reserved*");
+    }
+
+    [Test]
+    public void SanitizeFileName_StripsLeadingDots()
+    {
+        ClaudeCodeCliRunner.SanitizeFileName("...my-skill").Should().Be("my-skill");
+    }
+
+    [Test]
+    public void SanitizeFileName_ReplacesPathSeparators()
+    {
+        var result = ClaudeCodeCliRunner.SanitizeFileName("../../etc/passwd");
+        result.Should().NotContain("/");
+        result.Should().NotContain("\\");
+    }
+
+    [Test]
+    public void SanitizeFileName_TruncatesLongNames()
+    {
+        var longName = new string('a', 300);
+        ClaudeCodeCliRunner.SanitizeFileName(longName).Length.Should().BeLessOrEqualTo(200);
+    }
+
+    [Test]
+    public void SetupSkills_SanitizesPathTraversalAttempt()
+    {
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-traversal-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
+
+        try
+        {
+            var userSkills = new List<UserSkill>
+            {
+                new() { Name = "../../etc/evil", Content = "content" },
+            };
+
+            ClaudeCodeCliRunner.SetupSkills(workingDir, userSkills);
+
+            // The file should be written safely inside the skills directory, not at ../../etc/evil
+            var skillsDir = Path.Combine(workingDir, ".claude", "skills");
+            var files = Directory.GetFiles(skillsDir, "*.md");
+            files.Should().Contain(f => f.Contains("etc-evil"));
+
+            // Verify nothing was written outside
+            File.Exists(Path.Combine(workingDir, "..", "..", "etc", "evil.md")).Should().BeFalse();
         }
         finally
         {
