@@ -23,21 +23,23 @@ public partial class Build
                                Logging.InBlock(flavour, () =>
                                                         {
                                                             var flavourFolder = KnownPaths.OutputsDirectory / flavour;
-                                                            
+
                                                             var compressedArtifactPath = KnownPaths.OutputsDirectory / $"{flavour}.zip";
                                                             compressedArtifactPath.UncompressTo(flavourFolder);
                                                             Log.Information("Uncompressed {ZipPath} to {FolderPath}", compressedArtifactPath, flavourFolder);
-
-                                                            // change the native binary to be executable
-                                                            PowerShellTasks.PowerShell(_ => _
-                                                                                            .EnableNoProfile()
-                                                                                            .SetCommand($"chmod +x '{flavourFolder / flavour}'"));
-
 
                                                             //Rename any `linux-x64` folders to `linux-amd64`
                                                             Directory.Move(flavourFolder / "linux-x64",
                                                                 flavourFolder / "linux-amd64");
                                                             Log.Information("Renamed 'linux-x64' folder to 'linux-amd64'");
+                                                            foreach (var supportedPlatform in supportedPlatforms)
+                                                            {
+                                                                var platformFolder = supportedPlatform.Replace("/", "-");
+                                                                // change the native binary to be executable in each platform
+                                                                PowerShellTasks.PowerShell(_ => _
+                                                                                                .EnableNoProfile()
+                                                                                                .SetCommand($"chmod +x '{flavourFolder / platformFolder / flavour}'"));
+                                                            }
 
                                                             var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
 
