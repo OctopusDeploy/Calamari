@@ -104,11 +104,11 @@
         "TaskDefinition": {
           "Ref": "TaskDefinitiontestOctopusSpfdeployedTask"
         },
-        "DesiredCount": 1.0,
+        "DesiredCount": 1,
         "EnableECSManagedTags": false,
         "DeploymentConfiguration": {
-          "MinimumHealthyPercent": 100.0,
-          "MaximumPercent": 200.0
+          "MinimumHealthyPercent": 100,
+          "MaximumPercent": 200
         },
         "NetworkConfiguration": {
           "AwsvpcConfiguration": {

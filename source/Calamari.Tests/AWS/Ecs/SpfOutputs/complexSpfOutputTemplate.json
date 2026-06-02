@@ -26,15 +26,15 @@
     },
     "DesiredCount": {
       "Type": "Number",
-      "Default": 2.0
+      "Default": 2
     },
     "MinimumHealthPercent": {
       "Type": "Number",
-      "Default": 150.0
+      "Default": 150
     },
     "MaximumHealthPercent": {
       "Type": "Number",
-      "Default": 300.0
+      "Default": 300
     },
     "LogGroupName": {
       "Type": "String",
@@ -96,10 +96,10 @@
               "Command": [
                 "curl -f http://localhost/ || exit 1"
               ],
-              "Interval": 240.0,
-              "Retries": 7.0,
-              "StartPeriod": 179.0,
-              "Timeout": 54.0
+              "Interval": 240,
+              "Retries": 7,
+              "StartPeriod": 179,
+              "Timeout": 54
             },
             "ExtraHosts": [],
             "Ulimits": [
