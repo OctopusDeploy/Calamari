@@ -13,6 +13,7 @@ namespace Calamari.DockerCredentialHelper
         {
             var credentialsDir = Path.Combine(dockerConfigPath, CredentialsDirectory);
             Directory.CreateDirectory(credentialsDir);
+            RestrictToOwner(credentialsDir, isDirectory: true);
 
             var credential = new DockerCredential { Username = username, Secret = secret };
             var credentialJson = JsonSerializer.Serialize(credential, CredentialJsonContext.Default.DockerCredential);
@@ -22,6 +23,20 @@ namespace Calamari.DockerCredentialHelper
 
             var filePath = Path.Combine(credentialsDir, GetCredentialFileName(serverUrl));
             File.WriteAllBytes(filePath, encryptedBytes);
+            RestrictToOwner(filePath, isDirectory: false);
+        }
+
+        // The credential files only contain ciphertext, but restrict them to the owner anyway as
+        // defense-in-depth (dir 0700, file 0600). No-op on Windows, which has no Unix file modes.
+        static void RestrictToOwner(string path, bool isDirectory)
+        {
+            if (OperatingSystem.IsWindows())
+                return;
+
+            var mode = isDirectory
+                ? UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                : UnixFileMode.UserRead | UnixFileMode.UserWrite;
+            File.SetUnixFileMode(path, mode);
         }
 
         public DockerCredential? Get(string serverUrl, string encryptionPassword, string dockerConfigPath)
