@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -58,8 +57,6 @@ namespace Calamari.Terraform.Behaviours
 
                 var args = new List<string>();
                 args.Add("plan");
-                if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
-                    args.Add("-no-color");
                 args.Add("-detailed-exitcode");
                 args.Add(GetOutputParameter(deployment, cli.Version));
                 args.Add(ExtraParameter);

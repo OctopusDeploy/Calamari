@@ -15,7 +15,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
             return repositoryUri.Host.Equals(baseUrl.Host, StringComparison.OrdinalIgnoreCase);
         }
 
-        public async Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
+        public async Task<IGitVendorPullRequestClient> Create(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             return new BitBucketPullRequestClient(repositoryConnection, baseUrl);

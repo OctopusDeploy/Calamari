@@ -26,14 +26,16 @@ public class DeployEcsServiceCommand : Command
     readonly ILog log;
     readonly IVariables variables;
     readonly ICalamariFileSystem fileSystem;
+    readonly IEcsStackNameGenerator stackNameGenerator;
     string templateFile;
     string templateParameterFile;
 
-    public DeployEcsServiceCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
+    public DeployEcsServiceCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IEcsStackNameGenerator stackNameGenerator)
     {
         this.log = log;
         this.variables = variables;
         this.fileSystem = fileSystem;
+        this.stackNameGenerator = stackNameGenerator;
         Options.Add("template=", "Path to the CloudFormation template file.", v => templateFile = v);
         Options.Add("templateParameters=", "Path to the CloudFormation template parameters JSON file.", v => templateParameterFile = v);
     }
@@ -102,21 +104,21 @@ public class DeployEcsServiceCommand : Command
         var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
         if (string.IsNullOrWhiteSpace(stackName))
         {
-            stackName = EcsStackName.Generate(variables, clusterName, serviceName);
+            stackName = stackNameGenerator.Generate(variables, clusterName, serviceName);
             log.Verbose($"No stack name supplied; generated \"{stackName}\".");
         }
 
         var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]") ?? [];
         var tags = EcsDefaultTags.Merge(variables, userTags);
 
-        var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
+        var waitOptionType = variables.Get(AwsSpecialVariables.Ecs.WaitOptionLegacy.Type);
         Guard.NotNullOrWhiteSpace(waitOptionType, "The wait option is required");
         if (waitOptionType != "waitUntilCompleted" && waitOptionType != "waitWithTimeout" && waitOptionType != "dontWait")
         {
             throw new CommandException($"The wait option has an invalid value '{waitOptionType}'. Expected one of: 'waitUntilCompleted', 'waitWithTimeout', 'dontWait'.");
         }
 
-        var waitOptionTimeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOption.Timeout);
+        var waitOptionTimeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOptionLegacy.Timeout);
         if (waitOptionType == "waitWithTimeout" && !waitOptionTimeoutMs.HasValue)
         {
             throw new CommandException("Wait option is 'waitWithTimeout' but timeout value is not set.");

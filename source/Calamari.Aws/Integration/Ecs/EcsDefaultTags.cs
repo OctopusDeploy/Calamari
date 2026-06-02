@@ -1,12 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Amazon.ECS.Model;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Aws.Integration.Ecs;
 
-// Merges 19 default Octopus tags with user tags, sanitizes, and truncates to AWS limits (128/256).
-// Mirrors SPF's generateDefaultOctopusTags + sanitizeAwsTagString.
+/// <summary>
+/// Sanitize and merge tags used in ECS steps to match SPF
+/// Deploy step does no deduplication but the update step does
+/// </summary>
 public static partial class EcsDefaultTags
 {
     const int KeyMaxLength = 128;
@@ -35,23 +38,45 @@ public static partial class EcsDefaultTags
         "Octopus.Machine.Name"
     ];
 
-    public static List<KeyValuePair<string, string>> Merge(IVariables variables, IEnumerable<KeyValuePair<string, string>> userTags)
-    {
-        var defaultTags = OctopusVariableNames
-                          .Select(name => new KeyValuePair<string, string>(name, variables.Get(name)))
-                          .Where(p => !string.IsNullOrEmpty(p.Value));
+    public static List<KeyValuePair<string, string>> Merge(
+        IVariables variables,
+        IEnumerable<KeyValuePair<string, string>> userTags) =>
+        Sanitize(GetDefaults(variables)
+                     .Concat(userTags?.Select(t => (t.Key, t.Value)) ?? []))
+            .Select(t => new KeyValuePair<string, string>(t.Key, t.Value))
+            .ToList();
 
-        return defaultTags.Concat(userTags)
-                          .Select(t => new KeyValuePair<string, string>(Truncate(SanitizeAwsTag(t.Key), KeyMaxLength), Truncate(SanitizeAwsTag(t.Value), ValueMaxLength)))
-                          .Where(t => !string.IsNullOrEmpty(t.Key) && !string.IsNullOrEmpty(t.Value))
-                          .ToList();
-    }
+    public static List<KeyValuePair<string, string>> MergeAndDeduplicateTags(
+        IVariables variables,
+        IEnumerable<KeyValuePair<string, string>> userTags,
+        IEnumerable<Tag> existingTags) =>
+        // Tag sources in priority order matching SPF
+        // existing tags < Octopus defaults < user
+        // GroupBy preserves ordering
+        Sanitize((existingTags?.Select(t => (t.Key, t.Value)) ?? [])
+                 .Concat(GetDefaults(variables))
+                 .Concat(userTags?.Select(t => (t.Key, t.Value)) ?? [])
+                 .GroupBy(t => t.Key)
+                 .Select(g => g.Last()))
+            .Select(t => new KeyValuePair<string, string>(t.Key, t.Value))
+            .ToList();
 
-    static string SanitizeAwsTag(string value) =>
-        string.IsNullOrEmpty(value) ? value : InvalidAwsCharsRegex().Replace(value, "").Trim();
+    static IEnumerable<(string Key, string Value)> GetDefaults(IVariables variables) =>
+        OctopusVariableNames
+            .Select(n => (Key: n, Value: variables.Get(n)))
+            .Where(p => !string.IsNullOrEmpty(p.Value));
 
-    static string Truncate(string value, int maxLength) =>
-        string.IsNullOrEmpty(value) || value.Length <= maxLength ? value : value[..maxLength];
+    static IEnumerable<(string Key, string Value)> Sanitize(IEnumerable<(string Key, string Value)> tags) =>
+        tags.Select(t => (
+                        Key: Truncate(StripInvalidChars(t.Key), KeyMaxLength),
+                        Value: Truncate(StripInvalidChars(t.Value), ValueMaxLength)))
+            .Where(t => !string.IsNullOrEmpty(t.Key) && !string.IsNullOrEmpty(t.Value));
+
+    static string StripInvalidChars(string v) =>
+        string.IsNullOrEmpty(v) ? v : InvalidAwsCharsRegex().Replace(v, "").Trim();
+
+    static string Truncate(string v, int max) =>
+        string.IsNullOrEmpty(v) || v.Length <= max ? v : v[..max];
 
     [GeneratedRegex("[^a-zA-Z0-9 +=.:/@_-]")]
     private static partial Regex InvalidAwsCharsRegex();

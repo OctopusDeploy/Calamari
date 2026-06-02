@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -14,82 +12,81 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Aws.Deployment.Conventions
+namespace Calamari.Aws.Deployment.Conventions;
+
+public class CreateCloudFormationChangeSetConvention : CloudFormationInstallationConventionBase
 {
-    public class CreateCloudFormationChangeSetConvention : CloudFormationInstallationConventionBase
+    readonly Func<IAmazonCloudFormation> clientFactory;
+    readonly Func<RunningDeployment, StackArn> stackProvider;
+    readonly Func<ICloudFormationRequestBuilder> templateFactory;
+
+    public CreateCloudFormationChangeSetConvention(Func<IAmazonCloudFormation> clientFactory,
+                                                   StackEventLogger stackEventLogger,
+                                                   Func<RunningDeployment, StackArn> stackProvider,
+                                                   Func<ICloudFormationRequestBuilder> templateFactory,
+                                                   ILog log
+    ) : base(stackEventLogger, log)
     {
-        readonly Func<IAmazonCloudFormation> clientFactory;
-        readonly Func<RunningDeployment, StackArn> stackProvider;
-        readonly Func<ICloudFormationRequestBuilder> templateFactory;
+        Guard.NotNull(stackProvider, "Stack provider should not be null");
+        Guard.NotNull(clientFactory, "Client factory should not be null");
+        Guard.NotNull(templateFactory, "Template factory should not be null");
 
-        public CreateCloudFormationChangeSetConvention(Func<IAmazonCloudFormation> clientFactory,
-                                                       StackEventLogger stackEventLogger,
-                                                       Func<RunningDeployment, StackArn> stackProvider,
-                                                       Func<ICloudFormationRequestBuilder> templateFactory,
-                                                       ILog log
-        ) : base(stackEventLogger, log)
+        this.clientFactory = clientFactory;
+        this.stackProvider = stackProvider;
+        this.templateFactory = templateFactory;
+    }
+
+    public override void Install(RunningDeployment deployment)
+    {
+        InstallAsync(deployment).GetAwaiter().GetResult();
+    }
+
+    async Task InstallAsync(RunningDeployment deployment)
+    {
+        var stack = stackProvider(deployment);
+        Guard.NotNull(stack, "The provided stack may not be null");
+
+        var name = deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Name];
+        Guard.NotNullOrWhiteSpace(name, "The changeset name must be provided.");
+
+        var template = templateFactory();
+        Guard.NotNull(template, "CloudFormation template should not be null.");
+
+        try
         {
-            Guard.NotNull(stackProvider, "Stack provider should not be null");
-            Guard.NotNull(clientFactory, "Client factory should not be null");
-            Guard.NotNull(templateFactory, "Template factory should not be null");
-
-            this.clientFactory = clientFactory;
-            this.stackProvider = stackProvider;
-            this.templateFactory = templateFactory;
+            var changeset = await CreateChangeSet(await template.BuildChangesetRequest());
+            await clientFactory.WaitForChangeSetCompletion(PollPeriod(deployment), changeset);
+            ApplyVariables(deployment.Variables)(changeset);
         }
-
-        public override void Install(RunningDeployment deployment)
+        catch (AmazonServiceException exception)
         {
-            InstallAsync(deployment).GetAwaiter().GetResult();
+            LogAmazonServiceException(exception);
+            throw;
         }
+    }
 
-        private async Task InstallAsync(RunningDeployment deployment)
+    Action<RunningChangeSet> ApplyVariables(IVariables variables)
+    {
+        return result =>
+               {
+                   SetOutputVariable(variables, "ChangesetId", result.ChangeSet.Value);
+                   SetOutputVariable(variables, "StackId", result.Stack.Value);
+                   variables.Set(AwsSpecialVariables.CloudFormation.Changesets.Arn, result.ChangeSet.Value);
+               };
+    }
+
+    async Task<RunningChangeSet> CreateChangeSet(CreateChangeSetRequest request)
+    {
+        try
         {
-            var stack = stackProvider(deployment);
-            Guard.NotNull(stack, "The provided stack may not be null");
-
-            var name = deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Name];
-            Guard.NotNullOrWhiteSpace(name, "The changeset name must be provided.");
-
-            var template = templateFactory();
-            Guard.NotNull(template, "CloudFormation template should not be null.");
-
-            try
-            {
-                var changeset = await CreateChangeSet(await template.BuildChangesetRequest());
-                await clientFactory.WaitForChangeSetCompletion(PollPeriod(deployment), changeset);
-                ApplyVariables(deployment.Variables)(changeset);
-            }
-            catch (AmazonServiceException exception)
-            {
-                LogAmazonServiceException(exception);
-                throw;
-            }
+            return (await clientFactory.CreateChangeSetAsync(request))
+                .Map(x => new RunningChangeSet(new StackArn(x.StackId), new ChangeSetArn(x.Id)));
         }
-
-        private Action<RunningChangeSet> ApplyVariables(IVariables variables)
+        catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
         {
-            return result =>
-                   {
-                       SetOutputVariable(variables, "ChangesetId", result.ChangeSet.Value);
-                       SetOutputVariable(variables, "StackId", result.Stack.Value);
-                       variables.Set(AwsSpecialVariables.CloudFormation.Changesets.Arn, result.ChangeSet.Value);
-                   };
-        }
-
-        private async Task<RunningChangeSet> CreateChangeSet(CreateChangeSetRequest request)
-        {
-            try
-            {
-                return (await clientFactory.CreateChangeSetAsync(request))
-                    .Map(x => new RunningChangeSet(new StackArn(x.StackId), new ChangeSetArn(x.Id)));
-            }
-            catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
-            {
-                throw new PermissionException(
-                                              @"The AWS account used to perform the operation does not have the required permissions to create the change set.\n" + "Please ensure the current user has the cloudformation:CreateChangeSet permission.\n" + ex.Message + "\n",
-                                              ex);
-            }
+            throw new PermissionException(
+                                          @"The AWS account used to perform the operation does not have the required permissions to create the change set.\n" + "Please ensure the current user has the cloudformation:CreateChangeSet permission.\n" + ex.Message + "\n",
+                                          ex);
         }
     }
 }

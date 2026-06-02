@@ -353,6 +353,25 @@ namespace Calamari.Deployment
                     public static readonly string ConfigName = "Octopus.Action.Nginx.Server.ConfigName";
                 }
             }
+            
+            public static class Git
+            {
+                public const string Url = "Octopus.Action.Git.TargetRepositoryUrl";
+                public const string Username = "Octopus.Action.Git.TargetRepositoryUsername";
+                public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
+                public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
+                public const string DestinationPath = "Octopus.Action.Git.TargetRepositoryDestinationPath";
+
+                public const string InputFileSources = "Octopus.Action.Git.InputFileSources";
+
+                public const string CommitMessageSummary = "Octopus.Action.Git.CommitMessageSummary";
+                public const string CommitMessageDescription = "Octopus.Action.Git.CommitMessageDescription";
+
+                public static class PullRequest
+                {
+                    public const string Create = "Octopus.Action.Git.PullRequest.Create";
+                }
+            }
         }
 
         public static class Account

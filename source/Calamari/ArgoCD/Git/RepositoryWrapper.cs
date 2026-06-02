@@ -33,12 +33,10 @@ namespace Calamari.ArgoCD.Git
         readonly IGitVendorPullRequestClient? vendorApiAdapter = vendorApiAdapter;
         readonly IClock clock = clock;
         // ReSharper restore ReplaceWithPrimaryConstructorParameter
-        
+
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
-
-        Credentials RepositoryCredentials => new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password };
 
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
@@ -129,7 +127,7 @@ namespace Calamari.ArgoCD.Git
                 return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
             }
 
-            var (title, number, uri) = await CreatePullRequest(
+            var ((title, number, uri), vendorName) = await CreatePullRequest(
                 summary,
                 description,
                 pushToBranchName,
@@ -140,13 +138,14 @@ namespace Calamari.ArgoCD.Git
                 commit.Sha,
                 commit.ShortSha(),
                 commit.Author.When,
-                connection.Url.AbsoluteUri,
+                connection.Url,
                 title,
                 uri,
-                number);
+                number,
+                vendorName);
         }
 
-        async Task<PullRequest> CreatePullRequest(
+        async Task<(PullRequest PullRequest, string VendorName)> CreatePullRequest(
             string summary,
             string description,
             GitBranchName pushToBranchName,
@@ -167,13 +166,9 @@ namespace Calamari.ArgoCD.Git
                     currentBranchName,
                     cancellationToken);
 
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Title", pullRequest.Title);
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Number", pullRequest.Number.ToString());
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Url", pullRequest.Url);
-
                 log.Info($"Pull Request [{pullRequest.Title} (#{pullRequest.Number})]({pullRequest.Url}) Created");
 
-                return pullRequest;
+                return (pullRequest, vendorApiAdapter.Name);
             }
             catch (LibGit2SharpException e)
             {
@@ -196,8 +191,9 @@ namespace Calamari.ArgoCD.Git
             PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
-                OnPushStatusError = errors => errorsDetected = errors
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
+                OnPushStatusError = errors => errorsDetected = errors,
+                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
             };
 
             repository.Network.Push(repository.Head, pushOptions);
@@ -213,7 +209,8 @@ namespace Calamari.ArgoCD.Git
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
             var fetchOptions = new FetchOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
+                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
             };
 
             try
@@ -297,5 +294,6 @@ namespace Calamari.ArgoCD.Git
         string RepositoryUri,
         string PullRequestTitle,
         string PullRequestUri,
-        long PullRequestNumber) : PushResult(CommitSha, ShortSha, CommitTimestamp);
+        long PullRequestNumber,
+        string VendorName) : PushResult(CommitSha, ShortSha, CommitTimestamp);
 }

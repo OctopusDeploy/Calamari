@@ -11,7 +11,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
         
         public bool CanHandleAsCloudHosted(Uri repositoryUri) => AzureDevOpsRepositoryUriParser.IsAzureDevOpsRepository(repositoryUri);
         
-        public async Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
+        public async Task<IGitVendorPullRequestClient> Create(IHttpsGitConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             return new AzureDevOpsPullRequestClient(repositoryConnection);

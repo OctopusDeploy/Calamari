@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -34,8 +33,6 @@ namespace Calamari.Terraform.Behaviours
                 var args = new List<string>();
                 args.Add("destroy");
                 args.Add("-auto-approve");
-                if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
-                    args.Add("-no-color");
                 args.Add(cli.TerraformVariableFiles);
                 args.Add(cli.ActionParams);
                 cli.ExecuteCommand(args.ToArray())

@@ -8,7 +8,10 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes;
+using Octopus.Calamari.Contracts.Git;
+using PullRequestCreatedServiceMessage = Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated;
 
 namespace Calamari.ArgoCD
 {
@@ -63,7 +66,27 @@ namespace Calamari.ArgoCD
                                                                                                            FilePath = rf.FilePath.EnsurePosixDirectorySeparator()
                                                                                                        })
                                                                                                        .ToList()));
+                
+                var message = CreatePullRequestCreatedServiceMessage(prResult);
+
+                log.WriteServiceMessage(message);
             }
+        }
+
+        static ServiceMessage CreatePullRequestCreatedServiceMessage(PullRequestPushResult prResult)
+        {
+            var parameters = new Dictionary<string, string>
+            {
+                { PullRequestCreatedServiceMessage.Attributes.PullRequestUri, prResult.PullRequestUri },
+                { PullRequestCreatedServiceMessage.Attributes.RepositoryUri, prResult.RepositoryUri },
+                { PullRequestCreatedServiceMessage.Attributes.VendorName, prResult.VendorName },
+                { PullRequestCreatedServiceMessage.Attributes.SourceType, PullRequestCreatedServiceMessage.SourceTypes.ArgoCD },
+            };
+
+            var message = new ServiceMessage(
+                                             PullRequestCreatedServiceMessage.Name,
+                                             parameters);
+            return message;
         }
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,

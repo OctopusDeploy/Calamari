@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -56,7 +57,7 @@ namespace Calamari.ArgoCD.Commands
                 new UpdateArgoCDAppImagesInstallConvention(log,
                                                            fileSystem,
                                                            configFactory,
-                                                           new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
+                                                           new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword, new IGitCredentialDtoJsonConverter()),
                                                            new ArgoCdApplicationManifestParser(),
                                                            gitVendorPullRequestClientResolver,
                                                            clock,
