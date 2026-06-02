@@ -34,8 +34,11 @@ namespace Calamari.ArgoCD.Conventions
         public UpdateArgoCDAppDeploymentConfig CreateUpdateImageConfig(RunningDeployment deployment)
         {
             var commitParameters = CommitParameters(deployment);
-            var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
-            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageReferences);
+            var packageHelmReference = deployment.Variables.GetContainerPackages().Select(p => new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString(p.PackageName),
+                                                                                                                          p.HelmReference)).ToList();
+            var useHelmReferenceFromContainer = OctopusFeatureToggles.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle.IsEnabled(deployment.Variables);
+            var updateKustomizePatches = OctopusFeatureToggles.KustomizePatchImageUpdatesFeatureToggle.IsEnabled(deployment.Variables);
+            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageHelmReference, useHelmReferenceFromContainer, updateKustomizePatches);
         }
         
         bool RequiresPullRequest(RunningDeployment deployment)

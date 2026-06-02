@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.Versioning;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -33,6 +34,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         [RequiresAdmin]
         [RequiresWindowsServer2012OrAbove]
+        [SupportedOSPlatform("windows")]
         public void ShouldDeployAVhd()
         {
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
@@ -75,6 +77,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         [RequiresAdmin]
         [RequiresWindowsServer2012OrAbove]
+        [SupportedOSPlatform("windows")]
         public void ShouldDeployAVhdWithTwoPartitions()
         {
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
@@ -125,6 +128,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         [RequiresAdmin]
         [RequiresWindowsServer2012OrAbove]
+        [SupportedOSPlatform("windows")]
         public void ShouldBlockMountAndOverrideAppPath()
         {
             Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";

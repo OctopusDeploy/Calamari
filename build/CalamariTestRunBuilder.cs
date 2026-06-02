@@ -39,7 +39,7 @@ public class CalamariTestRunBuilder(string projectFile, AbsolutePath outputDirec
                                                              _ => throw new ProcessException(process)
                                                          })
                        .AddLoggers("console;verbose=normal")
-                       .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(OutputDirectory));
+                       .When(_ => runningInTeamCity, x => x.EnableTeamCityTestLogger(OutputDirectory));
 
         var runSettingsFilePath = TryBuildExcludedTestsSettingsFile(Filter);
         if (runSettingsFilePath is not null)

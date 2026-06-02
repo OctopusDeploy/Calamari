@@ -18,6 +18,7 @@ using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using FluentAssertions;
+using JetBrains.TeamCity.ServiceMessages.Write.Special.Impl.Writer;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -63,45 +64,52 @@ namespace Calamari.AzureAppService.Tests
             TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
             SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
-
+            
             TestContext.Progress.WriteLine($"Resource group location: {ResourceGroupLocation}");
 
-            var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
-                                                                           ClientId,
-                                                                           TenantId,
-                                                                           ClientSecret,
-                                                                           "AzureGlobalCloud",
-                                                                           resourceManagementEndpointBaseUri,
-                                                                           activeDirectoryEndpointBaseUri);
+            try
+            {
+                var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
+                                                                               ClientId,
+                                                                               TenantId,
+                                                                               ClientSecret,
+                                                                               "AzureGlobalCloud",
+                                                                               resourceManagementEndpointBaseUri,
+                                                                               activeDirectoryEndpointBaseUri);
 
-            ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
-                                                                {
-                                                                    retryOptions.MaxRetries = 5;
-                                                                    retryOptions.Mode = RetryMode.Exponential;
-                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
-                                                                    // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
-                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
-                                                                });
+                ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
+                                                                    {
+                                                                        retryOptions.MaxRetries = 5;
+                                                                        retryOptions.Mode = RetryMode.Exponential;
+                                                                        retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                        // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
+                                                                        retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
+                                                                    });
 
-            //create the resource group
-            SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
+                //create the resource group
+                SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
 
-            var response = await SubscriptionResource
-                                 .GetResourceGroups()
-                                 .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                      ResourceGroupName,
-                                                      new ResourceGroupData(new AzureLocation(ResourceGroupLocation))
-                                                      {
-                                                          Tags =
+                var response = await SubscriptionResource
+                                     .GetResourceGroups()
+                                     .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                          ResourceGroupName,
+                                                          new ResourceGroupData(new AzureLocation(ResourceGroupLocation))
                                                           {
-                                                              [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
-                                                              [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
-                                                          }
-                                                      });
+                                                              Tags =
+                                                              {
+                                                                  [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
+                                                                  [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
+                                                              }
+                                                          });
 
-            ResourceGroupResource = response.Value;
+                ResourceGroupResource = response.Value;
 
-            await ConfigureTestResources(ResourceGroupResource);
+                await ConfigureTestResources(ResourceGroupResource);
+            }
+            catch(Exception ex)
+            {
+                throw new Exception($"Setup failed in region: {ResourceGroupLocation}", ex);
+            }
         }
 
         protected abstract Task ConfigureTestResources(ResourceGroupResource resourceGroup);

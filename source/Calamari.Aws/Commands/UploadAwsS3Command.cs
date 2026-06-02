@@ -31,6 +31,7 @@ namespace Calamari.Aws.Commands
         PathToPackage pathToPackage;
         string bucket;
         string targetMode;
+        S3OutputVariablesStrategy s3OutputVariablesStrategy = S3OutputVariablesStrategy.AllFiles;
 
         public UploadAwsS3Command(
             ILog log,
@@ -50,6 +51,8 @@ namespace Calamari.Aws.Commands
             Options.Add("package=", "Path to the package to extract that contains the package.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
             Options.Add("targetMode=", "Whether the entire package or files within the package should be uploaded to the s3 bucket", v => targetMode = v);
+            Options.Add("s3OutputVariablesStrategy=", "Strategy for generating output variables. Options: CalamariDefault (default), AllFiles, NoFiles.",
+                        v => s3OutputVariablesStrategy = Enum.TryParse<S3OutputVariablesStrategy>(v, out var result) ? result : S3OutputVariablesStrategy.AllFiles);;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -82,7 +85,8 @@ namespace Calamari.Aws.Commands
                     new VariableS3TargetOptionsProvider(variables),
                     bucketKeyProvider,
                     substituteInFiles,
-                    structuredConfigVariablesService
+                    structuredConfigVariablesService,
+                    s3OutputVariablesStrategy
                 )
             };
 
@@ -93,7 +97,7 @@ namespace Calamari.Aws.Commands
             return 0;
         }
 
-        private static S3TargetMode GetTargetMode(string value)
+        static S3TargetMode GetTargetMode(string value)
         {
             return Enum.TryParse<S3TargetMode>(value, out var result) ? result : S3TargetMode.EntirePackage;
         }

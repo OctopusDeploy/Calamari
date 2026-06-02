@@ -6,30 +6,16 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 
-namespace Calamari.Aws.Integration
+namespace Calamari.Aws.Integration;
+
+public class AwsAuthConvention(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null) : IInstallConvention
 {
-    public class AwsAuthConvention : IInstallConvention
+    public void Install(RunningDeployment deployment)
     {
-        public delegate AwsAuthConvention Factory(Func<Task<bool>> verifyLogin = null);
-
-        private readonly ILog log;
-        private readonly IVariables variables;
-        private readonly Func<Task<bool>> verifyLogin;
-
-        public AwsAuthConvention(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
+        var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables, verifyLogin).GetAwaiter().GetResult();
+        foreach (var envVar in awsEnvironmentVars.EnvironmentVars)
         {
-            this.log = log;
-            this.variables = variables;
-            this.verifyLogin = verifyLogin;
-        }
-
-        public void Install(RunningDeployment deployment)
-        {
-            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables, verifyLogin).GetAwaiter().GetResult();
-            foreach (var envVar in awsEnvironmentVars.EnvironmentVars)
-            {
-                deployment.EnvironmentVariables[envVar.Key] = envVar.Value;
-            }
+            deployment.EnvironmentVariables[envVar.Key] = envVar.Value;
         }
     }
 }

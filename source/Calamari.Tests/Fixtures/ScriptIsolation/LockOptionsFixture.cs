@@ -1,0 +1,585 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.Common.Features.Processes.ScriptIsolation;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Testing.Helpers;
+using FluentAssertions;
+using Microsoft.Extensions.Time.Testing;
+using NUnit.Framework;
+using Polly;
+using Polly.Timeout;
+
+namespace Calamari.Tests.Fixtures.ScriptIsolation
+{
+    [TestFixture]
+    public class LockOptionsFixture
+    {
+        string tempDir = null!;
+
+        [SetUp]
+        public void SetUp()
+        {
+            tempDir = Path.Join(Path.GetTempPath(), $"LockOptionsFixture.{Guid.NewGuid()}");
+            Directory.CreateDirectory(tempDir);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
+
+        static string DefaultTentacleHome => Path.GetTempPath();
+
+        static CommonOptions.ScriptIsolationOptions MakeOptions(
+            string? level = "FullIsolation",
+            string? mutexName = "TestMutex",
+            string? timeout = "00:01:00",
+            string? tentacleHome = null)
+            => new()
+            {
+                Level = level,
+                MutexName = mutexName,
+                Timeout = timeout,
+                TentacleHome = tentacleHome ?? DefaultTentacleHome
+            };
+
+        static CommonOptions.ScriptIsolationOptions MakeOptionsNoTentacleHome(
+            string? level = "FullIsolation",
+            string? mutexName = "TestMutex",
+            string? timeout = "00:01:00")
+            => new()
+            {
+                Level = level,
+                MutexName = mutexName,
+                Timeout = timeout,
+                TentacleHome = null
+            };
+
+        static RequestedLockOptions? CreateRequestedOrNull(CommonOptions.ScriptIsolationOptions options)
+            => new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateFromIsolationOptions(options);
+
+        static LockOptions? CreateLockOptionsOrNull(CommonOptions.ScriptIsolationOptions options)
+        {
+            var requested = CreateRequestedOrNull(options);
+            if (requested is null)
+                return null;
+            return new LockOptionsResolver(new StubLockDirectoryFactory(), ConsoleLog.Instance).Create(requested);
+        }
+
+        /// <summary>
+        /// Minimal stub that returns a fully-supported <see cref="LockDirectory"/> rooted at
+        /// the supplied preferred directory, without performing any filesystem probing.
+        /// </summary>
+        sealed class StubLockDirectoryFactory : ILockDirectoryFactory
+        {
+            public LockDirectory Create(DirectoryInfo preferredLockDirectory)
+                => new(preferredLockDirectory, LockCapability.Supported);
+        }
+
+        static (RequestedLockOptions? result, InMemoryLog log) CreateRequestedOrNullWithLog(CommonOptions.ScriptIsolationOptions options)
+        {
+            var log = new InMemoryLog();
+            var result = new RequestedLockOptionsFactory(log).CreateFromIsolationOptions(options);
+            return (result, log);
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ProducesNoLogMessages_WhenAllOptionsAreEmpty()
+        {
+            // When no script isolation options are configured at all (Level, MutexName, Timeout all null),
+            // no log messages should be emitted — in particular, no spurious "partially configured" warning
+            // even if TentacleHome happens to be set via the environment variable (which is the normal case
+            // on a Tentacle host where TentacleHome is always set).
+            var options = new CommonOptions.ScriptIsolationOptions
+            {
+                Level = null,
+                MutexName = null,
+                Timeout = null,
+                // TentacleHome is left at its default, which reads from the TentacleHome environment variable.
+                // We simulate a Tentacle host by providing an explicit non-null value so the test is
+                // deterministic regardless of the test machine's environment.
+                TentacleHome = DefaultTentacleHome
+            };
+
+            var (result, log) = CreateRequestedOrNullWithLog(options);
+
+            result.Should().BeNull(because: "no isolation options were provided");
+            log.Messages.Should().BeEmpty(because: "no log messages should be emitted when no options are specified");
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_WhenLevelIsNull()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(level: null));
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_WhenLevelIsWhiteSpace()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(level: "   "));
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_WhenMutexNameIsNull()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(mutexName: null));
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_WhenMutexNameIsWhiteSpace()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(mutexName: "   "));
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_WhenTentacleHomeIsMissing()
+        {
+            var result = CreateRequestedOrNull(MakeOptionsNoTentacleHome());
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_WhenTentacleHomeIsWhiteSpace()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(tentacleHome: "   "));
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_MapsFullIsolationToExclusive()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(level: "FullIsolation"));
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Exclusive);
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_MapsNoIsolationToShared()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(level: "NoIsolation"));
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Shared);
+        }
+
+        [TestCase("fullisolation")]
+        [TestCase("FULLISOLATION")]
+        [TestCase("FullIsolation")]
+        [TestCase("noisolation")]
+        [TestCase("NOISOLATION")]
+        [TestCase("NoIsolation")]
+        public void CreateRequestedOrNull_IsCaseInsensitive(string isolationLevelValue)
+        {
+            var result = CreateRequestedOrNull(MakeOptions(level: isolationLevelValue));
+            result.Should().NotBeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_ForUnknownIsolationLevel()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(level: "SomeUnknownLevel"));
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ParsesTimeout()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(timeout: "00:05:00"));
+            result.Should().NotBeNull();
+            result.Timeout.Should().Be(TimeSpan.FromMinutes(5));
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_DefaultsToInfinite_WhenTimeoutIsInvalid()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(timeout: "not-a-timespan"));
+            result.Should().NotBeNull();
+            result.Timeout.Should().Be(Timeout.InfiniteTimeSpan);
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_DefaultsToInfinite_WhenNoTimeoutIsSupplied()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(timeout: string.Empty));
+            result.Should().NotBeNull();
+            result.Timeout.Should().Be(Timeout.InfiniteTimeSpan);
+        }
+
+        [Test]
+        public void CreateLockOptionsOrNull_BuildsCorrectLockFileName()
+        {
+            var scriptIsolationOptions = MakeOptions(mutexName: "MyMutex");
+            var result = CreateLockOptionsOrNull(scriptIsolationOptions);
+            result.Should().NotBeNull();
+
+            result.LockFile.File.Name.Should().Be("ScriptIsolation.MyMutex.lock");
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_Throws_WhenMutexNameContainsInvalidFileNameChar()
+        {
+            var invalidChar = Path.GetInvalidFileNameChars()[0];
+            var badName = $"My{invalidChar}Mutex";
+
+            Action act = () => CreateRequestedOrNull(MakeOptions(mutexName: badName));
+
+            act.Should().Throw<ArgumentException>();
+        }
+
+        [Test]
+        public void CreateLockOptionsOrNull_PreservesName()
+        {
+            var result = CreateLockOptionsOrNull(MakeOptions(mutexName: "MyMutex"));
+            result.Should().NotBeNull();
+            result.Name.Should().Be("MyMutex");
+        }
+
+        [Test]
+        public async Task LockOptionsAcquisitionPipelineWithTimeoutGreaterThanOneDay_IsHandled()
+        {
+            var timeProvider = new FakeTimeProvider();
+            var testCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var lockOptions = CreateLockOptionsOrNull(MakeOptions(timeout: "1.12:00:00"));
+            lockOptions.Should().NotBeNull();
+            var testPipelineBuilder = new ResiliencePipelineBuilder<ILockHandle>
+            {
+                TimeProvider = timeProvider
+            };
+            var lockAcquisitionPipelineBuilder = new LockAcquisitionResiliencePipelineBuilder(testPipelineBuilder);
+            var testPipeline = lockAcquisitionPipelineBuilder.AddLockOptions(lockOptions).Build();
+
+            // Use a gate so we know when the pipeline has been entered at least once and
+            // is about to wait on a fake-time delay (i.e., timers are registered).
+            var pipelineEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            var pipelineTask = Task.Run(
+                async () => await testPipeline.ExecuteAsync<ILockHandle>(
+                    _ =>
+                    {
+                        pipelineEntered.TrySetResult();
+                        throw new LockRejectedException("I never succeed");
+                    },
+                    testCts.Token),
+                testCts.Token);
+
+            // Wait until the pipeline callback has been invoked. After signalling, the
+            // retry strategy still needs to schedule its first DelayAsync (which registers
+            // a fake-time timer). Use a short real-time delay to allow the async pipeline
+            // to fully reach its DelayAsync await before we start advancing fake time.
+            await pipelineEntered.Task;
+            await Task.Delay(TimeSpan.FromMilliseconds(50), testCts.Token);
+
+            var startTime = timeProvider.GetUtcNow();
+            var step = TimeSpan.FromMinutes(30);
+
+            // Phase 1: advance to just before the expected timeout and assert the pipeline
+            // is still running. This catches bugs where the timeout fires too early (e.g.
+            // a hardcoded value shorter than lockOptions.Timeout).
+            var beforeTimeout = lockOptions.Timeout - TimeSpan.FromMinutes(1);
+            var elapsed = TimeSpan.Zero;
+            while (elapsed < beforeTimeout)
+            {
+                // Cap each step so we never advance the clock past the beforeTimeout boundary.
+                var advance = elapsed + step < beforeTimeout ? step : beforeTimeout - elapsed;
+                timeProvider.Advance(advance);
+                elapsed += advance;
+                // Use a real-time delay (not just Task.Yield) so thread-pool continuations
+                // from the pipeline have a full scheduling round to run and update IsCompleted.
+                await Task.Delay(TimeSpan.FromMilliseconds(10), testCts.Token);
+                if (pipelineTask.IsCompleted)
+                    break;
+            }
+
+            pipelineTask.IsCompleted.Should().BeFalse("the pipeline should still be running before the timeout has elapsed");
+
+            // Phase 2: advance past the expected timeout and assert the pipeline times out.
+            var target = lockOptions.Timeout + TimeSpan.FromSeconds(1);
+            while (elapsed < target && !pipelineTask.IsCompleted)
+            {
+                await Task.Yield();
+                timeProvider.Advance(step);
+                elapsed += step;
+            }
+
+            try
+            {
+                await pipelineTask;
+            }
+            catch (Exception e)
+            {
+                e.Should().BeOfType<TimeoutRejectedException>();
+                timeProvider.GetUtcNow().Should().BeOnOrAfter(startTime + lockOptions.Timeout,
+                    "the pipeline should not have timed out before the configured timeout elapsed");
+                return;
+            }
+
+            Assert.Fail("Exception should have been thrown");
+        }
+
+        // -------------------------------------------------------------------------
+        // LockOptionsResolver.DetermineActualLockTypeToUseBasedOnSupport tests
+        // -------------------------------------------------------------------------
+
+        // Builds a LockOptions with a LockDirectory that has the given capability.
+        // Uses tempDir as the directory path so the path exists on disk.
+        LockOptions MakeLockOptionsWithCapability(LockType type, LockCapability capability)
+        {
+            var dir = new LockDirectory(new DirectoryInfo(tempDir), capability);
+            var lockFile = dir.GetLockFile("ScriptIsolation.TestMutex.lock");
+            return new LockOptions(
+                Type: type,
+                Name: "TestMutex",
+                LockFile: lockFile,
+                Timeout: TimeSpan.FromMinutes(1));
+        }
+
+        static (LockOptions? result, InMemoryLog log) UseExclusiveIfSharedIsNotSupported(LockOptions opts)
+        {
+            var log = new InMemoryLog();
+            var result = new LockOptionsResolver(new StubLockDirectoryFactory(), log).DetermineActualLockTypeToUseBasedOnSupport(opts);
+            return (result, log);
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsOriginal_WhenFullySupported()
+        {
+            // Supported capability + Exclusive → IsFullySupported = true → returned unchanged, no warning
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Supported);
+
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Exclusive);
+            log.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsOriginal_WhenExclusiveOnlyAndExclusiveRequested()
+        {
+            // ExclusiveOnly + Exclusive → IsSupported = true (Exclusive is supported) → returned unchanged, no warning
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.ExclusiveOnly);
+
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Exclusive);
+            log.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
+        public void LockOptionsFactory_PromotesToExclusive_WhenExclusiveOnlyAndSharedRequested()
+        {
+            // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true
+            // → always promotes to Exclusive with a warning
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.ExclusiveOnly);
+
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Exclusive,
+                                    because: "shared lock should always be promoted to exclusive when shared locking is unavailable");
+            log.MessagesWarnFormatted.Should().NotBeEmpty(
+                because: "a warning should be issued when the lock type is promoted");
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsNull_WhenUnsupportedAndExclusiveRequested()
+        {
+            // Unsupported + Exclusive → IsFullySupported = false, IsSupported = false,
+            // Supports(Exclusive) = false → returns null and a warning
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Unsupported);
+
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().BeNull(
+                because: "no locking is supported at all so no lock should be acquired");
+            log.MessagesWarnFormatted.Should().NotBeEmpty(
+                because: "a warning should be issued when no isolation is available");
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsNull_WhenUnsupportedAndSharedRequested()
+        {
+            // Unsupported + Shared → same as above
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.Unsupported);
+
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().BeNull(
+                because: "no locking is supported at all so no lock should be acquired");
+            log.MessagesWarnFormatted.Should().NotBeEmpty(
+                because: "a warning should be issued when no isolation is available");
+        }
+
+        // -------------------------------------------------------------------------
+        // Service message tests: CalamariScriptIsolationAlert is only emitted when
+        // the original lock requirement cannot be satisfied as requested.
+        // -------------------------------------------------------------------------
+
+        [Test]
+        public void NoServiceMessage_WhenFullySupportedAndExclusiveRequested()
+        {
+            // Fully supported + exclusive → returned unchanged, no alert needed
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Supported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().BeEmpty(
+                because: "no alert should be emitted when the lock requirement is fully satisfied");
+        }
+
+        [Test]
+        public void NoServiceMessage_WhenExclusiveOnlyAndExclusiveRequested()
+        {
+            // ExclusiveOnly + exclusive → returned unchanged, no alert needed
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.ExclusiveOnly);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().BeEmpty(
+                because: "no alert should be emitted when the exclusive lock requirement is satisfied");
+        }
+
+        [Test]
+        public void ServiceMessage_EmittedWithExclusiveEnforcedType_WhenSharedPromotedToExclusive()
+        {
+            // ExclusiveOnly + shared → promoted to exclusive; alert emitted
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.ExclusiveOnly);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().ContainSingle(
+                because: "exactly one alert message should be emitted on lock type promotion");
+            var msg = log.ServiceMessages[0];
+            msg.Name.Should().Be(ServiceMessageNames.CalamariScriptIsolationAlert.Name);
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.RequestedTypeAttribute)
+               .Should().Be(LockType.Shared.ToString(),
+                            because: "the requested type was Shared");
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.EnforcedTypeAttribute)
+               .Should().Be(LockType.Exclusive.ToString(),
+                            because: "the enforced type is Exclusive after promotion");
+        }
+
+        [Test]
+        public void ServiceMessage_EmittedWithNoneEnforcedType_WhenExclusiveUnsupported()
+        {
+            // Unsupported + exclusive → no lock at all; alert emitted with enforcedType = "None"
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Unsupported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().ContainSingle(
+                because: "exactly one alert message should be emitted when no isolation is available");
+            var msg = log.ServiceMessages[0];
+            msg.Name.Should().Be(ServiceMessageNames.CalamariScriptIsolationAlert.Name);
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.RequestedTypeAttribute)
+               .Should().Be(LockType.Exclusive.ToString(),
+                            because: "the requested type was Exclusive");
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.EnforcedTypeAttribute)
+               .Should().Be("None",
+                            because: "no locking could be enforced");
+        }
+
+        [Test]
+        public void ServiceMessage_EmittedWithNoneEnforcedType_WhenSharedUnsupported()
+        {
+            // Unsupported + shared → no lock at all; alert emitted with enforcedType = "None"
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.Unsupported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            log.ServiceMessages.Should().ContainSingle(
+                because: "exactly one alert message should be emitted when no isolation is available");
+            var msg = log.ServiceMessages[0];
+            msg.Name.Should().Be(ServiceMessageNames.CalamariScriptIsolationAlert.Name);
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.RequestedTypeAttribute)
+               .Should().Be(LockType.Shared.ToString(),
+                            because: "the requested type was Shared");
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.EnforcedTypeAttribute)
+               .Should().Be("None",
+                            because: "no locking could be enforced");
+        }
+
+        [Test]
+        public void ServiceMessage_FallbackUsed_IsFalse_WhenNoFallback()
+        {
+            // The 2-arg LockDirectory constructor sets IsFallback = false
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Unsupported);
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            var msg = log.ServiceMessages.Should().ContainSingle().Subject;
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.FallbackUsedAttribute)
+               .Should().Be(false.ToString(),
+                            because: "the lock directory was constructed without a fallback");
+        }
+
+        [Test]
+        public void ServiceMessage_FallbackUsed_IsTrue_WhenFallbackDirectoryWasChosen()
+        {
+            // Construct a LockDirectory explicitly marked as a fallback
+            var fallbackDir = new LockDirectory(
+                DirectoryInfo: new DirectoryInfo(tempDir),
+                LockSupport: LockCapability.Unsupported,
+                IsFallback: true,
+                DetectionResults: []);
+            var lockFile = fallbackDir.GetLockFile("ScriptIsolation.TestMutex.lock");
+            var opts = new LockOptions(LockType.Exclusive, "TestMutex", lockFile, TimeSpan.FromMinutes(1));
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            var msg = log.ServiceMessages.Should().ContainSingle().Subject;
+            msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.FallbackUsedAttribute)
+               .Should().Be(true.ToString(),
+                            because: "the lock directory was a fallback");
+        }
+
+        [Test]
+        public void ServiceMessage_CapabilityInfo_IncludesDetectionResults()
+        {
+            // Construct a LockDirectory with non-empty DetectionResults
+            var detectionResults = new List<LockSupportDetectionResult>
+            {
+                new(FallbackType: null,
+                    FileSystem: "nfs",
+                    LockCapability: LockCapability.Unsupported),
+                new(FallbackType: LockDirectoryFallbackType.TempFixed,
+                    FileSystem: "ext4",
+                    LockCapability: LockCapability.Supported)
+            };
+            var lockDir = new LockDirectory(
+                DirectoryInfo: new DirectoryInfo(tempDir),
+                LockSupport: LockCapability.Unsupported,
+                IsFallback: false,
+                DetectionResults: detectionResults);
+            var lockFile = lockDir.GetLockFile("ScriptIsolation.TestMutex.lock");
+            var opts = new LockOptions(LockType.Exclusive, "TestMutex", lockFile, TimeSpan.FromMinutes(1));
+
+            var (_, log) = UseExclusiveIfSharedIsNotSupported(opts);
+
+            var msg = log.ServiceMessages.Should().ContainSingle().Subject;
+            var capabilityInfo = msg.GetValue(ServiceMessageNames.CalamariScriptIsolationAlert.CapabilityInfoAttribute);
+            capabilityInfo.Should().NotBeNullOrEmpty(
+                because: "detection results should be serialised into the capability info attribute");
+            // Each detection result's ToString() should appear in the joined output
+            foreach (var result in detectionResults)
+            {
+                capabilityInfo.Should().Contain(result.ToString(),
+                                                because: $"detection result '{result}' should be included in capability info");
+            }
+        }
+    }
+}

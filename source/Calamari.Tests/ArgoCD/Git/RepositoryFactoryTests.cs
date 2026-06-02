@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Text;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -16,6 +17,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD.Git
 {
     [TestFixture]
+    [Category(TestCategory.RequiresOpenSsl1_1OrOpenSsl3)]
     public class RepositoryFactoryTests
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -37,7 +39,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorAgnosticApiAdapterFactory(Array.Empty<IGitVendorApiAdapterFactory>()), new SystemClock());
+            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorPullRequestClientResolver(Array.Empty<IGitVendorPullRequestClientFactory>()), new SystemClock());
         }
 
         [TearDown]
@@ -49,9 +51,9 @@ namespace Calamari.Tests.ArgoCD.Git
         [Test]
         public void ThrowsExceptionIfUrlDoesNotExist()
         {
-            var connection = new GitConnection("username",
+            var connection = new HttpsGitConnection("username",
                                                "password",
-                                               new Uri("file://doesNotExist"),
+                                               "file://doesNotExist",
                                                branchName);
 
             Action action = () => repositoryFactory.CloneRepository("name", connection);
@@ -66,7 +68,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(branchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, new Uri(OriginPath), branchName);
+            var connection = new HttpsGitConnection(null, null, OriginPath, branchName);
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
@@ -83,7 +85,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(RepositoryHelpers.MainBranchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, new Uri(OriginPath), new GitHead());
+            var connection = new HttpsGitConnection(null, null, OriginPath, new GitHead());
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
@@ -91,6 +93,31 @@ namespace Calamari.Tests.ArgoCD.Git
             File.Exists(Path.Combine(clonedRepository.WorkingDirectory, filename)).Should().BeTrue();
             var fileContent = File.ReadAllText(Path.Combine(clonedRepository.WorkingDirectory, filename));
             fileContent.Should().Be(originalContent);
+        }
+
+        [Test]
+        public void CloningSshKeyGitConnectionDoesNotResolveAPullRequestClientAndLogsVerboseMessage()
+        {
+            var filename = "sshTest.txt";
+            var content = "ssh test content";
+            CreateCommitOnOrigin(branchName, filename, content);
+
+            var mockResolver = Substitute.For<IGitVendorPullRequestClientResolver>();
+            var factoryWithMockedResolver = new RepositoryFactory(log, fileSystem, tempDirectory, mockResolver, new SystemClock());
+
+            var sshConnection = new SshKeyGitConnection(
+                Username: "git",
+                PrivateKey: "private-key",
+                Url: OriginPath,
+                GitReference: branchName);
+
+            // libgit2 skips credential callbacks for local file paths, so this test validates only pull-request-client resolution and verbose logging — not SSH credential validity.
+            factoryWithMockedResolver.CloneRepository("Clone_WithSshConnection", sshConnection);
+
+            mockResolver.DidNotReceive().TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<System.Threading.CancellationToken>());
+
+            log.MessagesVerboseFormatted
+               .Should().Contain(s => s.Contains("SSH authentication") && s.Contains("PR creation will not be available"));
         }
 
         void CreateCommitOnOrigin(GitBranchName branchName, string fileName, string content)

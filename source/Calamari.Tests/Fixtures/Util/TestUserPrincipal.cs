@@ -2,12 +2,14 @@ using System;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Net;
+using System.Runtime.Versioning;
 using System.Security.Principal;
 using Microsoft.Win32;
 using Polly;
 
 namespace Calamari.Tests.Fixtures.Util
 {
+    [SupportedOSPlatform("Windows")]
     public class TestUserPrincipal
     {
         public TestUserPrincipal(string username, string password = null)
@@ -87,7 +89,6 @@ namespace Calamari.Tests.Fixtures.Util
 
         static void HideUserAccountFromLogonScreen(string username)
         {
-#pragma warning disable CA1416
             using (var winLogonSubKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows NT\\CUrrentVersion\\WinLogon", RegistryKeyPermissionCheck.ReadWriteSubTree))
 
             {
@@ -103,14 +104,12 @@ namespace Calamari.Tests.Fixtures.Util
                     }
                 }
             }
-#pragma warning restore CA1416
         }
 
         public TestUserPrincipal EnsureIsMemberOfGroup(string groupName)
         {
             Console.WriteLine($"Ensuring the Windows User Account called '{UserName}' is a member of the '{groupName}' group...");
             using (var principalContext = new PrincipalContext(ContextType.Machine))
-#pragma warning disable CA1416
             using (var principal = UserPrincipal.FindByIdentity(principalContext, IdentityType.Sid, Sid.Value))
 
             {
@@ -127,7 +126,6 @@ namespace Calamari.Tests.Fixtures.Util
 
                 return this;
             }
-#pragma warning restore CA1416
         }
 
         public TestUserPrincipal GrantLogonAsAServiceRight()
@@ -140,9 +138,7 @@ namespace Calamari.Tests.Fixtures.Util
         
         public SecurityIdentifier Sid { get; private set; }
 
-#pragma warning disable CA1416 // API not supported on all platforms
         public string NTAccountName => Sid.Translate(typeof(NTAccount)).ToString();
-#pragma warning restore CA1416 // API not supported on all platforms
         public string DomainName => NTAccountName.Split(new[] {'\\'}, 2)[0];
         public string UserName => NTAccountName.Split(new[] {'\\'}, 2)[1];
         public string SamAccountName { get; private set; }

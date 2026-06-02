@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.Pipeline;
 namespace Calamari.AzureResourceGroup
 {
     [Command("deploy-azure-resource-group", Description = "Creates a new Azure Resource Group deployment")]
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class DeployAzureResourceGroupCommand : PipelineCommand
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)

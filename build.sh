@@ -44,7 +44,7 @@ else
             unset DOTNET_VERSION
         fi
     fi
-    
+
     # ----- Octopus Deploy Modification -----
     #
     # The default behaviour of the Nuke Bootstrapper (when .NET is not already preinstalled) is
@@ -68,12 +68,12 @@ else
     # Install by channel or version
     DOTNET_DIRECTORY="$TEMP_DIRECTORY/dotnet-unix"
     if [[ -z ${DOTNET_VERSION+x} ]]; then
-        "$DOTNET_INSTALL_FILE" --install-dir "$DOTNET_DIRECTORY" --channel "$DOTNET_CHANNEL"
+        "$DOTNET_INSTALL_FILE" --install-dir "$DOTNET_DIRECTORY" --channel "$DOTNET_CHANNEL" --no-path
     else
-        "$DOTNET_INSTALL_FILE" --install-dir "$DOTNET_DIRECTORY" --version "$DOTNET_VERSION"
+        "$DOTNET_INSTALL_FILE" --install-dir "$DOTNET_DIRECTORY" --version "$DOTNET_VERSION" --no-path
     fi
     export DOTNET_EXE="$DOTNET_DIRECTORY/dotnet"
-    
+
     # ----- Octopus Deploy Modification -----
     # Update the path with the temporary dotnet exe so it can be found by anything be run out of this shell
     export PATH="$PATH:$DOTNET_DIRECTORY"

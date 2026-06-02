@@ -18,10 +18,9 @@ namespace Octopus.Calamari.ConsolidatedPackage
             "Calamari.AzureResourceGroup",
             "Calamari.GoogleCloudScripting",
             "Calamari.AzureScripting",
-            "Calamari.AzureWebApp",
             "Calamari.Terraform"
         ];
-        
-        static string[] Windows => [..NonWindows, "Calamari.AzureServiceFabric"];
+
+        static string[] Windows => [..NonWindows, "Calamari.AzureWebApp", "Calamari.AzureServiceFabric"];
     }
 }

@@ -6,8 +6,8 @@
 
         public static class Authentication
         {
-            public static readonly string UseInstanceRole = "Octopus.Action.AwsAccount.UseInstanceRole";
-            public static readonly string AwsAccountVariable = "Octopus.Action.AwsAccount.Variable";
+            public const string UseInstanceRole = "Octopus.Action.AwsAccount.UseInstanceRole";
+            public const string AwsAccountVariable = "Octopus.Action.AwsAccount.Variable";
         }
 
         public static class S3
@@ -17,6 +17,21 @@
             public const string PublicAccess = "Octopus.Action.Aws.S3.PublicAccess";
             public const string FileSelections = "Octopus.Action.Aws.S3.FileSelections";
             public const string PackageOptions = "Octopus.Action.Aws.S3.PackageOptions";
+        }
+
+        public static class Ecs
+        {
+            public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
+            public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
+            public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.TargetTaskDefinitionName";
+            public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.TemplateTaskDefinitionName";
+            public const string Containers = "Octopus.Action.Aws.Ecs.Containers";
+
+            public static class WaitOption
+            {
+                public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";
+                public const string Timeout = "Octopus.Action.Aws.Ecs.WaitOption.Timeout";
+            }
         }
 
         public static class CloudFormation

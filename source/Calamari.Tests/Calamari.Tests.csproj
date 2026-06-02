@@ -15,12 +15,13 @@
         <EmitLegacyAssetsFileItems>true</EmitLegacyAssetsFileItems>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="NuGet.CommandLine" Version="7.0.1">
+        <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.4.0" />
+        <PackageReference Include="NuGet.CommandLine" Version="7.0.3">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0"/>
-        <PackageReference Include="System.Text.Json" Version="8.0.6"/>
+        <PackageReference Include="System.Text.Json" Version="9.0.16" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41"/>
         <PackageReference Include="WireMock.Net" Version="1.6.9"/>
         <PackageReference Include="XPath2" Version="1.1.5"/>
@@ -130,6 +131,9 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="Helpers\Certificates\SampleCertificateFiles\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="KubernetesFixtures\Patching\**\*.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <Compile Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**"/>

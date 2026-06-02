@@ -28,26 +28,25 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.8.8" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.21.1" />
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
-    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Octopus.Octodiff" Version="2.0.547" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.883" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="Octostache" Version="3.8.1563" />
-    <PackageReference Include="SharpCompress" Version="0.37.2" />
+    <PackageReference Include="Octostache" Version="3.9.2" />
+    <PackageReference Include="SharpCompress" Version="0.37.2">
+      <NoWarn>NU1902</NoWarn>
+    </PackageReference>
     <PackageReference Include="Sprache" Version="2.3.1" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
     <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
     <PackageReference Include="Polly" Version="8.3.1" />
-    <PackageReference Include="NuGet.Commands" Version="7.0.1" />
+    <PackageReference Include="NuGet.Commands" Version="7.0.3" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.0" />
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />

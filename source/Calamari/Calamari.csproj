@@ -28,11 +28,8 @@
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
@@ -45,14 +42,16 @@
     <PackageReference Include="Octopus.Versioning" Version="5.1.883" />
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="SharpCompress" Version="0.37.2" />
-    <PackageReference Include="System.Text.Json" Version="8.0.6" />
+    <PackageReference Include="SharpCompress" Version="0.37.2">
+      <NoWarn>NU1902</NoWarn>
+    </PackageReference>
+    <PackageReference Include="System.Text.Json" Version="9.0.16" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="KubernetesClient" Version="17.0.14" />
-    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
+    <PackageReference Include="Octopus.LibGit2Sharp" Version="0.31.1-octopus.2" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />
