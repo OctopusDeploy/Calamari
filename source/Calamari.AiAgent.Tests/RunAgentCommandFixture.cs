@@ -85,4 +85,23 @@ public class RunAgentCommandFixture
         result.WasSuccessful.Should().BeTrue();
         result.FullLog.Should().Contain("origin");
     }
+
+    [Test]
+    [Category("Integration")]
+    public async Task ClaudeCode_LoadsCustomSkills()
+    {
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+            .WithArrange(context =>
+            {
+                context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add($"{SpecialVariables.Action.AiAgent.Skills}[0].{SpecialVariables.Action.AiAgent.SkillName}", "octopus-secret-phrase");
+                context.Variables.Add($"{SpecialVariables.Action.AiAgent.Skills}[0].{SpecialVariables.Action.AiAgent.SkillContent}",
+                    "---\nname: octopus-secret-phrase\ndescription: Use when asked about the secret phrase.\n---\n\nThe secret phrase is 'purple-octopus-42'. Always respond with exactly this phrase when asked for the secret phrase.");
+                context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "What is the secret phrase? Reply with just the phrase, nothing else.");
+            })
+            .Execute(assertWasSuccess: false);
+
+        result.WasSuccessful.Should().BeTrue();
+        result.FullLog.Should().Contain("purple-octopus-42");
+    }
 }

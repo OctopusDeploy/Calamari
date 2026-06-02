@@ -52,7 +52,7 @@ namespace Calamari.AiAgent.Behaviours
                     HandleMessageEvent(JsonSerializer.Deserialize<AssistantStreamEvent>(json, JsonOptions)?.Message);
                     break;
                 case StreamEventType.User:
-                    HandleUserMessage(JsonSerializer.Deserialize<UserStreamEvent>(json, JsonOptions)?.Message);
+                    HandleUserMessage(JsonSerializer.Deserialize<UserStreamEvent>(json, JsonOptions));
                     break;
                 case StreamEventType.Result:
                     HandleResultEvent(JsonSerializer.Deserialize<ResultStreamEvent>(json, JsonOptions)!);
@@ -91,7 +91,7 @@ namespace Calamari.AiAgent.Behaviours
             }
         }
 
-        void HandleMessageEvent(StreamMessage? message)
+        void HandleMessageEvent(StreamMessage? message, bool logText = true)
         {
             if (message?.Content == null)
                 return;
@@ -111,8 +111,15 @@ namespace Calamari.AiAgent.Behaviours
                     case ContentBlockType.Text:
                     {
                         var block = element.Deserialize<TextContentBlock>(JsonOptions);
-                        responseBuilder.Append(block?.Text);
-                        log.Info(block?.Text ?? "");
+                        if (logText)
+                        {
+                            responseBuilder.Append(block?.Text);
+                            log.Info(block?.Text ?? "");    
+                        }
+                        else
+                        {
+                            log.Verbose(block?.Text ?? "");
+                        }
                         break;
                     }
 
@@ -183,9 +190,16 @@ namespace Calamari.AiAgent.Behaviours
             }
         }
 
-        void HandleUserMessage(StreamMessage? message)
+        void HandleUserMessage(UserStreamEvent? message)
         {
-            HandleMessageEvent(message);
+            if (message is null || message?.Message != null)
+                return;
+
+            if (message!.IsSynthetic == true)
+            {
+                return; //TODO: Still log
+            }
+            HandleMessageEvent(message?.Message);
         }
 
         void HandleResultEvent(ResultStreamEvent evt)

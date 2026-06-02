@@ -79,7 +79,7 @@ namespace Calamari.AiAgent.Behaviours
             var tools = new List<AITool>();
             McpClient? mcpClient = null;
 
-            var githubToken = variables.Get(SpecialVariables.Action.AiAgent.GitHubToken);
+            var githubToken = variables.Get("Octopus.Action.Claude.GitHubToken");
             if (!string.IsNullOrWhiteSpace(githubToken))
             {
                 log.Info("Connecting to GitHub MCP server...");
@@ -151,7 +151,7 @@ namespace Calamari.AiAgent.Behaviours
                 var msg = new ChatMessage(ChatRole.User, prompt);
                 chatHistory.Add(msg);
 
-                var maxTokens = variables.GetInt32(SpecialVariables.Action.AiAgent.MaxTokens)??10000;
+                var maxTokens = 10000;
                 var chatOptions = new ChatOptions()
                 {
                     MaxOutputTokens = maxTokens, Tools = [.. tools]

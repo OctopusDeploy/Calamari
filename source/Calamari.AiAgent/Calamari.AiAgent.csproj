@@ -27,4 +27,9 @@
         <InternalsVisibleTo Include="Calamari.AiAgent.Tests" />
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\Skills\**\*.md" />
+        <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\system-prompt.md" />
+    </ItemGroup>
+
 </Project>
