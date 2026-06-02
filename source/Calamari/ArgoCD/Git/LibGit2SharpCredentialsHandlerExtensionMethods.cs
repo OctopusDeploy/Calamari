@@ -45,7 +45,7 @@ public static class LibGit2SharpCredentialsHandlerExtensionMethods
 
                    return new SshKeyMemoryCredentials
                    {
-                       Username = connection.Username ?? userFromUrl,
+                       Username = string.IsNullOrWhiteSpace(connection.Username) ? userFromUrl : connection.Username,
                        PrivateKey = connection.PrivateKey,
                    };
                };
