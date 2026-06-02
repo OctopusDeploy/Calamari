@@ -26,10 +26,12 @@ namespace Calamari.DockerCredentialHelper
             RestrictFileToOwner(filePath);
         }
 
+        static void RestrictDirectoryToOwner(string path) => RestrictToOwner(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+        static void RestrictFileToOwner(string path) => RestrictToOwner(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+
         // The credential files only contain ciphertext, but restrict them to the owner anyway as
         // defense-in-depth (dir 0700, file 0600). No-op on Windows, which has no Unix file modes.
-        static void RestrictDirectoryToOwner(string path) => RestrictToOwner(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        static void RestrictFileToOwner(string path) => RestrictToOwner(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
         static void RestrictToOwner(string path, UnixFileMode mode)
         {
             if (!OperatingSystem.IsWindows())

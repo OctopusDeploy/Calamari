@@ -174,14 +174,14 @@ namespace Calamari.Integration.Packages.Download
             return $"{feedUri.Host}:{feedUri.Port}";
         }
 
-        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> dictionary)
+        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> environmentVariables)
         {
-            var envVars = new Dictionary<string, string>(dictionary);
-            envVars["DockerUsername"] = username;
-            envVars["DockerPassword"] = password;
-            envVars["FeedUri"] = feed;
+            var dockerLoginEnvironmentVariables = new Dictionary<string, string>(environmentVariables);
+            dockerLoginEnvironmentVariables["DockerUsername"] = username;
+            dockerLoginEnvironmentVariables["DockerPassword"] = password;
+            dockerLoginEnvironmentVariables["FeedUri"] = feed;
 
-            var (result, output) = ExecuteScript("DockerLogin", envVars);
+            var (result, output) = ExecuteScript("DockerLogin", dockerLoginEnvironmentVariables);
             if (result == null)
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
