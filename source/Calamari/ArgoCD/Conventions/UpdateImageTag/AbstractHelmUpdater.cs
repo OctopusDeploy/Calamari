@@ -9,7 +9,6 @@ using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Patching.JsonPatch;
-using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 

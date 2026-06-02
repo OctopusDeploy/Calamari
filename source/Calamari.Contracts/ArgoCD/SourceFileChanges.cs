@@ -2,7 +2,7 @@ using System;
 
 namespace Octopus.Calamari.Contracts.ArgoCD;
 
-public record TrackedSourceDetail(
+public record SourceFileChanges(
     string? CommitSha,
     DateTimeOffset? CommitTimestamp,
     int SourceIndex,

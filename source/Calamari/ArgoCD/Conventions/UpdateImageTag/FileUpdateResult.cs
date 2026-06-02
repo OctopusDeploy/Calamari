@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
