@@ -18,17 +18,13 @@ using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Newtonsoft.Json;
-using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Timeout;
-using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -93,12 +89,19 @@ namespace Calamari.AzureAppService.Behaviors
 
             var webSiteResource = armClient.GetWebSiteResource(targetSite.CreateWebSiteResourceIdentifier());
             Log.Verbose($"App Service '{targetSite.Site}' found, with Azure Resource Manager Id '{webSiteResource.Id.ToString()}'.");
+            var siteInfo = webSiteResource.Get();
+            WebSiteResource? webSiteInforResource = null;
+            if (siteInfo != null && siteInfo.HasValue && siteInfo.Value.HasData)
+            {
+                Log.Verbose($"App Service Plan running on '{siteInfo.Value.Data.Sku}' tier");
+                webSiteInforResource = siteInfo.Value;
+            } 
 
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
-
+            
             IPackageProvider packageProvider = packageFileInfo.Extension switch
                                                {
-                                                   ".zip" => new ZipPackageProvider(),
+                                                   ".zip" => GetZipPackageProvider(webSiteInforResource),
                                                    ".nupkg" => new NugetPackageProvider(),
                                                    ".war" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/wardeploy"),
                                                    ".jar" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/publish?type=jar"),
@@ -177,6 +180,16 @@ namespace Calamari.AzureAppService.Behaviors
             }
         }
 
+        static IPackageProvider GetZipPackageProvider(WebSiteResource? webSiteResource)
+        {
+            if (webSiteResource != null && webSiteResource.Data.Sku.Equals("FlexConsumption", StringComparison.OrdinalIgnoreCase))
+            {
+                return new FlexConsumptionZipPackageProvider();
+            }
+
+            return new ZipPackageProvider();
+        }
+
         private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, AzureTargetSite site)
         {
             Log.Verbose($"Checking if deployment slot '{site.Slot}' exists.");
@@ -234,7 +247,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                       {
                                                                                           await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                           using var streamContent = new StreamContent(fileStream);
-                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
                                                                                           
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
@@ -312,7 +325,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                 //we have to create a new request message each time
                                                                                                 await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                                 using var streamContent = new StreamContent(fileStream);
-                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
 
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                                 {

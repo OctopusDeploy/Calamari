@@ -4,7 +4,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -56,6 +55,6 @@ namespace Calamari.AzureAppService
         }
 
         public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile) => await Task.Run(() => sourceFile);
-
+        public string ContentType => "application/octet-stream";
     }
 }

@@ -12,5 +12,7 @@ namespace Calamari.AzureAppService
         Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory);
 
         Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile);
+        
+        string ContentType { get; }
     }
 }
