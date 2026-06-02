@@ -16,16 +16,9 @@ public static class VariablesDeserialisationExtensions
             throw new CommandException($"Variable {name} was not supplied");
         }
 
-        // Expand any `#{...}` references in the raw JSON before deserialising. Without
-        // this, variables nested inside the JSON (e.g. a containerImage referencing a
-        // package variable) stay as literal `#{...}` text in the typed objects.
-        // Variables that contain JSON-significant characters must use `| JsonEscape`
-        // when referenced so the substituted text stays parseable.
-        var evaluatedJson = variables.Evaluate(variableJson);
-
         try
         {
-            var output = JsonConvert.DeserializeObject<T>(evaluatedJson, CalamariContractSerializationSettings.Default);
+            var output = JsonConvert.DeserializeObject<T>(variableJson, CalamariContractSerializationSettings.Default);
             return output ?? throw new CommandException($"Variable {name} was deserialized as null ");
         }
         catch (JsonSerializationException)
