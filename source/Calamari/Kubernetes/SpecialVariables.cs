@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Models;
 
 namespace Calamari.Kubernetes
@@ -191,6 +193,13 @@ namespace Calamari.Kubernetes
                     public const string ApplicationName = "applicationName";
                     public const string Sources = "sources";
                 }
+                
+                public record SourceDetails(
+                    string? CommitSha,
+                    DateTimeOffset? CommitTimestamp,
+                    int SourceIndex,
+                    List<FileHash> ReplacedFiles,
+                    List<FileJsonPatch> PatchedFiles);
             }
         }
     }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
@@ -22,6 +24,7 @@ namespace Calamari.Tests.ArgoCD
         const string ApplicationName = "TestApp";
         const string ApplicationNamespace = "argocd";
         static readonly QualifiedApplicationName QualifiedApplicationName = QualifiedApplicationName.Create(ApplicationName, ApplicationNamespace);
+        static readonly QualifiedApplicationName SecondApplicationName = Calamari.ArgoCD.Models.QualifiedApplicationName.Create("OtherApp", ApplicationNamespace);
         const string CommitSha = "1234567890abcdef1234567890abcdef12345678";
         const string ShortSha = "1234567";
         static readonly DateTimeOffset Timestamp = DateTimeOffset.UtcNow;
@@ -154,13 +157,25 @@ namespace Calamari.Tests.ArgoCD
         public void WriteManifestUpdateOutput_SingleItems_WritesAllOutputVariables()
         {
             // Arrange
-            var gateways = new[] { "gateway-1" };
-            var gitRepos = new[] { "https://github.com/org/repo" };
-            var totalApps = new[] { (QualifiedApplicationName, 3, 2) };
-            var updatedApps = new[] { (QualifiedApplicationName, 2) };
+            var appResult = new ProcessApplicationResult(
+                gatewayId: "gateway-1",
+                gatewayName: "gateway-1",
+                applicationName: QualifiedApplicationName,
+                totalSourceCount: 3,
+                matchingSourceCount: 2,
+                trackedSourceDetails:
+                [
+                    new TrackedSourceDetail("https://github.com/org/repo", "abc123", DateTimeOffset.UtcNow, 0, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo", "def456", DateTimeOffset.UtcNow, 1, [], []),
+                ],
+                updatedImages: new HashSet<string>(),
+                gitReposUpdated: ["https://github.com/org/repo"]);
+            var applicationResults = new[] { appResult };
+            var totalApps = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
 
             // Act
-            writer.WriteManifestUpdateOutput(gateways, gitRepos, totalApps, updatedApps);
+            writer.WriteManifestUpdateOutput(["gateway-1"], ["https://github.com/org/repo"], totalApps, updatedApps, applicationResults);
 
             // Assert
             using var _ = new AssertionScope();
@@ -180,22 +195,37 @@ namespace Calamari.Tests.ArgoCD
         public void WriteManifestUpdateOutput_MultipleItems_WritesCommaSeparatedValues()
         {
             // Arrange
-            var gateways = new[] { "gateway-1", "gateway-2" };
-            var gitRepos = new[] { "https://github.com/org/repo-a", "https://github.com/org/repo-b" };
-            var app2 = QualifiedApplicationName.Create("OtherApp", "argocd");
-            var totalApps = new[]
-            {
-                (QualifiedApplicationName, 3, 2),
-                (app2, 1, 1),
-            };
-            var updatedApps = new[]
-            {
-                (QualifiedApplicationName, 2),
-                (app2, 1),
-            };
+            var appResult1 = new ProcessApplicationResult(
+                gatewayId: "gateway-1",
+                gatewayName: "gateway-1",
+                applicationName: QualifiedApplicationName,
+                totalSourceCount: 3,
+                matchingSourceCount: 2,
+                trackedSourceDetails:
+                [
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "abc123", DateTimeOffset.UtcNow, 0, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "def456", DateTimeOffset.UtcNow, 1, [], []),
+                ],
+                updatedImages: new HashSet<string>(),
+                gitReposUpdated: ["https://github.com/org/repo-a"]);
+            var appResult2 = new ProcessApplicationResult(
+                gatewayId: "gateway-2",
+                gatewayName: "gateway-2",
+                applicationName: SecondApplicationName,
+                totalSourceCount: 1,
+                matchingSourceCount: 1,
+                trackedSourceDetails:
+                [
+                    new TrackedSourceDetail("https://github.com/org/repo-b", "ghi789", DateTimeOffset.UtcNow, 0, [], []),
+                ],
+                updatedImages: new HashSet<string>(),
+                gitReposUpdated: ["https://github.com/org/repo-b"]);
+            var applicationResults = new[] { appResult1, appResult2 };
+            var totalApps = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
 
             // Act
-            writer.WriteManifestUpdateOutput(gateways, gitRepos, totalApps, updatedApps);
+            writer.WriteManifestUpdateOutput(["gateway-1", "gateway-2"], ["https://github.com/org/repo-a", "https://github.com/org/repo-b"], totalApps, updatedApps, applicationResults);
 
             // Assert
             using var _ = new AssertionScope();
@@ -203,18 +233,23 @@ namespace Calamari.Tests.ArgoCD
 
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1, gateway-2");
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo-a, https://github.com/org/repo-b");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{QualifiedApplicationName}, {SecondApplicationName}");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("3, 1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("2, 1");
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{QualifiedApplicationName}, {SecondApplicationName}");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("2, 1");
         }
 
         [Test]
         public void WriteManifestUpdateOutput_EmptyCollections_WritesEmptyValues()
         {
+            // Arrange
+            var applicationResults = Array.Empty<ProcessApplicationResult>();
+            var totalApps = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
+
             // Act
-            writer.WriteManifestUpdateOutput([], [], [], []);
+            writer.WriteManifestUpdateOutput([], [], totalApps, updatedApps, applicationResults);
 
             // Assert
             using var _ = new AssertionScope();
@@ -233,14 +268,26 @@ namespace Calamari.Tests.ArgoCD
         public void WriteImageUpdateOutput_SingleItems_WritesAllOutputVariablesIncludingUpdatedImages()
         {
             // Arrange
-            var gateways = new[] { "gateway-1" };
-            var gitRepos = new[] { "https://github.com/org/repo" };
-            var totalApps = new[] { (QualifiedApplicationName, 3, 2) };
-            var updatedApps = new[] { (QualifiedApplicationName, 2) };
-            const int imagesUpdatedCount = 5;
+            var appResult = new ProcessApplicationResult(
+                gatewayId: "gateway-1",
+                gatewayName: "gateway-1",
+                applicationName: QualifiedApplicationName,
+                totalSourceCount: 3,
+                matchingSourceCount: 2,
+                trackedSourceDetails:
+                [
+                    new TrackedSourceDetail("https://github.com/org/repo", "abc123", DateTimeOffset.UtcNow, 0, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo", "def456", DateTimeOffset.UtcNow, 1, [], []),
+                ],
+                updatedImages: ["image-a:1.0", "image-b:2.0", "image-c:3.0", "image-d:4.0", "image-e:5.0"],
+                gitReposUpdated: ["https://github.com/org/repo"]);
+            var applicationResults = new[] { appResult };
+            var totalApps = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
+            var imagesUpdatedCount = applicationResults.SelectMany(r => r.UpdatedImages).ToHashSet().Count;
 
             // Act
-            writer.WriteImageUpdateOutput(gateways, gitRepos, totalApps, updatedApps, imagesUpdatedCount);
+            writer.WriteImageUpdateOutput(["gateway-1"], ["https://github.com/org/repo"], totalApps, updatedApps, imagesUpdatedCount, applicationResults.ToList());
 
             // Assert
             using var _ = new AssertionScope();
@@ -260,23 +307,39 @@ namespace Calamari.Tests.ArgoCD
         public void WriteImageUpdateOutput_MultipleItems_WritesCommaSeparatedValues()
         {
             // Arrange
-            var gateways = new[] { "gateway-1", "gateway-2" };
-            var gitRepos = new[] { "https://github.com/org/repo-a", "https://github.com/org/repo-b" };
-            var app2 = QualifiedApplicationName.Create("OtherApp", "argocd");
-            var totalApps = new[]
-            {
-                (QualifiedApplicationName, 4, 3),
-                (app2, 2, 1),
-            };
-            var updatedApps = new[]
-            {
-                (QualifiedApplicationName, 3),
-                (app2, 1),
-            };
-            const int imagesUpdatedCount = 4;
+            var appResult1 = new ProcessApplicationResult(
+                gatewayId: "gateway-1",
+                gatewayName: "gateway-1",
+                applicationName: QualifiedApplicationName,
+                totalSourceCount: 4,
+                matchingSourceCount: 3,
+                trackedSourceDetails:
+                [
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "abc123", DateTimeOffset.UtcNow, 0, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "def456", DateTimeOffset.UtcNow, 1, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "ghi789", DateTimeOffset.UtcNow, 2, [], []),
+                ],
+                updatedImages: ["image-a:1.0", "image-b:2.0"],
+                gitReposUpdated: ["https://github.com/org/repo-a"]);
+            var appResult2 = new ProcessApplicationResult(
+                gatewayId: "gateway-2",
+                gatewayName: "gateway-2",
+                applicationName: SecondApplicationName,
+                totalSourceCount: 2,
+                matchingSourceCount: 1,
+                trackedSourceDetails:
+                [
+                    new TrackedSourceDetail("https://github.com/org/repo-b", "jkl012", DateTimeOffset.UtcNow, 0, [], []),
+                ],
+                updatedImages: ["image-c:3.0", "image-d:4.0"],
+                gitReposUpdated: ["https://github.com/org/repo-b"]);
+            var applicationResults = new[] { appResult1, appResult2 };
+            var totalApps = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
+            var imagesUpdatedCount = applicationResults.SelectMany(r => r.UpdatedImages).ToHashSet().Count;
 
             // Act
-            writer.WriteImageUpdateOutput(gateways, gitRepos, totalApps, updatedApps, imagesUpdatedCount);
+            writer.WriteImageUpdateOutput(["gateway-1", "gateway-2"], ["https://github.com/org/repo-a", "https://github.com/org/repo-b"], totalApps, updatedApps, imagesUpdatedCount, applicationResults.ToList());
 
             // Assert
             using var _ = new AssertionScope();
@@ -284,10 +347,10 @@ namespace Calamari.Tests.ArgoCD
 
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1, gateway-2");
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo-a, https://github.com/org/repo-b");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{QualifiedApplicationName}, {SecondApplicationName}");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("4, 2");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("3, 1");
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{QualifiedApplicationName}, {app2}");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{QualifiedApplicationName}, {SecondApplicationName}");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("3, 1");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be("4");
         }
@@ -295,8 +358,14 @@ namespace Calamari.Tests.ArgoCD
         [Test]
         public void WriteImageUpdateOutput_ZeroImagesUpdated_WritesZeroForUpdatedImages()
         {
+            // Arrange
+            var applicationResults = Array.Empty<ProcessApplicationResult>();
+            var totalApps = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
+            var imagesUpdatedCount = applicationResults.SelectMany(r => r.UpdatedImages).ToHashSet().Count;
+
             // Act
-            writer.WriteImageUpdateOutput([], [], [], [], 0);
+            writer.WriteImageUpdateOutput([], [], totalApps, updatedApps, imagesUpdatedCount, applicationResults.ToList());
 
             // Assert
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");

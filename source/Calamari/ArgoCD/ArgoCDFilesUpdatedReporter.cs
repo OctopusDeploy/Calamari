@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD
                 {
                     { ArgoCDFilesUpdatedAttributes.GatewayId, appResult.GatewayId },
                     { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Value },
-                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(ConvertPathsToPosix(appResult.TrackedSourceDetails)) }
+                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(MapToDto(ConvertPathsToPosix(appResult.TrackedSourceDetails))) }
                 };
 
                 var message = new ServiceMessage(
@@ -43,6 +43,17 @@ namespace Calamari.ArgoCD
 
                 log.WriteServiceMessage(message);
             }
+        }
+
+        List<SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.SourceDetails> MapToDto(List<TrackedSourceDetail> inputs)
+        {
+            return inputs.Select(i => new SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.SourceDetails(
+                                     i.CommitSha,
+                                     i.CommitTimestamp,
+                                     i.SourceIndex,
+                                     i.ReplacedFiles,
+                                     i.PatchedFiles))
+                         .ToList();
         }
 
         List<TrackedSourceDetail> ConvertPathsToPosix(List<TrackedSourceDetail> inputs)

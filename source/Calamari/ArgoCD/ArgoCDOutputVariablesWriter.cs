@@ -125,7 +125,7 @@ namespace Calamari.ArgoCD
                                               IEnumerable<string> gitRepos,
                                               IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
                                               IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts,
-                                              List<ProcessApplicationResult> applicationResults)
+                                              IReadOnlyCollection<ProcessApplicationResult> applicationResults)
         {
             foreach (var applicationResult in applicationResults)
             {
