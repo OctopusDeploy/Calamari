@@ -79,7 +79,7 @@ public class DeployEcsCommandInputs
 
     public string Memory => variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Memory);
 
-    public double DesiredCount => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount));
+    public int DesiredCount => int.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount));
     public double MinimumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
     public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
 
@@ -159,7 +159,7 @@ public record InputsValidityResult(IEnumerable<string> MissingKeys)
 
 public static class EcsInputDefaults
 {
-    public const double DesiredCount = 1;
+    public const int DesiredCount = 1;
     public const double MinimumHealthPercent = 100;
     public const double MaximumHealthPercent = 200;
 }

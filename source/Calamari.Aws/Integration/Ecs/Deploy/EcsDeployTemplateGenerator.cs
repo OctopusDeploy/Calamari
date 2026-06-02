@@ -51,7 +51,7 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
             list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskExecutionRole, commandInputs.TaskExecutionRole));
         }
 
-        if (DiffersFromDefault(commandInputs.DesiredCount, EcsInputDefaults.DesiredCount))
+        if (commandInputs.DesiredCount != EcsInputDefaults.DesiredCount)
         {
             list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount));
         }
