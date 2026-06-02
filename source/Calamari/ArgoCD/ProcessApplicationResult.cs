@@ -11,6 +11,7 @@ namespace Calamari.ArgoCD
     public record FileJsonPatch(string FilePath, string JsonPatch);
 
     public record TrackedSourceDetail(
+        string RepositoryUri,
         string? CommitSha,
         DateTimeOffset? CommitTimestamp,
         int SourceIndex,
@@ -19,6 +20,7 @@ namespace Calamari.ArgoCD
 
     public class ProcessApplicationResult(
         string gatewayId,
+        string gatewayName,
         QualifiedApplicationName applicationName,
         int totalSourceCount,
         int matchingSourceCount,
@@ -27,6 +29,7 @@ namespace Calamari.ArgoCD
         HashSet<string> gitReposUpdated)
     {
         public string GatewayId { get; } = gatewayId;
+        public string GatewayName { get; } = gatewayName;
         public QualifiedApplicationName ApplicationName { get; } = applicationName;
         public int TotalSourceCount { get; } = totalSourceCount;
         public int MatchingSourceCount { get; } = matchingSourceCount;

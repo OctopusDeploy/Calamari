@@ -102,7 +102,8 @@ namespace Calamari.ArgoCD.Conventions
             outputVariablesWriter.WriteManifestUpdateOutput(gatewayIds,
                                                             gitReposUpdated,
                                                             totalApplicationsWithSourceCounts,
-                                                            updatedApplicationsWithSources
+                                                            updatedApplicationsWithSources,
+                                                            applicationResults
                                                            );
         }
 

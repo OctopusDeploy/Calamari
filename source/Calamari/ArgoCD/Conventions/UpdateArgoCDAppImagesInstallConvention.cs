@@ -99,7 +99,8 @@ namespace Calamari.ArgoCD.Conventions
                                                          gitReposUpdated,
                                                          totalApplicationsWithSourceCounts,
                                                          updatedApplicationsWithSources,
-                                                         newImagesWritten.Count
+                                                         newImagesWritten.Count,
+                                                         applicationResults
                                                         );
         }
     }
