@@ -26,6 +26,7 @@ using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ArgoCD;
+using FileJsonPatch = Calamari.ArgoCD.FileJsonPatch;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {

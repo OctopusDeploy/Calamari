@@ -35,7 +35,7 @@ namespace Calamari.ArgoCD
                 {
                     { ArgoCDFilesUpdatedAttributes.GatewayId, appResult.GatewayId },
                     { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Value },
-                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(ConvertPathsToPosix(appResult.TrackedSourceDetails)) }
+                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(appResult.TrackedSourceDetails.Select(MapSource).ToList()) }
                 };
 
                 var message = new ServiceMessage(
@@ -46,22 +46,15 @@ namespace Calamari.ArgoCD
             }
         }
 
-        List<TrackedSourceDetail> ConvertPathsToPosix(List<TrackedSourceDetail> inputs)
+        static SourceFileChanges MapSource(TrackedSourceDetail trackedSourceDetail)
         {
-            return inputs.Select(usd => usd with
-                         {
-                             ReplacedFiles = usd.ReplacedFiles.Select(rf => rf with
-                                                {
-                                                    FilePath = rf.FilePath.EnsurePosixDirectorySeparator()
-                                                })
-                                                .ToList(),
-                             PatchedFiles = usd.PatchedFiles.Select(pf => pf with
-                                               {
-                                                   FilePath = pf.FilePath.EnsurePosixDirectorySeparator()
-                                               })
-                                               .ToList()
-                         })
-                         .ToList();
+            return new SourceFileChanges(
+                trackedSourceDetail.CommitSha,
+                trackedSourceDetail.CommitTimestamp,
+                trackedSourceDetail.SourceIndex,
+                trackedSourceDetail.ReplacedFiles.Select(f => new Octopus.Calamari.Contracts.ArgoCD.FileHash(f.FilePath.EnsurePosixDirectorySeparator(), f.Hash)).ToList(),
+                trackedSourceDetail.PatchedFiles.Select(f => new Octopus.Calamari.Contracts.ArgoCD.FileJsonPatch(f.FilePath.EnsurePosixDirectorySeparator(), f.JsonPatch)).ToList()
+            );
         }
     }
 }
