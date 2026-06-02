@@ -7,7 +7,7 @@ public sealed record ServiceProperties
     public Value<string> Cluster { get; init; }
     public string LaunchType { get; init; }
     public Value<string> TaskDefinition { get; init; }
-    public Value<double> DesiredCount { get; init; }
+    public Value<int> DesiredCount { get; init; }
 
     // CFN's actual property name is EnableECSManagedTags (all-caps "ECS"); keep
     // the C# property in conventional PascalCase and override the JSON name here.
@@ -22,8 +22,8 @@ public sealed record ServiceProperties
 
 public sealed record DeploymentConfiguration
 {
-    public Value<double> MinimumHealthyPercent { get; init; }
-    public Value<double> MaximumPercent { get; init; }
+    public Value<int> MinimumHealthyPercent { get; init; }
+    public Value<int> MaximumPercent { get; init; }
 }
 
 public sealed record NetworkConfiguration

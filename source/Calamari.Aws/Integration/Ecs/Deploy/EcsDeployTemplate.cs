@@ -116,86 +116,87 @@ sealed class EcsDeployTemplate
 
         return new Cfn.TaskDefinitionProperties
         {
-            ContainerDefinitions    = commandInputs.Containers.Select(c => BuildContainerDefinition(c, logGroupNameRef, awsRegionRef)).ToArray(),
-            Family                  = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionName),
-            Cpu                     = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionCpu),
-            Memory                  = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionMemory),
-            ExecutionRoleArn        = executionRoleArn,
-            TaskRoleArn             = StringRefOr(EcsTemplateParameterNames.TaskRole, commandInputs.TaskRole),
+            ContainerDefinitions = commandInputs.Containers.Select(c => BuildContainerDefinition(commandInputs, c, logGroupNameRef, awsRegionRef)).ToArray(),
+            Family = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionName),
+            Cpu = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionCpu),
+            Memory = new Cfn.Ref(EcsTemplateParameterNames.TaskDefinitionMemory),
+            ExecutionRoleArn = executionRoleArn,
+            TaskRoleArn = StringRefOr(EcsTemplateParameterNames.TaskRole, commandInputs.TaskRole),
             RequiresCompatibilities = [FargateLaunchType],
-            NetworkMode             = AwsVpcNetworkMode,
-            RuntimePlatform         = new Cfn.RuntimePlatform
+            NetworkMode = AwsVpcNetworkMode,
+            RuntimePlatform = new Cfn.RuntimePlatform
             {
                 OperatingSystemFamily = LinuxOperatingSystemFamily,
-                CpuArchitecture       = commandInputs.CpuArchitecture
+                CpuArchitecture = commandInputs.CpuArchitecture
             },
             Volumes = commandInputs.Volumes.ParseVolumes(),
-            Tags    = commandInputs.Tags.ToCloudFormationTags()
+            Tags = commandInputs.Tags.ToCloudFormationTags()
         };
     }
 
     Cfn.ServiceProperties BuildServiceProperties() => new()
     {
-        Cluster              = new Cfn.Ref(EcsTemplateParameterNames.ClusterName),
-        LaunchType           = FargateLaunchType,
-        TaskDefinition       = new Cfn.Ref(commandInputs.TaskName),
-        DesiredCount         = NumberRefOr(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount),
+        Cluster = new Cfn.Ref(EcsTemplateParameterNames.ClusterName),
+        LaunchType = FargateLaunchType,
+        TaskDefinition = new Cfn.Ref(commandInputs.TaskName),
+        DesiredCount = NumberRefOr(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount),
         EnableEcsManagedTags = commandInputs.EnableEcsManagedTags,
         DeploymentConfiguration = new Cfn.DeploymentConfiguration
         {
             MinimumHealthyPercent = NumberRefOr(EcsTemplateParameterNames.MinimumHealthPercent, commandInputs.MinimumHealthyPercentage),
-            MaximumPercent        = NumberRefOr(EcsTemplateParameterNames.MaximumHealthPercent, commandInputs.MaximumHealthyPercentage)
+            MaximumPercent = NumberRefOr(EcsTemplateParameterNames.MaximumHealthPercent, commandInputs.MaximumHealthyPercentage)
         },
         NetworkConfiguration = new Cfn.NetworkConfiguration
         {
             AwsvpcConfiguration = new Cfn.AwsvpcConfiguration
             {
                 AssignPublicIp = commandInputs.AutoAssignPublicIp,
-                Subnets        = commandInputs.SubnetIDs,
+                Subnets = commandInputs.SubnetIDs,
                 SecurityGroups = commandInputs.NetworkSecurityGroupIds
             }
         },
         LoadBalancers = commandInputs.LoadBalancerMappings.ToLoadBalancerProperties(),
-        Tags          = commandInputs.Tags.ToCloudFormationTags()
+        Tags = commandInputs.Tags.ToCloudFormationTags()
     };
 
     static Cfn.ContainerDefinition BuildContainerDefinition(
+        DeployEcsCommandInputs commandInputs,
         ContainerSpec c,
         Cfn.Value<string> logGroupNameRef,
         Cfn.Value<string> awsRegionRef) => new()
     {
-        Name                   = c.ContainerName,
-        Image                  = c.ContainerImageReference.ImageName,
-        Essential              = c.Essential.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
-        DisableNetworking      = c.NetworkSettings.DisableNetworking.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
-        WorkingDirectory       = string.IsNullOrEmpty(c.WorkingDirectory) ? null : c.WorkingDirectory,
-        Memory                 = c.MemoryLimitHard.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-        MemoryReservation      = c.MemoryLimitSoft.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-        Cpu                    = c.Cpus.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-        User                   = string.IsNullOrEmpty(c.User) ? null : c.User,
-        StartTimeout           = c.StartTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-        StopTimeout            = c.StopTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        Name = c.ContainerName,
+        Image = commandInputs.ResolveImageName(c.ContainerImageReference),
+        Essential = c.Essential.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
+        DisableNetworking = c.NetworkSettings.DisableNetworking.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
+        WorkingDirectory = string.IsNullOrEmpty(c.WorkingDirectory) ? null : c.WorkingDirectory,
+        Memory = c.MemoryLimitHard.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        MemoryReservation = c.MemoryLimitSoft.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        Cpu = c.Cpus.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        User = string.IsNullOrEmpty(c.User) ? null : c.User,
+        StartTimeout = c.StartTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        StopTimeout = c.StopTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
         // SPF always emits these arrays even when empty — preserve that shape.
-        DnsServers             = c.NetworkSettings.DnsServers.ToArray(),
-        DnsSearchDomains       = c.NetworkSettings.DnsSearchDomains.ToArray(),
+        DnsServers = c.NetworkSettings.DnsServers.ToArray(),
+        DnsSearchDomains = c.NetworkSettings.DnsSearchDomains.ToArray(),
         ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
-        Command                = c.Command.ConvertedOrDefault<string[]>(s => [s], () => null),
-        EntryPoint             = c.EntryPoint.ConvertedOrDefault<string[]>(s => s.Split(',').Select(x => x.Trim()).ToArray(), () => null),
-        ResourceRequirements   = c.ParseResourceRequirements(),
-        DockerLabels           = c.ParseDockerLabels(),
-        PortMappings           = c.ParsePortMappings(),
-        HealthCheck            = c.ParseHealthCheck(),
-        ExtraHosts             = c.ParseExtraHosts(),
-        RepositoryCredentials  = c.ParseRepositoryCredentials(),
-        Ulimits                = c.ParseULimits(),
-        MountPoints            = c.ParseMountPoints(),
-        DependsOn              = c.ParseDependencies(),
-        VolumesFrom            = c.ParseVolumesFrom(),
-        LogConfiguration       = c.ParseLogConfiguration(logGroupNameRef, awsRegionRef),
-        EnvironmentFiles       = c.ParseEnvironmentFiles(),
-        FirelensConfiguration  = c.ParseFireLensConfiguration(),
-        Environment            = c.ParseEnvironmentVariables(),
-        Secrets                = c.ParseSecrets()
+        Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => null),
+        EntryPoint = c.EntryPoint.ConvertedOrDefault<string[]>(s => s.Split(',').Select(x => x.Trim()).ToArray(), () => null),
+        ResourceRequirements = c.ParseResourceRequirements(),
+        DockerLabels = c.ParseDockerLabels(),
+        PortMappings = c.ParsePortMappings(),
+        HealthCheck = c.ParseHealthCheck(),
+        ExtraHosts = c.ParseExtraHosts(),
+        RepositoryCredentials = c.ParseRepositoryCredentials(),
+        Ulimits = c.ParseULimits(),
+        MountPoints = c.ParseMountPoints(),
+        DependsOn = c.ParseDependencies(),
+        VolumesFrom = c.ParseVolumesFrom(),
+        LogConfiguration = c.ParseLogConfiguration(logGroupNameRef, awsRegionRef),
+        EnvironmentFiles = c.ParseEnvironmentFiles(),
+        FirelensConfiguration = c.ParseFireLensConfiguration(),
+        Environment = c.ParseEnvironmentVariables(),
+        Secrets = c.ParseSecrets()
     };
 
     // Conditionally-registered parameters: when the parameter exists, emit a Ref so CFN
@@ -203,6 +204,6 @@ sealed class EcsDeployTemplate
     Cfn.Value<string> StringRefOr(string parameterName, string literal) =>
         registeredParameterNames.Contains(parameterName) ? new Cfn.Ref(parameterName) : literal;
 
-    Cfn.Value<double> NumberRefOr(string parameterName, double literal) =>
+    Cfn.Value<int> NumberRefOr(string parameterName, int literal) =>
         registeredParameterNames.Contains(parameterName) ? new Cfn.Ref(parameterName) : literal;
 }

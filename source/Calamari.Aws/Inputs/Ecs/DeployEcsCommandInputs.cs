@@ -80,8 +80,8 @@ public class DeployEcsCommandInputs
     public string Memory => variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Memory);
 
     public int DesiredCount => int.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount));
-    public double MinimumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
-    public double MaximumHealthyPercentage => double.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
+    public int MinimumHealthyPercentage => int.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
+    public int MaximumHealthyPercentage => int.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
 
     public string AutoAssignPublicIp => variables.GetFlag(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp) ? "ENABLED" : "DISABLED";
 
@@ -108,8 +108,6 @@ public class DeployEcsCommandInputs
 
     public WaitOption WaitOption => variables.GetValueDeserialisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
 
-    public ContainerSpec[] Containers => variables.GetValueDeserialisedAs<ContainerSpec[]>(AwsSpecialVariables.Ecs.Deploy.Containers);
-
     public KeyValuePair<string, string>[] Tags => variables.GetValueDeserialisedAs<KeyValuePair<string, string>[]>(AwsSpecialVariables.Ecs.Tags);
 
     public LoadBalancerMapping[] LoadBalancerMappings => variables.GetValueDeserialisedAs<LoadBalancerMapping[]>(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings);
@@ -119,6 +117,11 @@ public class DeployEcsCommandInputs
     public bool RequiresLogGroup => Containers.Any(c => c.ContainerLogging.Type == ContainerLoggingType.Auto);
 
     public bool ShouldWaitForDeploymentCompletion => WaitOption.Type is WaitType.WaitUntilCompleted or WaitType.WaitWithTimeout;
+
+    public ContainerSpec[] Containers => variables.GetValueDeserialisedAs<ContainerSpec[]>(AwsSpecialVariables.Ecs.Deploy.Containers);
+
+    public string ResolveImageName(ContainerImageReference imageReference) => variables.Get(PackageVariables.IndexedImage(imageReference.ReferenceId));
+
 
     public InputsValidityResult Validate()
     {
@@ -160,6 +163,6 @@ public record InputsValidityResult(IEnumerable<string> MissingKeys)
 public static class EcsInputDefaults
 {
     public const int DesiredCount = 1;
-    public const double MinimumHealthPercent = 100;
-    public const double MaximumHealthPercent = 200;
+    public const int MinimumHealthPercent = 100;
+    public const int MaximumHealthPercent = 200;
 }

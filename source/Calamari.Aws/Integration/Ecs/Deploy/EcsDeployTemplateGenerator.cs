@@ -56,12 +56,12 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
             list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.DesiredCount, commandInputs.DesiredCount));
         }
 
-        if (DiffersFromDefault(commandInputs.MinimumHealthyPercentage, EcsInputDefaults.MinimumHealthPercent))
+        if (commandInputs.MinimumHealthyPercentage != EcsInputDefaults.MinimumHealthPercent)
         {
             list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.MinimumHealthPercent, commandInputs.MinimumHealthyPercentage));
         }
 
-        if (DiffersFromDefault(commandInputs.MaximumHealthyPercentage, EcsInputDefaults.MaximumHealthPercent))
+        if (commandInputs.MaximumHealthyPercentage != EcsInputDefaults.MaximumHealthPercent)
         {
             list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.MaximumHealthPercent, commandInputs.MaximumHealthyPercentage));
         }
@@ -73,8 +73,4 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
 
         return list;
     }
-
-    // Epsilon-based double comparison — direct != is unreliable across precision and NaN.
-    static bool DiffersFromDefault(double value, double @default) =>
-        Math.Abs(value - @default) > double.Epsilon;
 }
