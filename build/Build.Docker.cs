@@ -28,6 +28,12 @@ public partial class Build
                                                             compressedArtifactPath.UncompressTo(flavourFolder);
                                                             Log.Information("Uncompressed {ZipPath} to {FolderPath}", compressedArtifactPath, flavourFolder);
 
+                                                            // change the native binary to be executable
+                                                            PowerShellTasks.PowerShell(_ => _
+                                                                                            .EnableNoProfile()
+                                                                                            .SetCommand($"chmod +x '{flavourFolder / flavour}'"));
+
+
                                                             //Rename any `linux-x64` folders to `linux-amd64`
                                                             Directory.Move(flavourFolder / "linux-x64",
                                                                 flavourFolder / "linux-amd64");
