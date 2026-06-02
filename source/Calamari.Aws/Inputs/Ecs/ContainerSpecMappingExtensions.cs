@@ -26,10 +26,10 @@ public static class ContainerSpecMappingExtensions
         return new Cfn.HealthCheck
         {
             Command = containerSpec.HealthCheck.Command.ToArray(),
-            Interval = containerSpec.HealthCheck.Interval.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-            Retries = containerSpec.HealthCheck.Retries.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-            StartPeriod = containerSpec.HealthCheck.StartPeriod.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-            Timeout = containerSpec.HealthCheck.Timeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+            Interval = containerSpec.HealthCheck.Interval.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+            Retries = containerSpec.HealthCheck.Retries.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+            StartPeriod = containerSpec.HealthCheck.StartPeriod.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+            Timeout = containerSpec.HealthCheck.Timeout.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
         };
     }
 

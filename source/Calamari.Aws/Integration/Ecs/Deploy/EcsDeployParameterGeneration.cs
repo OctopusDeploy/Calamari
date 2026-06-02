@@ -31,7 +31,9 @@ public record EcsTemplateParameter<T>(string Name, T TypedValue) : IEcsTemplateP
         _               => TypedValue.ToString() ?? string.Empty
     };
 
-    public string CfnType => typeof(T) == typeof(double) ? "Number" : "String";
+    // CFN parameter types: "Number" covers ints + floats; everything else maps to "String".
+    // (CFN has no Boolean parameter type — booleans are emitted as literals in resources.)
+    public string CfnType => typeof(T) == typeof(int) ? "Number" : "String";
 }
 
 // Static factory enables generic type inference at the call site:

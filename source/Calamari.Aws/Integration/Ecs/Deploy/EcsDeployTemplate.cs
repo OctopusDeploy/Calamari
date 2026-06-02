@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Linq;
 using Calamari.Aws.Inputs.Ecs;
 using Octopus.Calamari.Contracts.Aws.Ecs;
-using Cfn = Calamari.Aws.Integration.Ecs.Deploy.Cfn;
 
 namespace Calamari.Aws.Integration.Ecs.Deploy;
 
@@ -167,19 +166,19 @@ sealed class EcsDeployTemplate
     {
         Name = c.ContainerName,
         Image = commandInputs.ResolveImageName(c.ContainerImageReference),
-        Essential = c.Essential.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
-        DisableNetworking = c.NetworkSettings.DisableNetworking.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
+        Essential = c.Essential.ConvertedOrDefault(bool.Parse),
+        DisableNetworking = c.NetworkSettings.DisableNetworking.ConvertedOrDefault(bool.Parse),
         WorkingDirectory = string.IsNullOrEmpty(c.WorkingDirectory) ? null : c.WorkingDirectory,
-        Memory = c.MemoryLimitHard.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-        MemoryReservation = c.MemoryLimitSoft.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-        Cpu = c.Cpus.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+        Memory = c.MemoryLimitHard.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+        MemoryReservation = c.MemoryLimitSoft.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+        Cpu = c.Cpus.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
         User = string.IsNullOrEmpty(c.User) ? null : c.User,
         StartTimeout = c.StartTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
         StopTimeout = c.StopTimeout.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
         // SPF always emits these arrays even when empty — preserve that shape.
         DnsServers = c.NetworkSettings.DnsServers.ToArray(),
         DnsSearchDomains = c.NetworkSettings.DnsSearchDomains.ToArray(),
-        ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault<bool?>(s => bool.Parse(s)),
+        ReadonlyRootFilesystem = c.ContainerStorage.ReadOnlyRootFileSystem.ConvertedOrDefault(bool.Parse),
         Command = c.Command.ConvertedOrDefault<string[]>(s => [s], () => null),
         EntryPoint = c.EntryPoint.ConvertedOrDefault<string[]>(s => s.Split(',').Select(x => x.Trim()).ToArray(), () => null),
         ResourceRequirements = c.ParseResourceRequirements(),

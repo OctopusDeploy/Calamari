@@ -53,10 +53,10 @@ public sealed record PortMapping
 public sealed record HealthCheck
 {
     public string[] Command { get; init; }
-    public double? Interval { get; init; }
-    public double? Retries { get; init; }
-    public double? StartPeriod { get; init; }
-    public double? Timeout { get; init; }
+    public int? Interval { get; init; }
+    public int? Retries { get; init; }
+    public int? StartPeriod { get; init; }
+    public int? Timeout { get; init; }
 }
 
 public sealed record ExtraHost
