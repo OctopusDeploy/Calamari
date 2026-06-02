@@ -19,12 +19,13 @@ public class DeployEcsCommandInputsFixture
     
     readonly ILog fakeLog = Substitute.For<ILog>();
     readonly IEcsStackNameGenerator fakeStackNameGenerator = Substitute.For<IEcsStackNameGenerator>();
+    readonly IEcsImageNameResolver fakeImageNameResolver = Substitute.For<IEcsImageNameResolver>();
     
     [Test]
     public void Validate_WithEmptyVariableList_ReturnsFalseWithAllRequiredVariables()
     {
         var variables = new CalamariVariables();
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.Validate().IsValid;
         
@@ -35,7 +36,7 @@ public class DeployEcsCommandInputsFixture
     public void Validate_WithMissingRequiredVariables_ReturnsFalse()
     {
         var variables = new CalamariVariables();
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.Validate().IsValid;
         
@@ -45,7 +46,7 @@ public class DeployEcsCommandInputsFixture
     [Test]
     public void Validate_WithAllExpectedVariables_ReturnsTrue()
     {
-        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.Validate().IsValid;
         
@@ -59,7 +60,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedClusterName = "MyTestCluster";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.ClusterName, expectedClusterName, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var clusterName = inputs.ClusterName;
         
@@ -69,7 +70,7 @@ public class DeployEcsCommandInputsFixture
     [Test]
     public void CfStackName_WhenNotInVariables_ReturnsValue()
     {
-        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var stackName = inputs.CfStackName;
         
@@ -83,7 +84,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedStackName = "MyTestStack";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.StackName, expectedStackName, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var stackName = inputs.CfStackName;
         
@@ -96,7 +97,7 @@ public class DeployEcsCommandInputsFixture
         const string expectedStackName = "MyGeneratedStack";
         fakeStackNameGenerator.Generate(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(expectedStackName);
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.StackName, "", false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var stackName = inputs.CfStackName;
         
@@ -108,7 +109,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedEnvironmentId = "TestEnvironment-1";
         var variables = SetupVariable(DeploymentEnvironment.Id, expectedEnvironmentId, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var stackName = inputs.Environment;
         
@@ -119,7 +120,7 @@ public class DeployEcsCommandInputsFixture
     public void Tenant_WithNoTenantVariable_ReturnsEmptyString()
     {
         var variables = MinimumRequiredVariableSet();
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var stackName = inputs.Tenant;
         
@@ -131,7 +132,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedTenantId = "TestTenant-1";
         var variables = SetupVariable(DeploymentVariables.Tenant.Id, expectedTenantId, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var stackName = inputs.Tenant;
         
@@ -145,7 +146,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedServiceTaskName = "MyNewEcsService";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var serviceName = inputs.ServiceName;
         
@@ -160,7 +161,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedServiceTaskName = "MyNewEcsServiceTask";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var taskName = inputs.TaskName;
 
@@ -174,7 +175,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedServiceTaskName = "MyNewEcsServiceTask";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var logGroupName = inputs.LogGroupName;
 
@@ -188,7 +189,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string cpuInput = "0.5";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Cpu, cpuInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var cpu = inputs.Cpu;
 
@@ -202,7 +203,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string memoryInput = "0.5";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Memory, memoryInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var memory = inputs.Memory;
 
@@ -216,7 +217,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string cpuArchitecture = "ARM64";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, cpuArchitecture, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var architecture = inputs.CpuArchitecture;
 
@@ -230,7 +231,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string desiredCountInput = "7";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount, desiredCountInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var desiredCount = inputs.DesiredCount;
 
@@ -244,7 +245,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string minHealthInput = "50";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, minHealthInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.MinimumHealthyPercentage;
 
@@ -258,7 +259,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string maxHealthInput = "150";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, maxHealthInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.MaximumHealthyPercentage;
 
@@ -270,7 +271,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string waitOptionInput = """{ "type": "waitUntilCompleted" }""";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, waitOptionInput, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.WaitOption;
         
@@ -282,7 +283,7 @@ public class DeployEcsCommandInputsFixture
     public void ShouldWaitForDeploymentCompletion_WhenDontWait_ReturnsFalse()
     {
         var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, """{ "type": "dontWait" }""", false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         inputs.ShouldWaitForDeploymentCompletion.Should().BeFalse();
     }
@@ -293,7 +294,7 @@ public class DeployEcsCommandInputsFixture
     public void ShouldWaitForDeploymentCompletion_WhenWaiting_ReturnsTrue(string waitType)
     {
         var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, $$"""{ "type": "{{waitType}}", "timeoutMinutes": "30" }""", false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         inputs.ShouldWaitForDeploymentCompletion.Should().BeTrue();
     }
@@ -305,7 +306,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string enablePublicIpInput = "True";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp, enablePublicIpInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.AutoAssignPublicIp;
 
@@ -319,7 +320,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string enableEcsManagedTagsInput = "True";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags, enableEcsManagedTagsInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var result = inputs.EnableEcsManagedTags;
 
@@ -335,7 +336,7 @@ public class DeployEcsCommandInputsFixture
                                            ["sg-0123abcd456789fgh", "sg-abcd1234abcdef567"]
                                            """";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds, securityGroupsInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var result = inputs.NetworkSecurityGroupIds;
         
@@ -353,7 +354,7 @@ public class DeployEcsCommandInputsFixture
                                           ["subnet-0123abcd456789fgh", "subnet-abcd1234abcdef567", "subnet-xxxxxxxxxxxxxxxx"]
                                           """";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.SubnetIds, subnetsInput, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var result = inputs.SubnetIDs;
         
@@ -366,7 +367,7 @@ public class DeployEcsCommandInputsFixture
     [Test]
     public void TaskRole_WithValueUnspecified_ReturnsEmptyString()
     {
-        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var roleId = inputs.TaskRole;
 
@@ -376,7 +377,7 @@ public class DeployEcsCommandInputsFixture
     [Test]
     public void TaskExecutionRole_WithValueUnspecified_ReturnsEmptyString()
     {
-        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var roleId = inputs.TaskExecutionRole;
 
@@ -390,7 +391,7 @@ public class DeployEcsCommandInputsFixture
     {
         var taskRoleArn = "arn:aws:iam::123456780912:role/ecsTaskRole";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.TaskRole, taskRoleArn, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var roleId = inputs.TaskRole;
 
@@ -405,7 +406,7 @@ public class DeployEcsCommandInputsFixture
         // { AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, "arn:aws:iam::123456780912:role/ecsTaskRole"}
         var taskExecRoleArn = "arn:aws:iam::123456780912:role/ecsExecTaskRole";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, taskExecRoleArn, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var roleId = inputs.TaskExecutionRole;
 
@@ -419,7 +420,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string serviceTaskName = "MyNewEcsServiceTask";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, serviceTaskName, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var taskExecutionRoleName = inputs.FallbackTaskExecutionRoleName;
         
@@ -433,7 +434,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string expectedServiceTaskName = "ServiceTaskName";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var serviceTaskName = inputs.ServiceTaskName;
         
@@ -449,7 +450,7 @@ public class DeployEcsCommandInputsFixture
                                      """;
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Containers, containerJson, false);
         variables["Octopus.Action.Package[nginx].Image"] = "docker.io/nginx:1.29.1";
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
         
         var containers = inputs.Containers;
         containers.Length.Should().Be(1);
@@ -472,7 +473,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string tagsJson = """[{"key":"Environment","value":"Test"}]""";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, tagsJson, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var tags = inputs.Tags;
 
@@ -492,7 +493,7 @@ public class DeployEcsCommandInputsFixture
                                 ]
                                 """;
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, tagsJson, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var tags = inputs.Tags;
 
@@ -507,7 +508,7 @@ public class DeployEcsCommandInputsFixture
     public void Tags_WithEmptyArray_ReturnsEmptyList()
     {
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, "[]", false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var tags = inputs.Tags;
 
@@ -528,7 +529,7 @@ public class DeployEcsCommandInputsFixture
                                     ]
                                     """;
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, mappingsJson, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var mappings = inputs.LoadBalancerMappings;
 
@@ -548,7 +549,7 @@ public class DeployEcsCommandInputsFixture
                                     ]
                                     """;
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, mappingsJson, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var mappings = inputs.LoadBalancerMappings;
 
@@ -562,7 +563,7 @@ public class DeployEcsCommandInputsFixture
     public void LoadBalancerMappings_WithEmptyArray_ReturnsEmpty()
     {
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, "[]", false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var mappings = inputs.LoadBalancerMappings;
 
@@ -587,7 +588,7 @@ public class DeployEcsCommandInputsFixture
                                    ]
                                    """;
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var volumes = inputs.Volumes;
 
@@ -606,7 +607,7 @@ public class DeployEcsCommandInputsFixture
     {
         const string volumesJson = """[{"type":"bind","name":"scratch"}]""";
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var volumes = inputs.Volumes;
 
@@ -629,7 +630,7 @@ public class DeployEcsCommandInputsFixture
                                    ]
                                    """;
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var volumes = inputs.Volumes;
 
@@ -642,7 +643,7 @@ public class DeployEcsCommandInputsFixture
     public void Volumes_WithEmptyArray_ReturnsEmpty()
     {
         var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, "[]", false);
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
 
         var volumes = inputs.Volumes;
 

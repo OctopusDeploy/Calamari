@@ -15,13 +15,15 @@ public class DeployEcsCommandInputs
 {
     readonly IVariables variables;
     readonly IEcsStackNameGenerator stackNameGenerator;
+    readonly IEcsImageNameResolver ecsImageResolver;
     readonly ILog log;
     readonly HashSet<string> requiredVariableKeys = [];
 
-    public DeployEcsCommandInputs(IVariables variables, IEcsStackNameGenerator stackNameGenerator, ILog log)
+    public DeployEcsCommandInputs(IVariables variables, IEcsStackNameGenerator stackNameGenerator, IEcsImageNameResolver ecsImageResolver, ILog log)
     {
         this.variables = variables;
         this.stackNameGenerator = stackNameGenerator;
+        this.ecsImageResolver = ecsImageResolver;
         this.log = log;
 
         // strings
@@ -120,7 +122,7 @@ public class DeployEcsCommandInputs
 
     public ContainerSpec[] Containers => variables.GetValueDeserialisedAs<ContainerSpec[]>(AwsSpecialVariables.Ecs.Deploy.Containers);
 
-    public string ResolveImageName(ContainerImageReference imageReference) => variables.Get(PackageVariables.IndexedImage(imageReference.ReferenceId));
+    public string ResolveImageName(ContainerImageReference imageReference) => ecsImageResolver.ResolveImageName(imageReference, variables);
 
 
     public InputsValidityResult Validate()

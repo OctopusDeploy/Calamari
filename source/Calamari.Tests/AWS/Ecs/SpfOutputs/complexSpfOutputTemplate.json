@@ -56,7 +56,7 @@
         "ContainerDefinitions": [
           {
             "Name": "web-server",
-            "Image": "#{Octopus.Action[Deploy Amazon ECS Service - clone (1)].Package[nginx].Image}",
+            "Image": "index.docker.io/nginx:latest",
             "Essential": true,
             "DisableNetworking": false,
             "WorkingDirectory": "/tmp",

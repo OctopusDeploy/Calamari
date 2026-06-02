@@ -10,6 +10,7 @@ using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Tests.AWS.Ecs;
 
@@ -18,13 +19,14 @@ public class EcsDeployTemplateGeneratorTests
 {
     readonly ILog fakeLog = Substitute.For<ILog>();
     readonly IEcsStackNameGenerator fakeStackNameGenerator = Substitute.For<IEcsStackNameGenerator>();
+    readonly IEcsImageNameResolver fakeEcsImageResolver = Substitute.For<IEcsImageNameResolver>();
 
 
     [Test]
     public void WithSimpleVariableSetup_MatchesExpectedSpfOutput()
     {
-     var expectedJson = ReadFromFile("simpleSpfOutputTemplate.json");
-        
+        var expectedJson = ReadFromFile("simpleSpfOutputTemplate.json");
+        fakeEcsImageResolver.ResolveImageName(Arg.Is<ContainerImageReference>(v => v.ReferenceId == "732002f0-4555-4dbf-8dc3-64255eee5f26"), Arg.Any<IVariables>()).Returns("docker.io/nginx:1.29");
         var variables = new CalamariVariables
         {
             { AwsSpecialVariables.Ecs.Deploy.StackName, "ecs-spf-#{Octopus.Deployment.Id}" },
@@ -52,10 +54,10 @@ public class EcsDeployTemplateGeneratorTests
             },
             { AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, "arn:aws:iam::720766170633:role/ecsTaskExecutionRole" },
             { AwsSpecialVariables.Ecs.Deploy.TaskRole, "arn:aws:iam::720766170633:role/ecsTaskExecutionRole" },
-            // TODO: Update containers to use variable
+            
             {AwsSpecialVariables.Ecs.Tags, """[{"key":"owner","value":"spfdeployment"},{"key":"createdBy", "value":"#{Octopus.Project.Slug}"}]"""},
             {AwsSpecialVariables.Ecs.Deploy.Containers, """
-                                                        [{"containerName":"web-server-spf","containerImageReference":{"referenceId":"732002f0-4555-4dbf-8dc3-64255eee5f26","imageName":"docker.io/nginx:1.29","feedId":"Feeds-1061"},"repositoryAuthentication":{"type":"Default"},"containerPortMappings":[{"containerPort":"80","protocol":"Tcp"}],"essential":"True","environmentFiles":[],"environmentVariables":[{"type":"Plain","key":"env","value":"#{Octopus.Environment.Name}"}],"networkSettings":{"disableNetworking":"False","dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"False","mountPoints":[],"volumeFrom":[]},"containerLogging":{"type":"Manual","logDriver":"None","logOptions":[]},"firelensConfiguration":{"type":"Disabled","enableEcsLogMetadata":""},"dockerLabels":[],"healthCheck":{"command":[]},"dependencies":[],"ulimits":[]}]
+                                                        [{"containerName":"web-server-spf","containerImageReference":{"referenceId":"732002f0-4555-4dbf-8dc3-64255eee5f26","imageName":"nginx","feedId":"Feeds-1061"},"repositoryAuthentication":{"type":"Default"},"containerPortMappings":[{"containerPort":"80","protocol":"Tcp"}],"essential":"True","environmentFiles":[],"environmentVariables":[{"type":"Plain","key":"env","value":"#{Octopus.Environment.Name}"}],"networkSettings":{"disableNetworking":"False","dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"False","mountPoints":[],"volumeFrom":[]},"containerLogging":{"type":"Manual","logDriver":"None","logOptions":[]},"firelensConfiguration":{"type":"Disabled","enableEcsLogMetadata":""},"dockerLabels":[],"healthCheck":{"command":[]},"dependencies":[],"ulimits":[]}]
                                                         """},
 
             
@@ -134,7 +136,7 @@ public class EcsDeployTemplateGeneratorTests
     public void WithComplexStep_MatchesExpectedSpfOutput()
     {
         var expectedJson = ReadFromFile("complexSpfOutputTemplate.json");
-
+        fakeEcsImageResolver.ResolveImageName(Arg.Any<ContainerImageReference>(), Arg.Any<IVariables>()).Returns("index.docker.io/nginx:latest");
         var variables = new CalamariVariables
         {
             {"Octopus.Action.Aws.Ecs.Deploy.CFStackName", "test-stack"},
@@ -163,7 +165,7 @@ public class EcsDeployTemplateGeneratorTests
     }
     JObject GenerateTemplateFromVariables(CalamariVariables variables)
     {
-        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeLog);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeEcsImageResolver, fakeLog);
         var template = new EcsDeployTemplateGenerator(inputs).Generate();
         var resultJson =  JObject.Parse(template.Body);
 
