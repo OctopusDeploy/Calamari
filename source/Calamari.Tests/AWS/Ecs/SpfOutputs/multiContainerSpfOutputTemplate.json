@@ -27,7 +27,7 @@
     },
     "DesiredCount": {
       "Type": "Number",
-      "Default": 2.0
+      "Default": 2
     },
     "LogGroupName": {
       "Type": "String",
@@ -89,10 +89,10 @@
               "Command": [
                 "curl -f http://localhost/ || exit 1"
               ],
-              "Interval": 240.0,
-              "Retries": 7.0,
-              "StartPeriod": 179.0,
-              "Timeout": 54.0
+              "Interval": 240,
+              "Retries": 7,
+              "StartPeriod": 179,
+              "Timeout": 54
             },
             "ExtraHosts": [],
             "Ulimits": [
@@ -240,8 +240,8 @@
         },
         "EnableECSManagedTags": true,
         "DeploymentConfiguration": {
-          "MinimumHealthyPercent": 100.0,
-          "MaximumPercent": 200.0
+          "MinimumHealthyPercent": 100,
+          "MaximumPercent": 200
         },
         "NetworkConfiguration": {
           "AwsvpcConfiguration": {
