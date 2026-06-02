@@ -109,7 +109,9 @@ namespace Calamari.Tests.ArgoCD.Git
                 Username: "git",
                 PrivateKey: "private-key",
                 Url: OriginPath,
-                GitReference: branchName);
+                GitReference: branchName,
+                KnownHosts: [] // libgit2 skips the certificate callback for local file paths
+            );
 
             // libgit2 skips credential callbacks for local file paths, so this test validates only pull-request-client resolution and verbose logging — not SSH credential validity.
             factoryWithMockedResolver.CloneRepository("Clone_WithSshConnection", sshConnection);

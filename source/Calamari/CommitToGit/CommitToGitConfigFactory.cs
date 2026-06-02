@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Amazon.ECS.Model;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
@@ -39,13 +40,14 @@ namespace Calamari.CommitToGit
             IGitConnection connection = properties.GitCredential switch
                                         {
                                             UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
-                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString), ssh.KnownHosts.Select(kh => new SshKnownHost(kh.Host, kh.PublicKey)).ToArray()),
                                             _ => throw new NotSupportedException($"An unrecognised credential type '{properties.GitCredential.GetType().Name}' was found for '{uriAsString}'"),
                                         };
 
+            //Note: Octopus server removes variables containing empty strings, thus a missing property should default to an empty string.
             return new CommitToGitRepositorySettings(connection,
                                                      commitParameters,
-                                                     variables.Get(SpecialVariables.Action.Git.DestinationPath));
+                                                     variables.Get(SpecialVariables.Action.Git.DestinationPath) ?? string.Empty);
         }
 
         string EvaluateNonsensitiveExpression(string expression)

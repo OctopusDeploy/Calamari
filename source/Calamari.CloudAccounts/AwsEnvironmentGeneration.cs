@@ -174,8 +174,17 @@ namespace Calamari.CloudAccounts
         /// </summary>
         void PopulateCommonSettings()
         {
-            EnvironmentVars["AWS_DEFAULT_REGION"] = region;
-            EnvironmentVars["AWS_REGION"] = region;
+            // When the step has no Octopus.Action.Aws.Region, `region` is null. Writing null into
+            // EnvironmentVars used to wipe the parent process's AWS_REGION in any spawned child
+            // (because SilentProcessRunner overlays the dict on ProcessStartInfo.EnvironmentVariables,
+            // where null means 'remove the var'). For Terraform steps on EKS Pods with IRSA, this
+            // erased the Pod's inherited region and broke `terraform plan` with 'invalid AWS Region:'.
+            // See Issues #8337.
+            if (!string.IsNullOrWhiteSpace(region))
+            {
+                EnvironmentVars["AWS_DEFAULT_REGION"] = region;
+                EnvironmentVars["AWS_REGION"] = region;
+            }
         }
 
         /// <summary>

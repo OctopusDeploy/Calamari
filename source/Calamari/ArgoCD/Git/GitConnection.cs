@@ -1,6 +1,8 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Commands;
 
 namespace Calamari.ArgoCD.Git
@@ -61,6 +63,9 @@ namespace Calamari.ArgoCD.Git
         string? Username,
         string PrivateKey,
         string Url,
-        GitReference GitReference)
+        GitReference GitReference,
+        IReadOnlyList<SshKnownHost> KnownHosts)
         : IGitConnection;
+
+    public record SshKnownHost(string Host, string PublicKey);
 }

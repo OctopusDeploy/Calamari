@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 using LibGit2Sharp.Handlers;
 
@@ -19,11 +20,11 @@ public static class LibGit2SharpCredentialsHandlerExtensionMethods
                };
     }
 
-    public static CertificateCheckHandler? ToLibGit2SharpCertificateCheckHandler(this IGitConnection? connection)
+    public static CertificateCheckHandler? ToLibGit2SharpCertificateCheckHandler(this IGitConnection? connection, ILog log)
     {
         return connection switch
                {
-                   SshKeyGitConnection sshKey => SshHostKeyVerificationBypass.AcceptAll,
+                   SshKeyGitConnection sshKey => SshKnownHostsCertificateCheck.Build(sshKey.KnownHosts, log),
                    _ => null
                };
     }

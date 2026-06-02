@@ -10,8 +10,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Serialization;
-using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.Aws.Ecs;
 
 namespace Calamari.Aws.Commands;
 
@@ -47,8 +46,7 @@ public class UpdateEcsServiceCommand : Command
                                         inputs.TargetTaskDefinitionName,
                                         inputs.Containers,
                                         inputs.Tags,
-                                        inputs.WaitOption,
-                                        inputs.WaitTimeout)
+                                        inputs.WaitOption)
                                 ],
                                 log).RunConventions();
 
@@ -60,20 +58,19 @@ public class UpdateEcsServiceCommand : Command
         var clusterName = variables.Get(AwsSpecialVariables.Ecs.ClusterName);
         Guard.NotNullOrWhiteSpace(clusterName, "Cluster name is required");
 
-        var serviceName = variables.Get(AwsSpecialVariables.Ecs.ServiceName);
+        var serviceName = variables.Get(AwsSpecialVariables.Ecs.Update.ServiceName);
         Guard.NotNullOrWhiteSpace(serviceName, "Service name is required");
 
-        var targetFamily = variables.Get(AwsSpecialVariables.Ecs.TargetTaskDefinitionName);
+        var targetFamily = variables.Get(AwsSpecialVariables.Ecs.Update.TargetTaskDefinitionName);
         Guard.NotNullOrWhiteSpace(targetFamily, "Target task definition name is required");
 
-        var templateFamily = variables.Get(AwsSpecialVariables.Ecs.TemplateTaskDefinitionName);
+        var templateFamily = variables.Get(AwsSpecialVariables.Ecs.Update.TemplateTaskDefinitionName);
         if (string.IsNullOrWhiteSpace(templateFamily))
         {
             templateFamily = targetFamily;
         }
 
-        var containersJson = variables.Get(AwsSpecialVariables.Ecs.Containers) ?? "[]";
-        var containers = JsonConvert.DeserializeObject<List<EcsContainerUpdate>>(containersJson, JsonSerialization.GetDefaultSerializerSettings()) ?? [];
+        var containers = variables.GetValueDeserialisedAs<List<ContainerUpdate>>(AwsSpecialVariables.Ecs.Update.ContainerUpdates);
         if (containers.Count == 0)
         {
             throw new CommandException("At least one container is required.");
@@ -84,8 +81,7 @@ public class UpdateEcsServiceCommand : Command
             Guard.NotNullOrWhiteSpace(c.ContainerName, "Container name is required");
         }
 
-        var tagsJson = variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]";
-        var userTags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(tagsJson) ?? [];
+        var userTags = variables.GetValueDeserialisedAs<List<KeyValuePair<string, string>>>(AwsSpecialVariables.ResourceTags);
         var seenTagKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var tag in userTags)
         {
@@ -95,24 +91,10 @@ public class UpdateEcsServiceCommand : Command
             }
         }
 
-        var waitOptionRaw = variables.Get(AwsSpecialVariables.Ecs.WaitOption.Type);
-        Guard.NotNullOrWhiteSpace(waitOptionRaw, "The wait option is required");
-        if (!Enum.TryParse<WaitOptionType>(waitOptionRaw, ignoreCase: true, out var waitOption))
+        var waitOption = variables.GetValueDeserialisedAs<WaitOption>(AwsSpecialVariables.Ecs.WaitOption);
+        if (waitOption.Type == WaitType.WaitWithTimeout && waitOption.GetTimeoutSpan() is null)
         {
-            throw new CommandException(
-                                       $"The wait option has an invalid value '{waitOptionRaw}'. Expected one of: 'waitUntilCompleted', 'waitWithTimeout', 'dontWait'.");
-        }
-
-        TimeSpan? timeout = null;
-        var timeoutMs = variables.GetInt32(AwsSpecialVariables.Ecs.WaitOption.Timeout);
-        if (waitOption == WaitOptionType.WaitWithTimeout)
-        {
-            if (!timeoutMs.HasValue)
-            {
-                throw new CommandException("Wait option is 'waitWithTimeout' but timeout value is not set.");
-            }
-
-            timeout = TimeSpan.FromMilliseconds(timeoutMs.Value);
+            throw new CommandException($"Wait option is '{nameof(WaitType.WaitWithTimeout)}' but got invalid timeout '{waitOption.TimeoutMinutes}'.");
         }
 
         return new EcsUpdateServiceInputs(
@@ -122,8 +104,7 @@ public class UpdateEcsServiceCommand : Command
                                           templateFamily,
                                           containers,
                                           userTags,
-                                          waitOption,
-                                          timeout);
+                                          waitOption);
     }
 }
 
@@ -132,7 +113,6 @@ public record EcsUpdateServiceInputs(
     string ServiceName,
     string TargetTaskDefinitionName,
     string TemplateTaskDefinitionName,
-    List<EcsContainerUpdate> Containers,
+    List<ContainerUpdate> Containers,
     List<KeyValuePair<string, string>> Tags,
-    WaitOptionType WaitOption,
-    TimeSpan? WaitTimeout);
+    WaitOption WaitOption);

@@ -188,7 +188,7 @@ public class DeployEcsServiceFixture
         variables.Set(AwsSpecialVariables.Ecs.ClusterName, ClusterName);
         variables.Set(AwsSpecialVariables.Ecs.ServiceName, serviceName);
         //the integration test only needs to verify we can submit a valid template so don't wait for stack to be ready
-        variables.Set(AwsSpecialVariables.Ecs.WaitOption.Type, "dontWait");
+        variables.Set(AwsSpecialVariables.Ecs.WaitOptionLegacy.Type, "dontWait");
 
         return variables;
     }

@@ -141,7 +141,6 @@ namespace Calamari.Aws.Commands
                                                                                           TemplateFactory,
                                                                                           stackEventLogger,
                                                                                           StackProvider,
-                                                                                          RoleArnProvider,
                                                                                           waitForComplete,
                                                                                           stackName,
                                                                                           environment,
