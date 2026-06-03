@@ -41,6 +41,6 @@ public sealed record AwsvpcConfiguration
 public sealed record LoadBalancer
 {
     public string ContainerName { get; init; }
-    public double? ContainerPort { get; init; }
+    public int? ContainerPort { get; init; }
     public string TargetGroupArn { get; init; }
 }

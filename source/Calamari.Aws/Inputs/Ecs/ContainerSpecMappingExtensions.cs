@@ -55,8 +55,8 @@ public static class ContainerSpecMappingExtensions
     public static Cfn.PortMapping[] ParsePortMappings(this ContainerSpec containerSpec) =>
         containerSpec.ContainerPortMappings.Select(pm => new Cfn.PortMapping
                      {
-                         ContainerPort = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
-                         HostPort = pm.ContainerPort.ConvertedOrDefault<double?>(s => double.Parse(s, CultureInfo.InvariantCulture)),
+                         ContainerPort = pm.ContainerPort.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+                         HostPort = pm.ContainerPort.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
                          Protocol = pm.Protocol.ToString().ToLowerInvariant()
                      })
                      .ToArray();
@@ -93,8 +93,8 @@ public static class ContainerSpecMappingExtensions
         return containerSpec.Ulimits.Select(ul => new Cfn.Ulimit
                             {
                                 Name = ul.LimitName,
-                                HardLimit = double.Parse(ul.HardLimit, CultureInfo.InvariantCulture),
-                                SoftLimit = double.Parse(ul.SoftLimit, CultureInfo.InvariantCulture)
+                                HardLimit = int.Parse(ul.HardLimit, CultureInfo.InvariantCulture),
+                                SoftLimit = int.Parse(ul.SoftLimit, CultureInfo.InvariantCulture)
                             })
                             .ToArray();
     }
@@ -107,7 +107,7 @@ public static class ContainerSpecMappingExtensions
                             {
                                 SourceVolume = string.IsNullOrEmpty(mp.SourceVolume) ? null : mp.SourceVolume,
                                 ContainerPath = string.IsNullOrEmpty(mp.ContainerPath) ? null : mp.ContainerPath,
-                                ReadOnly = mp.Readonly.ConvertedOrDefault<bool?>(s => bool.Parse(s))
+                                ReadOnly = mp.Readonly.ConvertedOrDefault(s => bool.TryParse(s, out var result) && result)
                             })
                             .ToArray();
     }
@@ -131,7 +131,7 @@ public static class ContainerSpecMappingExtensions
         return containerSpec.ContainerStorage.VolumeFrom.Select(vf => new Cfn.VolumeFrom
                             {
                                 SourceContainer = string.IsNullOrEmpty(vf.SourceContainer) ? null : vf.SourceContainer,
-                                ReadOnly = vf.Readonly.ConvertedOrDefault<bool?>(s => bool.Parse(s))
+                                ReadOnly = vf.Readonly.ConvertedOrDefault(s => bool.TryParse(s, out var result) && result)
                             })
                             .ToArray();
     }

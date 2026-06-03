@@ -9,15 +9,15 @@ public sealed record ContainerDefinition
     public bool? Essential { get; init; }
     public bool? DisableNetworking { get; init; }
     public string WorkingDirectory { get; init; }
-    public double? Memory { get; init; }
-    public double? MemoryReservation { get; init; }
-    public double? Cpu { get; init; }
+    public int? Memory { get; init; }
+    public int? MemoryReservation { get; init; }
+    public int? Cpu { get; init; }
     public string User { get; init; }
-    public double? StartTimeout { get; init; }
-    public double? StopTimeout { get; init; }
+    public int? StartTimeout { get; init; }
+    public int? StopTimeout { get; init; }
     public string[] DnsServers { get; init; }
     public string[] DnsSearchDomains { get; init; }
-    public bool? ReadonlyRootFilesystem { get; init; }
+    public bool ReadonlyRootFilesystem { get; init; }
     public string[] Command { get; init; }
     public string[] EntryPoint { get; init; }
     public ResourceRequirement[] ResourceRequirements { get; init; }
@@ -45,8 +45,8 @@ public sealed record ResourceRequirement
 
 public sealed record PortMapping
 {
-    public double? ContainerPort { get; init; }
-    public double? HostPort { get; init; }
+    public int? ContainerPort { get; init; }
+    public int? HostPort { get; init; }
     public string Protocol { get; init; }
 }
 
@@ -73,15 +73,15 @@ public sealed record RepositoryCredentials
 public sealed record Ulimit
 {
     public string Name { get; init; }
-    public double HardLimit { get; init; }
-    public double SoftLimit { get; init; }
+    public int HardLimit { get; init; }
+    public int SoftLimit { get; init; }
 }
 
 public sealed record MountPoint
 {
     public string SourceVolume { get; init; }
     public string ContainerPath { get; init; }
-    public bool? ReadOnly { get; init; }
+    public bool ReadOnly { get; init; }
 }
 
 public sealed record ContainerDependency
@@ -93,7 +93,7 @@ public sealed record ContainerDependency
 public sealed record VolumeFrom
 {
     public string SourceContainer { get; init; }
-    public bool? ReadOnly { get; init; }
+    public bool ReadOnly { get; init; }
 }
 
 // LogConfiguration.Options values can be either a literal string or a Ref intrinsic

@@ -16,11 +16,12 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
         var parameters = BuildParameters();
         var template = new EcsDeployTemplate(commandInputs, parameters).Build();
 
-        var body = JsonConvert.SerializeObject(template, new JsonSerializerSettings
-        {
-            Formatting = Formatting.Indented,
-            NullValueHandling = NullValueHandling.Ignore
-        });
+        var body = JsonConvert.SerializeObject(template,
+            new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Ignore
+            });
 
         return new GeneratedTemplate(
             body,
@@ -31,9 +32,9 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
     {
         var list = new List<IEcsTemplateParameter>
         {
-            EcsTemplateParameter.Of(EcsTemplateParameterNames.ClusterName,          commandInputs.ClusterName),
-            EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionName,   commandInputs.ServiceTaskName),
-            EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionCpu,    commandInputs.Cpu),
+            EcsTemplateParameter.Of(EcsTemplateParameterNames.ClusterName, commandInputs.ClusterName),
+            EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionName, commandInputs.ServiceTaskName),
+            EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionCpu, commandInputs.Cpu),
             EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskDefinitionMemory, commandInputs.Memory),
         };
 
