@@ -81,9 +81,9 @@ public class DeployEcsCommandInputs
 
     public string Memory => variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.Memory);
 
-    public int DesiredCount => int.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount));
-    public int MinimumHealthyPercentage => int.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent));
-    public int MaximumHealthyPercentage => int.Parse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent));
+    public int DesiredCount => int.TryParse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount), out var result) ? result : EcsInputDefaults.DesiredCount;
+    public int MinimumHealthyPercentage => int.TryParse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent), out var result) ? result : EcsInputDefaults.MinimumHealthPercent;
+    public int MaximumHealthyPercentage => int.TryParse(variables.GetMandatoryVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent), out var result) ? result : EcsInputDefaults.MaximumHealthPercent;
 
     public string AutoAssignPublicIp => variables.GetFlag(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp) ? "ENABLED" : "DISABLED";
 
@@ -130,7 +130,7 @@ public class DeployEcsCommandInputs
         var variableNames = variables.GetNames();
         var missingKeys = requiredVariableKeys.Except(variableNames);
 
-        // TODO: Validation of input values
+        // NOTE: Can we validate values are of the right type etc?
 
         return new InputsValidityResult(missingKeys);
     }
