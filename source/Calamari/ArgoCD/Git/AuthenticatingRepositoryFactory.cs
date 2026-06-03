@@ -26,39 +26,16 @@ public class AuthenticatingRepositoryFactory
         this.log = log;
     }
 
-    public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
+    public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision, bool createsPr)
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
-        switch (gitCredential)
+        var gitConnection = GitConnectionFactory.Create(gitCredential, requestedUrl, GitReference.CreateFromString(targetRevision), createsPr);
+
+        if (gitConnection is AnonymousGitConnection)
         {
-            case GitCredentialDto passwordCredential:
-            {
-                var gitConnection = new HttpsGitConnection(passwordCredential.Username, passwordCredential.Password, GitCloneSafeUrl.ConvertToUriString(requestedUrl), GitReference.CreateFromString(targetRevision));
-                return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-            }
-            case SshKeyGitCredentialDto sshCredential:
-            {
-                var sshConnection = new SshKeyGitConnection(
-                    sshCredential.Username,
-                    sshCredential.PrivateKey,
-                    requestedUrl,
-                    GitReference.CreateFromString(targetRevision),
-                    sshCredential.KnownHosts.Select(kh => new SshKnownHost(kh.Host, kh.PublicKey)).ToArray());
-                return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
-            }
-            case null:
-            {
-                log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
-                break;
-            }
-            default:
-            {
-                log.Warn($"An unrecognised credential type '{gitCredential.GetType().Name}' was found for '{requestedUrl}'. Ignoring the credentials and attempting an anonymous clone.");
-                break;
-            }
+            log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
         }
 
-        var anonGitConnection = new HttpsGitConnection(null, null, GitCloneSafeUrl.ConvertToUriString(requestedUrl), GitReference.CreateFromString(targetRevision));
-        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), anonGitConnection);
+        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
     }
 }

@@ -17,6 +17,8 @@ public class RepositoryUpdater
         this.log = log;
         this.commitMessageGenerator = commitMessageGenerator;
     }
+
+    public bool RequiresPr => commitParameters.RequiresPr;
     
     public PushResult? PushToRemote(
         RepositoryWrapper repository,

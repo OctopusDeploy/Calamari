@@ -58,7 +58,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
                 repositoryFactory,
                 log);
 
-            using var wrapper = factory.CloneRepository(httpsUrl, branchName.ToFriendlyName());
+            using var wrapper = factory.CloneRepository(httpsUrl, branchName.ToFriendlyName(), createsPr: false);
             wrapper.Should().NotBeNull();
         }
 
@@ -71,8 +71,21 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
                 repositoryFactory,
                 log);
 
-            using var wrapper = factory.CloneRepository(originUrl, branchName.ToFriendlyName());
+            using var wrapper = factory.CloneRepository(originUrl, branchName.ToFriendlyName(), createsPr: false);
             wrapper.Should().NotBeNull();
+            log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
+        }
+
+        [Test]
+        public void LogsAnInformationalMessageWhenCloningAnonymously()
+        {
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+            var factory = new AuthenticatingRepositoryFactory([], mockRepoFactory, log);
+
+            factory.CloneRepository("https://github.com/org/repo.git", "main", createsPr: false);
+
+            mockRepoFactory.Received()
+                           .CloneRepository(Arg.Any<string>(), Arg.Is<IGitConnection>(c => c is AnonymousGitConnection));
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
         }
     }
@@ -95,12 +108,10 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
                 mockRepoFactory,
                 log);
 
-            factory.CloneRepository(sshUrl, branchName.ToFriendlyName());
+            factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), createsPr: false);
 
             mockRepoFactory.Received()
-                           .CloneRepository(
-                               Arg.Any<string>(),
-                               Arg.Is<IGitConnection>(c => c is SshKeyGitConnection));
+                           .CloneRepository(Arg.Any<string>(), Arg.Is<IGitConnection>(c => c is SshKeyGitConnection));
         }
 
         [Test]
@@ -127,7 +138,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
                 mockRepoFactory,
                 log);
 
-            factory.CloneRepository(sshUrl, branchName.ToFriendlyName());
+            factory.CloneRepository(sshUrl, branchName.ToFriendlyName(), createsPr: false);
 
             mockRepoFactory.Received()
                            .CloneRepository(
@@ -159,7 +170,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
 
             // This will fail to clone (no real repo at this URL) but we can verify it
             // falls through to anonymous because the SCP URL doesn't match the HTTPS URL
-            var act = () => factory.CloneRepository(scpUrl, "main");
+            var act = () => factory.CloneRepository(scpUrl, "main", createsPr: false);
             act.Should().Throw<Exception>(); // clone failure expected
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("No Git credentials found"));
         }
@@ -184,7 +195,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
 
         var factory = new AuthenticatingRepositoryFactory(rawCredentials, mockRepoFactory, log);
 
-        factory.CloneRepository(url, "main");
+        factory.CloneRepository(url, "main", createsPr: false);
 
         mockRepoFactory.Received()
                        .CloneRepository(
