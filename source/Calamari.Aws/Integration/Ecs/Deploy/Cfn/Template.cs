@@ -2,6 +2,8 @@ using System.Collections.Generic;
 
 namespace Calamari.Aws.Integration.Ecs.Deploy.Cfn;
 
+// Template format created from SPF out matched with AWS official API documentation here: https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/AWS_ECS.html
+
 public sealed record Template
 {
     public string AWSTemplateFormatVersion { get; init; } = "2010-09-09";
