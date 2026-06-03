@@ -55,7 +55,7 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseMountPoints_WithEmptyReadonly_IsNull()
+    public void ParseMountPoints_WithEmptyReadonly_IsFalse()
     {
         var spec = new ContainerSpec
         {
@@ -75,7 +75,7 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseMountPoints();
 
-        result[0].ReadOnly.Should().BeNull();
+        result[0].ReadOnly.Should().BeFalse();
     }
 
     [Test]
@@ -238,7 +238,7 @@ public class ContainerSpecMappingExtensionsTests
     }
 
     [Test]
-    public void ParseVolumesFrom_WithEmptyReadonly_IsNull()
+    public void ParseVolumesFrom_WithEmptyReadonly_IsFalse()
     {
         var spec = new ContainerSpec
         {
@@ -257,7 +257,7 @@ public class ContainerSpecMappingExtensionsTests
 
         var result = spec.ParseVolumesFrom();
 
-        result[0].ReadOnly.Should().BeNull();
+        result[0].ReadOnly.Should().BeFalse();
     }
 
     [Test]

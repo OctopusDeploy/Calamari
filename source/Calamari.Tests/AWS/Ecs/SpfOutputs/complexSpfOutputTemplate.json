@@ -60,12 +60,12 @@
             "Essential": true,
             "DisableNetworking": false,
             "WorkingDirectory": "/tmp",
-            "Memory": 200.0,
-            "MemoryReservation": 47.0,
-            "Cpu": 2.0,
+            "Memory": 200,
+            "MemoryReservation": 47,
+            "Cpu": 2,
             "User": "test-user",
-            "StartTimeout": 40.0,
-            "StopTimeout": 60.0,
+            "StartTimeout": 40,
+            "StopTimeout": 60,
             "DnsServers": [],
             "DnsSearchDomains": [],
             "ReadonlyRootFilesystem": true,
@@ -82,13 +82,13 @@
             },
             "PortMappings": [
               {
-                "ContainerPort": 80.0,
-                "HostPort": 80.0,
+                "ContainerPort": 80,
+                "HostPort": 80,
                 "Protocol": "tcp"
               },
               {
-                "ContainerPort": 443.0,
-                "HostPort": 443.0,
+                "ContainerPort": 443,
+                "HostPort": 443,
                 "Protocol": "tcp"
               }
             ],
@@ -105,8 +105,8 @@
             "Ulimits": [
               {
                 "Name": "core",
-                "HardLimit": 12.0,
-                "SoftLimit": 10.0
+                "HardLimit": 12,
+                "SoftLimit": 10
               }
             ],
             "MountPoints": [

@@ -42,8 +42,8 @@
             "ResourceRequirements": [],
             "PortMappings": [
               {
-                "ContainerPort": 80.0,
-                "HostPort": 80.0,
+                "ContainerPort": 80,
+                "HostPort": 80,
                 "Protocol": "tcp"
               }
             ],
