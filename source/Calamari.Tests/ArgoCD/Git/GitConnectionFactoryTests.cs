@@ -6,6 +6,7 @@ using ArgoCdSshKeyCredential = Octopus.Calamari.Contracts.ArgoCD.SshKeyGitCreden
 using GitCredential = Octopus.Calamari.Contracts.Git.IGitCredentialDto;
 using GitPasswordCredential = Octopus.Calamari.Contracts.Git.UsernamePasswordGitCredentialDto;
 using GitSshKeyCredential = Octopus.Calamari.Contracts.Git.SshKeyGitCredentialDto;
+using GitSshKnownHostDto = Octopus.Calamari.Contracts.Git.SshKnownHostDto;
 
 namespace Calamari.Tests.ArgoCD.Git;
 
@@ -15,13 +16,6 @@ public class GitConnectionFactoryTests
     static readonly GitReference Reference = GitBranchName.CreateFromFriendlyName("main");
     const string HttpsUrl = "https://github.com/org/repo.git";
     const string SshUrl = "ssh://git@github.com/org/repo.git";
-
-    // The factory only maps a credential onto the matching connection type, carrying its fields across.
-    // The HTTPS connection types expose a Lazy<Uri> derived from Url, so it is excluded from the
-    // equivalence checks (Url itself is still asserted).
-
-    // The ArgoCD overload maps Argo credentials onto the common credential type before delegating, so
-    // we confirm each Argo credential lands on the right connection type with its fields mapped across.
 
     [Test]
     public void ArgoCdSshKeyCredentialIsMappedToSshKeyGitConnection()
@@ -42,9 +36,20 @@ public class GitConnectionFactoryTests
     [Test]
     public void SshKeyCredentialIsMappedToSshKeyGitConnection()
     {
-        var connection = GitConnectionFactory.Create(new GitSshKeyCredential("cred", SshUrl, "git", "private-key", []), SshUrl, Reference);
+        GitSshKnownHostDto[] knownHosts =
+        [
+            new ("github.com", "AAAAB3NzaC1yc2EAAAADAQABAAABAQ=="),
+            new ("bitbucket.org", "AAAAC3NzaC1lZDI1NTE5AAAAIA=="),
+        ];
+        var connection = GitConnectionFactory.Create(new GitSshKeyCredential("cred", SshUrl, "git", "private-key", knownHosts), SshUrl, Reference);
 
-        connection.Should().BeEquivalentTo(new SshKeyGitConnection("git", "private-key", SshUrl, Reference, []));
+
+        SshKnownHost[] expectedKnownHosts =
+        [
+            new("github.com", "AAAAB3NzaC1yc2EAAAADAQABAAABAQ"),
+            new("bitbucket.org", "AAAAC3NzaC1lZDI1NTE5AAAAIA=="),
+        ];
+        connection.Should().BeEquivalentTo(new SshKeyGitConnection("git", "private-key", SshUrl, Reference, expectedKnownHosts));
     }
 
     [Test]

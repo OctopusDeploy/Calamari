@@ -30,7 +30,8 @@ public class AuthenticatingRepositoryFactory
     public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision, bool requiresPullRequest)
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
-        var gitConnection = GitConnectionFactory.Create(gitCredential, requestedUrl, GitReference.CreateFromString(targetRevision));
+        var cloneUrl = gitCredential is SshKeyGitCredentialDto ? requestedUrl : GitCloneSafeUrl.ConvertToUriString(requestedUrl);
+        var gitConnection = GitConnectionFactory.Create(gitCredential, cloneUrl, GitReference.CreateFromString(targetRevision));
 
         if (requiresPullRequest)
         {

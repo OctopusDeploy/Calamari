@@ -230,4 +230,28 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
                            Arg.Any<string>(),
                            Arg.Is<IGitConnection>(c => c is HttpsGitConnection));
     }
+
+    [TestFixture]
+    public class UrlNormalizationTests : AuthenticatingRepositoryFactoryTestBase
+    {
+        [Test]
+        public void SchemelessUrlIsNormalizedWithOciSchemeForNonSshCredential()
+        {
+            const string schemelessUrl = "registry.example.com/charts/myapp";
+            const string expectedNormalizedUrl = "oci://registry.example.com/charts/myapp";
+
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+            var factory = new AuthenticatingRepositoryFactory(
+                [new GitCredentialDto(schemelessUrl, "user", "password")],
+                mockRepoFactory,
+                log);
+
+            factory.CloneRepository(schemelessUrl, "main", requiresPullRequest: false);
+
+            mockRepoFactory.Received()
+                           .CloneRepository(
+                               Arg.Any<string>(),
+                               Arg.Is<IGitConnection>(c => c.Url == expectedNormalizedUrl));
+        }
+    }
 }
