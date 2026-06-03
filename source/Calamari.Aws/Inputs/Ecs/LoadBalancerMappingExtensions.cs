@@ -13,7 +13,7 @@ public static class LoadBalancerMappingExtensions
         var mappings = loadBalancerMappings.Select(lbm => new Cfn.LoadBalancer
         {
             ContainerName  = lbm.ContainerName,
-            ContainerPort  = lbm.ContainerPort.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+            ContainerPort  = lbm.ContainerPort.ConvertedOrDefault<int?>(s => int.TryParse(s, out var result) ? result : null),
             TargetGroupArn = lbm.TargetGroupArn
         }).ToArray();
 
