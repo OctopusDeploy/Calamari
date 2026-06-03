@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Models;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.Tests.ArgoCD
 {
