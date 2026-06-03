@@ -22,9 +22,35 @@
 
         public static class Ecs
         {
+            public static class Deploy
+            {
+
+                // Not reusing CloudFormation variable here to make it easier to remove all traces of this when we migrate to native ECS API
+                public const string StackName = "Octopus.Action.Aws.Ecs.Deploy.CFStackName";
+
+                public const string DesiredCount =  "Octopus.Action.Aws.Ecs.Deploy.DesiredCount";
+                public const string MinimumHealthPercent =  "Octopus.Action.Aws.Ecs.Deploy.MinimumHealthPercent";
+                public const string MaximumHealthPercent =  "Octopus.Action.Aws.Ecs.Deploy.MaximumHealthPercent";
+                public const string Cpu =  "Octopus.Action.Aws.Ecs.Deploy.Cpu";
+                public const string Memory =  "Octopus.Action.Aws.Ecs.Deploy.Memory";
+                public const string RuntimeArchitecturePlatform =  "Octopus.Action.Aws.Ecs.Deploy.RuntimeArchitecturePlatform";
+                public const string AutoAssignPublicIp =  "Octopus.Action.Aws.Ecs.Deploy.AutoAssignPublicIp";
+                public const string EnableEcsManagedTags =  "Octopus.Action.Aws.Ecs.Deploy.EnableEcsManagedTags";
+                public const string ServiceTaskName =  "Octopus.Action.Aws.Ecs.Deploy.ServiceTaskName";
+                public const string TaskRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskRole";
+                public const string TaskExecutionRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskExecutionRole";
+                public const string SecurityGroupIds =  "Octopus.Action.Aws.Ecs.Deploy.SecurityGroupIds";
+                public const string SubnetIds =   "Octopus.Action.Aws.Ecs.Deploy.SubnetIds";
+                public const string LoadBalancerMappings =   "Octopus.Action.Aws.Ecs.Deploy.LoadBalancerMappings";
+                public const string Volumes = "Octopus.Action.Aws.Ecs.Deploy.Volumes";
+                public const string Containers = "Octopus.Action.Aws.Ecs.Deploy.Containers";
+            }
+            
+            // Not reusing CloudFormation variable here to make it easier to remove all traces of this when we migrate to native ECS API
+            public const string Tags = "Octopus.Action.Aws.Ecs.Tags";
             public const string ClusterName = "Octopus.Action.Aws.Ecs.ClusterName";
-            public const string ServiceName = "Octopus.Action.Aws.Ecs.ServiceName";
             public const string WaitOption = "Octopus.Action.Aws.Ecs.WaitOption";
+            
 
             public static class Update
             {
@@ -32,13 +58,6 @@
                 public const string TargetTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TargetTaskDefinitionName";
                 public const string TemplateTaskDefinitionName = "Octopus.Action.Aws.Ecs.Update.TemplateTaskDefinitionName";
                 public const string ContainerUpdates = "Octopus.Action.Aws.Ecs.Update.ContainerUpdates";
-            }
-
-            // Deploy ECS step: legacy flat key/value pair. Will consolidate when Deploy migrates.
-            public static class WaitOptionLegacy
-            {
-                public const string Type = "Octopus.Action.Aws.Ecs.WaitOption.Type";
-                public const string Timeout = "Octopus.Action.Aws.Ecs.WaitOption.Timeout";
             }
         }
 

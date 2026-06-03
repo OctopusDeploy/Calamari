@@ -7,7 +7,8 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes;
-using ArgoCDFilesUpdatedAttributes = Calamari.Kubernetes.SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.Attributes;
+using Octopus.Calamari.Contracts.ArgoCD;
+using ArgoCDFilesUpdatedAttributes = Octopus.Calamari.Contracts.ArgoCD.ServiceMessages.ArgoCDFilesUpdated.Attributes;
 
 namespace Calamari.ArgoCD
 {
@@ -34,33 +35,32 @@ namespace Calamari.ArgoCD
                 {
                     { ArgoCDFilesUpdatedAttributes.GatewayId, appResult.GatewayId },
                     { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Value },
-                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(ConvertPathsToPosix(appResult.TrackedSourceDetails)) }
+                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(appResult.TrackedSourceDetails.Select(MapSource).ToList()) }
                 };
 
                 var message = new ServiceMessage(
-                                                 SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.Name,
+                                                 ServiceMessages.ArgoCDFilesUpdated.Name,
                                                  parameters);
 
                 log.WriteServiceMessage(message);
             }
         }
 
-        List<TrackedSourceDetail> ConvertPathsToPosix(List<TrackedSourceDetail> inputs)
+        static SourceFileChanges MapSource(TrackedSourceDetail trackedSourceDetail)
         {
-            return inputs.Select(usd => usd with
-                         {
-                             ReplacedFiles = usd.ReplacedFiles.Select(rf => rf with
-                                                {
-                                                    FilePath = rf.FilePath.EnsurePosixDirectorySeparator()
-                                                })
-                                                .ToList(),
-                             PatchedFiles = usd.PatchedFiles.Select(pf => pf with
-                                               {
-                                                   FilePath = pf.FilePath.EnsurePosixDirectorySeparator()
-                                               })
-                                               .ToList()
-                         })
-                         .ToList();
+            return new SourceFileChanges(
+                trackedSourceDetail.CommitSha,
+                trackedSourceDetail.CommitTimestamp,
+                trackedSourceDetail.SourceIndex,
+                trackedSourceDetail.ReplacedFiles.Select(f => f with
+                {
+                    FilePath = f.FilePath.EnsurePosixDirectorySeparator()
+                }).ToList(),
+                trackedSourceDetail.PatchedFiles.Select(f => f with
+                {
+                    FilePath = f.FilePath.EnsurePosixDirectorySeparator()
+                }).ToList()
+            );
         }
     }
 }
