@@ -2,24 +2,24 @@ using System.Text.Json.Serialization;
 
 namespace Calamari.DockerCredentialHelper
 {
-    public class DockerCredential
+    public record DockerCredential
     {
-        public string Username { get; set; } = string.Empty;
-        public string Secret { get; set; } = string.Empty;
+        public string Username { get; init; } = string.Empty;
+        public string Secret { get; init; } = string.Empty;
     }
 
-    public class StoreRequest
+    public record StoreRequest
     {
-        public string ServerURL { get; set; } = string.Empty;
-        public string Username { get; set; } = string.Empty;
-        public string Secret { get; set; } = string.Empty;
+        public string ServerURL { get; init; } = string.Empty;
+        public string Username { get; init; } = string.Empty;
+        public string Secret { get; init; } = string.Empty;
     }
 
-    public class GetResponse
+    public record GetResponse
     {
-        public string ServerURL { get; set; } = string.Empty;
-        public string Username { get; set; } = string.Empty;
-        public string Secret { get; set; } = string.Empty;
+        public string ServerURL { get; init; } = string.Empty;
+        public string Username { get; init; } = string.Empty;
+        public string Secret { get; init; } = string.Empty;
     }
 
     // Source-generated serialization keeps System.Text.Json trim-safe (no reflection), so the

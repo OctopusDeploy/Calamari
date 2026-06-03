@@ -7,9 +7,7 @@ namespace Calamari.DockerCredentialHelper
 {
     // Self-contained AES used only by docker-credential-octopus to protect the short-lived credential
     // files it writes during a package acquisition. The helper both writes (on `docker login`) and
-    // reads (on `docker pull`) these files, so this does not need to interoperate with Calamari's
-    // AesEncryption — it's a deliberately minimal, dependency-free copy so the binary can be trimmed
-    // small. (Calamari.AzureWebApp.NetCoreShim clones AesEncryption for the same reason.)
+    // reads (on `docker pull`) these files, so this does not need to interoperate with Calamari's AesEncryption
     public class AesEncryption
     {
         const int KeySizeBits = 256;

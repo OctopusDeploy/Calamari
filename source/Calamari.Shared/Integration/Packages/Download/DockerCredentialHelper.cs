@@ -30,22 +30,13 @@ namespace Calamari.Integration.Packages.Download
                 var dockerConfigPath = environmentVariables["DOCKER_CONFIG"];
                 Directory.CreateDirectory(dockerConfigPath);
 
-                // Protect the credentials Docker will store with an ephemeral, per-acquisition password.
-                // This mirrors how Calamari's script bootstrappers encrypt sensitive variables for a
-                // child process (AesEncryption.RandomString + AesEncryption.ForScripts): the password
-                // only needs to survive for this acquisition, is handed to docker-credential-octopus via
-                // OCTOPUS_CREDENTIAL_PASSWORD, and the encrypted .cred files are deleted in cleanup.
+                // Ephemeral password for the duration of the acquisition.
                 var encryptionPassword = AesEncryption.RandomString(16);
 
-                // docker-credential-octopus ships alongside Calamari in the app base directory.
-                // Zipping the package (System.IO.Compression) drops the Unix executable bit, so restore
-                // it — otherwise Docker's PATH lookup ignores the file ("executable file not found in $PATH").
                 EnsureCredentialHelperIsExecutable();
                 AddDirectoryToPath(environmentVariables, AppContext.BaseDirectory);
                 environmentVariables["OCTOPUS_CREDENTIAL_PASSWORD"] = encryptionPassword;
 
-                // No need to pre-store the credential: `docker login` invokes the helper's `store`
-                // operation itself (with the key Docker also uses for the later `get`).
                 CreateDockerConfig(dockerConfigPath, BuildCredHelpers(feedUri, dockerHubRegistry));
 
                 log.Verbose($"Configured Docker credential helper for {GetServerUrlForCredentialHelper(feedUri, dockerHubRegistry)}");
