@@ -26,10 +26,10 @@ public static class ContainerSpecMappingExtensions
         return new Cfn.HealthCheck
         {
             Command = containerSpec.HealthCheck.Command.ToArray(),
-            Interval = containerSpec.HealthCheck.Interval.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
-            Retries = containerSpec.HealthCheck.Retries.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
-            StartPeriod = containerSpec.HealthCheck.StartPeriod.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
-            Timeout = containerSpec.HealthCheck.Timeout.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+            Interval = containerSpec.HealthCheck.Interval.ConvertedOrDefault<int?>((s => int.TryParse(s, CultureInfo.InvariantCulture, out var result) ? result : null)),
+            Retries = containerSpec.HealthCheck.Retries.ConvertedOrDefault<int?>((s => int.TryParse(s, CultureInfo.InvariantCulture, out var result) ? result : null)),
+            StartPeriod = containerSpec.HealthCheck.StartPeriod.ConvertedOrDefault<int?>((s => int.TryParse(s, CultureInfo.InvariantCulture, out var result) ? result : null)),
+            Timeout = containerSpec.HealthCheck.Timeout.ConvertedOrDefault<int?>((s => int.TryParse(s, CultureInfo.InvariantCulture, out var result) ? result : null)),
         };
     }
 
@@ -55,8 +55,8 @@ public static class ContainerSpecMappingExtensions
     public static Cfn.PortMapping[] ParsePortMappings(this ContainerSpec containerSpec) =>
         containerSpec.ContainerPortMappings.Select(pm => new Cfn.PortMapping
                      {
-                         ContainerPort = pm.ContainerPort.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
-                         HostPort = pm.ContainerPort.ConvertedOrDefault<int?>(s => int.Parse(s, CultureInfo.InvariantCulture)),
+                         ContainerPort = pm.ContainerPort.ConvertedOrDefault<int?>((s => int.TryParse(s, CultureInfo.InvariantCulture, out var result) ? result : null)),
+                         HostPort = pm.ContainerPort.ConvertedOrDefault<int?>((s => int.TryParse(s, CultureInfo.InvariantCulture, out var result) ? result : null)),
                          Protocol = pm.Protocol.ToString().ToLowerInvariant()
                      })
                      .ToArray();
@@ -93,8 +93,8 @@ public static class ContainerSpecMappingExtensions
         return containerSpec.Ulimits.Select(ul => new Cfn.Ulimit
                             {
                                 Name = ul.LimitName,
-                                HardLimit = int.Parse(ul.HardLimit, CultureInfo.InvariantCulture),
-                                SoftLimit = int.Parse(ul.SoftLimit, CultureInfo.InvariantCulture)
+                                HardLimit = int.TryParse(ul.HardLimit, CultureInfo.InvariantCulture, out var hl) ? hl : null,
+                                SoftLimit = int.TryParse(ul.SoftLimit, CultureInfo.InvariantCulture, out var sl) ? sl : null,
                             })
                             .ToArray();
     }

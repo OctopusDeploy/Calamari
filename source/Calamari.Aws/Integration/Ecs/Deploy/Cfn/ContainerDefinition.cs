@@ -73,8 +73,8 @@ public sealed record RepositoryCredentials
 public sealed record Ulimit
 {
     public string Name { get; init; }
-    public int HardLimit { get; init; }
-    public int SoftLimit { get; init; }
+    public int? HardLimit { get; init; }
+    public int? SoftLimit { get; init; }
 }
 
 public sealed record MountPoint
