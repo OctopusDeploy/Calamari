@@ -81,6 +81,8 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     public class SshUrlTests : AuthenticatingRepositoryFactoryTestBase
     {
         [Test]
+        // SSH not currently functional on Windows
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void SshCredentialBranch_IsSelectedAndDispatchesSshKeyGitConnection()
         {
             // Use an ssh:// URL so the new strict validation allows it, and mock the factory
@@ -108,6 +110,8 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         }
 
         [Test]
+        // SSH not currently functional on Windows
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void KnownHostsFromDtoAreCarriedOntoSshKeyGitConnection()
         {
             const string sshUrl = "ssh://git@github.com/org/repo.git";
