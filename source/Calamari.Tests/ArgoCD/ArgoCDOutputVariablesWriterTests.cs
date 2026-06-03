@@ -165,8 +165,8 @@ namespace Calamari.Tests.ArgoCD
                 matchingSourceCount: 2,
                 trackedSourceDetails:
                 [
-                    new TrackedSourceDetail("https://github.com/org/repo", "abc123", DateTimeOffset.UtcNow, 0, [], []),
-                    new TrackedSourceDetail("https://github.com/org/repo", "def456", DateTimeOffset.UtcNow, 1, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo", "abc123", DateTimeOffset.UtcNow, 0, [], [],[]),
+                    new TrackedSourceDetail("https://github.com/org/repo", "def456", DateTimeOffset.UtcNow, 1, [], [],[]),
                 ],
                 updatedImages: new HashSet<string>(),
                 gitReposUpdated: ["https://github.com/org/repo"]);
@@ -175,7 +175,7 @@ namespace Calamari.Tests.ArgoCD
             var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
 
             // Act
-            writer.WriteManifestUpdateOutput(["gateway-1"], ["https://github.com/org/repo"], totalApps, updatedApps, applicationResults);
+            writer.WriteManifestUpdateOutput(applicationResults);
 
             // Assert
             using var _ = new AssertionScope();
@@ -203,8 +203,8 @@ namespace Calamari.Tests.ArgoCD
                 matchingSourceCount: 2,
                 trackedSourceDetails:
                 [
-                    new TrackedSourceDetail("https://github.com/org/repo-a", "abc123", DateTimeOffset.UtcNow, 0, [], []),
-                    new TrackedSourceDetail("https://github.com/org/repo-a", "def456", DateTimeOffset.UtcNow, 1, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "abc123", DateTimeOffset.UtcNow, 0, [], [],[]),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "def456", DateTimeOffset.UtcNow, 1, [], [],[]),
                 ],
                 updatedImages: new HashSet<string>(),
                 gitReposUpdated: ["https://github.com/org/repo-a"]);
@@ -216,7 +216,7 @@ namespace Calamari.Tests.ArgoCD
                 matchingSourceCount: 1,
                 trackedSourceDetails:
                 [
-                    new TrackedSourceDetail("https://github.com/org/repo-b", "ghi789", DateTimeOffset.UtcNow, 0, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo-b", "ghi789", DateTimeOffset.UtcNow, 0, [], [],[]),
                 ],
                 updatedImages: new HashSet<string>(),
                 gitReposUpdated: ["https://github.com/org/repo-b"]);
@@ -225,7 +225,7 @@ namespace Calamari.Tests.ArgoCD
             var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
 
             // Act
-            writer.WriteManifestUpdateOutput(["gateway-1", "gateway-2"], ["https://github.com/org/repo-a", "https://github.com/org/repo-b"], totalApps, updatedApps, applicationResults);
+            writer.WriteManifestUpdateOutput(applicationResults);
 
             // Assert
             using var _ = new AssertionScope();
@@ -249,7 +249,7 @@ namespace Calamari.Tests.ArgoCD
             var updatedApps = applicationResults.Where(r => r.Updated).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
 
             // Act
-            writer.WriteManifestUpdateOutput([], [], totalApps, updatedApps, applicationResults);
+            writer.WriteManifestUpdateOutput(applicationResults);
 
             // Assert
             using var _ = new AssertionScope();
@@ -276,8 +276,8 @@ namespace Calamari.Tests.ArgoCD
                 matchingSourceCount: 2,
                 trackedSourceDetails:
                 [
-                    new TrackedSourceDetail("https://github.com/org/repo", "abc123", DateTimeOffset.UtcNow, 0, [], []),
-                    new TrackedSourceDetail("https://github.com/org/repo", "def456", DateTimeOffset.UtcNow, 1, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo", "abc123", DateTimeOffset.UtcNow, 0, [], [],[]),
+                    new TrackedSourceDetail("https://github.com/org/repo", "def456", DateTimeOffset.UtcNow, 1, [], [],[]),
                 ],
                 updatedImages: ["image-a:1.0", "image-b:2.0", "image-c:3.0", "image-d:4.0", "image-e:5.0"],
                 gitReposUpdated: ["https://github.com/org/repo"]);
@@ -287,7 +287,7 @@ namespace Calamari.Tests.ArgoCD
             var imagesUpdatedCount = applicationResults.SelectMany(r => r.UpdatedImages).ToHashSet().Count;
 
             // Act
-            writer.WriteImageUpdateOutput(["gateway-1"], ["https://github.com/org/repo"], totalApps, updatedApps, imagesUpdatedCount, applicationResults.ToList());
+            writer.WriteImageUpdateOutput(applicationResults.ToList());
 
             // Assert
             using var _ = new AssertionScope();
@@ -315,9 +315,9 @@ namespace Calamari.Tests.ArgoCD
                 matchingSourceCount: 3,
                 trackedSourceDetails:
                 [
-                    new TrackedSourceDetail("https://github.com/org/repo-a", "abc123", DateTimeOffset.UtcNow, 0, [], []),
-                    new TrackedSourceDetail("https://github.com/org/repo-a", "def456", DateTimeOffset.UtcNow, 1, [], []),
-                    new TrackedSourceDetail("https://github.com/org/repo-a", "ghi789", DateTimeOffset.UtcNow, 2, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "abc123", DateTimeOffset.UtcNow, 0, [], [],[]),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "def456", DateTimeOffset.UtcNow, 1, [], [],[]),
+                    new TrackedSourceDetail("https://github.com/org/repo-a", "ghi789", DateTimeOffset.UtcNow, 2, [], [],[]),
                 ],
                 updatedImages: ["image-a:1.0", "image-b:2.0"],
                 gitReposUpdated: ["https://github.com/org/repo-a"]);
@@ -329,7 +329,7 @@ namespace Calamari.Tests.ArgoCD
                 matchingSourceCount: 1,
                 trackedSourceDetails:
                 [
-                    new TrackedSourceDetail("https://github.com/org/repo-b", "jkl012", DateTimeOffset.UtcNow, 0, [], []),
+                    new TrackedSourceDetail("https://github.com/org/repo-b", "jkl012", DateTimeOffset.UtcNow, 0, [], [],[]),
                 ],
                 updatedImages: ["image-c:3.0", "image-d:4.0"],
                 gitReposUpdated: ["https://github.com/org/repo-b"]);
@@ -339,7 +339,7 @@ namespace Calamari.Tests.ArgoCD
             var imagesUpdatedCount = applicationResults.SelectMany(r => r.UpdatedImages).ToHashSet().Count;
 
             // Act
-            writer.WriteImageUpdateOutput(["gateway-1", "gateway-2"], ["https://github.com/org/repo-a", "https://github.com/org/repo-b"], totalApps, updatedApps, imagesUpdatedCount, applicationResults.ToList());
+            writer.WriteImageUpdateOutput(applicationResults.ToList());
 
             // Assert
             using var _ = new AssertionScope();
@@ -365,7 +365,7 @@ namespace Calamari.Tests.ArgoCD
             var imagesUpdatedCount = applicationResults.SelectMany(r => r.UpdatedImages).ToHashSet().Count;
 
             // Act
-            writer.WriteImageUpdateOutput([], [], totalApps, updatedApps, imagesUpdatedCount, applicationResults.ToList());
+            writer.WriteImageUpdateOutput(applicationResults.ToList());
 
             // Assert
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");

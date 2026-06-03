@@ -39,7 +39,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [],
-                            [])
+                            [],[])
                     ],
                     [],
                     [])
@@ -97,7 +97,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [],
-                            [])
+                            [],[])
                     ],
                     [],
                     [])
@@ -142,7 +142,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [],
-                            [])
+                            [],[])
                     ],
                     [],
                     []),
@@ -158,7 +158,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [],
-                            [])
+                            [],[])
                     ],
                     [],
                     [])
@@ -212,7 +212,7 @@ namespace Calamari.Tests.ArgoCD
                                                 timestamp,
                                                 0,
                                                 [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")],
-                                                [])
+                                                [],[])
                     ],
                     [],
                     [])
@@ -257,7 +257,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [],
-                            [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]""")])
+                            [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]""")],[])
                     ],
                     [],
                     [])
@@ -302,7 +302,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")],
-                            [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]""")])
+                            [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]""")],[])
                     ],
                     [],
                     [])
@@ -353,7 +353,7 @@ namespace Calamari.Tests.ArgoCD
                             [
                                 new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"nginx:latest"}]"""),
                                 new FileJsonPatch("patch.yaml", """[{"op":"replace","path":"/spec/replicas","value":3}]""")
-                            ])
+                            ],[])
                     ],
                     [],
                     [])
@@ -398,14 +398,14 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [new FileHash("values.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")],
-                            []),
+                            [],[]),
                         new TrackedSourceDetail(
                             "https://github.com",
                             "abc123",
                             timestamp,
                             1,
                             [],
-                            [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"redis:latest"}]""")])
+                            [new FileJsonPatch("kustomization.yaml", """[{"op":"replace","path":"/images/0/name","value":"redis:latest"}]""")],[])
                     ],
                     [],
                     [])
@@ -450,7 +450,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [new FileHash(Path.Combine("some", "nested", "values.yaml"), "22c0df2cceca5273e4dc569dda52805d27df3360")],
-                            [])
+                            [],[])
                     ],
                     [],
                     [])
@@ -493,7 +493,7 @@ namespace Calamari.Tests.ArgoCD
                             null,
                             0,
                             [],
-                            [new FileJsonPatch("values.yaml", """[{"op":"replace","path":"/image","value":"nginx:1.27"}]""")])
+                            [new FileJsonPatch("values.yaml", """[{"op":"replace","path":"/image","value":"nginx:1.27"}]""")],[])
                     ],
                     [],
                     [])
@@ -546,7 +546,7 @@ namespace Calamari.Tests.ArgoCD
                             timestamp,
                             0,
                             [],
-                            [])
+                            [],[])
                     ],
                     [],
                     []),

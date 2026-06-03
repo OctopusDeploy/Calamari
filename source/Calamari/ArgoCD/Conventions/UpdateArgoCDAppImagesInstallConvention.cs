@@ -86,22 +86,9 @@ namespace Calamari.ArgoCD.Conventions
 
             //if we are creating a pull request, we don't want to report files updated (as this will be passed down as output variables _with_ the PR info)
 
-                reporter.ReportFilesUpdated(deploymentConfig.CommitParameters, applicationResults);
+            reporter.ReportFilesUpdated(deploymentConfig.CommitParameters, applicationResults);
 
-            var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
-            var updatedApplications = applicationResults.Where(r => r.Updated).ToList();
-            var updatedApplicationsWithSources = updatedApplications.Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
-            var gitReposUpdated = updatedApplications.SelectMany(r => r.GitReposUpdated).ToHashSet();
-            var newImagesWritten = updatedApplications.SelectMany(r => r.UpdatedImages).ToHashSet();
-
-            var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
-            outputVariablesWriter.WriteImageUpdateOutput(gatewayIds,
-                                                         gitReposUpdated,
-                                                         totalApplicationsWithSourceCounts,
-                                                         updatedApplicationsWithSources,
-                                                         newImagesWritten.Count,
-                                                         applicationResults
-                                                        );
+            outputVariablesWriter.WriteImageUpdateOutput(applicationResults);
         }
     }
 }

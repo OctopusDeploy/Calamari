@@ -141,6 +141,9 @@ namespace Calamari.Kubernetes
                                 //These are always sent
                                 public string Updated => $"{qualifiedPrefix}.Updated";
                                 public string RepositoryUrl => $"{qualifiedPrefix}.RepositoryUrl";
+                                
+                                //These are only sent for image tag updates
+                                public string UpdatedImages => $"{qualifiedPrefix}.UpdatedImages";
                             }
                         }
                     }

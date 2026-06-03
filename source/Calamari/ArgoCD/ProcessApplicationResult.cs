@@ -13,7 +13,8 @@ namespace Calamari.ArgoCD
         DateTimeOffset? CommitTimestamp,
         int SourceIndex,
         List<FileHash> ReplacedFiles,
-        List<FileJsonPatch> PatchedFiles);
+        List<FileJsonPatch> PatchedFiles,
+        HashSet<string> imagesUpdated);
 
     public class ProcessApplicationResult(
         string gatewayId,
