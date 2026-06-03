@@ -9,8 +9,6 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ArgoCD;
-using FileHash = Calamari.ArgoCD.FileHash;
-using FileJsonPatch = Calamari.ArgoCD.FileJsonPatch;
 
 namespace Calamari.Tests.ArgoCD
 {

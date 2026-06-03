@@ -24,7 +24,6 @@ using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ArgoCD;
-using FileHash = Calamari.ArgoCD.FileHash;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {
