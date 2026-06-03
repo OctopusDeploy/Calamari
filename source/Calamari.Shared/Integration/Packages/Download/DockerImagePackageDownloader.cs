@@ -51,7 +51,6 @@ namespace Calamari.Integration.Packages.Download
 
         public DockerImagePackageDownloader(IScriptEngine scriptEngine,
                                             ICalamariFileSystem fileSystem,
-                                            ICommandLineRunner commandLineRunner,
                                             IVariables variables,
                                             ILog log,
                                             IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory)

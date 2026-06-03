@@ -251,12 +251,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         static DockerImagePackageDownloader GetDownloader(ILog log, IVariables variables)
         {
-            var runner = new CommandLineRunner(log, variables);
             return new DockerImagePackageDownloader(
-                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), 
-                CalamariPhysicalFileSystem.GetPhysicalFileSystem(), 
-                runner, 
-                variables, 
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log),
+                CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
+                variables,
                 log,
                 new FeedLoginDetailsProviderFactory());
         }
