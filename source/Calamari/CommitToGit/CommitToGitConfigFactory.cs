@@ -1,13 +1,10 @@
 using System;
-using System.Linq;
-using Amazon.ECS.Model;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Octopus.Calamari.Contracts.CommitToGit;
-using Octopus.Calamari.Contracts.Git;
 
 namespace Calamari.CommitToGit
 {
@@ -37,12 +34,24 @@ namespace Calamari.CommitToGit
 
             var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
 
-            var connection = GitConnectionFactory.Create(properties.GitCredential, uriAsString, GitReference.CreateFromString(gitReferenceAsString), requiresPullRequest);
+            var connection = GitConnectionFactory.Create(properties.GitCredential, uriAsString, GitReference.CreateFromString(gitReferenceAsString));
+
+            if (requiresPullRequest)
+            {
+                switch (connection)
+                {
+                    case SshKeyGitConnection:
+                        throw new CommandException("Creating PRs is not possible when using SSH key authentication, please use a username and password instead");
+                    case AnonymousGitConnection:
+                        throw new CommandException("Creating a pull request requires Git repository credentials, but none were provided. Please configure a username and password.");
+                }
+            }
 
             //Note: Octopus server removes variables containing empty strings, thus a missing property should default to an empty string.
-            return new CommitToGitRepositorySettings(connection,
-                                                     commitParameters,
-                                                     variables.Get(SpecialVariables.Action.Git.DestinationPath) ?? string.Empty);
+            return new CommitToGitRepositorySettings(
+                connection,
+                commitParameters,
+                variables.Get(SpecialVariables.Action.Git.DestinationPath) ?? string.Empty);
         }
 
         string EvaluateNonsensitiveExpression(string expression)
