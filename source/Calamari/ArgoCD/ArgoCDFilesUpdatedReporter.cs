@@ -52,8 +52,14 @@ namespace Calamari.ArgoCD
                 trackedSourceDetail.CommitSha,
                 trackedSourceDetail.CommitTimestamp,
                 trackedSourceDetail.SourceIndex,
-                trackedSourceDetail.ReplacedFiles.Select(f => new Octopus.Calamari.Contracts.ArgoCD.FileHash(f.FilePath.EnsurePosixDirectorySeparator(), f.Hash)).ToList(),
-                trackedSourceDetail.PatchedFiles.Select(f => new Octopus.Calamari.Contracts.ArgoCD.FileJsonPatch(f.FilePath.EnsurePosixDirectorySeparator(), f.JsonPatch)).ToList()
+                trackedSourceDetail.ReplacedFiles.Select(f => f with
+                {
+                    FilePath = f.FilePath.EnsurePosixDirectorySeparator()
+                }).ToList(),
+                trackedSourceDetail.PatchedFiles.Select(f => f with
+                {
+                    FilePath = f.FilePath.EnsurePosixDirectorySeparator()
+                }).ToList()
             );
         }
     }
