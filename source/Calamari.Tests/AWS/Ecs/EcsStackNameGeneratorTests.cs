@@ -1,5 +1,4 @@
 using Calamari.Aws.Integration.Ecs;
-using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -11,10 +10,7 @@ public class EcsStackNameGeneratorTests
     [Test]
     public void UntenantedDefault_WhenTenantIdMissing()
     {
-        var variables = new CalamariVariables();
-        variables.Set("Octopus.Environment.Id", "env1");
-
-        var name = new EcsStackNameGenerator().Generate(variables, "mycluster", "myservice");
+        var name = new EcsStackNameGenerator().Generate("mycluster", "myservice", "env1");
 
         name.Should().Be("cf-ecs-mycluster-myservice-env1-untenanted");
     }
@@ -22,11 +18,7 @@ public class EcsStackNameGeneratorTests
     [Test]
     public void UsesTenantId_WhenPresent()
     {
-        var variables = new CalamariVariables();
-        variables.Set("Octopus.Environment.Id", "env1");
-        variables.Set("Octopus.Deployment.Tenant.Id", "tenant1");
-
-        var name = new EcsStackNameGenerator().Generate(variables, "mycluster", "myservice");
+        var name = new EcsStackNameGenerator().Generate("mycluster", "myservice", "env1", "tenant1");
 
         name.Should().Be("cf-ecs-mycluster-myservice-env1-tenant1");
     }
@@ -34,11 +26,8 @@ public class EcsStackNameGeneratorTests
     [Test]
     public void TruncatesTo128Chars()
     {
-        var variables = new CalamariVariables();
-        variables.Set("Octopus.Environment.Id", "env1");
-
         var longService = new string('a', 200);
-        var name = new EcsStackNameGenerator().Generate(variables, "cluster", longService);
+        var name = new EcsStackNameGenerator().Generate( "cluster", longService, "env1" );
 
         name.Length.Should().Be(128);
         name.Should().StartWith("cf-ecs-cluster-");
