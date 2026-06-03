@@ -3,13 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Models;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD
 {
-    public record FileHash(string FilePath, string Hash);
-
-    public record FileJsonPatch(string FilePath, string JsonPatch);
-
     public record TrackedSourceDetail(
         string? CommitSha,
         DateTimeOffset? CommitTimestamp,
