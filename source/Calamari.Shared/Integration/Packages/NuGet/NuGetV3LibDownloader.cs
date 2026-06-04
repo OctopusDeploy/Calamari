@@ -36,7 +36,11 @@ namespace Calamari.Integration.Packages.NuGet
                 }
 
                 string targetTempNupkg = Path.Combine(targetPath, Path.GetRandomFileName());
-                var packageDownloader =  providers.GetPackageDownloaderAsync(new PackageIdentity(packageId, version.ToNuGetVersion()), sourceCacheContext, logger, CancellationToken.None)
+                var packageIdentity = new PackageIdentity(packageId, version.ToNuGetVersion());
+
+                EnsurePackageVersionExists(sourceRepository, packageIdentity, feedUri, sourceCacheContext, logger);
+
+                var packageDownloader =  providers.GetPackageDownloaderAsync(packageIdentity, sourceCacheContext, logger, CancellationToken.None)
                                                       .GetAwaiter()
                                                       .GetResult();
                 var fileCopied = packageDownloader.CopyNupkgFileToAsync(targetTempNupkg, CancellationToken.None).GetAwaiter().GetResult();
@@ -48,6 +52,26 @@ namespace Calamari.Integration.Packages.NuGet
 
                 File.Move(targetTempNupkg, targetFilePath);
             }
+        }
+
+        // The (forked) NuGet.Commands SourceRepositoryDependencyProvider.GetPackageDownloaderAsync throws a bare
+        // NullReferenceException when the requested version is not present on the feed: the inner FindPackageByIdResource
+        // returns a null downloader, which the provider then dereferences unconditionally (SetThrottle/SetExceptionHandler).
+        // Calamari can't stop the library dereferencing its own null, so we pre-check that the version exists and throw an
+        // actionable error instead. This folds into the existing "could not be downloaded ... make sure the package is
+        // pushed to the feed" retry messaging in InternalNuGetPackageDownloader. See FD-440.
+        static void EnsurePackageVersionExists(SourceRepository sourceRepository, PackageIdentity packageIdentity, Uri feedUri, SourceCacheContext sourceCacheContext, ILogger logger)
+        {
+            var findPackageByIdResource = sourceRepository.GetResourceAsync<FindPackageByIdResource>(CancellationToken.None)
+                                                          .GetAwaiter()
+                                                          .GetResult();
+
+            var packageExists = findPackageByIdResource.DoesPackageExistAsync(packageIdentity.Id, packageIdentity.Version, sourceCacheContext, logger, CancellationToken.None)
+                                                       .GetAwaiter()
+                                                       .GetResult();
+
+            if (!packageExists)
+                throw new Exception($"Package {packageIdentity.Id} version {packageIdentity.Version.ToNormalizedString()} was not found on the NuGet feed '{feedUri}'. Make sure the package version has been pushed to the feed.");
         }
 
         public class NugetLogger : ILogger
