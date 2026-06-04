@@ -27,6 +27,7 @@ namespace Calamari.AiAgent.Behaviours
             ClaudeCommandArgsBuilder argsBuilder,
             string apiToken,
             IReadOnlyDictionary<string, McpServerConfig> mcpServers,
+            IReadOnlyDictionary<string, string> deploymentVariables,
             ProcessCredentials? runAs = null,
             IReadOnlyList<UserSkill>? userSkills = null)
         {
@@ -37,7 +38,14 @@ namespace Calamari.AiAgent.Behaviours
             try
             {
                 SetupSkills(workingDir, userSkills);
-                SetupMcpConfig(workingDir, mcpServers);
+                SetupDeploymentVariables(workingDir, deploymentVariables);
+
+                var systemPromptPath = SetupSystemPrompt(workingDir);
+                argsBuilder.WithAppendSystemPromptFile(systemPromptPath);
+
+                var mcpConfigPath = SetupMcpConfig(workingDir, mcpServers);
+                argsBuilder.WithMcpConfigPath(mcpConfigPath);
+
                 return await RunInDirectoryAsync(argsBuilder, apiToken, workingDir, runAs);
             }
             finally
@@ -53,14 +61,10 @@ namespace Calamari.AiAgent.Behaviours
             string workingDir,
             ProcessCredentials? runAs)
         {
-            //var mcpConfigPath = Path.Combine(workingDir, "mcp-config.json");
-            //var systemPromptPath = Path.Combine(workingDir, "CLAUDE.md");
             var verboseLogPath = Path.Combine(Path.GetTempPath(), $"claude-agent-verbose-{Guid.NewGuid():N}.log");
             var debugLogPath = Path.Combine(Path.GetTempPath(), $"claude-agent-debug-{Guid.NewGuid():N}.log");
             var fullArgs = argsBuilder.Build();
-            //var fullArgs = $"{args} --strict-mcp-config " //"--bare "
-                           //+ $"--system-prompt-file {EscapeArg(systemPromptPath)} "
-                           fullArgs += $" --debug-file {EscapeArg(debugLogPath)}";
+            fullArgs += $" --debug-file {EscapeArg(debugLogPath)}";
             
             log.Verbose($"Claude Code command: claude {fullArgs}");
             var startInfo = new ProcessStartInfo
@@ -114,7 +118,7 @@ namespace Calamari.AiAgent.Behaviours
                                       {
                                           while (await process.StandardOutput.ReadLineAsync() is { } line)
                                           {
-                                              await File.AppendAllTextAsync(verboseLogPath, line);
+                                              await File.AppendAllTextAsync(verboseLogPath, line + "\n");
                                               streamProcessor.ProcessLine(line);
                                           }
                                       });
@@ -139,15 +143,38 @@ namespace Calamari.AiAgent.Behaviours
             }
         }
 
-        internal static void SetupMcpConfig(string workingDir, IReadOnlyDictionary<string, McpServerConfig> mcpServers)
+        internal static string SetupMcpConfig(string workingDir, IReadOnlyDictionary<string, McpServerConfig> mcpServers)
         {
             var config = new { mcpServers };
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(Path.Combine(workingDir, "mcp-config.json"), json);
+            var path = Path.Combine(workingDir, "mcp-config.json");
+            File.WriteAllText(path, json);
+            return path;
         }
 
         const string SkillsResourcePrefix = "Calamari.AiAgent.ClaudeCodeBehaviour.DefaultContext.Skills.";
         const string SystemPromptResource = "Calamari.AiAgent.ClaudeCodeBehaviour.DefaultContext.system-prompt.md";
+
+        internal static string SetupSystemPrompt(string workingDir)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var path = Path.Combine(workingDir, "system-prompt.md");
+
+            using var stream = assembly.GetManifestResourceStream(SystemPromptResource);
+            if (stream != null)
+            {
+                using var reader = new StreamReader(stream);
+                File.WriteAllText(path, reader.ReadToEnd());
+            }
+
+            return path;
+        }
+
+        internal static void SetupDeploymentVariables(string workingDir, IReadOnlyDictionary<string, string> variables)
+        {
+            var json = JsonSerializer.Serialize(variables, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(Path.Combine(workingDir, "deployment-variables.json"), json);
+        }
 
         internal static void SetupSkills(string workingDir, IReadOnlyList<UserSkill>? userSkills = null)
         {
@@ -156,21 +183,11 @@ namespace Calamari.AiAgent.Behaviours
 
             var assembly = Assembly.GetExecutingAssembly();
 
-            // Write CLAUDE.md (system prompt) to the working directory root
-            using (var promptStream = assembly.GetManifestResourceStream(SystemPromptResource))
-            {
-                if (promptStream != null)
-                {
-                    using var reader = new StreamReader(promptStream);
-                    File.WriteAllText(Path.Combine(workingDir, "CLAUDE.md"), reader.ReadToEnd());
-                }
-            }
-
             foreach (var resourceName in assembly.GetManifestResourceNames())
             {
                 if (!resourceName.StartsWith(SkillsResourcePrefix, StringComparison.Ordinal))
                     continue;
-                
+
                 var fileName = resourceName.Substring(SkillsResourcePrefix.Length);
                 var skillName = Path.GetFileNameWithoutExtension(fileName);
                 var innerSkillDir = Path.Combine(skillsDir, skillName);
@@ -188,7 +205,7 @@ namespace Calamari.AiAgent.Behaviours
                 {
                     var dirName = SanitizeFileName(skill.Name);
                     var innerSkillDir = Path.GetFullPath(Path.Combine(skillsDir, dirName));
-                    
+
                     if (!innerSkillDir.StartsWith(Path.GetFullPath(skillsDir) + Path.DirectorySeparatorChar, StringComparison.Ordinal))
                         throw new CommandException($"Skill name '{skill.Name}' results in a path outside the skills directory.");
 

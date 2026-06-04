@@ -175,20 +175,11 @@ namespace Calamari.AiAgent.Behaviours
         [JsonPropertyName("timestamp")]
         public string? Timestamp { get; init; }
 
-        [JsonPropertyName("tool_use_result")]
-        public ToolUseResultInfo? ToolUseResult { get; init; }
+        //[JsonPropertyName("tool_use_result")]
+        //public string? ToolUseResult { get; init; }
 
         [JsonPropertyName("isSynthetic")]
         public bool? IsSynthetic { get; init; }
-    }
-
-    public record ToolUseResultInfo
-    {
-        [JsonPropertyName("success")]
-        public bool? Success { get; init; }
-
-        [JsonPropertyName("commandName")]
-        public string? CommandName { get; init; }
     }
 
     public record ResultStreamEvent : StreamEvent
@@ -227,10 +218,22 @@ namespace Calamari.AiAgent.Behaviours
         public IReadOnlyDictionary<string, ModelUsageInfo>? ModelUsage { get; init; }
 
         [JsonPropertyName("permission_denials")]
-        public IReadOnlyList<string>? PermissionDenials { get; init; }
+        public IReadOnlyList<PermissionDenial>? PermissionDenials { get; init; }
 
         [JsonPropertyName("fast_mode_state")]
         public string? FastModeState { get; init; }
+    }
+
+    public record PermissionDenial
+    {
+        [JsonPropertyName("tool_name")]
+        public string? ToolName { get; init; }
+
+        [JsonPropertyName("tool_use_id")]
+        public string? ToolUseId { get; init; }
+
+        [JsonPropertyName("tool_input")]
+        public JsonElement? ToolInput { get; init; }
     }
 
     public record StreamMessage

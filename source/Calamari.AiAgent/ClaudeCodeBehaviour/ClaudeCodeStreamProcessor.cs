@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -33,30 +34,42 @@ namespace Calamari.AiAgent.Behaviours
             {
                 return;
             }
-
-            using var _ = doc;
-            var typeString = doc.RootElement.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
-
-            if (typeString == null || !TryParseEventType(typeString, out var eventType))
+            catch (Exception ex)
             {
-                log.Verbose($"[stream] unhandled event type '{typeString}'");
+                log.Error($"[stream] failed to parse JSON: {ex.Message}");
                 return;
             }
 
-            switch (eventType)
+            try
             {
-                case StreamEventType.System:
-                    HandleSystemEvent(JsonSerializer.Deserialize<SystemStreamEvent>(json, JsonOptions)!);
-                    break;
-                case StreamEventType.Assistant:
-                    HandleMessageEvent(JsonSerializer.Deserialize<AssistantStreamEvent>(json, JsonOptions)?.Message);
-                    break;
-                case StreamEventType.User:
-                    HandleUserMessage(JsonSerializer.Deserialize<UserStreamEvent>(json, JsonOptions));
-                    break;
-                case StreamEventType.Result:
-                    HandleResultEvent(JsonSerializer.Deserialize<ResultStreamEvent>(json, JsonOptions)!);
-                    break;
+                using var _ = doc;
+                var typeString = doc.RootElement.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
+
+                if (typeString == null || !TryParseEventType(typeString, out var eventType))
+                {
+                    log.Verbose($"[stream] unhandled event type '{typeString}'");
+                    return;
+                }
+
+                switch (eventType)
+                {
+                    case StreamEventType.System:
+                        HandleSystemEvent(JsonSerializer.Deserialize<SystemStreamEvent>(json, JsonOptions)!);
+                        break;
+                    case StreamEventType.Assistant:
+                        HandleMessageEvent(JsonSerializer.Deserialize<AssistantStreamEvent>(json, JsonOptions)?.Message);
+                        break;
+                    case StreamEventType.User:
+                        HandleUserMessage(JsonSerializer.Deserialize<UserStreamEvent>(json, JsonOptions));
+                        break;
+                    case StreamEventType.Result:
+                        HandleResultEvent(JsonSerializer.Deserialize<ResultStreamEvent>(json, JsonOptions)!);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"[stream] failed to process JSON: {ex.Message}");
             }
         }
 
@@ -222,7 +235,8 @@ namespace Calamari.AiAgent.Behaviours
                 properties[AiAgentServiceMessageNames.DurationApiMsAttribute] = evt.DurationApiMs.Value.ToString("F0");
             if (evt.NumTurns.HasValue)
                 properties[AiAgentServiceMessageNames.NumTurnsAttribute] = evt.NumTurns.Value.ToString();
-
+            log.Info($"AI Agent Usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
+            
             if (evt.Usage is { } usage)
             {
                 if (usage.InputTokens.HasValue)
@@ -233,6 +247,8 @@ namespace Calamari.AiAgent.Behaviours
                     properties[AiAgentServiceMessageNames.CacheReadInputTokensAttribute] = usage.CacheReadInputTokens.Value.ToString();
                 if (usage.CacheCreationInputTokens.HasValue)
                     properties[AiAgentServiceMessageNames.CacheCreationInputTokensAttribute] = usage.CacheCreationInputTokens.Value.ToString();
+                
+                log.Info($"AI Agent Tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
             }
 
             log.WriteServiceMessage(new ServiceMessage(AiAgentServiceMessageNames.Name, properties));

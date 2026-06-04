@@ -13,7 +13,7 @@ namespace Calamari.AiAgent.Tests;
 public class ClaudeCodeCliRunnerFixture
 {
     [Test]
-    public void SetupSkills_CreatesSkillFile()
+    public void SetupSkills_CreatesSkillDirectories()
     {
         var workingDir = Path.Combine(Path.GetTempPath(), $"test-skills-{Path.GetRandomFileName()}");
         Directory.CreateDirectory(workingDir);
@@ -22,12 +22,13 @@ public class ClaudeCodeCliRunnerFixture
         {
             ClaudeCodeCliRunner.SetupSkills(workingDir);
 
-            var skillPath = Path.Combine(workingDir, ".claude", "skills", "octopus-deployment.context.md");
-            File.Exists(skillPath).Should().BeTrue();
+            var skillDir = Path.Combine(workingDir, ".claude", "skills", "octopus-deployment-context");
+            Directory.Exists(skillDir).Should().BeTrue();
 
-            var content = File.ReadAllText(skillPath);
-            content.Should().Contain("name: octopus-deployment-context");
-            content.Should().Contain("description:");
+            var skillMd = Path.Combine(skillDir, "SKILL.md");
+            File.Exists(skillMd).Should().BeTrue();
+
+            var content = File.ReadAllText(skillMd);
             content.Should().Contain("get_deployment_variables");
         }
         finally
@@ -52,13 +53,32 @@ public class ClaudeCodeCliRunnerFixture
 
             ClaudeCodeCliRunner.SetupSkills(workingDir, userSkills);
 
-            var skillPath1 = Path.Combine(workingDir, ".claude", "skills", "my-custom-skill.md");
-            File.Exists(skillPath1).Should().BeTrue();
-            File.ReadAllText(skillPath1).Should().Contain("Do something useful.");
+            var skill1 = Path.Combine(workingDir, ".claude", "skills", "my-custom-skill", "SKILL.md");
+            File.Exists(skill1).Should().BeTrue();
+            File.ReadAllText(skill1).Should().Contain("Do something useful.");
 
-            var skillPath2 = Path.Combine(workingDir, ".claude", "skills", "another-skill.md");
-            File.Exists(skillPath2).Should().BeTrue();
-            File.ReadAllText(skillPath2).Should().Contain("More instructions.");
+            var skill2 = Path.Combine(workingDir, ".claude", "skills", "another-skill", "SKILL.md");
+            File.Exists(skill2).Should().BeTrue();
+            File.ReadAllText(skill2).Should().Contain("More instructions.");
+        }
+        finally
+        {
+            Directory.Delete(workingDir, true);
+        }
+    }
+
+    [Test]
+    public void SetupSystemPrompt_WritesFile()
+    {
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-sysprompt-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
+
+        try
+        {
+            var path = ClaudeCodeCliRunner.SetupSystemPrompt(workingDir);
+
+            File.Exists(path).Should().BeTrue();
+            File.ReadAllText(path).Should().NotBeEmpty();
         }
         finally
         {
@@ -122,13 +142,13 @@ public class ClaudeCodeCliRunnerFixture
 
             ClaudeCodeCliRunner.SetupSkills(workingDir, userSkills);
 
-            // The file should be written safely inside the skills directory, not at ../../etc/evil
+            // The file should be written safely inside the skills directory
             var skillsDir = Path.Combine(workingDir, ".claude", "skills");
-            var files = Directory.GetFiles(skillsDir, "*.md");
-            files.Should().Contain(f => f.Contains("etc-evil"));
+            var dirs = Directory.GetDirectories(skillsDir);
+            dirs.Should().Contain(d => Path.GetFileName(d).Contains("etc-evil"));
 
             // Verify nothing was written outside
-            File.Exists(Path.Combine(workingDir, "..", "..", "etc", "evil.md")).Should().BeFalse();
+            File.Exists(Path.Combine(workingDir, "..", "..", "etc", "evil", "SKILL.md")).Should().BeFalse();
         }
         finally
         {
@@ -154,9 +174,8 @@ public class ClaudeCodeCliRunnerFixture
                 },
             };
 
-            ClaudeCodeCliRunner.SetupMcpConfig(workingDir, servers);
+            var configPath = ClaudeCodeCliRunner.SetupMcpConfig(workingDir, servers);
 
-            var configPath = Path.Combine(workingDir, "mcp-config.json");
             File.Exists(configPath).Should().BeTrue();
 
             var json = File.ReadAllText(configPath);
@@ -179,9 +198,8 @@ public class ClaudeCodeCliRunnerFixture
 
         try
         {
-            ClaudeCodeCliRunner.SetupMcpConfig(workingDir, new Dictionary<string, McpServerConfig>());
+            var configPath = ClaudeCodeCliRunner.SetupMcpConfig(workingDir, new Dictionary<string, McpServerConfig>());
 
-            var configPath = Path.Combine(workingDir, "mcp-config.json");
             var json = File.ReadAllText(configPath);
             var doc = JsonDocument.Parse(json);
             doc.RootElement.TryGetProperty("mcpServers", out var mcpServers).Should().BeTrue();
