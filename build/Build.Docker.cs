@@ -32,13 +32,20 @@ public partial class Build
                                                             Directory.Move(flavourFolder / "linux-x64",
                                                                 flavourFolder / "linux-amd64");
                                                             Log.Information("Renamed 'linux-x64' folder to 'linux-amd64'");
+
+                                                            //a known list of binaries to chmod +x
+                                                            string[] binariesToChmodX = ["docker-credential-octopus", flavour];
+
                                                             foreach (var supportedPlatform in supportedPlatforms)
                                                             {
                                                                 var platformFolder = supportedPlatform.Replace("/", "-");
-                                                                // change the native binary to be executable in each platform
-                                                                PowerShellTasks.PowerShell(_ => _
-                                                                                                .EnableNoProfile()
-                                                                                                .SetCommand($"chmod +x '{flavourFolder / platformFolder / flavour}'"));
+                                                                // change the native binaries to be executable in each platform
+                                                                foreach (var binary in binariesToChmodX)
+                                                                {
+                                                                    PowerShellTasks.PowerShell(_ => _
+                                                                                                    .EnableNoProfile()
+                                                                                                    .SetCommand($"chmod +x '{flavourFolder / platformFolder / binary}'"));
+                                                                }
                                                             }
 
                                                             var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
