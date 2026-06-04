@@ -15,6 +15,8 @@ namespace Calamari.AiAgent
                 public const string MaxTurns = "Octopus.Action.Claude.MaxTurns";
                 public const string MaxBudgetUsd = "Octopus.Action.Claude.MaxBudgetUsd";
                 public const string OctopusToken = "Octopus.Action.Claude.OctopusToken";
+                public const string AllowedTools = "Octopus.Action.Claude.AllowedTools";
+                public const string Effort = "Octopus.Action.Claude.Effort";
                 public const string RunAsUsername = "Octopus.Action.Claude.RunAsUsername";
                 public const string RunAsPassword = "Octopus.Action.Claude.RunAsPassword";
 

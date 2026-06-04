@@ -11,9 +11,11 @@ namespace Calamari.AiAgent.Behaviours
         string? model;
         string? systemPrompt;
         string? mcpConfigPath;
+        string? appendSystemPromptFile;
         int maxTurns = 10;
         decimal? maxBudgetUsd;
         IReadOnlyList<string>? allowedTools;
+        string? effort;
 
         public ClaudeCommandArgsBuilder WithPrompt(string prompt)
         {
@@ -38,10 +40,16 @@ namespace Calamari.AiAgent.Behaviours
             this.maxTurns = maxTurns;
             return this;
         }
-        
+
         public ClaudeCommandArgsBuilder WithMcpConfigPath(string mcpConfigPath)
         {
             this.mcpConfigPath = mcpConfigPath;
+            return this;
+        }
+
+        public ClaudeCommandArgsBuilder WithAppendSystemPromptFile(string path)
+        {
+            this.appendSystemPromptFile = path;
             return this;
         }
 
@@ -57,15 +65,22 @@ namespace Calamari.AiAgent.Behaviours
             return this;
         }
 
+        public ClaudeCommandArgsBuilder WithEffort(string effort)
+        {
+            this.effort = effort;
+            return this;
+        }
+
         public string Build()
         {
             if (string.IsNullOrWhiteSpace(prompt))
                 throw new InvalidOperationException("A prompt is required. Call WithPrompt() before Build().");
 
             var args = new StringBuilder();
-           
+
             args.Append(" --model ");
             args.Append(EscapeArg(model ?? "claude-sonnet-4-20250514"));
+            args.Append(" --bare");
             args.Append(" --strict-mcp-config");
             args.Append(" --output-format stream-json");
             args.Append(" --verbose");
@@ -74,10 +89,15 @@ namespace Calamari.AiAgent.Behaviours
 
             if (!string.IsNullOrWhiteSpace(mcpConfigPath))
             {
-                args.Append(" --mcp-config");
+                args.Append(" --mcp-config ");
                 args.Append(EscapeArg(mcpConfigPath));
             }
 
+            if (!string.IsNullOrWhiteSpace(appendSystemPromptFile))
+            {
+                args.Append(" --append-system-prompt-file ");
+                args.Append(EscapeArg(appendSystemPromptFile));
+            }
 
             if (allowedTools != null && allowedTools.Count > 0)
             {
@@ -90,13 +110,16 @@ namespace Calamari.AiAgent.Behaviours
             if (maxBudgetUsd.HasValue)
                 args.Append($" --max-budget-usd {maxBudgetUsd.Value.ToString(CultureInfo.InvariantCulture)}");
 
+            if (!string.IsNullOrWhiteSpace(effort))
+                args.Append($" --effort {effort}");
+
             if (!string.IsNullOrWhiteSpace(systemPrompt))
             {
                 args.Append(" --system-prompt ");
                 args.Append(EscapeArg(systemPrompt));
             }
-            
-            args.Append("-p ");
+
+            args.Append(" -p ");
             args.Append(EscapeArg(prompt));
 
             return args.ToString();

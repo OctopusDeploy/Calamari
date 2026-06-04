@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
@@ -47,10 +48,20 @@ namespace Calamari.AiAgent.Behaviours
             var mcpServers = BuildMcpServers(variables);
             var runAs = BuildRunAs(variables);
 
+            var defaultAllowedTools = new[] { "Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch" };
+            var allowedToolsRaw = variables.Get(SpecialVariables.Action.AiAgent.AllowedTools);
+            var allowedTools = new List<string>(!string.IsNullOrWhiteSpace(allowedToolsRaw)
+                ? allowedToolsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                : defaultAllowedTools);
+
+            // Auto-allow all tools from configured MCP servers
+            foreach (var serverName in mcpServers.Keys)
+                allowedTools.Add($"mcp__{serverName}__*");
+
             var argsBuilder = new ClaudeCommandArgsBuilder()
                 .WithPrompt(prompt)
                 .WithModel(model)
-                .WithAllowedTools(new[] { "Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch" });
+                .WithAllowedTools(allowedTools);
 
             var systemPrompt = variables.Get(SpecialVariables.Action.AiAgent.SystemSkill);
             if (!string.IsNullOrWhiteSpace(systemPrompt))
@@ -65,10 +76,15 @@ namespace Calamari.AiAgent.Behaviours
                 && decimal.TryParse(maxBudgetUsdRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var budgetUsd))
                 argsBuilder.WithMaxBudgetUsd(budgetUsd);
 
+            var effort = variables.Get(SpecialVariables.Action.AiAgent.Effort);
+            if (!string.IsNullOrWhiteSpace(effort))
+                argsBuilder.WithEffort(effort);
+
             var userSkills = BuildUserSkills(variables);
+            var deploymentVariables = BuildDeploymentVariables(variables);
 
             var runner = new ClaudeCodeCliRunner(log);
-            var response = await runner.RunAsync(argsBuilder, apiToken, mcpServers, runAs, userSkills);
+            var response = await runner.RunAsync(argsBuilder, apiToken, mcpServers, deploymentVariables, runAs, userSkills);
 
             Log.SetOutputVariable(SpecialVariables.Action.AiAgent.Response, response, variables);
             log.Info("Claude Code invocation complete.");
@@ -83,7 +99,7 @@ namespace Calamari.AiAgent.Behaviours
             var octopusToken = variables.Get(SpecialVariables.Action.AiAgent.OctopusToken);
             if (!string.IsNullOrWhiteSpace(octopusToken))
             {
-                var octopusServerUrl = variables.Get("Octopus.Web.BaseUrl");
+                var octopusServerUrl = variables.Get("Octopus.Web.ServerUri");
                 if (string.IsNullOrWhiteSpace(octopusServerUrl))
                 {
                     Log.Warn("Unable to find Octopus Server URL");
@@ -177,6 +193,15 @@ namespace Calamari.AiAgent.Behaviours
                 Username = username,
                 Password = variables.Get(SpecialVariables.Action.AiAgent.RunAsPassword),
             };
+        }
+
+        static readonly string[] SensitiveKeywords = { "password", "secret", "token", "apikey", "api_key", "api-key", "private" };
+
+        static Dictionary<string, string> BuildDeploymentVariables(IVariables variables)
+        {
+            return variables
+                .Where(kvp => !SensitiveKeywords.Any(k => kvp.Key.Contains(k, StringComparison.OrdinalIgnoreCase)))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
     }
 }
