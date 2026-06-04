@@ -229,6 +229,37 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.True(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{imageFullName}:{tag}' may not be cached")));
         }
 
+        [Test]
+        [RequiresDockerInstalled]
+        public void AfterCreatingDockerConfigFile_ShouldRemoveIt()
+        {
+            // Arrange
+            var log = new InMemoryLog();
+            var downloader = GetDownloader(log);
+
+            var dockerConfigPath = "./octo-docker-configs";
+            var configFilePath = Path.Combine(dockerConfigPath, "config.json");
+
+            // Ensure config directory doesn't exist before test
+            if (Directory.Exists(dockerConfigPath))
+            {
+                Directory.Delete(dockerConfigPath, true);
+            }
+
+            // Act
+            var pkg = downloader.DownloadPackage("octopustestaccount/octopetshop-productservice",
+                new SemanticVersion("13.0"), "docker-feed",
+                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
+                TimeSpan.FromSeconds(10));
+
+            // Assert
+            pkg.Should().NotBeNull();
+
+            // Verify that the config file was cleaned up (should not exist after download)
+            File.Exists(configFilePath).Should().BeFalse("Config file should be removed after use");
+            Directory.Exists(dockerConfigPath).Should().BeFalse("Config directory should be removed after use");
+        }
+
         static void PreCacheImage(string packageId, string tag, string feedUri, string username, string password)
         {
             GetDownloader(new SilentLog()).DownloadPackage(packageId, 
@@ -259,8 +290,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         static DockerImagePackageDownloader GetDownloader(ILog log)
         {
-            var runner = new CommandLineRunner(log, new CalamariVariables());
-            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables(), log, new FeedLoginDetailsProviderFactory());
+            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariables(), log, new FeedLoginDetailsProviderFactory());
         }
     }
 }

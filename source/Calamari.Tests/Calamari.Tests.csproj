@@ -37,6 +37,7 @@
         <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0"/>
         <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj"/>
         <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
+        <ProjectReference Include="..\Calamari.DockerCredentialHelper\Calamari.DockerCredentialHelper.csproj"/>
         <PackageReference Include="Markdown" Version="2.1.0"/>
         <PackageReference Include="NGitLab" Version="10.4.1"/>
         <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0"/>

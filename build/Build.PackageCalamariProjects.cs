@@ -92,6 +92,39 @@ public partial class Build
 
                            await Task.WhenAll(ridTasks);
 
+                           // Publish the standalone docker-credential-octopus (a single self-contained,
+                           // trimmed binary) and drop it straight into Calamari's folder. Its name is unique,
+                           // so it doesn't collide with any Calamari file; the downloader adds the Calamari
+                           // folder to PATH so Docker can invoke it, and it gets signed with Calamari's binaries.
+                           var calamariProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari")
+                                                 ?? throw new InvalidOperationException("Could not find the 'Calamari' project.");
+                           var helperProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari.DockerCredentialHelper")
+                                               ?? throw new InvalidOperationException("Could not find the 'Calamari.DockerCredentialHelper' project.");
+                           foreach (var rid in GetRuntimeIdentifiers(calamariProject))
+                           {
+                               var stagingDirectory = KnownPaths.PublishDirectory / "Calamari.DockerCredentialHelper" / rid;
+                               Log.Information("Publishing docker-credential-octopus for {Rid}", rid);
+                               // Trimming / single-file / invariant-globalization are applied here (not in the
+                               // csproj) so they don't leak into how Calamari.Tests consumes the project reference.
+                               DotNetPublish(s => s
+                                                  .SetConfiguration(Configuration)
+                                                  .SetProject(helperProject)
+                                                  .SetFramework(Frameworks.Net80)
+                                                  .SetRuntime(rid)
+                                                  .SetVersion(NugetVersion.Value)
+                                                  .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                                  .EnableSelfContained()
+                                                  .EnablePublishSingleFile()
+                                                  .EnablePublishTrimmed()
+                                                  .SetOutput(stagingDirectory));
+
+                               var calamariRidDirectory = (KnownPaths.PublishDirectory / "Calamari" / rid).ToString();
+                               foreach (var helperFile in Directory.GetFiles(stagingDirectory.ToString(), "docker-credential-octopus*"))
+                                   File.Copy(helperFile, Path.Combine(calamariRidDirectory, Path.GetFileName(helperFile)), overwrite: true);
+
+                               stagingDirectory.DeleteDirectory();
+                           }
+
                            // Sign and compress tasks
                            Log.Information("Signing published binaries...");
                            var signTasks = outputPaths
