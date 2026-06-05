@@ -53,7 +53,8 @@ public partial class Build
                                                                     //Not all binaries exist in all flavours (The extra win check skips the CA1416 issues)
                                                                     if (File.Exists(binaryPath) && !OperatingSystem.IsWindows())
                                                                     {
-                                                                        File.SetUnixFileMode(binaryPath, UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
+                                                                        var mode = File.GetUnixFileMode(binaryPath);
+                                                                        File.SetUnixFileMode(binaryPath, mode | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
                                                                     }
                                                                 }
                                                             }
