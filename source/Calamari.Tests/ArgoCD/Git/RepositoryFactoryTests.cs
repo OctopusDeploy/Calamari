@@ -96,6 +96,8 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
+        // SSH not currently functional on Windows
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void CloningSshKeyGitConnectionDoesNotResolveAPullRequestClientAndLogsVerboseMessage()
         {
             var filename = "sshTest.txt";
