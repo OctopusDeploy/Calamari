@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes;
 using Octopus.Calamari.Contracts.Git;
+using Octopus.CoreUtilities.Extensions;
 using PullRequestCreatedServiceMessage = Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated;
 
 namespace Calamari.ArgoCD
@@ -26,7 +27,7 @@ namespace Calamari.ArgoCD
 
         public void WriteSourceUpdateResultOutputWhenPushResultExists(
             string gatewayName,
-            string applicationName,
+            QualifiedApplicationName applicationName,
             int sourceIndex,
             SourceUpdateResult sourceUpdateResult)
         {
@@ -48,7 +49,7 @@ namespace Calamari.ArgoCD
 
             if (pushResult is PullRequestPushResult prResult)
             {
-                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.RepositoryUrl, prResult.RepositoryUri);
+//                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.RepositoryUrl, prResult.RepositoryUri);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestTitle, prResult.PullRequestTitle);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestUrl, prResult.PullRequestUri);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestNumber, prResult.PullRequestNumber.ToString(CultureInfo.InvariantCulture));
@@ -89,62 +90,42 @@ namespace Calamari.ArgoCD
             return message;
         }
 
-        public void WriteImageUpdateOutput(IEnumerable<string> gateways,
-                                           IEnumerable<string> gitRepos,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts,
-                                           int imagesUpdatedCount)
+        public void WriteImageUpdateOutput(List<ProcessApplicationResult> applicationResults)
         {
-            WriteGatewayIds(gateways);
-            WriteGitUris(gitRepos);
-            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCounts);
-            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
-
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedImages, imagesUpdatedCount.ToString());
+            
+            foreach (var applicationResult in applicationResults)
+            {
+                foreach (var sourceDetail in applicationResult.TrackedSourceDetails)
+                {
+                    var appSourceVariables = SpecialVariables.ArgoCD.Output
+                                                             .Actions()
+                                                             .ArgoCDGateways(applicationResult.GatewayName)
+                                                             .Applications(applicationResult.ApplicationName)
+                                                             .Sources(sourceDetail.SourceIndex);
+                    
+                    log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.Updated, sourceDetail.CommitSha.IsNullOrEmpty().ToString());
+                    log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.RepositoryUrl, sourceDetail.RepositoryUri);
+                    log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.UpdatedImages, ToCommaSeparatedString(sourceDetail.imagesUpdated));
+                }
+            }
         }
 
-        public void WriteManifestUpdateOutput(IEnumerable<string> gateways,
-                                              IEnumerable<string> gitRepos,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts)
+        public void WriteManifestUpdateOutput(IReadOnlyCollection<ProcessApplicationResult> applicationResults)
         {
-            WriteGatewayIds(gateways);
-            WriteGitUris(gitRepos);
-            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCounts);
-            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
-        }
-
-        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> matchingApplicationsWithSourceCounts)
-        {
-            var totalApps = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.ApplicationName));
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
-
-            var totalSourceCounts = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.TotalSourceCount));
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationTotalSourceCounts, totalSourceCounts);
-
-            var matchingSourceCounts = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.MatchingSourceCount));
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationMatchingSourceCounts, matchingSourceCounts);
-        }
-
-        void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
-        {
-            var updatedApps = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.ApplicationName));
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
-            var updatedSourceCounts = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.SourceCount));
-
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplicationSourceCounts, updatedSourceCounts);
-        }
-
-        void WriteGitUris(IEnumerable<string> gitRepos)
-        {
-            var gitUris = ToCommaSeparatedString(gitRepos);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
-        }
-
-        void WriteGatewayIds(IEnumerable<string> gateways)
-        {
-            var gatewayIds = ToCommaSeparatedString(gateways);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GatewayIds, gatewayIds);
+            foreach (var applicationResult in applicationResults)
+            {
+                foreach (var sourceDetail in applicationResult.TrackedSourceDetails)
+                {
+                    var appSourceVariables = SpecialVariables.ArgoCD.Output
+                                                             .Actions()
+                                                             .ArgoCDGateways(applicationResult.GatewayName)
+                                                             .Applications(applicationResult.ApplicationName)
+                                                             .Sources(sourceDetail.SourceIndex);
+                    
+                    log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.Updated, sourceDetail.CommitSha.IsNullOrEmpty().ToString());
+                    log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.RepositoryUrl, sourceDetail.RepositoryUri);
+                }
+            }
         }
 
         static string ToCommaSeparatedString<T>(IEnumerable<T> items)

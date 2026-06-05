@@ -98,7 +98,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
-                                            .WithName("App1")
+                                            .WithName("App1").WithNamespace("argocd")
                                             .WithAnnotations(new Dictionary<string, string>()
                                             {
                                                 [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -1052,7 +1052,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(new ArgoCDApplicationBuilder()
-                                                        .WithName("App1")
+                                                        .WithName("App1").WithNamespace("argocd")
                                                         .WithAnnotations(new Dictionary<string, string>
                                                         {
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -1123,7 +1123,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(new ArgoCDApplicationBuilder()
-                                                        .WithName("App1")
+                                                        .WithName("App1").WithNamespace("argocd")
                                                         .WithAnnotations(new Dictionary<string, string>
                                                         {
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source0"))] = ProjectSlug,
@@ -1182,7 +1182,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(new ArgoCDApplicationBuilder()
-                                                        .WithName("App1")
+                                                        .WithName("App1").WithNamespace("argocd")
                                                         .WithAnnotations(new Dictionary<string, string>
                                                         {
                                                             [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source0"))] = ProjectSlug,
@@ -1243,7 +1243,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(new ArgoCDApplicationBuilder()
-                                                        .WithName("App1")
+                                                        .WithName("App1").WithNamespace("argocd")
                                                         .WithAnnotations(new Dictionary<string, string>
                                                         {
                                                             // source0 is annotated for a different project — out of scope for this deployment
@@ -1302,10 +1302,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginUrl : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? "1" : "0");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("argocd/App1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("1");
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "argocd/App1" : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be(updated ? "1" : string.Empty);
 
             if (updated)

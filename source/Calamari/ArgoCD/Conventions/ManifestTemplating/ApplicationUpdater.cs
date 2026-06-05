@@ -90,10 +90,11 @@ public class ApplicationUpdater
 
         return new ProcessApplicationResult(
                                             application.GatewayId,
-                                            applicationName.ToApplicationName(),
+                                            gateway.Name,
+                                            QualifiedApplicationName.Create(applicationName, applicationFromYaml.Metadata.Namespace),
                                             applicationFromYaml.Spec.Sources.Count,
                                             applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                            trackedSourceUpdateResults.Select(r => new TrackedSourceDetail(r.UpdateResult.CommitSha, r.UpdateResult.CommitTimestamp, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
+                                            trackedSourceUpdateResults.Select(r => new TrackedSourceDetail(r.applicationSource.Source.OriginalRepoUrl, r.UpdateResult.CommitSha, r.UpdateResult.CommitTimestamp, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [], [])).ToList(),
                                             [],
                                             trackedSourceUpdateResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
     }

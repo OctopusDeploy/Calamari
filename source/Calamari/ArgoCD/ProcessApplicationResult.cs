@@ -8,15 +8,18 @@ using Octopus.Calamari.Contracts.ArgoCD;
 namespace Calamari.ArgoCD
 {
     public record TrackedSourceDetail(
+        string RepositoryUri,
         string? CommitSha,
         DateTimeOffset? CommitTimestamp,
         int SourceIndex,
         List<FileHash> ReplacedFiles,
-        List<FileJsonPatch> PatchedFiles);
+        List<FileJsonPatch> PatchedFiles,
+        HashSet<string> imagesUpdated);
 
     public class ProcessApplicationResult(
         string gatewayId,
-        ApplicationName applicationName,
+        string gatewayName,
+        QualifiedApplicationName applicationName,
         int totalSourceCount,
         int matchingSourceCount,
         List<TrackedSourceDetail> trackedSourceDetails,
@@ -24,7 +27,8 @@ namespace Calamari.ArgoCD
         HashSet<string> gitReposUpdated)
     {
         public string GatewayId { get; } = gatewayId;
-        public ApplicationName ApplicationName { get; } = applicationName;
+        public string GatewayName { get; } = gatewayName;
+        public QualifiedApplicationName ApplicationName { get; } = applicationName;
         public int TotalSourceCount { get; } = totalSourceCount;
         public int MatchingSourceCount { get; } = matchingSourceCount;
         public List<TrackedSourceDetail> TrackedSourceDetails { get; } = trackedSourceDetails;

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Models;
 
 namespace Calamari.Kubernetes
@@ -112,9 +114,11 @@ namespace Calamari.Kubernetes
                     {
                         readonly string qualifiedPrefix = $"ArgoCD.Gateway[{GatewayName}]";
 
-                        public ApplicationOutputVariables Applications(string name) => new(name, this);
+                        //public string ApplicationCount => $"{qualifiedPrefix}.ApplicationCount";
 
-                        public record ApplicationOutputVariables(string Name, ArgoCDGatewayOutputVariables ArgoCDGatewayOutputVariables)
+                        public ApplicationOutputVariables Applications(QualifiedApplicationName name) => new(name, this);
+
+                        public record ApplicationOutputVariables(QualifiedApplicationName Name, ArgoCDGatewayOutputVariables ArgoCDGatewayOutputVariables)
                         {
                             readonly string qualifiedPrefix = $"{ArgoCDGatewayOutputVariables.qualifiedPrefix}.Application[{Name}]";
 
@@ -124,15 +128,22 @@ namespace Calamari.Kubernetes
                             {
                                 readonly string qualifiedPrefix = $"{ApplicationVariables.qualifiedPrefix}.Source[{Index}]";
 
+                                //These are only sent if there was an update
                                 public string CommitSha => $"{qualifiedPrefix}.CommitSha";
                                 public string ShortSha => $"{qualifiedPrefix}.ShortSha";
-                                public string RepositoryUrl => $"{qualifiedPrefix}.RepositoryUrl";
                                 public string CommitTimestamp => $"{qualifiedPrefix}.CommitTimestamp";
                                 public string PullRequestTitle => $"{qualifiedPrefix}.PullRequest.Title";
                                 public string PullRequestNumber => $"{qualifiedPrefix}.PullRequest.Number";
                                 public string PullRequestUrl => $"{qualifiedPrefix}.PullRequest.Url";
                                 public string PullRequestReplacedFiles =>  $"{qualifiedPrefix}.PullRequest.ReplacedFiles";
                                 public string PullRequestPatchedFiles =>  $"{qualifiedPrefix}.PullRequest.PatchedFiles";
+                                
+                                //These are always sent
+                                public string Updated => $"{qualifiedPrefix}.Updated";
+                                public string RepositoryUrl => $"{qualifiedPrefix}.RepositoryUrl";
+                                
+                                //These are only sent for image tag updates
+                                public string UpdatedImages => $"{qualifiedPrefix}.UpdatedImages";
                             }
                         }
                     }
