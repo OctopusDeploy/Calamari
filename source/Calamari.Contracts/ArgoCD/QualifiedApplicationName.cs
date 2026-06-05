@@ -1,6 +1,6 @@
-using Octopus.TinyTypes;
+using System;
 
-namespace Calamari.ArgoCD.Models
+namespace Octopus.Calamari.Contracts.ArgoCD
 {
     public record QualifiedApplicationName(string Name, string KubernetesNamespace)
     {
