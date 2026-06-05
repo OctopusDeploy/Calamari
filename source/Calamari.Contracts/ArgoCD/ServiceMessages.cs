@@ -12,6 +12,7 @@ public static class ServiceMessages
         {
             public const string GatewayId = "gatewayId";
             public const string ApplicationName = "applicationName";
+            public const string KubernetesNamespace = "kubernetesNamespace";
             public const string Sources = "sources";
         }
     }

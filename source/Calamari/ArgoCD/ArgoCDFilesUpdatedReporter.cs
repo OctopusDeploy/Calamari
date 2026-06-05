@@ -34,7 +34,8 @@ namespace Calamari.ArgoCD
                 var parameters = new Dictionary<string, string>
                 {
                     { ArgoCDFilesUpdatedAttributes.GatewayId, appResult.GatewayId },
-                    { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Value },
+                    { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Name },
+                    { ArgoCDFilesUpdatedAttributes.KubernetesNamespace, appResult.ApplicationName.KubernetesNamespace },
                     { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(appResult.TrackedSourceDetails.Select(MapSource).ToList()) }
                 };
 

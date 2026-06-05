@@ -21,7 +21,7 @@ namespace Calamari.Tests.ArgoCD
         const string GatewayName = "TestGateway";
         const string ApplicationName = "TestApp";
         const string ApplicationNamespace = "argocd";
-        static readonly QualifiedApplicationName QualifiedApplicationName = QualifiedApplicationName.Create(ApplicationName, ApplicationNamespace);
+        static readonly QualifiedApplicationName QualifiedApplicationName = new QualifiedApplicationName(ApplicationName, ApplicationNamespace);
         const string CommitSha = "1234567890abcdef1234567890abcdef12345678";
         const string ShortSha = "1234567";
         static readonly DateTimeOffset Timestamp = DateTimeOffset.UtcNow;
@@ -182,7 +182,7 @@ namespace Calamari.Tests.ArgoCD
             // Arrange
             var gateways = new[] { "gateway-1", "gateway-2" };
             var gitRepos = new[] { "https://github.com/org/repo-a", "https://github.com/org/repo-b" };
-            var app2 = QualifiedApplicationName.Create("OtherApp", "argocd");
+            var app2 = new QualifiedApplicationName("OtherApp", "argocd");
             var totalApps = new[]
             {
                 (QualifiedApplicationName, 3, 2),
@@ -262,7 +262,7 @@ namespace Calamari.Tests.ArgoCD
             // Arrange
             var gateways = new[] { "gateway-1", "gateway-2" };
             var gitRepos = new[] { "https://github.com/org/repo-a", "https://github.com/org/repo-b" };
-            var app2 = QualifiedApplicationName.Create("OtherApp", "argocd");
+            var app2 = new QualifiedApplicationName("OtherApp", "argocd");
             var totalApps = new[]
             {
                 (QualifiedApplicationName, 4, 3),

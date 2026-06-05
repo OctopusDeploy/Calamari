@@ -2,13 +2,11 @@ using Octopus.TinyTypes;
 
 namespace Calamari.ArgoCD.Models
 {
-    public class QualifiedApplicationName : CaseSensitiveStringTinyType
+    public record QualifiedApplicationName(string Name, string KubernetesNamespace)
     {
-        QualifiedApplicationName(string value) : base(value)
+        public string ToDisplayName()
         {
+            return $"{KubernetesNamespace}/{Name}";
         }
-
-        public static QualifiedApplicationName Create(string name, string @namespace)
-            => new QualifiedApplicationName($"{@namespace}/{name}");
     }
 }

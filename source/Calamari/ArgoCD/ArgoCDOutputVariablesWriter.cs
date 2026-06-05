@@ -39,7 +39,7 @@ namespace Calamari.ArgoCD
             var appSourceVariables = SpecialVariables.ArgoCD.Output
                                                      .Actions()
                                                      .ArgoCDGateways(gatewayName)
-                                                     .Applications(applicationName.Value)
+                                                     .Applications(applicationName.ToDisplayName())
                                                      .Sources(sourceIndex);
 
             log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitSha, pushResult.CommitSha);
@@ -116,7 +116,7 @@ namespace Calamari.ArgoCD
 
         void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> matchingApplicationsWithSourceCounts)
         {
-            var totalApps = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.ApplicationName));
+            var totalApps = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.ApplicationName.ToDisplayName()));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
 
             var totalSourceCounts = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.TotalSourceCount));
@@ -128,7 +128,7 @@ namespace Calamari.ArgoCD
 
         void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(QualifiedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
         {
-            var updatedApps = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.ApplicationName));
+            var updatedApps = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.ApplicationName.ToDisplayName()));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
             var updatedSourceCounts = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.SourceCount));
 
@@ -147,7 +147,13 @@ namespace Calamari.ArgoCD
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GatewayIds, gatewayIds);
         }
 
-        static string ToCommaSeparatedString<T>(IEnumerable<T> items)
+        //Be strict about types so we know if we accidentally format a complex type
+        static string ToCommaSeparatedString(IEnumerable<string> items)
+        {
+            return string.Join(", ", items);
+        }
+        
+        static string ToCommaSeparatedString(IEnumerable<int> items)
         {
             return string.Join(", ", items);
         }
