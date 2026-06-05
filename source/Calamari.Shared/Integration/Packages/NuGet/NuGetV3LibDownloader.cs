@@ -8,7 +8,6 @@ using NuGet.Protocol.Core.Types;
 using System.IO;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
-using NuGet.Commands;
 using NuGet.Packaging.Core;
 using Octopus.Versioning;
 
@@ -28,17 +27,32 @@ namespace Calamari.Integration.Packages.NuGet
 
             using (var sourceCacheContext = new SourceCacheContext() { NoCache = true })
             {
-                var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, sourceCacheContext, sourceCacheContext.IgnoreFailedSources, false);
                 var targetPath = Directory.GetParent(targetFilePath).FullName;
                 if (!Directory.Exists(targetPath))
                 {
                     Directory.CreateDirectory(targetPath);
                 }
 
+                // Resolve the downloader from FindPackageByIdResource directly rather than going through
+                // SourceRepositoryDependencyProvider. The provider unconditionally dereferences the downloader returned
+                // here, which is null when the requested version isn't on the feed, producing a bare NullReferenceException
+                // (FD-440). Calling the resource directly lets us null-check it and surface an actionable error. The
+                // provider's throttle / ignore-failed-sources behaviour isn't relevant here: Calamari passes no throttle
+                // and downloads from a single source.
+                var findPackageByIdResource = sourceRepository.GetResourceAsync<FindPackageByIdResource>(CancellationToken.None)
+                                                              .GetAwaiter()
+                                                              .GetResult();
+
+                var packageIdentity = new PackageIdentity(packageId, version.ToNuGetVersion());
+
                 string targetTempNupkg = Path.Combine(targetPath, Path.GetRandomFileName());
-                var packageDownloader =  providers.GetPackageDownloaderAsync(new PackageIdentity(packageId, version.ToNuGetVersion()), sourceCacheContext, logger, CancellationToken.None)
-                                                      .GetAwaiter()
-                                                      .GetResult();
+                var packageDownloader = findPackageByIdResource.GetPackageDownloaderAsync(packageIdentity, sourceCacheContext, logger, CancellationToken.None)
+                                                               .GetAwaiter()
+                                                               .GetResult();
+
+                if (packageDownloader == null)
+                    throw new Exception($"Package {packageId} version {version} was not found on the NuGet feed '{feedUri}'. Make sure the package version has been pushed to the feed.");
+
                 var fileCopied = packageDownloader.CopyNupkgFileToAsync(targetTempNupkg, CancellationToken.None).GetAwaiter().GetResult();
                 
                 if (!fileCopied) //I would expect any actual standard exception to be thrown above and not returned as a bool
