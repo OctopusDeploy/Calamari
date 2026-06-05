@@ -31,5 +31,6 @@ namespace Calamari.AzureAppService
         }
 
         public string ContentType => "application/octet-stream";
+        public string AdditionalParameters => string.Empty;
     }
 }

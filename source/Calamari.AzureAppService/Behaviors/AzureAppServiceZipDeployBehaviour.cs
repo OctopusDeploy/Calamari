@@ -301,7 +301,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!new FileInfo(uploadZipPath).Exists)
                 throw new FileNotFoundException(uploadZipPath);
 
-            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}?remoteBuild=false&deployer=Octopus";
+            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}{packageProvider.AdditionalParameters}";
             Log.Verbose($"Publishing {uploadZipPath} to {zipUploadUrl} and checking for deployment");
 
             using var httpClient = new HttpClient(new HttpClientHandler

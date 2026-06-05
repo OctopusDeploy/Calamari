@@ -18,7 +18,6 @@ using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using FluentAssertions;
-using JetBrains.TeamCity.ServiceMessages.Write.Special.Impl.Writer;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
@@ -42,11 +41,11 @@ namespace Calamari.AzureAppService.Tests
         protected ResourceGroupResource ResourceGroupResource { get; private set; }
         protected WebSiteResource WebSiteResource { get; private protected set; }
 
-        private readonly HttpClient client = new HttpClient();
+        private readonly HttpClient client = new();
 
         protected virtual string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions();
 
-        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        static readonly CancellationTokenSource CancellationTokenSource = new();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]

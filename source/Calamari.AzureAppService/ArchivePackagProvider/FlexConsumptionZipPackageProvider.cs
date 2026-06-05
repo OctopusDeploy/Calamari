@@ -9,7 +9,7 @@ namespace Calamari.AzureAppService;
 
 public class FlexConsumptionZipPackageProvider : IPackageProvider
 {
-    public string UploadUrlPath => "/api/publish";
+    public string UploadUrlPath => @"/api/publish";
     public bool SupportsAsynchronousDeployment => true;
 
     public async Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory)
@@ -25,5 +25,6 @@ public class FlexConsumptionZipPackageProvider : IPackageProvider
     }
 
     public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile) => await Task.Run(() => sourceFile);
-    public string ContentType => "application/zip";
+    public string ContentType => @"application/zip";
+    public string AdditionalParameters => "?remoteBuild=false&deployer=Octopus";
 }
