@@ -12,6 +12,12 @@ public partial class Build
         d =>
             d.Executes(() =>
                        {
+                           if (OperatingSystem.IsWindows())
+                           {
+                               Log.Error("The Docker images can not be built on Windows");
+                               return;
+                           }
+
                            var flavours = GetCalamariFlavours();
                            string[] supportedPlatforms = ["linux/amd64", "linux/arm64", "linux/arm"];
                            var dockerBuildPlatform = string.Join(",", supportedPlatforms);
@@ -32,13 +38,25 @@ public partial class Build
                                                             Directory.Move(flavourFolder / "linux-x64",
                                                                 flavourFolder / "linux-amd64");
                                                             Log.Information("Renamed 'linux-x64' folder to 'linux-amd64'");
+
+                                                            string[] binariesToChmodX = ["docker-credential-octopus", flavour];
+
                                                             foreach (var supportedPlatform in supportedPlatforms)
                                                             {
                                                                 var platformFolder = supportedPlatform.Replace("/", "-");
-                                                                // change the native binary to be executable in each platform
-                                                                PowerShellTasks.PowerShell(_ => _
-                                                                                                .EnableNoProfile()
-                                                                                                .SetCommand($"chmod +x '{flavourFolder / platformFolder / flavour}'"));
+                                                                
+                                                                // change the native binaries to be executable in each platform
+                                                                foreach (var binary in binariesToChmodX)
+                                                                {
+                                                                    string binaryPath = flavourFolder / platformFolder / binary;
+                                                                    
+                                                                    //Not all binaries exist in all flavours (The extra win check skips the CA1416 issues)
+                                                                    if (File.Exists(binaryPath) && !OperatingSystem.IsWindows())
+                                                                    {
+                                                                        var mode = File.GetUnixFileMode(binaryPath);
+                                                                        File.SetUnixFileMode(binaryPath, mode | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
+                                                                    }
+                                                                }
                                                             }
 
                                                             var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
