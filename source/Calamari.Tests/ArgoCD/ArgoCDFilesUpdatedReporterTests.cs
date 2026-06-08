@@ -28,7 +28,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [
@@ -57,7 +57,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [],
@@ -82,7 +82,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [
@@ -124,7 +124,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [
@@ -137,7 +137,7 @@ namespace Calamari.Tests.ArgoCD
                     [],
                     []),
                 new("gateway2",
-                    QualifiedApplicationName.Create("app2", "argocd"),
+                    NamespacedApplicationName.Create("app2", "argocd"),
                     1,
                     1,
                     [
@@ -189,7 +189,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [
@@ -231,7 +231,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     1,
                     1,
                     [
@@ -273,7 +273,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [
@@ -315,7 +315,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [
@@ -363,7 +363,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [
@@ -410,7 +410,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     1,
                     1,
                     [
@@ -450,7 +450,7 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     1,
                     1,
                     [
@@ -492,14 +492,14 @@ namespace Calamari.Tests.ArgoCD
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1",
-                    QualifiedApplicationName.Create("app1", "argocd"),
+                    NamespacedApplicationName.Create("app1", "argocd"),
                     2,
                     2,
                     [],
                     [],
                     []),
                 new("gateway2",
-                    QualifiedApplicationName.Create("app2", "argocd"),
+                    NamespacedApplicationName.Create("app2", "argocd"),
                     1,
                     1,
                     [
@@ -512,7 +512,7 @@ namespace Calamari.Tests.ArgoCD
                     [],
                     []),
                 new("gateway3",
-                    QualifiedApplicationName.Create("app3", "argocd"),
+                    NamespacedApplicationName.Create("app3", "argocd"),
                     1,
                     1,
                     [],

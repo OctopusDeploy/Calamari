@@ -16,7 +16,7 @@ namespace Calamari.ArgoCD
 
     public class ProcessApplicationResult(
         string gatewayId,
-        QualifiedApplicationName applicationName,
+        NamespacedApplicationName applicationName,
         int totalSourceCount,
         int matchingSourceCount,
         List<TrackedSourceDetail> trackedSourceDetails,
@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD
         HashSet<string> gitReposUpdated)
     {
         public string GatewayId { get; } = gatewayId;
-        public QualifiedApplicationName ApplicationName { get; } = applicationName;
+        public NamespacedApplicationName ApplicationName { get; } = applicationName;
         public int TotalSourceCount { get; } = totalSourceCount;
         public int MatchingSourceCount { get; } = matchingSourceCount;
         public List<TrackedSourceDetail> TrackedSourceDetails { get; } = trackedSourceDetails;
