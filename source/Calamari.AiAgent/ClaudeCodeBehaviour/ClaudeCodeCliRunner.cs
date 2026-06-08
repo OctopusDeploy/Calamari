@@ -54,6 +54,32 @@ namespace Calamari.AiAgent.Behaviours
                 catch { /* best effort cleanup */ }
             }
         }
+        
+        /*
+         using System.Diagnostics;
+           
+           string user = "claude";
+           string cmd = "bash";
+           string password = "claude";
+           
+           var psi = new ProcessStartInfo {
+               FileName = "script",
+               ArgumentList = { "-qec", $"su - {user} -c '{cmd}'", "/dev/null" },
+               RedirectStandardInput  = true,
+               RedirectStandardOutput = true,
+               RedirectStandardError  = true,
+               UseShellExecute = false,
+           };
+           
+           using var p = Process.Start(psi)!;
+           p.StandardInput.WriteLine(password);
+           
+           
+           
+           p.WaitForExit();
+           Console.WriteLine($"exit={p.ExitCode}\n{output}");
+         
+         */
 
         async Task<string> RunInDirectoryAsync(
             ClaudeCommandArgsBuilder argsBuilder,
