@@ -24,7 +24,7 @@ export DOTNET_MULTILEVEL_LOOKUP=0
 ###########################################################################
 
 function FirstJsonValue {
-    grep -o '"'"$1"'"\s*:\s*"[^"]*"' <<< "${@:2}" | sed 's/.*: *"//;s/"//'
+    perl -nle 'print $1 if m{"'"$1"'": "([^"]+)",?}' <<< "${@:2}"
 }
 
 # If dotnet CLI is installed globally and it matches requested version, use for execution
