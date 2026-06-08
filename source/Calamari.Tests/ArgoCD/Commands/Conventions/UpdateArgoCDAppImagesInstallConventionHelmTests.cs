@@ -334,6 +334,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -405,6 +406,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -487,6 +489,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("blah-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -566,6 +569,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("blah-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -638,6 +642,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -722,6 +727,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",

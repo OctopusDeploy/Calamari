@@ -2,9 +2,7 @@ using System;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.ServiceMessages;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using FluentAssertions.Execution;
@@ -23,8 +21,7 @@ namespace Calamari.Tests.ArgoCD
         const string ApplicationName = "TestApp";
         const string ApplicationNamespace = "argocd";
         static readonly QualifiedApplicationName QualifiedApplicationName = QualifiedApplicationName.Create(ApplicationName, ApplicationNamespace);
-        static readonly string ApplicationDisplayName = QualifiedApplicationName.ToDisplayName();
-        
+
         const string CommitSha = "1234567890abcdef1234567890abcdef12345678";
         const string ShortSha = "1234567";
         static readonly DateTimeOffset Timestamp = DateTimeOffset.UtcNow;
@@ -171,10 +168,11 @@ namespace Calamari.Tests.ArgoCD
 
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1");
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be(ApplicationDisplayName);
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be(applicationDisplayName);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("3");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("2");
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(ApplicationDisplayName);
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(applicationDisplayName);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("2");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().BeNull();
         }
@@ -206,10 +204,11 @@ namespace Calamari.Tests.ArgoCD
 
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1, gateway-2");
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo-a, https://github.com/org/repo-b");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{ApplicationDisplayName}, {app2.ToDisplayName()}");
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{applicationDisplayName}, {app2}");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("3, 1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("2, 1");
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{ApplicationDisplayName}, {app2.ToDisplayName()}");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{applicationDisplayName}, {app2}");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("2, 1");
         }
 
@@ -251,10 +250,11 @@ namespace Calamari.Tests.ArgoCD
 
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1");
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be(ApplicationDisplayName);
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be(applicationDisplayName);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("3");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("2");
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(ApplicationDisplayName);
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(applicationDisplayName);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("2");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be("5");
         }
@@ -287,10 +287,11 @@ namespace Calamari.Tests.ArgoCD
 
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be("gateway-1, gateway-2");
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be("https://github.com/org/repo-a, https://github.com/org/repo-b");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{ApplicationDisplayName}, {app2.ToDisplayName()}");
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be($"{applicationDisplayName}, {app2}");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be("4, 2");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("3, 1");
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{ApplicationDisplayName}, {app2.ToDisplayName()}");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be($"{applicationDisplayName}, {app2}");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be("3, 1");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be("4");
         }
@@ -309,30 +310,34 @@ namespace Calamari.Tests.ArgoCD
         //Zero = No (but NO COMMIT is part of the forbidden words list)
         static void AssertZeroCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].CommitSha").Should().BeNull();
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].ShortSha").Should().BeNull();
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].CommitTimestamp").Should().BeNull();
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].CommitSha").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].ShortSha").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].CommitTimestamp").Should().BeNull();
         }
 
         static void AssertCommitVariables(ServiceMessage[] serviceMessages, int sourceIndex, string commitSha = CommitSha, string shortSha = ShortSha)
         {
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].CommitSha").Should().Be(commitSha);
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].ShortSha").Should().Be(shortSha);
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].CommitTimestamp").Should().Be(Timestamp.ToString("o"));
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].CommitSha").Should().Be(commitSha);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].ShortSha").Should().Be(shortSha);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].CommitTimestamp").Should().Be(Timestamp.ToString("o"));
         }
 
         static void AssertNoPullRequestVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].PullRequest.Title").Should().BeNull();
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].PullRequest.Number").Should().BeNull();
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].PullRequest.Url").Should().BeNull();
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].PullRequest.Title").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].PullRequest.Number").Should().BeNull();
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].PullRequest.Url").Should().BeNull();
         }
 
         static void AssertPullRequestVariables(ServiceMessage[] serviceMessages, int sourceIndex)
         {
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].PullRequest.Title").Should().Be(PrTitle);
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].PullRequest.Number").Should().Be(PrNumber.ToString());
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationDisplayName}].Source[{sourceIndex}].PullRequest.Url").Should().Be(PrUrl);
+            var applicationDisplayName = QualifiedApplicationName.Value;
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].PullRequest.Title").Should().Be(PrTitle);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].PullRequest.Number").Should().Be(PrNumber.ToString());
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{applicationDisplayName}].Source[{sourceIndex}].PullRequest.Url").Should().Be(PrUrl);
         }
 
         static void AssertPullRequestCreatedServiceMessage(ServiceMessage[] serviceMessages, PullRequestPushResult pushResult)
