@@ -104,7 +104,13 @@ namespace Calamari.AiAgent.Behaviours
                 CreateNoWindow = true,
             };
 
-            startInfo.Environment["ANTHROPIC_API_KEY"] = apiToken;
+            var customEnvVars = new Dictionary<string, string>
+            {
+                ["ANTHROPIC_API_KEY"] = apiToken,
+            };
+
+            foreach (var kvp in customEnvVars)
+                startInfo.Environment[kvp.Key] = kvp.Value;
 
             if (runAs != null)
                 ApplyCredentials(startInfo, runAs);
