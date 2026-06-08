@@ -299,6 +299,11 @@ namespace Calamari.AiAgent.Behaviours
             }
         }
 
+        internal static string ShellQuote(string value)
+        {
+            return "'" + value.Replace("'", @"'\''") + "'";
+        }
+
         static string EscapeArg(string arg)
         {
             if (arg.IndexOfAny(new[] { ' ', '"', '\\' }) < 0)

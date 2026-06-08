@@ -190,6 +190,16 @@ public class ClaudeCodeCliRunnerFixture
         }
     }
 
+    [TestCase("simple", "'simple'")]
+    [TestCase("has space", "'has space'")]
+    [TestCase("it's", @"'it'\''s'")]
+    [TestCase("", "''")]
+    [TestCase("a'b'c", @"'a'\''b'\''c'")]
+    public void ShellQuote_QuotesCorrectly(string input, string expected)
+    {
+        ClaudeCodeCliRunner.ShellQuote(input).Should().Be(expected);
+    }
+
     [Test]
     public void SetupMcpConfig_WritesEmptyServers_WhenNoneProvided()
     {
