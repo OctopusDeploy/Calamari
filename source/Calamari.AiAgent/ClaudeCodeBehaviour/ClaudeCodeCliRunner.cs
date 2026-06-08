@@ -113,7 +113,7 @@ namespace Calamari.AiAgent.Behaviours
                 startInfo.Environment[kvp.Key] = kvp.Value;
 
             if (runAs != null)
-                ApplyCredentials(startInfo, runAs);
+                ApplyCredentials(startInfo, runAs, customEnvVars);
 
             var responseBuilder = new StringBuilder();
             var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder);
@@ -280,23 +280,40 @@ namespace Calamari.AiAgent.Behaviours
             return result;
         }
 
-        internal static void ApplyCredentials(ProcessStartInfo startInfo, ProcessCredentials credentials)
+        internal static void ApplyCredentials(ProcessStartInfo startInfo, ProcessCredentials credentials, Dictionary<string, string> customEnvVars)
         {
-            // See ADR: https://github.com/OctopusDeploy/adr/blob/main/team-modern-deployments/calamari-ai-agent/adr-001-use-processstartinfo-username-for-user-impersonation.md
-            // Uses ProcessStartInfo.UserName on all platforms.
-            // On Windows: uses native token-based impersonation with optional password/domain.
-            // On Linux: .NET calls setuid/setgid internally. Requires the calling process to
-            // be root or have CAP_SETUID/CAP_SETGID capabilities. Environment variables from
-            // ProcessStartInfo.Environment are inherited naturally — no special handling needed.
-            startInfo.UserName = credentials.Username;
-
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
+                startInfo.UserName = credentials.Username;
+
                 if (!string.IsNullOrEmpty(credentials.Password))
                     startInfo.PasswordInClearText = credentials.Password;
                 if (!string.IsNullOrEmpty(credentials.Domain))
                     startInfo.Domain = credentials.Domain;
+
+                return;
             }
+
+            // Linux: use script/su to impersonate the user with a proper login shell.
+            // su - starts a login shell which clears the environment, so we inline
+            // any custom env vars into the command string.
+            if (string.IsNullOrEmpty(credentials.Password))
+                throw new CommandException("A password is required for Linux user impersonation via su");
+
+            var envPrefix = string.Join(" ", customEnvVars.Select(kvp => $"{kvp.Key}={ShellQuote(kvp.Value)}"));
+            var innerCommand = string.IsNullOrEmpty(envPrefix)
+                ? $"{startInfo.FileName} {startInfo.Arguments}"
+                : $"{envPrefix} {startInfo.FileName} {startInfo.Arguments}";
+
+            var suCommand = $"su - {credentials.Username} -c {ShellQuote(innerCommand)}";
+
+            startInfo.FileName = "script";
+            startInfo.Arguments = ""; // clear — using ArgumentList instead
+            startInfo.ArgumentList.Add("-qec");
+            startInfo.ArgumentList.Add(suCommand);
+            startInfo.ArgumentList.Add("/dev/null");
+            startInfo.RedirectStandardInput = true;
+            startInfo.UserName = null;
         }
 
         internal static string ShellQuote(string value)

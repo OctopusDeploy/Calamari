@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Calamari.AiAgent.Behaviours;
 using Calamari.Common.Commands;
@@ -198,6 +200,98 @@ public class ClaudeCodeCliRunnerFixture
     public void ShellQuote_QuotesCorrectly(string input, string expected)
     {
         ClaudeCodeCliRunner.ShellQuote(input).Should().Be(expected);
+    }
+
+    [Test]
+    public void ApplyCredentials_Linux_RewritesStartInfoToUseScriptSu()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            Assert.Ignore("Linux-only test");
+            return;
+        }
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "claude",
+            Arguments = "--model sonnet --print",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+        };
+
+        var credentials = new ProcessCredentials
+        {
+            Username = "claude",
+            Password = "claude",
+        };
+
+        var customEnvVars = new Dictionary<string, string>
+        {
+            ["ANTHROPIC_API_KEY"] = "sk-test-123",
+            ["OTHER_VAR"] = "hello",
+        };
+
+        ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars);
+
+        startInfo.FileName.Should().Be("script");
+        startInfo.UserName.Should().BeNull();
+        startInfo.RedirectStandardInput.Should().BeTrue();
+
+        // ArgumentList should be: -qec, "su - claude -c '...'", /dev/null
+        startInfo.ArgumentList.Should().HaveCount(3);
+        startInfo.ArgumentList[0].Should().Be("-qec");
+        startInfo.ArgumentList[2].Should().Be("/dev/null");
+
+        var suCommand = startInfo.ArgumentList[1];
+        suCommand.Should().StartWith("su - claude -c ");
+        suCommand.Should().Contain("ANTHROPIC_API_KEY=");
+        suCommand.Should().Contain("OTHER_VAR=");
+        suCommand.Should().Contain("claude --model sonnet --print");
+    }
+
+    [Test]
+    public void ApplyCredentials_Linux_ThrowsWhenPasswordMissing()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            Assert.Ignore("Linux-only test");
+            return;
+        }
+
+        var startInfo = new ProcessStartInfo { FileName = "claude" };
+        var credentials = new ProcessCredentials { Username = "claude", Password = null };
+        var customEnvVars = new Dictionary<string, string>();
+
+        var act = () => ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars);
+
+        act.Should().Throw<CommandException>().WithMessage("*password*");
+    }
+
+    [Test]
+    public void ApplyCredentials_Windows_SetsUsernameAndPassword()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Assert.Ignore("Windows-only test");
+            return;
+        }
+
+        var startInfo = new ProcessStartInfo { FileName = "claude" };
+        var credentials = new ProcessCredentials
+        {
+            Username = "deploy-user",
+            Password = "s3cret",
+            Domain = "CORP",
+        };
+        var customEnvVars = new Dictionary<string, string>();
+
+        ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars);
+
+        startInfo.UserName.Should().Be("deploy-user");
+        startInfo.PasswordInClearText.Should().Be("s3cret");
+        startInfo.Domain.Should().Be("CORP");
+        startInfo.FileName.Should().Be("claude"); // unchanged
     }
 
     [Test]
