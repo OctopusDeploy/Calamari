@@ -2,11 +2,13 @@ using System;
 
 namespace Octopus.Calamari.Contracts.ArgoCD
 {
-    public record QualifiedApplicationName(string Name, string KubernetesNamespace)
+    public class QualifiedApplicationName : CaseSensitiveStringTinyType
     {
-        public string ToDisplayName()
+        QualifiedApplicationName(string value) : base(value)
         {
-            return $"{KubernetesNamespace}/{Name}";
         }
+
+        public static QualifiedApplicationName Create(string name, string @namespace)
+            => new QualifiedApplicationName($"{@namespace}/{name}");
     }
 }

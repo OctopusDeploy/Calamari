@@ -62,7 +62,7 @@ public class ApplicationSourceUpdater
         var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
         
         outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
-            new QualifiedApplicationName(applicationFromYaml.Metadata.Name, applicationFromYaml.Metadata.Namespace),
+            QualifiedApplicationName.Create(applicationFromYaml.Metadata.Name, applicationFromYaml.Metadata.Namespace),
                                                             sourceWithMetadata.Index,
                                                             sourceUpdateResult);
 
