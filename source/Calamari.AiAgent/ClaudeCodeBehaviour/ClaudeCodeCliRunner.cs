@@ -120,7 +120,8 @@ namespace Calamari.AiAgent.Behaviours
 
             try
             {
-                await RunProcess(startInfo, verboseLogPath, streamProcessor);
+                var password = runAs != null && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? runAs.Password : null;
+                await RunProcess(startInfo, verboseLogPath, streamProcessor, password);
             }
             catch (Exception e)
             {
@@ -141,11 +142,17 @@ namespace Calamari.AiAgent.Behaviours
             return responseBuilder.ToString();
         }
 
-        async Task RunProcess(ProcessStartInfo startInfo, string verboseLogPath, ClaudeCodeStreamProcessor streamProcessor)
+        async Task RunProcess(ProcessStartInfo startInfo, string verboseLogPath, ClaudeCodeStreamProcessor streamProcessor, string? password = null)
         {
             using var process = new Process();
             process.StartInfo = startInfo;
             process.Start();
+
+            if (password != null)
+            {
+                await process.StandardInput.WriteLineAsync(password);
+                process.StandardInput.Close();
+            }
             var stdoutTask = Task.Run(async () =>
                                       {
                                           while (await process.StandardOutput.ReadLineAsync() is { } line)
@@ -282,6 +289,12 @@ namespace Calamari.AiAgent.Behaviours
 
         internal static void ApplyCredentials(ProcessStartInfo startInfo, ProcessCredentials credentials, Dictionary<string, string> customEnvVars)
         {
+            // See ADR: https://github.com/OctopusDeploy/adr/blob/main/team-modern-deployments/calamari-ai-agent/adr-001-use-processstartinfo-username-for-user-impersonation.md
+            // On Windows: uses ProcessStartInfo.UserName with native token-based impersonation
+            //   and optional password/domain.
+            // On Linux: uses script(1) + su(1) to launch a login shell as the target user.
+            //   Environment variables are inlined into the su -c command since login shells
+            //   clear the inherited environment. Password is piped via stdin.
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 startInfo.UserName = credentials.Username;
