@@ -203,6 +203,102 @@ public class ClaudeCodeCliRunnerFixture
     }
 
     [Test]
+    public void WriteWrapperScript_WritesEnvVarsAndExecCommand()
+    {
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-wrapper-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
+
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "claude",
+                Arguments = "--model sonnet --print",
+            };
+
+            var customEnvVars = new Dictionary<string, string>
+            {
+                ["ANTHROPIC_API_KEY"] = "sk-test-123",
+                ["OTHER_VAR"] = "hello",
+            };
+
+            var scriptPath = ClaudeCodeCliRunner.WriteWrapperScript(startInfo, customEnvVars, workingDir);
+
+            File.Exists(scriptPath).Should().BeTrue();
+            var content = File.ReadAllText(scriptPath);
+            content.Should().StartWith("#!/bin/bash");
+            content.Should().Contain("export ANTHROPIC_API_KEY='sk-test-123'");
+            content.Should().Contain("export OTHER_VAR='hello'");
+            content.Should().Contain("exec claude --model sonnet --print");
+        }
+        finally
+        {
+            Directory.Delete(workingDir, true);
+        }
+    }
+
+    [Test]
+    public void ApplyCredentials_MacOS_RewritesStartInfoToUseBsdScript()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Assert.Ignore("macOS-only test");
+            return;
+        }
+
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-creds-mac-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
+
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "claude",
+                Arguments = "--model sonnet --print",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+            };
+
+            var credentials = new ProcessCredentials
+            {
+                Username = "claude",
+                Password = "claude",
+            };
+
+            var customEnvVars = new Dictionary<string, string>
+            {
+                ["ANTHROPIC_API_KEY"] = "sk-test-123",
+            };
+
+            ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars, workingDir);
+
+            startInfo.FileName.Should().Be("script");
+            startInfo.UserName.Should().BeNullOrEmpty();
+            startInfo.RedirectStandardInput.Should().BeTrue();
+
+            // BSD script: -q, /dev/null, su, -, username, -c, command
+            startInfo.ArgumentList.Should().HaveCount(7);
+            startInfo.ArgumentList[0].Should().Be("-q");
+            startInfo.ArgumentList[1].Should().Be("/dev/null");
+            startInfo.ArgumentList[2].Should().Be("su");
+            startInfo.ArgumentList[3].Should().Be("-");
+            startInfo.ArgumentList[4].Should().Be("claude");
+            startInfo.ArgumentList[5].Should().Be("-c");
+            startInfo.ArgumentList[6].Should().Contain("/bin/bash");
+            startInfo.ArgumentList[6].Should().Contain("run-claude.sh");
+
+            // Verify wrapper script was written
+            var scriptPath = Path.Combine(workingDir, "run-claude.sh");
+            File.Exists(scriptPath).Should().BeTrue();
+        }
+        finally
+        {
+            Directory.Delete(workingDir, true);
+        }
+    }
+
+    [Test]
     public void ApplyCredentials_Linux_RewritesStartInfoToUseScriptSu()
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -211,61 +307,82 @@ public class ClaudeCodeCliRunnerFixture
             return;
         }
 
-        var startInfo = new ProcessStartInfo
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-creds-linux-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
+
+        try
         {
-            FileName = "claude",
-            Arguments = "--model sonnet --print",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-        };
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "claude",
+                Arguments = "--model sonnet --print",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+            };
 
-        var credentials = new ProcessCredentials
+            var credentials = new ProcessCredentials
+            {
+                Username = "claude",
+                Password = "claude",
+            };
+
+            var customEnvVars = new Dictionary<string, string>
+            {
+                ["ANTHROPIC_API_KEY"] = "sk-test-123",
+            };
+
+            ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars, workingDir);
+
+            startInfo.FileName.Should().Be("script");
+            startInfo.UserName.Should().BeNullOrEmpty();
+            startInfo.RedirectStandardInput.Should().BeTrue();
+
+            // Linux script: -qec, "su - claude -c '...run-claude.sh'", /dev/null
+            startInfo.ArgumentList.Should().HaveCount(3);
+            startInfo.ArgumentList[0].Should().Be("-qec");
+            startInfo.ArgumentList[2].Should().Be("/dev/null");
+
+            var suCommand = startInfo.ArgumentList[1];
+            suCommand.Should().StartWith("su - claude -c ");
+            suCommand.Should().Contain("run-claude.sh");
+
+            // Verify wrapper script was written
+            var scriptPath = Path.Combine(workingDir, "run-claude.sh");
+            File.Exists(scriptPath).Should().BeTrue();
+        }
+        finally
         {
-            Username = "claude",
-            Password = "claude",
-        };
-
-        var customEnvVars = new Dictionary<string, string>
-        {
-            ["ANTHROPIC_API_KEY"] = "sk-test-123",
-            ["OTHER_VAR"] = "hello",
-        };
-
-        ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars);
-
-        startInfo.FileName.Should().Be("script");
-        startInfo.UserName.Should().BeNull();
-        startInfo.RedirectStandardInput.Should().BeTrue();
-
-        // ArgumentList should be: -qec, "su - claude -c '...'", /dev/null
-        startInfo.ArgumentList.Should().HaveCount(3);
-        startInfo.ArgumentList[0].Should().Be("-qec");
-        startInfo.ArgumentList[2].Should().Be("/dev/null");
-
-        var suCommand = startInfo.ArgumentList[1];
-        suCommand.Should().StartWith("su - claude -c ");
-        suCommand.Should().Contain("ANTHROPIC_API_KEY=");
-        suCommand.Should().Contain("OTHER_VAR=");
-        suCommand.Should().Contain("claude --model sonnet --print");
+            Directory.Delete(workingDir, true);
+        }
     }
 
     [Test]
-    public void ApplyCredentials_Linux_ThrowsWhenPasswordMissing()
+    public void ApplyCredentials_NonWindows_ThrowsWhenPasswordMissing()
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Assert.Ignore("Linux-only test");
+            Assert.Ignore("Non-Windows test");
             return;
         }
 
-        var startInfo = new ProcessStartInfo { FileName = "claude" };
-        var credentials = new ProcessCredentials { Username = "claude", Password = null };
-        var customEnvVars = new Dictionary<string, string>();
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-creds-nopw-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
 
-        var act = () => ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars);
+        try
+        {
+            var startInfo = new ProcessStartInfo { FileName = "claude" };
+            var credentials = new ProcessCredentials { Username = "claude", Password = null };
+            var customEnvVars = new Dictionary<string, string>();
 
-        act.Should().Throw<CommandException>().WithMessage("*password*");
+            var act = () => ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars, workingDir);
+
+            act.Should().Throw<CommandException>().WithMessage("*password*");
+        }
+        finally
+        {
+            Directory.Delete(workingDir, true);
+        }
     }
 
     [Test]
@@ -277,21 +394,31 @@ public class ClaudeCodeCliRunnerFixture
             return;
         }
 
-        var startInfo = new ProcessStartInfo { FileName = "claude" };
-        var credentials = new ProcessCredentials
+        var workingDir = Path.Combine(Path.GetTempPath(), $"test-creds-win-{Path.GetRandomFileName()}");
+        Directory.CreateDirectory(workingDir);
+
+        try
         {
-            Username = "deploy-user",
-            Password = "s3cret",
-            Domain = "CORP",
-        };
-        var customEnvVars = new Dictionary<string, string>();
+            var startInfo = new ProcessStartInfo { FileName = "claude" };
+            var credentials = new ProcessCredentials
+            {
+                Username = "deploy-user",
+                Password = "s3cret",
+                Domain = "CORP",
+            };
+            var customEnvVars = new Dictionary<string, string>();
 
-        ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars);
+            ClaudeCodeCliRunner.ApplyCredentials(startInfo, credentials, customEnvVars, workingDir);
 
-        startInfo.UserName.Should().Be("deploy-user");
-        startInfo.PasswordInClearText.Should().Be("s3cret");
-        startInfo.Domain.Should().Be("CORP");
-        startInfo.FileName.Should().Be("claude"); // unchanged
+            startInfo.UserName.Should().Be("deploy-user");
+            startInfo.PasswordInClearText.Should().Be("s3cret");
+            startInfo.Domain.Should().Be("CORP");
+            startInfo.FileName.Should().Be("claude"); // unchanged
+        }
+        finally
+        {
+            Directory.Delete(workingDir, true);
+        }
     }
 
     [Test]

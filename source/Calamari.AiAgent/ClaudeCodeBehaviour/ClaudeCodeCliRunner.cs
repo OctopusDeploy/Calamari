@@ -66,7 +66,7 @@ namespace Calamari.AiAgent.Behaviours
                FileName = "script",
                ArgumentList = { "-qec", $"su - {user} -c '{cmd}'", "/dev/null" },
                RedirectStandardInput  = true,
-               RedirectStandardOutput = true,
+               RedirectStI andardOutput = true,
                RedirectStandardError  = true,
                UseShellExecute = false,
            };
@@ -113,7 +113,7 @@ namespace Calamari.AiAgent.Behaviours
                 startInfo.Environment[kvp.Key] = kvp.Value;
 
             if (runAs != null)
-                ApplyCredentials(startInfo, runAs, customEnvVars);
+                ApplyCredentials(startInfo, runAs, customEnvVars, workingDir);
 
             var responseBuilder = new StringBuilder();
             var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder);
@@ -287,14 +287,14 @@ namespace Calamari.AiAgent.Behaviours
             return result;
         }
 
-        internal static void ApplyCredentials(ProcessStartInfo startInfo, ProcessCredentials credentials, Dictionary<string, string> customEnvVars)
+        internal static void ApplyCredentials(ProcessStartInfo startInfo, ProcessCredentials credentials, Dictionary<string, string> customEnvVars, string workingDir)
         {
             // See ADR: https://github.com/OctopusDeploy/adr/blob/main/team-modern-deployments/calamari-ai-agent/adr-001-use-processstartinfo-username-for-user-impersonation.md
             // On Windows: uses ProcessStartInfo.UserName with native token-based impersonation
             //   and optional password/domain.
-            // On Linux: uses script(1) + su(1) to launch a login shell as the target user.
-            //   Environment variables are inlined into the su -c command since login shells
-            //   clear the inherited environment. Password is piped via stdin.
+            // On Linux/macOS: uses script(1) + su(1) to launch a login shell as the target user.
+            //   A wrapper script is written to disk with env exports and the command, avoiding
+            //   nested shell escaping. Password is piped via stdin.
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 startInfo.UserName = credentials.Username;
@@ -307,26 +307,62 @@ namespace Calamari.AiAgent.Behaviours
                 return;
             }
 
-            // Linux: use script/su to impersonate the user with a proper login shell.
-            // su - starts a login shell which clears the environment, so we inline
-            // any custom env vars into the command string.
             if (string.IsNullOrEmpty(credentials.Password))
                 throw new CommandException("A password is required for Linux user impersonation via su");
 
-            var envPrefix = string.Join(" ", customEnvVars.Select(kvp => $"{kvp.Key}={ShellQuote(kvp.Value)}"));
-            var innerCommand = string.IsNullOrEmpty(envPrefix)
-                ? $"{startInfo.FileName} {startInfo.Arguments}"
-                : $"{envPrefix} {startInfo.FileName} {startInfo.Arguments}";
+            // Write a wrapper script so env vars and the command are expressed as plain
+            // shell syntax — no nested quoting through script → su → shell layers.
+            var scriptPath = WriteWrapperScript(startInfo, customEnvVars, workingDir);
 
-            var suCommand = $"su - {credentials.Username} -c {ShellQuote(innerCommand)}";
+            var suArg = $"/bin/bash {scriptPath}";
 
             startInfo.FileName = "script";
             startInfo.Arguments = ""; // clear — using ArgumentList instead
-            startInfo.ArgumentList.Add("-qec");
-            startInfo.ArgumentList.Add(suCommand);
-            startInfo.ArgumentList.Add("/dev/null");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                // BSD script: script -q /dev/null command args...
+                startInfo.ArgumentList.Add("-q");
+                startInfo.ArgumentList.Add("/dev/null");
+                startInfo.ArgumentList.Add("su");
+                startInfo.ArgumentList.Add("-");
+                startInfo.ArgumentList.Add(credentials.Username);
+                startInfo.ArgumentList.Add("-c");
+                startInfo.ArgumentList.Add(suArg);
+            }
+            else
+            {
+                // Linux (util-linux) script: script -qec "command" /dev/null
+                startInfo.ArgumentList.Add("-qec");
+                startInfo.ArgumentList.Add($"su - {credentials.Username} -c {ShellQuote(suArg)}");
+                startInfo.ArgumentList.Add("/dev/null");
+            }
+
             startInfo.RedirectStandardInput = true;
-            startInfo.UserName = null;
+        }
+
+        internal static string WriteWrapperScript(ProcessStartInfo startInfo, Dictionary<string, string> customEnvVars, string workingDir)
+        {
+            var scriptPath = Path.Combine(workingDir, "run-claude.sh");
+            var sb = new StringBuilder();
+            sb.AppendLine("#!/bin/bash");
+            foreach (var kvp in customEnvVars)
+                sb.AppendLine($"export {kvp.Key}={ShellQuote(kvp.Value)}");
+            sb.AppendLine($"exec {startInfo.FileName} {startInfo.Arguments}");
+            File.WriteAllText(scriptPath, sb.ToString());
+
+            // Ensure the target su user can read the working directory and script.
+            // The directory may have been created with a restrictive umask (e.g. 077).
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                File.SetUnixFileMode(scriptPath, UnixFileMode.UserRead | UnixFileMode.UserWrite
+                    | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+                File.SetUnixFileMode(workingDir, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                    | UnixFileMode.GroupRead | UnixFileMode.GroupExecute
+                    | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+            }
+
+            return scriptPath;
         }
 
         internal static string ShellQuote(string value)
