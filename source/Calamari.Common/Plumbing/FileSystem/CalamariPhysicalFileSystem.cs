@@ -529,7 +529,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 LogFileAccess(temporaryReplacement);
                 LogFileAccess(backup);
 
-                throw unauthorizedAccessException;
+                throw;
             }
 
             File.Delete(temporaryReplacement);
