@@ -62,5 +62,5 @@
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" />
   </Target>
 
-  <Import Project="$(SolutionDir)\IncludeDotNetScript.targets"/>
+  <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>

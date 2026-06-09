@@ -17,5 +17,5 @@
         <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
     </ItemGroup>
 
-    <Import Project="$(SolutionDir)\IncludeDotNetScript.targets"/>
+    <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>

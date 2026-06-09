@@ -246,5 +246,5 @@
         <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.sh"/>
     </ItemGroup>
 
-    <Import Project="$(SolutionDir)\IncludeDotNetScript.targets"/>
+    <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>

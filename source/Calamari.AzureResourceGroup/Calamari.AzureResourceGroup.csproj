@@ -22,5 +22,5 @@
         <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
     </ItemGroup>
 
-    <Import Project="$(SolutionDir)\IncludeDotNetScript.targets"/>
+    <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>
