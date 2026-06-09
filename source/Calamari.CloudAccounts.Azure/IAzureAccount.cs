@@ -1,4 +1,6 @@
-namespace Calamari.CloudAccounts
+using System;
+
+namespace Calamari.CloudAccounts.Azure
 {
     public interface IAzureAccount
     {

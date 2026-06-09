@@ -1,7 +1,8 @@
+using System;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     public class AzureOidcAccount : IAzureAccount
     {
@@ -26,13 +27,13 @@ namespace Calamari.CloudAccounts
 
         public AzureOidcAccount(IVariables variables)
         {
-            SubscriptionNumber = variables.Get(AccountVariables.SubscriptionId);
-            ClientId = variables.Get(AccountVariables.ClientId);
-            TenantId = variables.Get(AccountVariables.TenantId);
-            Jwt = variables.Get(AccountVariables.Jwt);
-            AzureEnvironment = variables.Get(AccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.OidcAuthContextUri);
+            SubscriptionNumber = variables.Get(AzureAccountVariables.SubscriptionId);
+            ClientId = variables.Get(AzureAccountVariables.ClientId);
+            TenantId = variables.Get(AzureAccountVariables.TenantId);
+            Jwt = variables.Get(AzureAccountVariables.OpenIDJwt);
+            AzureEnvironment = variables.Get(AzureAccountVariables.Environment);
+            ResourceManagementEndpointBaseUri = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+            ActiveDirectoryEndpointBaseUri = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.OidcAuthContextUri);
         }
 
         public AccountType AccountType => AccountType.AzureOidc;

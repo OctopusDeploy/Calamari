@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
@@ -10,7 +7,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Aws
 {
     /// <summary>
     /// This service is used to generate the appropriate environment variables required to authentication

@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NetWebRequest = System.Net.WebRequest;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     public class AzureContainerRegistryAuthenticationProvider
     {
@@ -35,7 +32,7 @@ namespace Calamari.CloudAccounts
             {
                 Log.Verbose("Starting ACR OIDC credential retrieval process");
                 var jwt = variables.Get(AuthenticationVariables.Jwt);
-                var clientId = variables.Get(AuthenticationVariables.Azure.ClientId);
+                var clientId = variables.Get(AzureAccountVariables.ClientId);
                 var tenantId = variables.Get(AuthenticationVariables.Azure.TenantId);
                 var aadToken = await ExchangeJwtForAccessTokenAsync(jwt, clientId, tenantId);
                 var refreshToken = await GetAcrRefreshTokenAsync(registryUri, aadToken, tenantId);

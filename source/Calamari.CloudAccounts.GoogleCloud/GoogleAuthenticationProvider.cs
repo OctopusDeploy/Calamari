@@ -1,14 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using NetWebRequest = System.Net.WebRequest;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.GoogleCloud
 {
     public class GoogleAuthenticationProvider
     {
@@ -33,7 +29,7 @@ namespace Calamari.CloudAccounts
             {
                 Log.Verbose("Starting GCR OIDC credential retrieval process");
                 var jwt = variables.Get(AuthenticationVariables.Jwt);
-                var rawAudience = variables.Get(AuthenticationVariables.Google.Audience);
+                var rawAudience = variables.Get(GoogleAccountVariables.Audience);
                 var audience = Uri.TryCreate(rawAudience, UriKind.Absolute, out var uri)
                     ? $"//{uri.Host}{uri.AbsolutePath}"
                     : rawAudience;

@@ -7,6 +7,7 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
@@ -90,7 +91,7 @@ namespace Calamari.Integration.Packages.Download
             {
                 try
                 {
-                    var region = variables.Get(AuthenticationVariables.Aws.Region) ?? GetBucketsRegion(feedUsername, feedPassword, bucketName);
+                    var region = variables.Get(AwsAccountVariables.Region) ?? GetBucketsRegion(feedUsername, feedPassword, bucketName);
 
                     log.Verbose($"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} in region {region}. Attempt #{retry + 1}");
 

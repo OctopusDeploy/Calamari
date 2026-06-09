@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;

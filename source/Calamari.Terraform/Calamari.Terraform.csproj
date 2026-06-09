@@ -11,11 +11,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NuGet.Versioning" Version="7.4.0-octopus-release.17001" />
-    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.20" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj" />
+    <ProjectReference Include="..\Calamari.CloudAccounts.Aws\Calamari.CloudAccounts.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.CloudAccounts.Azure\Calamari.CloudAccounts.Azure.csproj" />
   </ItemGroup>
 </Project>

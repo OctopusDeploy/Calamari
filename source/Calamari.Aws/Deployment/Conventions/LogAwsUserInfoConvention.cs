@@ -8,6 +8,7 @@ using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;

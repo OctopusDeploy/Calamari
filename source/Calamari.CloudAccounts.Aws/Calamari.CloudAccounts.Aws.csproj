@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <RootNamespace>Calamari.CloudAccounts</RootNamespace>
+        <RootNamespace>Calamari.CloudAccounts.Aws</RootNamespace>
         <TargetFramework>net8.0</TargetFramework>
-        <PackageId>Octopus.Calamari.CloudAccounts</PackageId>
-        <Title>Calamari.CloudAccounts</Title>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>Octopus.Calamari.CloudAccounts.Aws</PackageId>
+        <Title>Calamari.CloudAccounts.Aws</Title>
         <Authors>Octopus Deploy</Authors>
         <Copyright>Octopus Deploy Pty Ltd</Copyright>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
@@ -14,15 +15,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />  
+        <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AWSSDK.Core" Version="4.0.3.29" />
-      <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.20" />
-      <PackageReference Include="AWSSDK.ECR" Version="4.0.13.1" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
+        <PackageReference Include="AWSSDK.Core" Version="4.0.3.29" />
+        <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.20" />
+        <PackageReference Include="AWSSDK.ECR" Version="4.0.13.1" />
     </ItemGroup>
-
 </Project>

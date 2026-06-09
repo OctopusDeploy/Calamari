@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     static class DefaultVariables
     {

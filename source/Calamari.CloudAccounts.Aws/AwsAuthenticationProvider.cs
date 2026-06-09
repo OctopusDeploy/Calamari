@@ -1,8 +1,6 @@
 using System;
-using System.Linq;
 using System.Security.Authentication;
 using System.Text;
-using System.Threading.Tasks;
 using Amazon;
 using Amazon.ECR;
 using Amazon.ECR.Model;
@@ -12,7 +10,7 @@ using Amazon.SecurityToken.Model;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Aws
 {
     public static class AwsAuthenticationProvider
     {
@@ -22,9 +20,9 @@ namespace Calamari.CloudAccounts
             try
             {
                 var jwt = variables.Get(AuthenticationVariables.Jwt);
-                var roleArn = variables.Get(AuthenticationVariables.Aws.RoleArn);
-                var region = variables.Get(AuthenticationVariables.Aws.Region);
-                var sessionDuration = variables.Get(AuthenticationVariables.Aws.SessionDuration);
+                var roleArn = variables.Get(AwsAccountVariables.RoleArn);
+                var region = variables.Get(AwsAccountVariables.Region);
+                var sessionDuration = variables.Get(AwsAccountVariables.SessionDuration);
                 
                 var regionEndpoint = RegionEndpoint.GetBySystemName(region);
                 var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), regionEndpoint);
@@ -53,7 +51,7 @@ namespace Calamari.CloudAccounts
         
         public static async Task<(string Username, string Password, Uri RegistryUri)> GetEcrAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
         {
-            var region = variables.Get(AuthenticationVariables.Aws.Region);
+            var region = variables.Get(AwsAccountVariables.Region);
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
             AmazonECRClient client;
             if (accessKey.IsNullOrEmpty() || secretKey.IsNullOrEmpty())

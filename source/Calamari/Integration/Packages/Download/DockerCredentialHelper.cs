@@ -134,7 +134,7 @@ namespace Calamari.Integration.Packages.Download
 
         static void EnsureCredentialHelperIsExecutable()
         {
-            if (CalamariEnvironment.IsRunningOnWindows)
+            if (CalamariEnvironment.IsRunningOnWindows || OperatingSystem.IsWindows())
                 return;
 
             var helperPath = Path.Combine(AppContext.BaseDirectory, "docker-credential-octopus");

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Cache;
+using System.Net.Http;
 using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -127,7 +128,7 @@ namespace Calamari.Integration.Packages.Download
             JArray? req = null;
             while (req == null || req.Count != 0 && req.Count < 1000)
             {
-                var uri = feedUri.AbsoluteUri + $"repos/{Uri.EscapeUriString(owner)}/{Uri.EscapeUriString(repository)}/tags?page={++page}&per_page=1000";
+                var uri = feedUri.AbsoluteUri + $"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repository)}/tags?page={++page}&per_page=1000";
                 req = PerformRequest(authorizationToken, uri) as JArray;
                 if (req == null)
                     break;
@@ -179,8 +180,10 @@ namespace Calamari.Integration.Packages.Download
                 try
                 {
                     if (retry != 0) Log.Verbose($"Download Attempt #{retry + 1}");
-
+                    
+#pragma warning disable SYSLIB0014
                     using (var client = new WebClient())
+#pragma warning restore SYSLIB0014
                     {
                         client.CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable);
                         client.Headers.Set(HttpRequestHeader.UserAgent, GetUserAgent());
@@ -205,7 +208,9 @@ namespace Calamari.Integration.Packages.Download
         {
             try
             {
+#pragma warning disable SYSLIB0014
                 using (var client = new WebClient())
+#pragma warning restore SYSLIB0014
                 {
                     client.CachePolicy = new RequestCachePolicy(RequestCacheLevel.BypassCache);
                     client.Headers.Set(HttpRequestHeader.UserAgent, GetUserAgent());

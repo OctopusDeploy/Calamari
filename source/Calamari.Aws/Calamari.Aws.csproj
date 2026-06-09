@@ -31,7 +31,7 @@
     <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.20" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
+    <ProjectReference Include="..\Calamari.CloudAccounts.Aws\Calamari.CloudAccounts.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
   </ItemGroup>

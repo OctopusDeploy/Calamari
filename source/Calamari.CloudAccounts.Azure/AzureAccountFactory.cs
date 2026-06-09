@@ -1,6 +1,7 @@
-﻿using Calamari.Common.Plumbing.Variables;
+﻿using System;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     public static class AzureAccountFactory
     {

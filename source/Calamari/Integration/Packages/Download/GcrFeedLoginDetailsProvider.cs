@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.GoogleCloud;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -18,7 +18,7 @@ namespace Calamari.Integration.Packages.Download
             } 
             
             Log.Verbose("Gcr Feed - Using json key authentication flow.");
-            return await Task.FromResult(gcrAuth.GetGcrUserNamePasswordCredentials(username, password, feedUri));
+            return gcrAuth.GetGcrUserNamePasswordCredentials(username, password, feedUri);
         }
     }
 }

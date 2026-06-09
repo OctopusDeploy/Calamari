@@ -7,6 +7,7 @@ using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;

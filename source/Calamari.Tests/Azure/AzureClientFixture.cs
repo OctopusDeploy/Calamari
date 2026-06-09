@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Azure

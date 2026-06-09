@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -28,6 +28,4 @@ namespace Calamari.Integration.Packages.Download
             return await AwsAuthenticationProvider.GetEcrAccessKeyCredentials(variables, username ?? string.Empty, password ?? string.Empty);
         }
     }
-    
-    
 }
