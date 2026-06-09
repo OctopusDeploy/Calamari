@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Calamari.Integration.Certificates.WindowsNative;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
