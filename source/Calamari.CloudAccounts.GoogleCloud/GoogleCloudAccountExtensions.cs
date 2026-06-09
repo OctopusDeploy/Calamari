@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing;
@@ -11,7 +8,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.GoogleCloudAccounts
+namespace Calamari.CloudAccounts.GoogleCloud
 {
         public class SetupGCloudAuthentication
         {
@@ -22,7 +19,7 @@ namespace Calamari.GoogleCloudAccounts
             readonly string workingDirectory;
             readonly string jwtFilePath;
             readonly string jsonAuthFilePath;
-            private string gcloud = String.Empty;
+            private string gcloud = string.Empty;
 
             public SetupGCloudAuthentication(IVariables variables,
                 ILog log,

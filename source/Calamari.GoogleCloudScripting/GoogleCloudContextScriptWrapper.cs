@@ -7,7 +7,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.GoogleCloudAccounts;
+using Calamari.CloudAccounts.GoogleCloud;
 
 namespace Calamari.GoogleCloudScripting
 {
