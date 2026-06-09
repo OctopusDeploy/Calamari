@@ -184,10 +184,8 @@ namespace Calamari.Integration.Certificates
       {
         AccessControlSections accessControlSections = AccessControlSections.None;
         bool flag = false;
-        RuntimeHelpers.PrepareConstrainedRegions();
         try
         {
-          RuntimeHelpers.PrepareConstrainedRegions();
           try
           {
           }
