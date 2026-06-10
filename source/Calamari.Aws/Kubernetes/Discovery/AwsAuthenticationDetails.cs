@@ -180,7 +180,7 @@ public class AwsAuthenticationDetails<TCredentials> : ITargetDiscoveryAuthentica
         
     public string Type { get; set; }
 
-    public string AuthenticationMethod { get; set; } = null;
+    public string AuthenticationMethod { get; set; } = string.Empty;
 
     public AwsCredentials<TCredentials> Credentials { get; set; }
         

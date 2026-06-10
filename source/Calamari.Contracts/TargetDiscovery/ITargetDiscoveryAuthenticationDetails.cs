@@ -4,5 +4,5 @@ public interface ITargetDiscoveryAuthenticationDetails
 {
     string Type { get; }
 
-    string? AuthenticationMethod { get; }
+    string AuthenticationMethod { get; }
 }
