@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
+using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;

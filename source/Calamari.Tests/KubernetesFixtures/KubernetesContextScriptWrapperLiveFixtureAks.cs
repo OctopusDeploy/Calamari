@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
+using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes.Commands;
