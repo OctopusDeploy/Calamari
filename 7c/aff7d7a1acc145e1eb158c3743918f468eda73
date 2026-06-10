@@ -1,0 +1,19 @@
+source/Calamari.Tests/KubernetesFixtures/Commands/Executors/AppliedResourcesOutputHelperTests.cs
+  s_90b4e3915f976f::t_c7b3112beb1af5 1-44,46-86,88-105,107-110,112-128,130-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "7caff7d7a1acc145e1eb158c3743918f468eda73",
+  "prompts": {},
+  "sessions": {
+    "s_90b4e3915f976f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "52692a12-bac0-4aac-b3a0-c628ee1159e4",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}

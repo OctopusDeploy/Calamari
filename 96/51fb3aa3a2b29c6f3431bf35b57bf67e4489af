@@ -1,0 +1,24 @@
+source/Calamari/Kubernetes/Conventions/Helm/HelmUpgradeExecutor.cs
+  h_8814cab10e818f 75,82-83
+source/Calamari.Tests/KubernetesFixtures/Conventions/Helm/HelmUpgradeExecutorTests.cs
+  h_8814cab10e818f 87-88,116,139-140,161
+source/Calamari/Kubernetes/SpecialVariables.cs
+  h_8814cab10e818f 44
+source/Calamari/Kubernetes/Commands/Executors/AppliedResourcesOutputHelper.cs
+  h_8814cab10e818f 34
+source/Calamari.Tests/KubernetesFixtures/Commands/Executors/KustomizeExecutorTests.cs
+  h_8814cab10e818f 323
+source/Calamari.Tests/KubernetesFixtures/Commands/Executors/AppliedResourcesOutputHelperTests.cs
+  h_8814cab10e818f 6,46,88,107,130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "9651fb3aa3a2b29c6f3431bf35b57bf67e4489af",
+  "prompts": {},
+  "humans": {
+    "h_8814cab10e818f": {
+      "author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}

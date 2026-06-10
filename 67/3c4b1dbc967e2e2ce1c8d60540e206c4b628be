@@ -1,0 +1,19 @@
+source/Calamari.Tests/KubernetesFixtures/Commands/KubernetesVerifyResourcesCommandFixture.cs
+  s_0e992d1fb9c835::t_b68cdc5fd7005f 21,25,27,29-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "673c4b1dbc967e2e2ce1c8d60540e206c4b628be",
+  "prompts": {},
+  "sessions": {
+    "s_0e992d1fb9c835": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a98eff2-15f0-4c0a-b7b9-1329411b2009",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}

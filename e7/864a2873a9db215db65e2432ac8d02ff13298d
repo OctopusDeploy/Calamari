@@ -1,0 +1,23 @@
+source/Calamari.Tests/KubernetesFixtures/Conventions/Helm/HelmUpgradeExecutorTests.cs
+  s_90b4e3915f976f::t_a53b3ef8fd86c5 1-8,10-81,83-109,111-112,131,156-174,178-196,198,202-263,265-273,275-301
+  s_90b4e3915f976f::t_847522e20c88e1 9
+  s_90b4e3915f976f::t_8369f24470f174 199
+  s_90b4e3915f976f::t_5e397d5850c71d 264
+  s_90b4e3915f976f::t_5393f8c6993033 274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "e7864a2873a9db215db65e2432ac8d02ff13298d",
+  "prompts": {},
+  "sessions": {
+    "s_90b4e3915f976f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "52692a12-bac0-4aac-b3a0-c628ee1159e4",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}

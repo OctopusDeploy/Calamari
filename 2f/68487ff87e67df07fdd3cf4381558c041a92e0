@@ -1,0 +1,67 @@
+source/Calamari/Kubernetes/Conventions/HelmUpgradeWithKOSConvention.cs
+  s_d7608b018996df::t_c9188380a411f1 1
+  s_4f572e2532616b::t_d626b4dafce48e 72-73,75
+source/Calamari.Tests/KubernetesFixtures/Conventions/Helm/HelmUpgradeExecutorTests.cs
+  s_90b4e3915f976f::t_a53b3ef8fd86c5 1-8,10-174,176-197,199-296,298-306,308-334
+  s_90b4e3915f976f::t_847522e20c88e1 9
+  s_90b4e3915f976f::t_b62515e7200f11 175
+  s_90b4e3915f976f::t_8369f24470f174 198
+  s_90b4e3915f976f::t_5e397d5850c71d 297
+  s_90b4e3915f976f::t_5393f8c6993033 307
+source/Calamari/Kubernetes/Conventions/Helm/HelmUpgradeExecutor.cs
+  s_4f572e2532616b::t_557aa4f7743f3f 1,12,26,31-32,38
+  s_4f572e2532616b::t_cfdeda1943e36a 43,67,69,73-91
+  h_8814cab10e818f 65-66,68
+source/Calamari/Kubernetes/Commands/Executors/AppliedResourcesOutputHelper.cs
+  s_d7608b018996df::t_c6b766c93d35f6 1-37
+source/Calamari/Kubernetes/Commands/Executors/GatherAndApplyRawYamlExecutor.cs
+  h_8814cab10e818f 65-66
+source/Calamari.Tests/KubernetesFixtures/Commands/Executors/KustomizeExecutorTests.cs
+  s_90b4e3915f976f::t_43fc5c06493594 8,18
+  s_90b4e3915f976f::t_5d019cf3baefb0 304-356
+source/Calamari.Tests/KubernetesFixtures/Commands/Executors/AppliedResourcesOutputHelperTests.cs
+  s_90b4e3915f976f::t_c7b3112beb1af5 1-44,46-86,88-105,107-149,151-167
+  s_90b4e3915f976f::t_f2dfc6474d6b48 45
+  s_90b4e3915f976f::t_6efd6f628dcf22 87
+  s_90b4e3915f976f::t_a5def975acb323 106
+  s_90b4e3915f976f::t_5ad35ca2e3e098 150
+source/Calamari/Kubernetes/Commands/Executors/KustomizeExecutor.cs
+  s_d7608b018996df::t_1864c4df95f229 57-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "2f68487ff87e67df07fdd3cf4381558c041a92e0",
+  "prompts": {},
+  "humans": {
+    "h_8814cab10e818f": {
+      "author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  },
+  "sessions": {
+    "s_4f572e2532616b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e8d1a46e-87f3-486e-b909-a1926b6f5a86",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    },
+    "s_90b4e3915f976f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "52692a12-bac0-4aac-b3a0-c628ee1159e4",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    },
+    "s_d7608b018996df": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e07a81bf-318c-4eb3-b49d-1d215388add2",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}
