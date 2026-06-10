@@ -18,18 +18,18 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
     public class KubernetesVerifyResourcesCommandFixture
     {
         [Test]
-        public void WhenNoAppliedResourcesVariableIsSet_ShouldDoNothingAndSucceed()
+        public void WhenNoAppliedResourcesVariableIsSet_ShouldThrowCommandException()
         {
             var variables = new CalamariVariables();
             var statusReporter = Substitute.For<IResourceStatusReportExecutor>();
-            var log = new InMemoryLog();
-            var command = CreateCommand(variables, statusReporter, log);
+            var command = CreateCommand(variables, statusReporter, new InMemoryLog());
 
-            var result = command.Execute(new string[] { });
+            Action execute = () => command.Execute(new string[] { });
 
-            result.Should().Be(0);
+            execute.Should()
+                   .Throw<CommandException>()
+                   .WithMessage("The applied resources variable was not found. This variable is required to verify the deployed resources.");
             statusReporter.ReceivedCalls().Should().BeEmpty();
-            log.MessagesInfoFormatted.Should().Contain("No applied resources found; nothing to verify.");
         }
 
         [Test]
