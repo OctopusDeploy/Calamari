@@ -54,8 +54,7 @@ namespace Calamari.Kubernetes.Commands
             var json = variables.Get(SpecialVariables.AppliedResources);
             if (string.IsNullOrWhiteSpace(json))
             {
-                log.Info($"No applied resources found; nothing to verify.");
-                return 0;
+                throw new CommandException($"The applied resources variable was not found. This variable is required to verify the deployed resources.");
             }
 
             List<ResourceIdentifier> resources;
@@ -86,7 +85,7 @@ namespace Calamari.Kubernetes.Commands
 
             if (!success)
             {
-                throw new CommandException("Resource verification failed.");
+                throw new CommandException("Resource verification failed. Check verbose logs for more details.");
             }
 
             return 0;

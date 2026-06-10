@@ -5,7 +5,6 @@ using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
@@ -35,13 +34,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            //When ArgoRollouts support is enabled, resource status reporting is performed by a
-            //separate verification action (kubernetes-verify-resources) instead of inline here.
-            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(variables))
-            {
-                return false;
-            }
-
             var isBlueGreen = string.Equals(variables.Get(SpecialVariables.DeploymentStyle), "bluegreen", StringComparison.OrdinalIgnoreCase);
             var isWaitDeployment = string.Equals(variables.Get(SpecialVariables.DeploymentWait) , "wait", StringComparison.OrdinalIgnoreCase);
 
