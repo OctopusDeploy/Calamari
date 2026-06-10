@@ -8,19 +8,23 @@ public partial class Build
         d =>
             d.Executes(() =>
                        {
-                           const string runtime = "win-x64";
-                           var nukeBuildOutputDirectory = KnownPaths.BuildDirectory / "outputs" / runtime / "nukebuild";
-                           nukeBuildOutputDirectory.CreateOrCleanDirectory();
+                           //we aren't currently testing on Mac, so skip that
+                           string[] runtimeIdentifiers = ["win-x64","linux-x64","linux-arm","linux-arm64"];
+                           foreach (var runtime in runtimeIdentifiers)
+                           {
+                               var nukeBuildOutputDirectory = KnownPaths.BuildDirectory / "outputs" / runtime / "nukebuild";
+                               nukeBuildOutputDirectory.CreateOrCleanDirectory();
 
-                           DotNetPublish(p => p
-                                              .SetProject(KnownPaths.RootDirectory / "build" / "_build.csproj")
-                                              .SetConfiguration(Configuration)
-                                              .SetRuntime(runtime)
-                                              .SetVersion(NugetVersion.Value)
-                                              .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
-                                              .SetVerbosity(BuildVerbosity)
-                                              .EnableSelfContained());
+                               DotNetPublish(p => p
+                                                  .SetProject(KnownPaths.RootDirectory / "build" / "_build.csproj")
+                                                  .SetConfiguration(Configuration)
+                                                  .SetRuntime(runtime)
+                                                  .SetVersion(NugetVersion.Value)
+                                                  .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                                  .SetVerbosity(BuildVerbosity)
+                                                  .EnableSelfContained());
 
-                           Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, KnownPaths.ArtifactsDirectory / $"nukebuild.{runtime}.zip");
+                               Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, KnownPaths.ArtifactsDirectory / $"nukebuild.{runtime}.zip");
+                           }
                        });
 }
