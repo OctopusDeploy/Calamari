@@ -1,0 +1,30 @@
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/KustomizeUpdater.cs
+  s_800ecdeddb1ec9::t_3cb4f041e0d994 48-57
+source/Calamari.Tests/ArgoCD/KustomizeUpdaterTests.cs
+  s_800ecdeddb1ec9::t_587df1701cbeb8 296-332
+source/Calamari/ArgoCD/Models/ContainerImageReference.cs
+  s_800ecdeddb1ec9::t_ccfbc5a8f5067d 103-112
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/BaseUpdater.cs
+  s_800ecdeddb1ec9::t_2369b5f1a7af99 124-125,130-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "846ddc82c2d6723e56e7888e3e3503bf5b907f8c",
+  "prompts": {},
+  "humans": {
+    "h_1903a5d928fbe4": {
+      "author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  },
+  "sessions": {
+    "s_800ecdeddb1ec9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4888f85-046f-4180-b388-15e8a1d2b313",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
