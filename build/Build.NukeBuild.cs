@@ -8,7 +8,8 @@ public partial class Build
         d =>
             d.Executes(() =>
                        {
-                           string[] runtimeIdentifiers = ["win-x64", "linux-x64"];
+                           //we aren't currently testing on Mac, so skip that
+                           string[] runtimeIdentifiers = ["win-x64","linux-x64","linux-arm","linux-arm64"];
                            foreach (var runtime in runtimeIdentifiers)
                            {
                                var nukeBuildOutputDirectory = KnownPaths.BuildDirectory / "outputs" / runtime / "nukebuild";
