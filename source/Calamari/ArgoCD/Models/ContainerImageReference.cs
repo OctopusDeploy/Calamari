@@ -100,6 +100,16 @@ namespace Calamari.ArgoCD.Models
             return $"{ToOriginalFormatName()}:{tag}";
         }
 
+        /// <summary>
+        /// Returns a copy of this reference with a different tag, preserving the registry,
+        /// image name and the originating default registry. Unlike re-parsing a string via
+        /// <see cref="FromReferenceString"/>, this never loses registry information.
+        /// </summary>
+        public ContainerImageReference WithReplacedTag(string tag)
+        {
+            return new ContainerImageReference(Registry, ImageName, tag, DefaultRegistry);
+        }
+
         static bool RegistriesMatch(ContainerImageReference reference1, ContainerImageReference reference2)
         {
             return string.Equals(NormalizeRegistry(reference1), NormalizeRegistry(reference2), StringComparison.OrdinalIgnoreCase);

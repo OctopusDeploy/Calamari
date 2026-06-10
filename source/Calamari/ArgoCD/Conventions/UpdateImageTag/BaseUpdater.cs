@@ -121,12 +121,14 @@ public abstract class BaseUpdater : ISourceUpdater
     // The tag should always be present — ContainerImageReference objects are created by
     // DeploymentConfigFactory which ensures a tag is set. The no-tag fallback appends the
     // placeholder anyway so the replacer can still match.
+    protected const string PlaceholderTag = "__CALAMARI_PLACEHOLDER__";
+
     protected static string MakePlaceholderRef(string imageRef)
     {
         var colonIdx = imageRef.LastIndexOf(':');
         return colonIdx >= 0
-            ? imageRef[..colonIdx] + ":__CALAMARI_PLACEHOLDER__"
-            : imageRef + ":__CALAMARI_PLACEHOLDER__";
+            ? imageRef[..colonIdx] + ":" + PlaceholderTag
+            : imageRef + ":" + PlaceholderTag;
     }
 
     protected static JsonPatchDocument CreateJsonPatchFromDiff(string originalContent, string updatedContent)

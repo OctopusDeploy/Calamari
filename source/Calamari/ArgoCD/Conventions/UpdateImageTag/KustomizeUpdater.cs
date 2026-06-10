@@ -45,13 +45,16 @@ public class KustomizeUpdater : BaseUpdater
         // For kustomization resources, name and tag are separate YAML fields (name + newTag),
         // so naive string replacement of "name:tag" won't find a match.
         // Instead, run the replacer with placeholder tags to produce the "before" content.
-        var placeholderImages = targetedImages
-                                .Select(imageRef =>
-                                {
-                                    var placeholderRef = MakePlaceholderRef(imageRef);
-                                    return new ContainerImageReferenceAndHelmReference(
-                                        ContainerImageReference.FromReferenceString(placeholderRef, defaultRegistry));
-                                })
+        //
+        // The targeted image strings have their registry stripped (ImageName:Tag), so we must NOT
+        // re-parse them — doing so loses the registry for images on a non-default registry (e.g.
+        // GAR/GCR/ECR), causing the placeholder match to fail and the patch to come back empty.
+        // Instead, recover the original references (which retain registry + default registry) and
+        // only swap the tag for the placeholder.
+        var placeholderImages = imagesToUpdate
+                                .Where(i => targetedImages.Contains($"{i.ContainerReference.ImageName}:{i.ContainerReference.Tag}"))
+                                .Select(i => new ContainerImageReferenceAndHelmReference(
+                                            i.ContainerReference.WithReplacedTag(PlaceholderTag)))
                                 .ToList();
 
         var placeholderReplacer = new KustomizeContainerImageReplacer(content, defaultRegistry, updateKustomizePatches, log);
