@@ -16,83 +16,87 @@ using NUnit.Framework.Internal;
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    [NonParallelizable]
-    class AzureWebAppHealthCheckActionHandlerFixture : AppServiceIntegrationTest
+    class AzureWebAppHealthCheckActionHandlerFixture : AppServiceIntegrationTestWithStaticResources
     {
+        // https://portal.azure.com/#@octopusdeploy.onmicrosoft.com/resource/subscriptions/cf21dc34-73dc-4d7d-bd86-041884e0bc75/resourcegroups/calamari-testing-static-rg/providers/Microsoft.Web/sites/calamari-testing-static-health-check/appServices
+        const string WebAppName = "calamari-testing-static-health-check";
+        const string ExistingSlotName = "stage";
+        const string NonExistentSlotName = "not-a-slot";
+        
         const string NonExistentProxyHostname = "non-existent-proxy.local";
         const int NonExistentProxyPort = 3128;
-        readonly IWebProxy originalProxy = WebRequest.DefaultWebProxy;
-        readonly string originalProxyHost = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost);
-        readonly string originalProxyPort = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
-
-        protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
-        {
-            var (_, webSiteResource) = await CreateAppServicePlanAndWebApp(resourceGroup);
-            WebSiteResource = webSiteResource;
-        }
-
-        public override async Task Cleanup()
-        {
-            RestoreLocalEnvironmentProxySettings();
-            RestoreCiEnvironmentProxySettings();
-
-            await base.Cleanup();
-        }
 
         [Test]
-        [NonParallelizable]
-        public async Task WebAppIsFound_WithAndWithoutProxy()
+        public async Task WebApp_Exists_ReturnsSuccessful()
         {
-            const string slotName = "stage";
-            var slot = await WebSiteResource.GetWebSiteSlots()
-                                            .CreateOrUpdateAsync(WaitUntil.Completed, slotName, WebSiteResource.Data);
-
-            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     SetUpVariables(context);
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
-                                                 })
-                                    .WithAssert(result => result.WasSuccessful.Should().BeTrue())
-                                    .Execute();
-            
-            await slot.Value.DeleteAsync(WaitUntil.Completed);
-            
-            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     SetUpVariables(context);
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
-                                                 })
-                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
-                                    .Execute(false);
-
             await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
                                     .WithArrange(SetUpVariables)
                                     .WithAssert(result => result.WasSuccessful.Should().BeTrue())
                                     .Execute();
-
-            // Here we verify whether the proxy is correctly picked up
-            // Since the proxy we use here is non-existent, health check to the same Web App should fail due this this proxy setting
-            SetLocalEnvironmentProxySettings(NonExistentProxyHostname, NonExistentProxyPort);
-            SetCiEnvironmentProxySettings(NonExistentProxyHostname, NonExistentProxyPort);
-            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                    .WithArrange(SetUpVariables)
-                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
-                                    .Execute(false);
         }
-
+        
         [Test]
-        [NonParallelizable]
-        public async Task WebAppIsNotFound()
+        public async Task WebApp_DoesNotExist_ReturnsUnsuccessful()
         {
             var randomName = Randomizer.CreateRandomizer().GetString(34, "abcdefghijklmnopqrstuvwxyz1234567890");
             await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                    .WithArrange(SetUpVariables)
+                                    .WithArrange(context =>
+                                                 {
+                                                     SetUpVariables(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, randomName);
+                                                 })
+                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                                    .Execute(false);
+        }
+        
+        [Test]
+        public async Task WebAppSlot_Exists_ReturnsSuccessful()
+        {
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     SetUpVariables(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, ExistingSlotName);
+                                                 })
+                                    .WithAssert(result => result.WasSuccessful.Should().BeTrue())
+                                    .Execute();
+        }
+        
+        [Test]
+        public async Task WebAppSlot_DoesNotExist_ReturnsUnsuccessful()
+        {
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     SetUpVariables(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, NonExistentSlotName);
+                                                 })
                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                                     .Execute(false);
         }
 
+        [Test]
+        [NonParallelizable]
+        public async Task WebApp_ExistsButWithInvalidProxy_ReturnsUnsuccessful()
+        {
+            var originalProxy = WebRequest.DefaultWebProxy;
+            var originalProxyHost = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost);
+            var originalProxyPort = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
+            
+            // Here we verify whether the proxy is correctly picked up
+            // Since the proxy we use here is non-existent, health check to the same Web App should fail due to this proxy setting
+            SetLocalEnvironmentProxySettings(NonExistentProxyHostname, NonExistentProxyPort);
+            SetCiEnvironmentProxySettings(NonExistentProxyHostname, NonExistentProxyPort);
+            
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(SetUpVariables)
+                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                                    .Execute(false);
+            
+            RestoreCiEnvironmentProxySettings(originalProxyHost,originalProxyPort);
+            RestoreLocalEnvironmentProxySettings(originalProxy);
+        }
+        
         static void SetLocalEnvironmentProxySettings(string hostname, int port)
         {
             var proxySettings = new UseCustomProxySettings(hostname, port, null!, null!).CreateProxy().Value;
@@ -102,24 +106,26 @@ namespace Calamari.AzureAppService.Tests
         static void SetCiEnvironmentProxySettings(string hostname, int port)
         {
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, hostname);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, $"{port}");
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, port.ToString());
         }
 
-        void RestoreLocalEnvironmentProxySettings()
+        void RestoreLocalEnvironmentProxySettings(IWebProxy originalProxy)
         {
             WebRequest.DefaultWebProxy = originalProxy;
         }
 
-        void RestoreCiEnvironmentProxySettings()
+        void RestoreCiEnvironmentProxySettings(string originalHost, string originalPort)
         {
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, originalProxyHost);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, originalProxyPort);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, originalHost);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, originalPort);
         }
 
         void SetUpVariables(CommandTestBuilderContext context)
         {
             AddAzureVariables(context.Variables);
+            
             context.Variables.Add("Octopus.Account.AccountType", "AzureServicePrincipal");
+            context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, WebAppName);
         }
     }
 }
