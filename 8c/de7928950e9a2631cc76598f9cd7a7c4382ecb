@@ -1,0 +1,33 @@
+source/Calamari/Kubernetes/ResourceStatus/Resources/ResourceFactory.cs
+  s_30f3a8638ac000::t_04c54efeb6ecff 28-29
+source/Calamari/Kubernetes/Commands/KubernetesVerifyResourcesCommand.cs
+  s_30f3a8638ac000::t_61298028bb539d 106-114
+  s_30f3a8638ac000::t_31aa31bf758a7c 77
+  s_30f3a8638ac000::t_a290a30da6307e 115
+source/Calamari.Tests/KubernetesFixtures/Commands/KubernetesVerifyResourcesCommandFixture.cs
+  s_bfc8661eec638b::t_dde8f10d8691a8 1-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "8cde7928950e9a2631cc76598f9cd7a7c4382ecb",
+  "prompts": {},
+  "sessions": {
+    "s_30f3a8638ac000": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4c672e40-223f-4155-85b3-68b9a82e0473",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    },
+    "s_bfc8661eec638b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d3a5e0d0-5aa0-4820-b220-018b479fc633",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Sasha Kavalchuk <aliaksandr.kavalchuk@octopus.com>"
+    }
+  }
+}
