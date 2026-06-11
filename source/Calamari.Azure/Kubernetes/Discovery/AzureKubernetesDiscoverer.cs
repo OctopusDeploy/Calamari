@@ -10,6 +10,7 @@ using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.TargetDiscovery;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
