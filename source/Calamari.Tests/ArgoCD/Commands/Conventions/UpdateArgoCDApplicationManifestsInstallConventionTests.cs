@@ -102,6 +102,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         [TearDown]
         public void Cleanup()
         {
+            originRepo.Dispose();
             fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
         }
 

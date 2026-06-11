@@ -268,13 +268,6 @@ namespace Calamari.ArgoCD.Git
             log.Verbose("Deleting local repository");
             try
             {
-                //some files in the .git folder can/are ReadOnly which makes them impossible to delete
-                //so just remove the ReadOnly attribute from all files (if they are ReadOnly)
-                foreach (var gitFile in calamariFileSystem.EnumerateFilesRecursively(Path.Combine(repoCheckoutDirectoryPath, ".git")))
-                {
-                    calamariFileSystem.RemoveReadOnlyAttributeFromFile(gitFile);
-                }
-
                 calamariFileSystem.DeleteDirectory(repoCheckoutDirectoryPath);
                 log.Verbose("Deleted local repository");
             }

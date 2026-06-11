@@ -37,13 +37,15 @@ public class CommitToGitCommandTest
     readonly GitBranchName targetBranchName = GitBranchName.CreateFromFriendlyName(targetBranchFriendlyName);
 
     CalamariExecutionVariableCollection variables;
+    Repository bareOrigin;
+    string originalCwd;
 
     [SetUp]
-    public void setUp()
+    public void SetUp()
     {
         executionDirectory = fileSystem.CreateTemporaryDirectory();
 
-        RepositoryHelpers.CreateBareRepository(OriginPath);
+        bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(targetBranchName, OriginPath);
 
         variables = new();
@@ -56,7 +58,16 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.CommitMessageSummary, "Git Commit Summary", false),
         ]);
 
+        originalCwd = Directory.GetCurrentDirectory();
         Directory.SetCurrentDirectory(executionDirectory);
+    }
+    
+    [TearDown]
+    public void Cleanup()
+    {
+        bareOrigin.Dispose();
+        Directory.SetCurrentDirectory(originalCwd);
+        fileSystem.DeleteDirectory(executionDirectory);
     }
 
     [Test]
