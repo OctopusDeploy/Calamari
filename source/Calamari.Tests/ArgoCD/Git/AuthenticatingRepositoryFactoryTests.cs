@@ -43,7 +43,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     [TearDown]
     public void Cleanup()
     {
-        RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
+        fileSystem.DeleteDirectory(tempDirectory);
     }
 
     [TestFixture]
