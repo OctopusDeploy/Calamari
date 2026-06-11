@@ -82,6 +82,11 @@ namespace Calamari.Commands
                 new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory())
             };
 
+            if (FeatureToggle.GitDependenciesForScriptsFeatureToggle.IsEnabled(variables))
+            {
+                conventions.Add(new StageDependenciesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new GitDependencyVariablesFactory()));
+            }
+
             conventions.AddRange(new IConvention[] {
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),

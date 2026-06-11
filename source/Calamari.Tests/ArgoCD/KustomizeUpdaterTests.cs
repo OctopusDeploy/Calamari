@@ -292,6 +292,45 @@ spec:
             updatedKustomizationContent.Should().Contain("busybox:stable");
         }
 
+        
+        [Test]
+        public void Process_WithImageOnNonDefaultRegistry_ProducesPatchSoChangesAreCommitted()
+        {
+            // Regression test: an image whose registry differs from the default (e.g. GAR/GCR/ECR)
+            // must still produce a JSON patch. Previously the recorded image reference had its
+            // registry stripped, so CreateJsonPatch re-parsed it, defaulted the registry to
+            // docker.io, failed to match, and returned no patch — meaning HasChanges() was false
+            // and the working-copy edit was silently discarded (never committed).
+            const string kustomizationContent = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld
+  newTag: ""latest""
+";
+
+            var garImages = new List<ContainerImageReferenceAndHelmReference>
+            {
+                new(ContainerImageReference.FromReferenceString(
+                    "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2",
+                    ArgoCDConstants.DefaultContainerRegistry)),
+            };
+
+            var sourceWithMetadata = new ApplicationSourceWithMetadata(
+                new ApplicationSource { Path = "." },
+                SourceType.Kustomize,
+                0);
+
+            CreateKustomizationFile(kustomizationContent);
+
+            var updater = new KustomizeUpdater(CreateMockDeploymentConfig(garImages), ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+
+            var result = updater.Process(sourceWithMetadata, tempDir);
+
+            result.UpdatedImages.Should().Contain("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2");
+            result.HasChanges().Should().BeTrue("a JSON patch must be produced so the commit/push is not skipped");
+            result.PatchedFiles.Should().NotBeEmpty();
+        }
+        
         [Test]
         public void Process_WithNoKustomizationFile_ReturnsEmptyResult()
         {

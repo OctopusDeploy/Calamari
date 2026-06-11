@@ -12,5 +12,3 @@ public record FileUpdateResult(HashSet<string> UpdatedImages, List<FileHash> Rep
         return ReplacedFiles.Count > 0 || PatchedFiles.Count > 0 || FilesRemoved.Length > 0;
     }
 }
-
-
