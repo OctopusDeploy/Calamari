@@ -1,0 +1,38 @@
+source/Calamari/ArgoCD/ContainerImageReplacer.cs
+  h_1903a5d928fbe4 265,269
+source/Calamari.Tests/ArgoCD/Helm/HelmValuesImageReplaceStepVariablesTests.cs
+  s_800ecdeddb1ec9::t_5d5fcea06a7330 99-121
+source/Calamari.Tests/ArgoCD/DirectoryUpdaterTests.cs
+  s_800ecdeddb1ec9::t_03a74a07551f8c 5
+  s_800ecdeddb1ec9::t_511721b069cb91 1-4,6-87
+source/Calamari.Tests/ArgoCD/ContainerImageReplacerTests.cs
+  s_800ecdeddb1ec9::t_94c160b0f1fe02 814
+  s_800ecdeddb1ec9::t_1dea8d73bca561 181-211,213-214
+  s_800ecdeddb1ec9::t_c117c297eb9ebd 212
+  s_800ecdeddb1ec9::t_299ce99915e257 760-761
+source/Calamari/ArgoCD/JsonPatchImageReplacer.cs
+  s_800ecdeddb1ec9::t_349befbbdd252f 193
+source/Calamari.Tests/ArgoCD/JsonPatchImageReplacerTests.cs
+  h_1903a5d928fbe4 70,103,169,200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "db2f787df9448dd98e1bac45af2e8cf0de8b7122",
+  "prompts": {},
+  "humans": {
+    "h_1903a5d928fbe4": {
+      "author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  },
+  "sessions": {
+    "s_800ecdeddb1ec9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4888f85-046f-4180-b388-15e8a1d2b313",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
