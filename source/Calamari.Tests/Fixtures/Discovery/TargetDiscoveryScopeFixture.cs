@@ -2,22 +2,24 @@
 using FluentAssertions;
 using FluentAssertions.Execution;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.TargetDiscovery;
 
 namespace Calamari.Tests.Fixtures.Discovery
 {
     [TestFixture]
     public class TargetDiscoveryScopeFixture
     {
-        private const string scopeSpace = "scope-space";
-        private const string scopeTenant = "scope-tenant";
-        private const string scopeProject = "scope-project";
-        private const string scopeEnvironment = "scope-environment";
-        private const string scopeRole1 = "scope-role-1";
-        private const string scopeRole2 = "scope-role-2";
-        const string tenantedDeploymentMode = "Tenanted";
-        private static readonly string[] scopeRoles = new string[] { scopeRole1, scopeRole2 };
-        private TargetDiscoveryScope sut = new TargetDiscoveryScope(
-            scopeSpace, scopeEnvironment, scopeProject, scopeTenant, scopeRoles, "WorkerPool-1", null);
+        const string ScopeSpace = "scope-space";
+        const string ScopeTenant = "scope-tenant";
+        const string ScopeProject = "scope-project";
+        const string ScopeEnvironment = "scope-environment";
+        const string ScopeRole1 = "scope-role-1";
+        const string ScopeRole2 = "scope-role-2";
+        const string TenantedDeploymentMode = "Tenanted";
+        static readonly string[] ScopeRoles = [ScopeRole1, ScopeRole2];
+
+        readonly TargetDiscoveryScope sut = new(
+            ScopeSpace, ScopeEnvironment, ScopeProject, ScopeTenant, ScopeRoles, "WorkerPool-1", null);
 
         [Test]
         public void Match_ShouldFail_IfEnvironmentTagIsMissing()
@@ -25,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Discovery
             // Arrange
             var foundTags = new TargetTags(
                 environment: null,
-                role: scopeRole1,
+                role: ScopeRole1,
                 project: null,
                 space: null,
                 tenant: null,
@@ -49,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Discovery
             // Arrange
             var foundTags = new TargetTags(
                 environment: "wrong-environment",
-                role: scopeRole1,
+                role: ScopeRole1,
                 project: null,
                 space: null,
                 tenant: null,
@@ -72,7 +74,7 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
+                environment: ScopeEnvironment,
                 role: null,
                 project: null,
                 space: null,
@@ -96,7 +98,7 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
+                environment: ScopeEnvironment,
                 role: "wrong-role",
                 project: null,
                 space: null,
@@ -120,8 +122,8 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
-                role: scopeRole1,
+                environment: ScopeEnvironment,
+                role: ScopeRole1,
                 project: null,
                 space: null,
                 tenant: null,
@@ -139,8 +141,8 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
-                role: scopeRole2,
+                environment: ScopeEnvironment,
+                role: ScopeRole2,
                 project: null,
                 space: null,
                 tenant: null,
@@ -150,7 +152,7 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.Role.Should().Be(scopeRole2);
+            result.Role.Should().Be(ScopeRole2);
         }
 
         [Test]
@@ -158,8 +160,8 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
-                role: scopeRole1,
+                environment: ScopeEnvironment,
+                role: ScopeRole1,
                 project: "wrong-project",
                 space: null,
                 tenant: null,
@@ -182,8 +184,8 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
-                role: scopeRole1,
+                environment: ScopeEnvironment,
+                role: ScopeRole1,
                 project: null,
                 space: "wrong-space",
                 tenant: null,
@@ -206,8 +208,8 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
-                role: scopeRole1,
+                environment: ScopeEnvironment,
+                role: ScopeRole1,
                 project: null,
                 space: null,
                 tenant: "wrong-tenant",
@@ -230,16 +232,16 @@ namespace Calamari.Tests.Fixtures.Discovery
         {
             // Arrange
             var foundTags = new TargetTags(
-                environment: scopeEnvironment,
-                role: scopeRole1,
-                project: scopeProject,
-                space: scopeSpace,
-                tenant: scopeTenant,
-                tenantedDeploymentMode: tenantedDeploymentMode);
+                environment: ScopeEnvironment,
+                role: ScopeRole1,
+                project: ScopeProject,
+                space: ScopeSpace,
+                tenant: ScopeTenant,
+                tenantedDeploymentMode: TenantedDeploymentMode);
 
             // Act
             var result = sut.Match(foundTags);
-            result.TenantedDeploymentMode.Should().BeEquivalentTo(tenantedDeploymentMode);
+            result.TenantedDeploymentMode.Should().BeEquivalentTo(TenantedDeploymentMode);
 
             // Assert
             result.IsSuccess.Should().BeTrue();

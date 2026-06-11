@@ -7,6 +7,7 @@ using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.Calamari.Contracts.TargetDiscovery;
 
 namespace Calamari.Aws.Kubernetes.Discovery;
 
@@ -178,6 +179,8 @@ public class AwsAuthenticationDetails<TCredentials> : ITargetDiscoveryAuthentica
 
         
     public string Type { get; set; }
+
+    public string AuthenticationMethod { get; set; } = string.Empty;
 
     public AwsCredentials<TCredentials> Credentials { get; set; }
         
