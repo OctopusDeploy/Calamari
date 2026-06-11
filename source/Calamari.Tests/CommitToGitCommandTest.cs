@@ -61,6 +61,7 @@ public class CommitToGitCommandTest
         originalCwd = Directory.GetCurrentDirectory();
         Directory.SetCurrentDirectory(executionDirectory);
     }
+    
     [TearDown]
     public void Cleanup()
     {
