@@ -7,6 +7,8 @@ using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Octopus.Calamari.Contracts.TargetDiscovery;
 
 namespace Calamari.Aws.Kubernetes.Discovery;
@@ -151,11 +153,48 @@ public class AwsWorkerAuthenticationDetails : AwsAuthenticationDetails<AwsWorker
     }
 }
 
-public interface IAwsAuthenticationDetails
+[JsonConverter(typeof(AwsAuthenticationDetailsConverter))]
+public interface IAwsAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
 {
     AwsAssumedRole Role { get; set; }
     IEnumerable<string> Regions { get; set; }
+    string AccountId { get; }
     bool TryGetCredentials(ILog log, out AWSCredentials credentials);
+}
+
+/// <summary>
+/// JSON Deserializer to handle matching Context Credentials to AWS Basic or OIDC credentials
+/// </summary>
+public class AwsAuthenticationDetailsConverter : JsonConverter
+{
+    public override bool CanConvert(Type objectType) => objectType == typeof(IAwsAuthenticationDetails);
+
+    public override bool CanWrite => false;
+
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    {
+        if (reader.TokenType == JsonToken.Null)
+            return null;
+
+        var jObject = JObject.Load(reader);
+        var credentialsType = jObject
+                              .GetValue("Credentials", StringComparison.OrdinalIgnoreCase)?.Value<JObject>()
+                              ?.GetValue("Type", StringComparison.OrdinalIgnoreCase)?.Value<string>();
+
+        var concreteType = credentialsType switch
+        {
+            "account" => typeof(AwsAccessKeyAuthenticationDetails),
+            "oidcAccount" => typeof(AwsOidcAuthenticationDetails),
+            "worker" => typeof(AwsWorkerAuthenticationDetails),
+            _ => throw new JsonSerializationException(
+                     $"Unable to resolve AWS authentication details: unsupported credentials type '{credentialsType}'.")
+        };
+
+        return jObject.ToObject(concreteType, serializer);
+    }
+
+    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        => throw new NotSupportedException($"{nameof(AwsAuthenticationDetailsConverter)} is only used for deserialisation.");
 }
     
 public class AwsAuthenticationDetails<TCredentials> : ITargetDiscoveryAuthenticationDetails
@@ -183,7 +222,10 @@ public class AwsAuthenticationDetails<TCredentials> : ITargetDiscoveryAuthentica
     public string AuthenticationMethod { get; set; } = string.Empty;
 
     public AwsCredentials<TCredentials> Credentials { get; set; }
-        
+
+    [JsonIgnore]
+    public string AccountId => Credentials?.AccountId;
+
     public AwsAssumedRole Role { get; set; }
 
     public IEnumerable<string> Regions { get; set; }
