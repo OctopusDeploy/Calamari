@@ -67,7 +67,7 @@ namespace Calamari.Tests.ArgoCD
 
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
         }
 
@@ -100,7 +100,7 @@ namespace Calamari.Tests.ArgoCD
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("nginx:1.25");
             result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
         }
@@ -166,7 +166,7 @@ namespace Calamari.Tests.ArgoCD
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -197,7 +197,7 @@ namespace Calamari.Tests.ArgoCD
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]

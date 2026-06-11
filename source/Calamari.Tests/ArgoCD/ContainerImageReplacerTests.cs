@@ -178,6 +178,41 @@ spec:
     }
 
     [Test]
+    public void UpdateImages_WithImageOnNonDefaultRegistry_UpdatesTagAndReportsImage()
+    {
+      // Images on a non-default registry (e.g. GAR/GCR/ECR) must be matched and updated. The
+      // first path segment (us-docker.pkg.dev) is recognised as a registry, and the rest is the
+      // image name; only the tag should change.
+      const string inputYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: helloworld
+      image: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1";
+      const string expectedYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: helloworld
+      image: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var updatedImage = new List<ContainerImageReferenceAndHelmReference>
+      {
+        new(ContainerImageReference.FromReferenceString(
+                "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2",
+                DefaultContainerRegistry))
+      };
+
+      var result = imageReplacer.UpdateImages(updatedImage);
+
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Should().ContainSingle()
+            .Which.Should().Be("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2");
+    }
+
+    [Test]
     public void DoesNotUpdateComments()
     {
       var commentLine = "#image: nginx:1.19 being used here";
@@ -722,8 +757,8 @@ spec:
       result.UpdatedContents.Should().NotBeNull();
       result.UpdatedContents.Should().Be(expectedYaml);
       result.UpdatedImageReferences.Count.Should().Be(2);
-      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-custom.io/nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-custom.io/busybox:stable");
     }
 
     [Test]
@@ -776,7 +811,7 @@ spec:
       result.UpdatedContents.Should().NotBeNull();
       result.UpdatedContents.Should().Be(expectedYaml);
       result.UpdatedImageReferences.Count.Should().Be(1);
-      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-custom.io/busybox:stable");
     }
 
 

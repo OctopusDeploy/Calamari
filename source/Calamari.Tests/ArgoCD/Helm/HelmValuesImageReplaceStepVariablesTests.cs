@@ -96,6 +96,30 @@ image:
     }
 
     [Test]
+    public void StructuredValue_ImageOnNonDefaultRegistry_UpdatesFullRefAndTracksWithRegistry()
+    {
+        // Helm/Ref report updates using the registry-qualified FriendlyName, so an image on a
+        // non-default registry (e.g. GAR/GCR/ECR) round-trips with its registry intact.
+        const string yaml = @"
+image:
+  name: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1
+";
+        var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
+        var images = new List<ContainerImageReferenceAndHelmReference>
+        {
+            new(ContainerImageReference.FromReferenceString(
+                    "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2",
+                    DefaultRegistry), "image.name")
+        };
+
+        var result = replacer.UpdateImages(images);
+
+        using var scope = new AssertionScope();
+        result.UpdatedImageReferences.Should().BeEquivalentTo(["us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2"]);
+        result.UpdatedContents.Should().Contain("name: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2");
+    }
+
+    [Test]
     public void TwoImagesWithSameTag_OnlyUpdatesConfiguredPath()
     {
         const string yaml = @"

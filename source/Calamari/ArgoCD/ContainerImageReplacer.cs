@@ -262,11 +262,11 @@ namespace Calamari.ArgoCD
                                                  },
                                                  RegexOptions.Multiline);
 
-                        replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+                        replacementsMade.Add(matchedUpdate.Reference.FriendlyName());
                     }
                     else
                     {
-                        alreadyUpToDate.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+                        alreadyUpToDate.Add(matchedUpdate.Reference.FriendlyName());
                     }
                 }
             }
