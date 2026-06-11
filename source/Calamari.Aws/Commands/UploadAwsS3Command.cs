@@ -4,6 +4,7 @@ using System.IO;
 using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration.S3;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;

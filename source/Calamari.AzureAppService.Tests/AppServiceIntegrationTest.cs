@@ -15,6 +15,7 @@ using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using FluentAssertions;

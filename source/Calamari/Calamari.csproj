@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.CloudAccounts.GoogleCloud\Calamari.CloudAccounts.GoogleCloud.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
@@ -54,6 +55,10 @@
     <PackageReference Include="Octopus.LibGit2Sharp" Version="0.31.1-octopus.3" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Integration\Packages\Download\Scripts\DockerLogin.ps1" />
+    <EmbeddedResource Include="Integration\Packages\Download\Scripts\DockerLogin.sh" />
+    <EmbeddedResource Include="Integration\Packages\Download\Scripts\DockerPull.ps1" />
+    <EmbeddedResource Include="Integration\Packages\Download\Scripts\DockerPull.sh" />
     <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />
     <EmbeddedResource Include="Scripts\**" />
     <None Update="Calamari.exe.manifest">

@@ -26,8 +26,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build files", "Build files"
 		..\ForbiddenWords.txt = ..\ForbiddenWords.txt
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.CloudAccounts", "Calamari.CloudAccounts\Calamari.CloudAccounts.csproj", "{58955C6D-3FC6-413F-B532-F37FF70EB818}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Common", "Calamari.Common\Calamari.Common.csproj", "{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Testing", "Calamari.Testing\Calamari.Testing.csproj", "{95A4DBA0-EA92-4FD5-A92E-4DFDB4FC4493}"
@@ -78,8 +76,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting", "Calam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting.Tests", "Calamari.Scripting.Tests\Calamari.Scripting.Tests.csproj", "{D8DEC40C-948F-4806-AE87-1A7502E41A06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudAccounts", "Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj", "{74F2739F-A501-4F30-BF9E-75A087C3B917}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.ConsolidateCalamariPackages.Api", "Calamari.ConsolidateCalamariPackages.Api\Calamari.ConsolidateCalamariPackages.Api.csproj", "{A3BFFA0E-7514-41DE-A141-E124133D0665}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureWebApp.NetCoreShim", "Calamari.AzureWebApp.NetCoreShim\Calamari.AzureWebApp.NetCoreShim.csproj", "{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}"
@@ -87,6 +83,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Contracts", "Calamari.Contracts\Calamari.Contracts.csproj", "{13583496-C3D2-4ADE-9087-65583326C469}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.DockerCredentialHelper", "Calamari.DockerCredentialHelper\Calamari.DockerCredentialHelper.csproj", "{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.CloudAccounts.Aws", "Calamari.CloudAccounts.Aws\Calamari.CloudAccounts.Aws.csproj", "{A0E4AC5D-9D5D-4AA1-BD57-4F7F4E0DF835}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.CloudAccounts.Azure", "Calamari.CloudAccounts.Azure\Calamari.CloudAccounts.Azure.csproj", "{277F0CD8-1404-422F-A246-669738B33E40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.CloudAccounts.GoogleCloud", "Calamari.CloudAccounts.GoogleCloud\Calamari.CloudAccounts.GoogleCloud.csproj", "{07F06752-E901-4CE1-9207-830179DB4AF5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -110,10 +112,6 @@ Global
 		{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EDA4097-1A3E-4B1A-85BF-920DEA9ED8AD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{58955C6D-3FC6-413F-B532-F37FF70EB818}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{58955C6D-3FC6-413F-B532-F37FF70EB818}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{58955C6D-3FC6-413F-B532-F37FF70EB818}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{58955C6D-3FC6-413F-B532-F37FF70EB818}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -212,10 +210,6 @@ Global
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.Build.0 = Release|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.Build.0 = Debug|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.ActiveCfg = Release|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.Build.0 = Release|Any CPU
 								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.Build.0 = Debug|Any CPU
 								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -232,6 +226,18 @@ Global
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0E4AC5D-9D5D-4AA1-BD57-4F7F4E0DF835}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0E4AC5D-9D5D-4AA1-BD57-4F7F4E0DF835}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0E4AC5D-9D5D-4AA1-BD57-4F7F4E0DF835}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0E4AC5D-9D5D-4AA1-BD57-4F7F4E0DF835}.Release|Any CPU.Build.0 = Release|Any CPU
+		{277F0CD8-1404-422F-A246-669738B33E40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{277F0CD8-1404-422F-A246-669738B33E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{277F0CD8-1404-422F-A246-669738B33E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{277F0CD8-1404-422F-A246-669738B33E40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07F06752-E901-4CE1-9207-830179DB4AF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07F06752-E901-4CE1-9207-830179DB4AF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07F06752-E901-4CE1-9207-830179DB4AF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07F06752-E901-4CE1-9207-830179DB4AF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

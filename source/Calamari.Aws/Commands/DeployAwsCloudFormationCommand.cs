@@ -11,6 +11,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Commands;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;

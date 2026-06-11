@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.GoogleCloudAccounts;
+using Calamari.CloudAccounts.GoogleCloud;
 using Newtonsoft.Json;
 
 namespace Calamari.Terraform.Behaviours

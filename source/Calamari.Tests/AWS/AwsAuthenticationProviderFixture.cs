@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
@@ -24,7 +25,7 @@ namespace Calamari.Tests.AWS
         public void SetUp()
         {
             variables = new CalamariVariables();
-            variables.Add(AuthenticationVariables.Aws.Region, RegionEndpoint.USWest2.SystemName);
+            variables.Add(AwsAccountVariables.Region, RegionEndpoint.USWest2.SystemName);
         }
 
         [Test]

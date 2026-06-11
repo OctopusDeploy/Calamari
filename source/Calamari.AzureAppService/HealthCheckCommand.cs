@@ -6,6 +6,7 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 using Octopus.CoreUtilities.Extensions;

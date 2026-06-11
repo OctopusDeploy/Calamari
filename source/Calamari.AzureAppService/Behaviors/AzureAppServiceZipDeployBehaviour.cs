@@ -17,6 +17,7 @@ using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;

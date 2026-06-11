@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Calamari.CloudAccounts.GoogleCloud</RootNamespace>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>Octopus.Calamari.CloudAccounts.GoogleCloud</PackageId>
+        <Title>Calamari.CloudAccounts.GoogleCloud</Title>
+        <Authors>Octopus Deploy</Authors>
+        <Copyright>Octopus Deploy Pty Ltd</Copyright>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/OctopusDeploy/Calamari</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+</Project>

@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj" />
+        <ProjectReference Include="..\Calamari.CloudAccounts.GoogleCloud\Calamari.CloudAccounts.GoogleCloud.csproj" />
         <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
     </ItemGroup>
 
