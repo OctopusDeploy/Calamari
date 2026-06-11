@@ -107,6 +107,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -174,7 +175,7 @@ service:
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -333,6 +334,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -404,6 +406,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -486,6 +489,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("blah-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -565,6 +569,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("blah-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -637,6 +642,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -721,6 +727,7 @@ image:
                 Metadata = new Metadata()
                 {
                     Name = "App1",
+                    Namespace = "argocd",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -828,7 +835,7 @@ containerPort: 8070
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -911,7 +918,7 @@ containerPort: 8070
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -995,7 +1002,7 @@ containerPort: 8070
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -1081,7 +1088,7 @@ service:
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -1162,7 +1169,7 @@ autoscaling:
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("ref-source"))] = ProjectSlug,
@@ -1293,7 +1300,7 @@ service:
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("ref-source"))] = ProjectSlug,
@@ -1448,7 +1455,7 @@ service:
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("ref-source"))] = ProjectSlug,
@@ -1598,7 +1605,7 @@ service:
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
+                                          .WithName("App1").WithNamespace("argocd")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("helm-source"))] = ProjectSlug,
@@ -1817,7 +1824,7 @@ redis:
             }
 
             var app = new ArgoCDApplicationBuilder()
-                       .WithName("App1")
+                       .WithName("App1").WithNamespace("argocd")
                        .WithAnnotations(annotations)
                        .WithSource(new ApplicationSource
                            {
@@ -1900,10 +1907,10 @@ redis:
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginUrl : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? updatedImages.ToString() : "0");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("argocd/App1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be(matchingApplicationMatchingSourceCounts);
-            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "argocd/App1" : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be(updated ? "1" : string.Empty);
 
             if (updated)
