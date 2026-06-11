@@ -39,12 +39,17 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorPullRequestClientResolver(Array.Empty<IGitVendorPullRequestClientFactory>()), new SystemClock());
+            repositoryFactory = new RepositoryFactory(log,
+                fileSystem,
+                tempDirectory,
+                new GitVendorPullRequestClientResolver(Array.Empty<IGitVendorPullRequestClientFactory>()),
+                new SystemClock());
         }
 
         [TearDown]
         public void Cleanup()
         {
+            bareOrigin.Dispose();
             fileSystem.DeleteDirectory(tempDirectory);
         }
 
@@ -52,9 +57,9 @@ namespace Calamari.Tests.ArgoCD.Git
         public void ThrowsExceptionIfUrlDoesNotExist()
         {
             var connection = new HttpsGitConnection("username",
-                                               "password",
-                                               "file://doesNotExist",
-                                               branchName);
+                "password",
+                "file://doesNotExist",
+                branchName);
 
             Action action = () => repositoryFactory.CloneRepository("name", connection);
 
@@ -105,7 +110,11 @@ namespace Calamari.Tests.ArgoCD.Git
             CreateCommitOnOrigin(branchName, filename, content);
 
             var mockResolver = Substitute.For<IGitVendorPullRequestClientResolver>();
-            var factoryWithMockedResolver = new RepositoryFactory(log, fileSystem, tempDirectory, mockResolver, new SystemClock());
+            var factoryWithMockedResolver = new RepositoryFactory(log,
+                fileSystem,
+                tempDirectory,
+                mockResolver,
+                new SystemClock());
 
             var sshConnection = new SshKeyGitConnection(
                 Username: "git",
@@ -121,7 +130,8 @@ namespace Calamari.Tests.ArgoCD.Git
             mockResolver.DidNotReceive().TryResolve(Arg.Any<IHttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<System.Threading.CancellationToken>());
 
             log.MessagesVerboseFormatted
-               .Should().Contain(s => s.Contains("SSH authentication") && s.Contains("PR creation will not be available"));
+               .Should()
+               .Contain(s => s.Contains("SSH authentication") && s.Contains("PR creation will not be available"));
         }
 
         void CreateCommitOnOrigin(GitBranchName branchName, string fileName, string content)
@@ -136,12 +146,12 @@ namespace Calamari.Tests.ArgoCD.Git
 
             var tree = bareOrigin.ObjectDatabase.CreateTree(treeDefinition);
             var commit = bareOrigin.ObjectDatabase.CreateCommit(
-                                                                signature,
-                                                                signature,
-                                                                message,
-                                                                tree,
-                                                                new[] { branch.Tip },
-                                                                false);
+                signature,
+                signature,
+                message,
+                tree,
+                new[] { branch.Tip },
+                false);
             bareOrigin.Refs.UpdateTarget(branch.Reference, commit.Id);
         }
     }

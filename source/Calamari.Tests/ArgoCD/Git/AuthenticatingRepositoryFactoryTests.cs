@@ -7,6 +7,7 @@ using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
+using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ArgoCD;
@@ -23,13 +24,14 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     protected string tempDirectory;
     protected string OriginPath => Path.Combine(tempDirectory, "origin");
     protected RepositoryFactory repositoryFactory;
+    Repository bareOrigin;
 
     [SetUp]
     public void Init()
     {
         log = new InMemoryLog();
         tempDirectory = fileSystem.CreateTemporaryDirectory();
-        RepositoryHelpers.CreateBareRepository(OriginPath);
+        bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
         repositoryFactory = new RepositoryFactory(
@@ -43,6 +45,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     [TearDown]
     public void Cleanup()
     {
+        bareOrigin.Dispose();
         fileSystem.DeleteDirectory(tempDirectory);
     }
 

@@ -62,6 +62,8 @@ namespace Calamari.Tests.ArgoCD.Git
         [TearDown]
         public void Cleanup()
         {
+            bareOrigin.Dispose();
+            repository.Dispose();
             fileSystem.DeleteDirectory(tempDirectory);
         }
 
