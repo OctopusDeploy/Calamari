@@ -100,17 +100,17 @@ namespace Calamari.ArgoCD
                         {
                             matchedUpdate.ExistingTagNode.Style = ScalarStyle.DoubleQuoted;
                         }
-                        replacementsMade.Add(matchedUpdate.Reference.FriendlyName());
+                        replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                     }
                     else
                     {
-                        alreadyUpToDateImages.Add(matchedUpdate.Reference.FriendlyName());
+                        alreadyUpToDateImages.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                     }
                 }
                 else
                 {
                     imageNode.Children.Add(new YamlScalarNode(NewTagNodeKey), new YamlScalarNode(matchedUpdate.Reference.Tag) { Style = ScalarStyle.DoubleQuoted });
-                    replacementsMade.Add(matchedUpdate.Reference.FriendlyName());
+                    replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                 }
 
                 //remove any digest node (as we want the newTag node to dictate the container version)

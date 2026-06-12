@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Calamari.ArgoCD.Models
 {
-    public class ImageReplacementResult(string updatedContents, HashSet<ContainerImageReference> updatedImageReferences, HashSet<ContainerImageReference> alreadyUpToDateImages, HashSet<string>? unrecognisedKinds = null)
+    public class ImageReplacementResult(string updatedContents, HashSet<string> updatedImageReferences, HashSet<string> alreadyUpToDateImages, HashSet<string>? unrecognisedKinds = null)
     {
         public string UpdatedContents { get; } = updatedContents;
         public HashSet<string> UpdatedImageReferences { get; } = updatedImageReferences;
