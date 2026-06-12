@@ -84,7 +84,8 @@ namespace Calamari.Commands
 
             if (FeatureToggle.GitDependenciesForScriptsFeatureToggle.IsEnabled(variables))
             {
-                conventions.Add(new StageDependenciesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new GitDependencyVariablesFactory()));
+                //need to set "ForceExtract" or else the git repo cannot be extracted (no option to set this on the UI).
+                conventions.Add(new StageDependenciesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new GitDependencyVariablesFactory(), true));
             }
 
             conventions.AddRange(new IConvention[] {
