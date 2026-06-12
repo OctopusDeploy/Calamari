@@ -116,6 +116,13 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
         }
+        
+        [TearDown]
+        public void Cleanup()
+        {
+            originRepo.Dispose();
+            fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
+        }
 
         [Test]
         public void PluginSourceType_DontUpdate()
