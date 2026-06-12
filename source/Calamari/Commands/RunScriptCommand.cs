@@ -82,7 +82,7 @@ namespace Calamari.Commands
                 new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory())
             };
 
-            if (FeatureToggle.GitDependenciesForScriptsFeatureToggle.IsEnabled(variables))
+            if (OctopusFeatureToggles.GitDependenciesForScriptsFeatureToggle.IsEnabled(deployment.Variables))
             {
                 //need to set "ForceExtract" or else the git repo cannot be extracted (no option to set this on the UI).
                 conventions.Add(new StageDependenciesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new GitDependencyVariablesFactory(), true));

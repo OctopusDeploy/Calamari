@@ -10,7 +10,6 @@
         OidcAccountsFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
-        BashParametersArrayFeatureToggle,
-        GitDependenciesForScriptsFeatureToggle,
+        BashParametersArrayFeatureToggle
     }
 }
