@@ -176,7 +176,7 @@ namespace Calamari.ArgoCD
             if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
             {
                 var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
-                imageScalar.Value = newImageRef;
+                imageScalar.Value = newImageRef.FriendlyName();
 
                 if (imageScalar.Style != ScalarStyle.SingleQuoted && imageScalar.Style != ScalarStyle.DoubleQuoted)
                 {

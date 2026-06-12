@@ -785,7 +785,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             results.Should().NotBeNull();
             var actual = results.Single();
             actual.Updated.Should().BeTrue();
-            actual.UpdatedImages.Should().BeEquivalentTo(["index.docker.io/nginx:1.27.1"]);
+            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
             actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var sourceDetails = actual.TrackedSourceDetails.First();
@@ -855,7 +855,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             results.Should().NotBeNull();
             var actual = results.Single();
             actual.Updated.Should().BeTrue();
-            actual.UpdatedImages.Should().BeEquivalentTo(["index.docker.io/nginx:1.27.1", "index.docker.io/redis:7.0"]);
+            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1", "redis:7.0"]);
             actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var sourceDetails = actual.TrackedSourceDetails.First();
@@ -1146,7 +1146,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             results.Should().NotBeNull();
             var actual = results.Single();
             actual.Updated.Should().BeTrue("source 0 had an outdated image");
-            actual.UpdatedImages.Should().BeEquivalentTo(["index.docker.io/nginx:1.27.1"]);
+            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
             actual.TrackedSourceDetails.Should().HaveCount(2, "both sources should be tracked regardless of whether they made a commit");
 
             var singleContainerPatch = SerializeReplacePatch(("/0/spec/template/spec/containers/0/image", "nginx:1.27.1"));
