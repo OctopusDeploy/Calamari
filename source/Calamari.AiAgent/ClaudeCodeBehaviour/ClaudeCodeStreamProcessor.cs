@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using Calamari.AiAgent.ClaudeCodeBehaviour.JsonResponseModels;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 
-namespace Calamari.AiAgent.Behaviours
+namespace Calamari.AiAgent.ClaudeCodeBehaviour
 {
     public class ClaudeCodeStreamProcessor
     {
@@ -32,6 +33,7 @@ namespace Calamari.AiAgent.Behaviours
             }
             catch (JsonException)
             {
+                log.Verbose(json);
                 return;
             }
             catch (Exception ex)
@@ -205,14 +207,14 @@ namespace Calamari.AiAgent.Behaviours
 
         void HandleUserMessage(UserStreamEvent? message)
         {
-            if (message is null || message?.Message != null)
+            if (message is null || message?.Message == null)
                 return;
 
-            if (message!.IsSynthetic == true)
+            if (message.IsSynthetic == true)
             {
                 return; //TODO: Still log
             }
-            HandleMessageEvent(message?.Message);
+            HandleMessageEvent(message.Message, logText: false);
         }
 
         void HandleResultEvent(ResultStreamEvent evt)

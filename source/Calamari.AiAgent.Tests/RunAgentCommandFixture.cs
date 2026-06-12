@@ -7,6 +7,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests;
 
 [TestFixture]
+[Ignore("This test requires real tokens, mainly exists for now for development")]
 public class RunAgentCommandFixture
 {
     [Test]

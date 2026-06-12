@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace Calamari.AiAgent.Behaviours
+namespace Calamari.AiAgent.ClaudeCodeBehaviour
 {
     public class ClaudeCommandArgsBuilder
     {
         string? prompt;
         string? model;
-        string? systemPrompt;
+        string? systemPromptFile;
         string? mcpConfigPath;
-        string? appendSystemPromptFile;
+        string? debugLogPath;
         int maxTurns = 10;
         decimal? maxBudgetUsd;
         IReadOnlyList<string>? allowedTools;
@@ -22,6 +22,12 @@ namespace Calamari.AiAgent.Behaviours
             this.prompt = prompt;
             return this;
         }
+        
+        public ClaudeCommandArgsBuilder WithDebugLogPath(string debugLogPath)
+        {
+            this.debugLogPath = debugLogPath;
+            return this;
+        }
 
         public ClaudeCommandArgsBuilder WithModel(string model)
         {
@@ -29,9 +35,9 @@ namespace Calamari.AiAgent.Behaviours
             return this;
         }
 
-        public ClaudeCommandArgsBuilder WithSystemPrompt(string systemPrompt)
+        public ClaudeCommandArgsBuilder WithSystemPromptFile(string systemPromptFile)
         {
-            this.systemPrompt = systemPrompt;
+            this.systemPromptFile = systemPromptFile;
             return this;
         }
 
@@ -44,12 +50,6 @@ namespace Calamari.AiAgent.Behaviours
         public ClaudeCommandArgsBuilder WithMcpConfigPath(string mcpConfigPath)
         {
             this.mcpConfigPath = mcpConfigPath;
-            return this;
-        }
-
-        public ClaudeCommandArgsBuilder WithAppendSystemPromptFile(string path)
-        {
-            this.appendSystemPromptFile = path;
             return this;
         }
 
@@ -87,16 +87,22 @@ namespace Calamari.AiAgent.Behaviours
             args.Append(" --permission-mode dontAsk");
             args.Append(" --no-session-persistence");
 
+            if (!string.IsNullOrWhiteSpace(debugLogPath))
+            {
+                args.Append(" --debug-file ");
+                args.Append(EscapeArg(debugLogPath));
+            }
+
             if (!string.IsNullOrWhiteSpace(mcpConfigPath))
             {
                 args.Append(" --mcp-config ");
                 args.Append(EscapeArg(mcpConfigPath));
             }
 
-            if (!string.IsNullOrWhiteSpace(appendSystemPromptFile))
+            if (!string.IsNullOrWhiteSpace(systemPromptFile))
             {
-                args.Append(" --append-system-prompt-file ");
-                args.Append(EscapeArg(appendSystemPromptFile));
+                args.Append(" --system-prompt-file ");
+                args.Append(EscapeArg(systemPromptFile));
             }
 
             if (allowedTools != null && allowedTools.Count > 0)
@@ -112,12 +118,6 @@ namespace Calamari.AiAgent.Behaviours
 
             if (!string.IsNullOrWhiteSpace(effort))
                 args.Append($" --effort {effort}");
-
-            if (!string.IsNullOrWhiteSpace(systemPrompt))
-            {
-                args.Append(" --system-prompt ");
-                args.Append(EscapeArg(systemPrompt));
-            }
 
             args.Append(" -p ");
             args.Append(EscapeArg(prompt));

@@ -1,12 +1,12 @@
 using System.Linq;
 using System.Text;
-using Calamari.AiAgent.Behaviours;
+using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.AiAgent.Tests;
+namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
 [TestFixture]
 public class ClaudeCodeStreamProcessorFixture
@@ -111,8 +111,7 @@ public class ClaudeCodeStreamProcessorFixture
         log.ServiceMessages.Should().Contain(m => m.Name == AiAgentServiceMessageNames.Name);
 
         var msg = log.ServiceMessages.First(m => m.Name == AiAgentServiceMessageNames.Name);
-        var props = msg.GetValue(AiAgentServiceMessageNames.CostUsdAttribute);
-        props.Should().NotBeNull();
+        msg.GetValue(AiAgentServiceMessageNames.CostUsdAttribute).Should().NotBeNull();
         msg.GetValue(AiAgentServiceMessageNames.TotalCostUsdAttribute).Should().NotBeNull();
         msg.GetValue(AiAgentServiceMessageNames.DurationMsAttribute).Should().NotBeNull();
         msg.GetValue(AiAgentServiceMessageNames.NumTurnsAttribute).Should().NotBeNull();
@@ -243,5 +242,30 @@ public class ClaudeCodeStreamProcessorFixture
         var act = () => processor.ProcessLine(json);
 
         act.Should().NotThrow();
+    }
+
+    [Test]
+    public void UserTextContent_DoesNotAppendToResponse()
+    {
+        var json = """
+            {"type":"user","message":{"content":[{"type":"text","text":"user input"}]}}
+            """;
+
+        processor.ProcessLine(json);
+
+        responseBuilder.ToString().Should().BeEmpty();
+        log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage.Contains("user input"));
+    }
+
+    [Test]
+    public void SyntheticUserMessage_IsSkipped()
+    {
+        var json = """
+            {"type":"user","message":{"content":[{"type":"text","text":"synthetic"}]},"isSynthetic":true}
+            """;
+
+        processor.ProcessLine(json);
+
+        log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("synthetic"));
     }
 }

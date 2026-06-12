@@ -1,8 +1,8 @@
-using Calamari.AiAgent.Behaviours;
+using Calamari.AiAgent.ClaudeCodeBehaviour;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.AiAgent.Tests;
+namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
 [TestFixture]
 public class ClaudeCommandArgsBuilderFixture
@@ -23,6 +23,8 @@ public class ClaudeCommandArgsBuilderFixture
         args.Should().Contain("--verbose");
         args.Should().Contain("--permission-mode dontAsk");
         args.Should().Contain("--no-session-persistence");
+        args.Should().Contain("--bare");
+        args.Should().Contain("--strict-mcp-config");
     }
 
     [Test]
@@ -79,22 +81,49 @@ public class ClaudeCommandArgsBuilderFixture
     }
 
     [Test]
-    public void Build_IncludesSystemPrompt_WhenSet()
+    public void Build_IncludesSystemPromptFile_WhenSet()
     {
         var args = MinimalBuilder()
-            .WithSystemPrompt("You are helpful")
+            .WithSystemPromptFile("/tmp/system-prompt.md")
             .Build();
 
-        args.Should().Contain("--system-prompt");
-        args.Should().Contain("You are helpful");
+        args.Should().Contain("--system-prompt-file");
+        args.Should().Contain("/tmp/system-prompt.md");
     }
 
     [Test]
-    public void Build_OmitsSystemPrompt_WhenNotSet()
+    public void Build_OmitsSystemPromptFile_WhenNotSet()
     {
         var args = MinimalBuilder().Build();
 
-        args.Should().NotContain("--system-prompt");
+        args.Should().NotContain("--system-prompt-file");
+    }
+
+    [Test]
+    public void Build_IncludesEffort_WhenSet()
+    {
+        var args = MinimalBuilder().WithEffort("high").Build();
+
+        args.Should().Contain("--effort high");
+    }
+
+    [Test]
+    public void Build_OmitsEffort_WhenNotSet()
+    {
+        var args = MinimalBuilder().Build();
+
+        args.Should().NotContain("--effort");
+    }
+
+    [Test]
+    public void Build_IncludesMcpConfig_WhenSet()
+    {
+        var args = MinimalBuilder()
+            .WithMcpConfigPath("/tmp/mcp-config.json")
+            .Build();
+
+        args.Should().Contain("--mcp-config");
+        args.Should().Contain("/tmp/mcp-config.json");
     }
 
     [Test]

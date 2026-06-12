@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Calamari.AiAgent.Behaviours;
+using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 

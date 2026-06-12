@@ -4,18 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-//using Anthropic;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Calamari.Common.Plumbing.Variables;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
-using OpenAI;
 using OpenAI.Chat;
+//using Anthropic;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
-namespace Calamari.AiAgent.Behaviours
+namespace Calamari.AiAgent.AgentBehaviour
 {
     public class InvokeAgentBehaviour : IDeployBehaviour
     {
@@ -139,7 +137,7 @@ namespace Calamari.AiAgent.Behaviours
                 var lineBuffer = new LineBuffer(line => log.Info(line));
                 List<ChatMessage> chatHistory = [];
 
-                var systemPrompt = variables.Get(SpecialVariables.Action.AiAgent.SystemSkill);
+                var systemPrompt = string.Empty; //variables.Get(SpecialVariables.Action.AiAgent.SystemSkill);
                 if (!string.IsNullOrWhiteSpace(systemPrompt))
                 {
                     chatHistory.Add(new ChatMessage(ChatRole.System, systemPrompt));

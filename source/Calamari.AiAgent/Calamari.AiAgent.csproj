@@ -32,4 +32,8 @@
         <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\system-prompt.md" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="ClaudeCodeBehaviour\JsonResponseModels\" />
+    </ItemGroup>
+
 </Project>

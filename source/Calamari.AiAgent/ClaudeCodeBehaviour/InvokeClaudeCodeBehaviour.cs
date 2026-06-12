@@ -1,23 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
+using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.AiAgent.Behaviours
+namespace Calamari.AiAgent.ClaudeCodeBehaviour
 {
     public class InvokeClaudeCodeBehaviour : IDeployBehaviour
     {
         readonly ILog log;
+        readonly INonSensitiveVariables nonSensitiveVariables;
 
-        public InvokeClaudeCodeBehaviour(ILog log)
+        public InvokeClaudeCodeBehaviour(ILog log, INonSensitiveVariables nonSensitiveVariables)
         {
             this.log = log;
+            this.nonSensitiveVariables = nonSensitiveVariables;
         }
 
         public bool IsEnabled(RunningDeployment context)
@@ -45,27 +49,11 @@ namespace Calamari.AiAgent.Behaviours
 
             log.Info($"Invoking Claude Code CLI with model '{model}'...");
 
-            var mcpServers = BuildMcpServers(variables);
             var runAs = BuildRunAs(variables);
 
-            var defaultAllowedTools = new[] { "Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch" };
-            var allowedToolsRaw = variables.Get(SpecialVariables.Action.AiAgent.AllowedTools);
-            var allowedTools = new List<string>(!string.IsNullOrWhiteSpace(allowedToolsRaw)
-                ? allowedToolsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                : defaultAllowedTools);
-
-            // Auto-allow all tools from configured MCP servers
-            foreach (var serverName in mcpServers.Keys)
-                allowedTools.Add($"mcp__{serverName}__*");
-
             var argsBuilder = new ClaudeCommandArgsBuilder()
-                .WithPrompt(prompt)
-                .WithModel(model)
-                .WithAllowedTools(allowedTools);
-
-            var systemPrompt = variables.Get(SpecialVariables.Action.AiAgent.SystemSkill);
-            if (!string.IsNullOrWhiteSpace(systemPrompt))
-                argsBuilder.WithSystemPrompt(systemPrompt);
+                              .WithPrompt(prompt)
+                              .WithModel(model);
 
             var maxTurns = variables.GetInt32(SpecialVariables.Action.AiAgent.MaxTurns);
             if (maxTurns.HasValue)
@@ -80,106 +68,50 @@ namespace Calamari.AiAgent.Behaviours
             if (!string.IsNullOrWhiteSpace(effort))
                 argsBuilder.WithEffort(effort);
 
-            var userSkills = BuildUserSkills(variables);
-            var deploymentVariables = BuildDeploymentVariables(variables);
+            using var tempDir = TemporaryDirectory.Create();
+            var workingDir = tempDir.DirectoryPath;
+            log.Verbose($"Claude Code working directory: {workingDir}");
 
-            var runner = new ClaudeCodeCliRunner(log);
-            var response = await runner.RunAsync(argsBuilder, apiToken, mcpServers, deploymentVariables, runAs, userSkills);
+            // TODO: THis should be moved up higher in execution Chain.
+            var cancellationToken = new CancellationTokenSource();
+            var mcpWriter = new McpWriter(variables);
+            var mcpConfig = mcpWriter.SetupMcpConfig(workingDir);
+            
+            var allowedTools = AllowedTools(variables);
+            allowedTools.AddRange(mcpWriter.GetAllowedTools());
+            argsBuilder = argsBuilder.WithAllowedTools(allowedTools);
+            
+            new SkillsWriter(variables).SetupSkills(workingDir);
+            SetupDeploymentVariables(workingDir);
+            argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
+            argsBuilder.WithMcpConfigPath(mcpConfig);
+            
+            var customEnvVars = new Dictionary<string, string>
+            {
+                ["ANTHROPIC_API_KEY"] = apiToken,
+            };
+            
+            var response = await new ClaudeCodeCliRunner(log).RunAsync(argsBuilder, customEnvVars,  runAs, workingDir,
+                cancellationToken.Token);
 
             Log.SetOutputVariable(SpecialVariables.Action.AiAgent.Response, response, variables);
             log.Info("Claude Code invocation complete.");
         }
 
-        static Dictionary<string, McpServerConfig> BuildMcpServers(IVariables variables)
+        static List<string> AllowedTools(IVariables variables)
         {
-            var servers = new Dictionary<string, McpServerConfig>();
-            var path = Environment.GetEnvironmentVariable("PATH") ?? "";
-
-            // Octopus MCP server is always added when a token is available
-            var octopusToken = variables.Get(SpecialVariables.Action.AiAgent.OctopusToken);
-            if (!string.IsNullOrWhiteSpace(octopusToken))
-            {
-                var octopusServerUrl = variables.Get("Octopus.Web.ServerUri");
-                if (string.IsNullOrWhiteSpace(octopusServerUrl))
-                {
-                    Log.Warn("Unable to find Octopus Server URL");
-                }
-                else
-                {
-                    Log.Verbose("Octopus Server URL: " + octopusServerUrl);
-                    servers["octopus"] = new McpServerConfig
-                    {
-                        Command = "npx",
-                        Args = new[] { "-y", "@octopusdeploy/mcp-server" },
-                        Env = new Dictionary<string, string>
-                        {
-                            ["OCTOPUS_SERVER_URL"] = octopusServerUrl,
-                            ["OCTOPUS_API_KEY"] = octopusToken,
-                            ["PATH"] = path,
-                        },
-                    };
-                }
-            }
-
-            // User-configured MCP servers from JSON variable
-            var mcpServersJson = variables.Get(SpecialVariables.Action.AiAgent.McpServers);
-            if (!string.IsNullOrWhiteSpace(mcpServersJson))
-            {
-                List<McpServerEntry>? entries;
-                try
-                {
-                    entries = JsonSerializer.Deserialize<List<McpServerEntry>>(mcpServersJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                }
-                catch (JsonException ex)
-                {
-                    throw new CommandException($"Failed to parse MCP servers configuration: {ex.Message}");
-                }
-
-                if (entries != null)
-                {
-                    foreach (var entry in entries)
-                    {
-                        if (string.IsNullOrWhiteSpace(entry.Name))
-                            throw new CommandException("Each MCP server must have a name.");
-                        if (string.IsNullOrWhiteSpace(entry.Command))
-                            throw new CommandException($"MCP server '{entry.Name}' must have a command.");
-
-                        var env = entry.Env != null
-                            ? new Dictionary<string, string>(entry.Env)
-                            : new Dictionary<string, string>();
-
-                        if (!env.ContainsKey("PATH"))
-                            env["PATH"] = path;
-
-                        servers[entry.Name] = new McpServerConfig
-                        {
-                            Type = entry.Type ?? "stdio",
-                            Command = entry.Command,
-                            Args = entry.Args,
-                            Env = env,
-                        };
-                        Log.Verbose($"MCP server '{entry.Name}' added.");
-                    }
-                }
-            }
-
-            return servers;
+            var defaultAllowedTools = new[] { "Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch" };
+            var allowedToolsRaw = variables.Get(SpecialVariables.Action.AiAgent.AllowedTools);
+            var allowedTools = new List<string>(!string.IsNullOrWhiteSpace(allowedToolsRaw)
+                ? allowedToolsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                : defaultAllowedTools);
+            return allowedTools;
         }
 
-        static List<UserSkill> BuildUserSkills(IVariables variables)
+        void SetupDeploymentVariables(string workingDir)
         {
-            var skills = new List<UserSkill>();
-            var indexes = variables.GetIndexes(SpecialVariables.Action.AiAgent.Skills);
-            foreach (var index in indexes)
-            {
-                var prefix = $"{SpecialVariables.Action.AiAgent.Skills}[{index}].";
-                var name = variables.Get(prefix + SpecialVariables.Action.AiAgent.SkillName);
-                var content = variables.Get(prefix + SpecialVariables.Action.AiAgent.SkillContent);
-
-                if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(content))
-                    skills.Add(new UserSkill { Name = name, Content = content });
-            }
-            return skills;
+            var json = JsonSerializer.Serialize(nonSensitiveVariables, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(Path.Combine(workingDir, "deployment-variables.json"), json);
         }
 
         static ProcessCredentials? BuildRunAs(IVariables variables)
@@ -193,15 +125,6 @@ namespace Calamari.AiAgent.Behaviours
                 Username = username,
                 Password = variables.Get(SpecialVariables.Action.AiAgent.RunAsPassword),
             };
-        }
-
-        static readonly string[] SensitiveKeywords = { "password", "secret", "token", "apikey", "api_key", "api-key", "private" };
-
-        static Dictionary<string, string> BuildDeploymentVariables(IVariables variables)
-        {
-            return variables
-                .Where(kvp => !SensitiveKeywords.Any(k => kvp.Key.Contains(k, StringComparison.OrdinalIgnoreCase)))
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
     }
 }

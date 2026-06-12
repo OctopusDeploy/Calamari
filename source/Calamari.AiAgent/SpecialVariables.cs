@@ -2,6 +2,12 @@ namespace Calamari.AiAgent
 {
     public static class SpecialVariables
     {
+        public static class Web
+        {
+
+            public const string ServerUri = "Octopus.Web.ServerUri";
+        }
+
         public static class Action
         {
             public static class AiAgent
@@ -11,7 +17,6 @@ namespace Calamari.AiAgent
                 public const string Model = "Octopus.Action.Claude.Model";
                 public const string Response = "Octopus.Action.Claude.Response";
                 public const string McpServers = "Octopus.Action.Claude.McpServers";
-                public const string SystemSkill = "Octopus.Action.Claude.SystemSkill";
                 public const string MaxTurns = "Octopus.Action.Claude.MaxTurns";
                 public const string MaxBudgetUsd = "Octopus.Action.Claude.MaxBudgetUsd";
                 public const string OctopusToken = "Octopus.Action.Claude.OctopusToken";
