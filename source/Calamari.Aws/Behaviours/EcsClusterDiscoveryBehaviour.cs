@@ -11,6 +11,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Octopus.Calamari.Contracts.TargetDiscovery;
 using Octopus.CoreUtilities.Extensions;
 using Task = System.Threading.Tasks.Task;
@@ -71,7 +72,7 @@ public class EcsClusterDiscoveryBehaviour(ILog log) : IDeployBehaviour
                     {
                         discoveredTargetCount++;
                         log.Info($"Discovered matching ECS cluster '{cluster.ClusterName}' in {region}.");
-                        WriteTargetCreationServiceMessage(region, cluster, authentication.AccountId, scope, matchResult);
+                        WriteTargetCreationServiceMessage(region, cluster, authentication, scope, matchResult);
                     }
                     else
                     {
@@ -117,7 +118,7 @@ public class EcsClusterDiscoveryBehaviour(ILog log) : IDeployBehaviour
             {
                 Clusters = batch.ToList(),
                 // Tags aren't returned by default and are required to match the discovery scope.
-                Include = new List<string> { ClusterField.TAGS }
+                Include = [ClusterField.TAGS]
             });
 
             clusters.AddRange((response.Clusters ?? Enumerable.Empty<Cluster>())
@@ -160,24 +161,60 @@ public class EcsClusterDiscoveryBehaviour(ILog log) : IDeployBehaviour
     void WriteTargetCreationServiceMessage(
         string region,
         Cluster cluster,
-        string accountId,
+        IAwsAuthenticationDetails authentication,
         TargetDiscoveryScope scope,
         TargetMatchResult matchResult)
     {
-        // TODO: emit the create-ecstarget service message once the server-side contract
-        // (the message name and its parameter keys) is confirmed. Until then we log the match so
-        // discovery and scope matching can be exercised end-to-end. The values below are everything
-        // the server should need to create the target.
-        log.Verbose("Would create ECS cluster target:");
-        log.Verbose($"\tCluster Name: {cluster.ClusterName}");
-        log.Verbose($"\tCluster ARN: {cluster.ClusterArn}");
-        log.Verbose($"\tRegion: {region}");
-        log.Verbose($"\tAccount: {accountId}");
-        log.Verbose($"\tRoles: {matchResult.Role}");
-        log.Verbose($"\tWorker Pool: {scope.WorkerPoolId}");
-        if (matchResult.TenantedDeploymentMode != null)
+        var role = authentication.Role;
+        var assumesRole = role?.Type == "assumeRole";
+
+        var useInstanceRole = authentication is AwsWorkerAuthenticationDetails;
+
+        var properties = new Dictionary<string, string>
         {
-            log.Verbose($"\tTenanted Deployment Participation: {matchResult.TenantedDeploymentMode}");
-        }
+            // Generic create-target attributes consumed by the server's target-creation framework.
+            { DefaultKeyNames.Name, $"aws-ecs/{region}/{cluster.ClusterName}" },
+            { DefaultKeyNames.OctopusRoles, matchResult.Role },
+            { DefaultKeyNames.UpdateIfExisting, bool.TrueString },
+            { DefaultKeyNames.IsDynamic, bool.TrueString },
+            { DefaultKeyNames.TenantedDeploymentParticipation, matchResult.TenantedDeploymentMode },
+
+            // ECS-cluster-specific attributes (see server-side AwsEcsClusterMessageHandler).
+            { AwsEcsServiceMessageNames.AccountIdOrNameAttribute, authentication.AccountId },
+            { AwsEcsServiceMessageNames.ClusterNameAttribute, cluster.ClusterName },
+            { AwsEcsServiceMessageNames.WorkerPoolIdOrNameAttribute, scope.WorkerPoolId },
+            { AwsEcsServiceMessageNames.ClusterRegionAttribute, region },
+            { AwsEcsServiceMessageNames.UseInstanceRole, useInstanceRole.ToString() },
+            { AwsEcsServiceMessageNames.AssumeRole, assumesRole.ToString() },
+            { AwsEcsServiceMessageNames.AssumeRoleArn, assumesRole ? role.Arn : null },
+            { AwsEcsServiceMessageNames.AssumeRoleSession, assumesRole ? role.SessionName : null },
+            { AwsEcsServiceMessageNames.AssumeRoleSessionDurationSeconds, assumesRole ? role.SessionDuration?.ToString() : null },
+            { AwsEcsServiceMessageNames.AssumeRoleExternalId, assumesRole ? role.ExternalId : null },
+        };
+
+        var serviceMessage = new ServiceMessage(
+            AwsEcsServiceMessageNames.CreateTargetName,
+            properties.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value));
+
+        log.WriteServiceMessage(serviceMessage);
+    }
+
+    /// <summary>
+    /// The service message name and attribute keys used by server.
+    /// Note: Should these migrate to CalamariContracts?
+    /// </summary>
+    static class AwsEcsServiceMessageNames
+    {
+        public const string CreateTargetName = "create-awsecstarget";
+        public const string AccountIdOrNameAttribute = "octopusAccountIdOrName";
+        public const string ClusterNameAttribute = "clusterName";
+        public const string WorkerPoolIdOrNameAttribute = "octopusDefaultWorkerPoolIdOrName";
+        public const string ClusterRegionAttribute = "clusterRegion";
+        public const string UseInstanceRole = "useInstanceRole";
+        public const string AssumeRole = "assumeRole";
+        public const string AssumeRoleArn = "assumeRoleArn";
+        public const string AssumeRoleSession = "assumeRoleSession";
+        public const string AssumeRoleSessionDurationSeconds = "assumeRoleSessionDurationSeconds";
+        public const string AssumeRoleExternalId = "assumeRoleExternalId";
     }
 }
