@@ -4,6 +4,7 @@ using System.Linq;
 using Amazon;
 using Amazon.EKS;
 using Amazon.EKS.Model;
+using Calamari.Aws.Discovery;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;

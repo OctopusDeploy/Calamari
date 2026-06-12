@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Calamari.Contracts.TargetDiscovery;
 
-namespace Calamari.Aws.Kubernetes.Discovery;
+namespace Calamari.Aws.Discovery;
 
 public class AwsAccessKeyAuthenticationDetails : AwsAuthenticationDetails<AwsAccessKeyCredentials>, IAwsAuthenticationDetails
 {

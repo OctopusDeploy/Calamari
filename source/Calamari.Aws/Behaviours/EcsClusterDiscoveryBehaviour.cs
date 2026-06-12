@@ -7,7 +7,6 @@ using Amazon.ECS;
 using Amazon.ECS.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Discovery;
-using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
