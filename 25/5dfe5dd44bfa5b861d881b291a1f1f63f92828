@@ -1,0 +1,21 @@
+source/Calamari.Tests/ArgoCD/Commands/Conventions/UpdateArgoCDAppImagesInstallConventionTest.cs
+  s_c050da03e362b3::t_cd4142b0015d77 560
+  s_c050da03e362b3::t_0c6132f709b8b2 720
+  s_c050da03e362b3::t_7a5045d6bc5e45 647
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "255dfe5dd44bfa5b861d881b291a1f1f63f92828",
+  "prompts": {},
+  "sessions": {
+    "s_c050da03e362b3": {
+      "agent_id": {
+        "tool": "github-copilot-jetbrains",
+        "id": "1781242238354",
+        "model": "unknown"
+      },
+      "human_author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
