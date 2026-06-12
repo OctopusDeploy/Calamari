@@ -180,16 +180,19 @@ public class AwsAuthenticationDetailsConverter : JsonConverter
                               .GetValue("Credentials", StringComparison.OrdinalIgnoreCase)?.Value<JObject>()
                               ?.GetValue("Type", StringComparison.OrdinalIgnoreCase)?.Value<string>();
 
-        var concreteType = credentialsType switch
+        // Instantate and populate to avoid recursion issues in JSON.NET,
+        IAwsAuthenticationDetails authenticationDetails = credentialsType switch
         {
-            "account" => typeof(AwsAccessKeyAuthenticationDetails),
-            "oidcAccount" => typeof(AwsOidcAuthenticationDetails),
-            "worker" => typeof(AwsWorkerAuthenticationDetails),
+            "account" => new AwsAccessKeyAuthenticationDetails(),
+            "oidcAccount" => new AwsOidcAuthenticationDetails(),
+            "worker" => new AwsWorkerAuthenticationDetails(),
             _ => throw new JsonSerializationException(
                      $"Unable to resolve AWS authentication details: unsupported credentials type '{credentialsType}'.")
         };
 
-        return jObject.ToObject(concreteType, serializer);
+        using var jObjectReader = jObject.CreateReader();
+        serializer.Populate(jObjectReader, authenticationDetails);
+        return authenticationDetails;
     }
 
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
