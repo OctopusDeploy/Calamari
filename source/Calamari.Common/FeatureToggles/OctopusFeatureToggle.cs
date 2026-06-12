@@ -11,7 +11,6 @@ namespace Calamari.Common.FeatureToggles
             public const string ArgoRolloutsSupportFeatureToggle = "argo-rollouts-support";
             public const string UseDockerCredentialHelper = "calamari-use-docker-credential-helper";
             public const string GitDependenciesForScriptsFeatureToggle = "git-dependencies-for-scripts";
-            
         };
 
         public static readonly OctopusFeatureToggle ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle = new(KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle);

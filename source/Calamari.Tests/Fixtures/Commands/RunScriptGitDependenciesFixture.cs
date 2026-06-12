@@ -66,8 +66,6 @@ public class RunScriptGitDependenciesFixture
     [Test]
     public void GitDependencyIsExtractedEvenWhenExtractFlagIsFalse()
     {
-        // There is no option in the UI to mark a script step's git dependency as "extract", so
-        // staging is forced regardless of the Extract variable.
         var zipPath = CreateZipWithEntry("scripts/helper.sh", "echo hello");
 
         AddGitDependencyVariables(zipPath);
@@ -94,8 +92,6 @@ public class RunScriptGitDependenciesFixture
         Directory.Exists(ExtractedDependencyDirectory)
             .Should().BeFalse("git dependencies should not be staged when the feature toggle is not enabled");
     }
-
-    // --- Helpers ---
 
     int RunScript()
     {
