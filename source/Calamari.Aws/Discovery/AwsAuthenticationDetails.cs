@@ -5,7 +5,6 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
-using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
