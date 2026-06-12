@@ -1,0 +1,29 @@
+source/Calamari.Tests/ArgoCD/InlineJsonPatchReplacerTests.cs
+  s_c050da03e362b3::t_cf2f42590f5d53 98
+  s_c050da03e362b3::t_a5cd1c266df054 149
+source/Calamari.Tests/ArgoCD/KustomizeImageReplacerTests.cs
+  s_c050da03e362b3::t_596b7cc15e7552 243
+  s_c050da03e362b3::t_5517b5b5140f77 269
+  s_c050da03e362b3::t_c58e40ba9acfae 303
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "d745990a1eff401cbdc8f5e8b635561504d5718b",
+  "prompts": {},
+  "humans": {
+    "h_1903a5d928fbe4": {
+      "author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  },
+  "sessions": {
+    "s_c050da03e362b3": {
+      "agent_id": {
+        "tool": "github-copilot-jetbrains",
+        "id": "1781242238354",
+        "model": "unknown"
+      },
+      "human_author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
