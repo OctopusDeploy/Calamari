@@ -237,7 +237,8 @@ namespace Calamari.ArgoCD
 
                 var matchedUpdate = imagesToUpdate.Select(i => new
                                                   {
-                                                      Reference = i,
+                                                      UpdatedReference = i,
+                                                      ExistinReference = currentReference,
                                                       Comparison = i.CompareWith(currentReference)
 
                                                   })
@@ -247,7 +248,7 @@ namespace Calamari.ArgoCD
                     // Only do replacement if the tag is different
                     if (!matchedUpdate.Comparison.TagMatch)
                     {
-                        var newReference = currentReference.WithTag(matchedUpdate.Reference.Tag);
+                        var newReference = currentReference.WithTag(matchedUpdate.UpdatedReference.Tag);
 
                         // Pattern ensures we only update lines with  `image: <IMAGENAME>` OR  `- image: <IMAGENANME>`.
                         // Ignores comments and white space, while preserving any quotes around the image name
@@ -262,11 +263,11 @@ namespace Calamari.ArgoCD
                                                  },
                                                  RegexOptions.Multiline);
 
-                        replacementsMade.Add(matchedUpdate.Reference.FriendlyName());
+                        replacementsMade.Add(matchedUpdate.UpdatedReference.FriendlyName());
                     }
                     else
                     {
-                        alreadyUpToDate.Add(matchedUpdate.Reference.FriendlyName());
+                        alreadyUpToDate.Add(matchedUpdate.ExistinReference.FriendlyName());
                     }
                 }
             }
