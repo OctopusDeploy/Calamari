@@ -36,8 +36,8 @@ namespace Calamari.ArgoCD.Helm
             var fileContent = yamlContent;
             foreach (var existingImageReference in existingImageReferences)
             {
-                log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.ToString()}");
-                var imagesString = imagesToUpdate.Select(i => i.ContainerReference.ToString()).ToList();
+                log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.FriendlyName()}");
+                var imagesString = imagesToUpdate.Select(i => i.ContainerReference.FriendlyName()).ToList();
                 log.Verbose($"Images to Update = {string.Join(",", imagesString)}");
 
                 var matchedUpdate = imagesToUpdate.Select(i => new
