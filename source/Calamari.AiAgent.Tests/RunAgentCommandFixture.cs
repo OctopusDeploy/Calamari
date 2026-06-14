@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests;
 
 [TestFixture]
-[Ignore("This test requires real tokens, mainly exists for now for development")]
+
 public class RunAgentCommandFixture
 {
     [Test]
@@ -82,6 +82,24 @@ public class RunAgentCommandFixture
                 context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "get the currently executing process user");
             })
             .Execute(assertWasSuccess: false);
+
+        result.WasSuccessful.Should().BeTrue();
+        result.FullLog.Should().Contain("origin");
+    }
+    
+    [Test]
+    [Category("Integration")]
+    public async Task ClaudeCode_RunsOn_RunsUnderAnotherAccount()
+    {
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+                                             .WithArrange(context =>
+                                                          {
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.RunAsUsername, "test-user");
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.RunAsPassword, "supersecret");
+                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "get the currently executing process user");
+                                                          })
+                                             .Execute(assertWasSuccess: false);
 
         result.WasSuccessful.Should().BeTrue();
         result.FullLog.Should().Contain("origin");

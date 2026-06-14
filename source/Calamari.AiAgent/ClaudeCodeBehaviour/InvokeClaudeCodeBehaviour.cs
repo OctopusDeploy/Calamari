@@ -68,7 +68,12 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             if (!string.IsNullOrWhiteSpace(effort))
                 argsBuilder.WithEffort(effort);
 
-            using var tempDir = TemporaryDirectory.Create();
+
+            using var tempDir = TemporaryDirectory.Create(); 
+            //TODO: Fiddling with workdir for user perms
+            //new TemporaryDirectory($"/tmp/{Guid.NewGuid():N}");
+            //Directory.CreateDirectory(tempDir.DirectoryPath);
+
             var workingDir = tempDir.DirectoryPath;
             log.Verbose($"Claude Code working directory: {workingDir}");
 
@@ -92,6 +97,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             };
             
             var response = await new ClaudeCodeCliRunner(log).RunAsync(argsBuilder, customEnvVars,  runAs, workingDir,
+                context.CurrentDirectory,
                 cancellationToken.Token);
 
             Log.SetOutputVariable(SpecialVariables.Action.AiAgent.Response, response, variables);

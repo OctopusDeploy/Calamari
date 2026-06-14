@@ -12,7 +12,9 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public class ClaudeCodeProcessStartInfo
 {
+    //TODO: Should this be configurable?
     const string ClaudeCodePath = "claude";
+
     internal static string ShellQuote(string value)
     {
         return "'" + value.Replace("'", @"'\''") + "'";
@@ -79,11 +81,12 @@ public class ClaudeCodeProcessStartInfo
     }
 
 
-    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Higher up checks enforce the correct OS")]
     async Task<Process> StartMacOrLinuxProcess(string workingDir,
                                                ProcessCredentials? runAs,
                                                ClaudeCommandArgsBuilder argsBuilder,
-                                               Dictionary<string, string> environmentVariables, CancellationToken ct)
+                                               Dictionary<string, string> environmentVariables,
+                                               CancellationToken ct)
     {
 
         var username = runAs?.Username!;
@@ -93,16 +96,12 @@ public class ClaudeCodeProcessStartInfo
             var process1 = Process.Start(startInfo1)!;
             return process1;
         }
-        
-        //string cmd = $"ANTHROPIC_API_KEY=XXX claude -p \\\"What OS user am I?\\\"";
-        string cmd = "ANTHROPIC_API_KEY='XXX' claude -p 'what time is is?' --verbose --output-format stream-json";
-        //cmd = $"ANTHROPIC_API_KEY='{environmentVariables["ANTHROPIC_API_KEY"]}' claude   --model claude-sonnet-4-20250514 --bare --strict-mcp-config --output-format stream-json --verbose --permission-mode dontAsk --no-session-persistence --debug-file /var/folders/qr/m8j6qgqj0h93xlr5yw5dsgqh0000gn/T/claude-agent-debug-4bf79ef90e5b4e1a83d0494f8eea23b5.log --mcp-config /var/folders/qr/m8j6qgqj0h93xlr5yw5dsgqh0000gn/T/Test_9d362db4f38445339dafc520eff2b45c/mcp-config.json --system-prompt-file /var/folders/qr/m8j6qgqj0h93xlr5yw5dsgqh0000gn/T/Test_9d362db4f38445339dafc520eff2b45c/system-prompt.md --allowedTools Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,mcp__octopus__*,mcp__github__* --max-turns 10 -p 'Who Am I? Print out the name of the OS user account you are running under.'";
 
         var filePath = Path.Combine(workingDir, "my-command.sh");
-        File.WriteAllText(Path.Combine(workingDir, "my-command.sh"), $@"#!/bin/bash
-        cd {workingDir}
-        claude  --model claude-sonnet-4-20250514 --bare --strict-mcp-config --output-format stream-json --verbose  -p 'Who Am I? Print out the name of the OS user account you are running under.'
-");
+        await File.WriteAllTextAsync(Path.Combine(workingDir, "my-command.sh"), $@"#!/bin/bash
+cd {workingDir}
+{ClaudeCodePath} {argsBuilder.Build()}
+", ct);
         File.SetUnixFileMode(filePath,
             UnixFileMode.UserRead
             | UnixFileMode.UserWrite
@@ -112,6 +111,8 @@ public class ClaudeCodeProcessStartInfo
             | UnixFileMode.GroupExecute
             | UnixFileMode.OtherExecute
             | UnixFileMode.OtherRead);
+        
+        
         File.SetUnixFileMode(workingDir,
             UnixFileMode.UserRead
             | UnixFileMode.UserWrite
@@ -122,10 +123,7 @@ public class ClaudeCodeProcessStartInfo
             | UnixFileMode.OtherRead
             | UnixFileMode.OtherExecute
             | UnixFileMode.OtherWrite);
-        
-        
-        //cmd = $"ANTHROPIC_API_KEY='{environmentVariables["ANTHROPIC_API_KEY"]}' ./{filePath}";
-        cmd = $"{filePath}";
+
         var startInfo = new ProcessStartInfo
         {
             FileName = "script",
@@ -136,18 +134,27 @@ public class ClaudeCodeProcessStartInfo
             UseShellExecute = false,
             CreateNoWindow = true,
         };
-        //TODO: Perhaps this to script toa void encoding
+
         var argumentList = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ?
-            new[] { "-q", "/dev/null", "su", "-m", username, "-c", cmd } :
-            new[] { "-qec", "su", "-", username, "-c", cmd, "/dev/null" };
+            new[] { "-q", "/dev/null", "su", "-m", username, "-c", filePath } :
+            new[] { "-qec", "su", "-", username, "-c", filePath, "/dev/null" };
         startInfo.ArgumentList.AddRange(argumentList);
             
         foreach (var kvp in environmentVariables)
             startInfo.Environment[kvp.Key] = kvp.Value;
-
+        //SetPermissionsRecursively(workingDir);
+        var o = Process.Start("chmod", ["-R", "777", workingDir]);
+        await o.WaitForExitAsync(ct);
+         if(o.ExitCode != 0)
+            throw new Exception($"Failed to set permissions on working directory: {workingDir}");
+        
+        
         var process = Process.Start(startInfo)!;
-            Task.Delay(1000, ct).Wait(ct);
-        // Parse password prompt
+        
+        // TODO: Should just wait as long as it takes to read "Password:" below
+        await Task.Delay(1000, ct).WaitAsync(ct);
+        
+        // Parse password prompt so consuming code can ignore this initial password check.
         var passwordReq = "Password:".Length;
         var buff = new char[passwordReq];
         await process.StandardOutput.ReadAsync(buff, 0, passwordReq);
@@ -162,4 +169,32 @@ public class ClaudeCodeProcessStartInfo
 
         return process;
     }
+    
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
+    static void SetPermissionsRecursively(string path)
+    {
+        var dirMode = UnixFileMode.UserRead
+                      | UnixFileMode.UserWrite
+                      | UnixFileMode.UserExecute
+                      | UnixFileMode.GroupWrite
+                      | UnixFileMode.GroupRead
+                      | UnixFileMode.GroupExecute
+                      | UnixFileMode.OtherRead
+                      | UnixFileMode.OtherExecute
+                      | UnixFileMode.OtherWrite;
+        var fileMode = UnixFileMode.UserRead
+                       | UnixFileMode.UserWrite
+                       | UnixFileMode.UserExecute
+                       | UnixFileMode.GroupRead
+                       | UnixFileMode.GroupWrite
+                       | UnixFileMode.GroupExecute
+                       | UnixFileMode.OtherExecute
+                       | UnixFileMode.OtherRead;                                                                                                                                            
+                                                                                                                                                                                                               
+      new DirectoryInfo(path).UnixFileMode = dirMode;                                                                                                                                                            
+      foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))                                                                                                                     
+          File.SetUnixFileMode(file, fileMode);                                             
+      foreach (var dir in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories))                                                                                                                
+          new DirectoryInfo(dir).UnixFileMode = dirMode;                                                                                                                                                         
+  }     
 }

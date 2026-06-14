@@ -20,11 +20,17 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                                            Dictionary<string, string> customEnvVars,
                                            ProcessCredentials? runAs,
                                            string workingDir,
+                                           string calamariDir, //RunAs might not be able to access this dir.. but we need to preserve the logs.
                                            CancellationToken cancellationToken)
         {
-            var verboseLogPath = Path.Combine(Path.GetTempPath(), $"claude-agent-verbose-{Guid.NewGuid():N}.log");
-             var debugLogPath = Path.Combine(Path.GetTempPath(), $"claude-agent-debug-{Guid.NewGuid():N}.log");
-
+            
+            var logDir = Directory.CreateDirectory(Path.Combine(workingDir, "log"));
+            var verboseLogPath = Path.Combine(logDir.FullName, $"claude-agent-verbose-{Guid.NewGuid():N}.log");
+            var debugLogPath = Path.Combine(logDir.FullName, $"claude-agent-debug-{Guid.NewGuid():N}.log");
+            
+            // Temporarily here while working out the user process issues
+            //await File.Create(debugLogPath).DisposeAsync();
+            
             log.Verbose($"Claude Code command: claude {argsBuilder.Build()}");
 
             var runner = new ClaudeCodeProcessStartInfo();
@@ -45,16 +51,21 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 throw new CommandException($"Claude Code exited with code {process.ExitCode}");
             }
 
+            Directory.CreateDirectory(Path.Combine(calamariDir, "log"));
             if (File.Exists(debugLogPath))
             {
                 var fileInfo = new FileInfo(debugLogPath);
-                log.NewOctopusArtifact(debugLogPath, "claude-agent-debug.log", fileInfo.Length);
+                var movedFilePath = Path.Combine(calamariDir, "log", fileInfo.Name);
+                fileInfo.MoveTo(movedFilePath);
+                log.NewOctopusArtifact(movedFilePath, "claude-agent-debug.log", fileInfo.Length);
             }
 
             if (File.Exists(verboseLogPath))
             {
                 var fileInfo = new FileInfo(verboseLogPath);
-                log.NewOctopusArtifact(verboseLogPath, "claude-agent-verbose.log", fileInfo.Length);
+                var movedFilePath = Path.Combine(calamariDir, "log", fileInfo.Name);
+                fileInfo.MoveTo(movedFilePath);
+                log.NewOctopusArtifact(movedFilePath, "claude-agent-verbose.log", fileInfo.Length);
             }
 
             return stdoutTask.Result.ToString();
