@@ -190,7 +190,7 @@ namespace Calamari.ArgoCD
             var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
             UpdateJsonImageValue(imageValue, newImageRef.FriendlyName());
 
-            changes.Add(matchedUpdate.Reference.FriendlyName());
+            changes.Add(newImageRef.FriendlyName());
             log.Verbose($"Updated container image in JSON patch: {newImageRef}");
         }
 

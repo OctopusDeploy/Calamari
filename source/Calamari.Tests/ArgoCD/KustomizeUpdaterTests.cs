@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
@@ -13,7 +12,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
-using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD
@@ -27,8 +25,8 @@ namespace Calamari.Tests.ArgoCD
     {
         readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate = new()
         {
-            new(ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry)),
-            new(ContainerImageReference.FromReferenceString("busybox:stable", "my-registry.com")),
+            new(ContainerImageReference.FromReferenceString("docker.io/nginx:1.25")),
+            new(ContainerImageReference.FromReferenceString("my-registry.com/busybox:stable"))
         };
 
         ILog log;
@@ -289,7 +287,7 @@ spec:
             updatedServiceContent.Should().Contain("busybox:stable");
 
             var updatedKustomizationContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
-            updatedKustomizationContent.Should().Contain("busybox:stable");
+            updatedKustomizationContent.Should().Contain("my-registry.com/busybox:");
         }
 
         [Test]
