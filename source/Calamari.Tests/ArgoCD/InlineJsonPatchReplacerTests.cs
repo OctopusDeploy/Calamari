@@ -95,7 +95,7 @@ patches:
             result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -146,7 +146,7 @@ patches:
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]

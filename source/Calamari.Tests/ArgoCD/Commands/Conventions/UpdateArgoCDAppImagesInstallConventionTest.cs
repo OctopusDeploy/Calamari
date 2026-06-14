@@ -557,7 +557,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var results = getResults();
             results.Should().NotBeNull();
             var actual = results.Single();
-            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
+            actual.UpdatedImages.Should().BeEquivalentTo(["index.docker.io/nginx:1.27.1"]);
             actual.GitReposUpdated.Should().HaveCount(1);
             actual.TrackedSourceDetails.Should().HaveCount(1);
 
@@ -644,7 +644,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             results.Should().NotBeNull();
             var actual = results.Single();
             actual.Updated.Should().BeTrue();
-            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
+            actual.UpdatedImages.Should().BeEquivalentTo(["index.docker.io/nginx:1.27.1"]);
             actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var sourceDetails = actual.TrackedSourceDetails.First();
@@ -717,7 +717,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             results.Should().NotBeNull();
             var actual = results.Single();
             actual.Updated.Should().BeTrue();
-            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"], "only nginx needed updating");
+            actual.UpdatedImages.Should().BeEquivalentTo(["index.docker.io/nginx:1.27.1"], "only nginx needed updating");
             actual.TrackedSourceDetails.Should().HaveCount(1);
 
             var sourceDetails = actual.TrackedSourceDetails.First();
