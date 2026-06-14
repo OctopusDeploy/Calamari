@@ -757,8 +757,8 @@ spec:
       result.UpdatedContents.Should().NotBeNull();
       result.UpdatedContents.Should().Be(expectedYaml);
       result.UpdatedImageReferences.Count.Should().Be(2);
-      result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-custom.io/nginx:1.25");
-      result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-custom.io/busybox:stable");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
     }
 
     [Test]
@@ -811,7 +811,7 @@ spec:
       result.UpdatedContents.Should().NotBeNull();
       result.UpdatedContents.Should().Be(expectedYaml);
       result.UpdatedImageReferences.Count.Should().Be(1);
-      result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-custom.io/busybox:stable");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
     }
 
 
