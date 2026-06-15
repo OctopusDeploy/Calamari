@@ -147,6 +147,91 @@ namespace Calamari.ExternalTools.Tests.Terraform
                                       });
         }
 
+        /// <summary>
+        /// Validates the full substitution → apply → output pipeline:
+        /// Octostache substitution runs on variable files before terraform uses them.
+        /// Tests convention ordering in the Calamari pipeline.
+        /// </summary>
+        [Test]
+        public void OutputAndSubstituteOctopusVariables()
+        {
+            ExecuteAndReturnLogOutput(applyCommand,
+                                      _ =>
+                                      {
+                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.txt");
+                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "example.txt");
+                                          _.Variables.Add("Octopus.Action.StepName", "Step Name");
+                                          _.Variables.Add("Should_Be_Substituted", "Hello World");
+                                          _.Variables.Add("Should_Be_Substituted_in_txt", "Hello World from text");
+                                      },
+                                      "WithVariablesSubstitution",
+                                      result =>
+                                      {
+                                          result.OutputVariables
+                                                .ContainsKey("TerraformValueOutputs[my_output]")
+                                                .Should()
+                                                .BeTrue();
+                                          result.OutputVariables["TerraformValueOutputs[my_output]"]
+                                                .Value
+                                                .Should()
+                                                .Be("Hello World");
+                                          result.OutputVariables
+                                                .ContainsKey("TerraformValueOutputs[my_output_from_txt_file]")
+                                                .Should()
+                                                .BeTrue();
+                                          result.OutputVariables["TerraformValueOutputs[my_output_from_txt_file]"]
+                                                .Value
+                                                .Should()
+                                                .Be("Hello World from text");
+                                      });
+        }
+
+        /// <summary>
+        /// Validates terraform sensitive outputs are marked as IsSensitive in Calamari output variables.
+        /// Tool-specific output parsing behavior.
+        /// </summary>
+        [Test]
+        public void WithOutputSensitiveVariables()
+        {
+            ExecuteAndReturnLogOutput(applyCommand,
+                                      _ => { },
+                                      "WithOutputSensitiveVariables",
+                                      result =>
+                                      {
+                                          result.OutputVariables.Values.Should().OnlyContain(variable => variable.IsSensitive);
+                                      });
+        }
+
+        /// <summary>
+        /// Validates plan → apply → plan cycle with state file management.
+        /// Exit code 2 means "changes detected", exit code 0 means "no changes".
+        /// Unique to terraform's detailed exit code behavior.
+        /// </summary>
+        [Test]
+        public async Task PlanDetailedExitCode()
+        {
+            using var stateFileFolder = TemporaryDirectory.Create();
+
+            var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
+            output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
+            output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("2");
+
+            output = await ExecuteAndReturnResult(applyCommand, PopulateVariables, "PlanDetailedExitCode");
+            output.FullLog.Should()
+                  .Contain("apply -auto-approve");
+
+            output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
+            output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
+            output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("0");
+            return;
+
+            void PopulateVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
+                                $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
+            }
+        }
+
         [Test]
         public async Task GoogleCloudIntegration()
         {
