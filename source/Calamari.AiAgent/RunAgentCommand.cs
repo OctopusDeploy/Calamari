@@ -10,7 +10,6 @@ namespace Calamari.AiAgent
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            //yield return resolver.Create<InvokeAgentBehaviour>();
             yield return resolver.Create<InvokeClaudeCodeBehaviour>();
         }
     }
