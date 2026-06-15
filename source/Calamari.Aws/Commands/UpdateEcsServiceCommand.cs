@@ -31,7 +31,7 @@ public class UpdateEcsServiceCommand : Command
         var inputs = ReadAndValidateInputs();
         var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
 
-        using var ecsClient = EcsClientFactory.Create(environment);
+        using var ecsClient = EcsClientFactoryHelper.Create(environment);
 
         new ConventionProcessor(new RunningDeployment(variables),
                                 [

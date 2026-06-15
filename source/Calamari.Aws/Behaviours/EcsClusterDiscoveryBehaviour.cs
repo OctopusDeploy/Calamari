@@ -7,6 +7,7 @@ using Amazon.ECS;
 using Amazon.ECS.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Discovery;
+using Calamari.Aws.Integration.Ecs;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
@@ -18,7 +19,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Aws.Behaviours;
 
-public class EcsClusterDiscoveryBehaviour(ILog log) : IDeployBehaviour
+public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, ILog log) : IDeployBehaviour
 {
     // DescribeClusters accepts at most 100 cluster identifiers per request.
     const int DescribeClustersBatchSize = 100;
@@ -59,7 +60,7 @@ public class EcsClusterDiscoveryBehaviour(ILog log) : IDeployBehaviour
         {
             foreach (var region in authentication.Regions)
             {
-                using var client = new AmazonECSClient(credentials, RegionEndpoint.GetBySystemName(region));
+                using var client = ecsClientFactory.Create(credentials, region);
 
                 foreach (var cluster in await DiscoverClustersInRegion(client, region))
                 {
