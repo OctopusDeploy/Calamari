@@ -17,11 +17,11 @@ public class SkillsWriter(IVariables variables)
         var skillsDir = Path.Combine(workingDir, ".claude", "skills");
         Directory.CreateDirectory(skillsDir);
 
-        CreateSysemSkillFiles(skillsDir);
+        CreateSystemSkillFiles(skillsDir);
         CreateUserSkillFiles(skillsDir);
     }
 
-    static void CreateSysemSkillFiles(string skillsDir)
+    static void CreateSystemSkillFiles(string skillsDir)
     {
         var assembly = Assembly.GetExecutingAssembly();
         foreach (var resourceName in assembly.GetManifestResourceNames())
