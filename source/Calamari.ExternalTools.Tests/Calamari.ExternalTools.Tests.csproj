@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Calamari.ExternalTools.Tests</RootNamespace>
+        <AssemblyName>Calamari.ExternalTools.Tests</AssemblyName>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <IsPackable>false</IsPackable>
+        <TargetFramework>net8.0</TargetFramework>
+        <NoWarn>CS8632</NoWarn>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentAssertions" Version="7.2.0" />
+        <PackageReference Include="NUnit" Version="3.14.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
+        <PackageReference Include="SharpCompress" Version="0.37.2">
+            <NoWarn>NU1902</NoWarn>
+        </PackageReference>
+        <PackageReference Include="System.Text.Json" Version="9.0.16" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+        <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+        <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="tool-manifest.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.tf*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.hcl">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+</Project>

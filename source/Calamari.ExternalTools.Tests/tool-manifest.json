@@ -1,0 +1,52 @@
+{
+  "tools": {
+    "terraform": {
+      "lowest": "0.13.7",
+      "highest": "1.8.5",
+      "source": "https://releases.hashicorp.com/terraform/",
+      "architectures": ["amd64", "arm64"]
+    },
+    "kubectl": {
+      "lowest": "1.28.0",
+      "highest": "1.31.0",
+      "source": "https://storage.googleapis.com/kubernetes-release/release/",
+      "architectures": ["amd64", "arm64"]
+    },
+    "helm": {
+      "lowest": "3.12.0",
+      "highest": "3.16.0",
+      "source": "https://get.helm.sh/",
+      "architectures": ["amd64", "arm64"]
+    },
+    "aws-cli": {
+      "lowest": "2.11.22",
+      "highest": "2.11.22",
+      "source": "https://awscli.amazonaws.com/",
+      "architectures": ["amd64"]
+    },
+    "aws-iam-authenticator": {
+      "lowest": "0.7.10",
+      "highest": "0.7.10",
+      "source": "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases",
+      "architectures": ["amd64"]
+    },
+    "gcloud": {
+      "lowest": "436.0.0",
+      "highest": "436.0.0",
+      "source": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/",
+      "architectures": ["amd64"]
+    },
+    "kubelogin": {
+      "lowest": "0.0.25",
+      "highest": "0.0.25",
+      "source": "https://github.com/Azure/kubelogin/releases",
+      "architectures": ["amd64"]
+    },
+    "azure-cli": {
+      "lowest": "2.60.0",
+      "highest": "2.60.0",
+      "source": "https://learn.microsoft.com/en-us/cli/azure/install-azure-cli",
+      "architectures": ["amd64", "arm64"]
+    }
+  }
+}

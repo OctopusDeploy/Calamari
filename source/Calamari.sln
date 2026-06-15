@@ -88,6 +88,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Contracts", "Calam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.DockerCredentialHelper", "Calamari.DockerCredentialHelper\Calamari.DockerCredentialHelper.csproj", "{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.ExternalTools.Tests", "Calamari.ExternalTools.Tests\Calamari.ExternalTools.Tests.csproj", "{4893ED68-C02C-46EF-B3D1-319600566F42}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -212,14 +214,14 @@ Global
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.Build.0 = Release|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.Build.0 = Debug|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.ActiveCfg = Release|Any CPU
-								{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.Build.0 = Release|Any CPU
-								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.Build.0 = Debug|Any CPU
-								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.ActiveCfg = Release|Any CPU
-								{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3BFFA0E-7514-41DE-A141-E124133D0665}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3BFFA0E-7514-41DE-A141-E124133D0665}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -232,6 +234,10 @@ Global
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4893ED68-C02C-46EF-B3D1-319600566F42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4893ED68-C02C-46EF-B3D1-319600566F42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4893ED68-C02C-46EF-B3D1-319600566F42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4893ED68-C02C-46EF-B3D1-319600566F42}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
