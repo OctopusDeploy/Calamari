@@ -17,8 +17,8 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
     {
         static readonly ToolManifest Manifest = ToolManifest.Load();
 
-        protected string ToolExecutablePath { get; private set; } = "";
-        protected string ToolVersion { get; private set; } = "";
+        public string ToolExecutablePath { get; private set; } = "";
+        public string ToolVersion { get; private set; } = "";
 
         /// <summary>The tool name as it appears in tool-manifest.json.</summary>
         protected abstract string PrimaryToolName { get; }
