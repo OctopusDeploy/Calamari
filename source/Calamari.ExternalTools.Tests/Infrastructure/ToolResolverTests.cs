@@ -32,5 +32,32 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
             var result = ToolResolver.FindOnPath("definitely-not-a-real-tool-abc123");
             result.Should().BeNull();
         }
+
+        [Test]
+        public void SkipDownloadEnvVarName()
+        {
+            ToolResolver.SkipDownloadEnvVar.Should().Be("CALAMARI_TOOL_SKIP_DOWNLOAD");
+        }
+
+        [Test]
+        public void ShouldSkipDownloadWhenEnvVarIsTrue()
+        {
+            Environment.SetEnvironmentVariable(ToolResolver.SkipDownloadEnvVar, "true");
+            try
+            {
+                ToolResolver.ShouldSkipDownload.Should().BeTrue();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(ToolResolver.SkipDownloadEnvVar, null);
+            }
+        }
+
+        [Test]
+        public void ShouldNotSkipDownloadByDefault()
+        {
+            Environment.SetEnvironmentVariable(ToolResolver.SkipDownloadEnvVar, null);
+            ToolResolver.ShouldSkipDownload.Should().BeFalse();
+        }
     }
 }

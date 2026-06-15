@@ -7,9 +7,11 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
 {
     /// <summary>
     /// Base class for test fixtures that depend on an external tool.
-    /// Resolves the tool via: env var override -> PATH -> download.
     ///
-    /// Subclasses set PrimaryToolName and provide a download strategy.
+    /// Resolution order:
+    /// 1. Version override env var (CALAMARI_TOOL_{NAME}_VERSION) → download that version
+    /// 2. CALAMARI_TOOL_SKIP_DOWNLOAD=true → use PATH only, fail if not found
+    /// 3. Default → download the manifest's highest version
     /// </summary>
     public abstract class ExternalToolFixture
     {
@@ -28,23 +30,38 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
         public async Task ResolveTool()
         {
             var resolver = new ToolResolver(Manifest, Log);
-            var downloader = new ToolDownloader(Log);
-
             ToolVersion = resolver.ResolveVersion(PrimaryToolName);
 
-            // Try PATH first
-            var pathResult = ToolResolver.FindOnPath(PrimaryToolName);
-            if (pathResult != null)
+            var hasVersionOverride = !string.IsNullOrEmpty(
+                Environment.GetEnvironmentVariable(ToolResolver.GetOverrideEnvVar(PrimaryToolName)));
+
+            // Version override always triggers a download of that specific version
+            if (hasVersionOverride)
             {
-                var tool = Manifest.GetTool(PrimaryToolName);
-                // For PATH tools, we use them if available (version check is best-effort)
-                Log($"Found {PrimaryToolName} on PATH at {pathResult}");
+                Log($"Version override set — downloading {PrimaryToolName} {ToolVersion}");
+                var downloader = new ToolDownloader(Log);
+                ToolExecutablePath = await downloader.Download(PrimaryToolName, ToolVersion, DownloadTool);
+                return;
+            }
+
+            // Skip download mode — PATH only, fail if not found
+            if (ToolResolver.ShouldSkipDownload)
+            {
+                var pathResult = ToolResolver.FindOnPath(PrimaryToolName);
+                if (pathResult == null)
+                    throw new InvalidOperationException(
+                        $"{PrimaryToolName} not found on PATH. " +
+                        $"Either install it or unset {ToolResolver.SkipDownloadEnvVar} to allow downloading.");
+
+                Log($"Using {PrimaryToolName} from PATH at {pathResult} (download skipped)");
                 ToolExecutablePath = pathResult;
                 return;
             }
 
-            // Download and cache
-            ToolExecutablePath = await downloader.Download(PrimaryToolName, ToolVersion, DownloadTool);
+            // Default — download the manifest's highest version
+            Log($"Downloading {PrimaryToolName} {ToolVersion} from manifest");
+            var dl = new ToolDownloader(Log);
+            ToolExecutablePath = await dl.Download(PrimaryToolName, ToolVersion, DownloadTool);
         }
 
         protected void Log(string message)

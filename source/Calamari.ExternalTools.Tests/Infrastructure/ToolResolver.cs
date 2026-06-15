@@ -8,14 +8,16 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
 {
     /// <summary>
     /// Resolves the path to an external tool using the resolution order:
-    /// 1. Environment variable override (CALAMARI_TOOL_{NAME}_VERSION)
-    /// 2. Local installation on PATH (if version is within manifest range)
-    /// 3. Download and cache (via ToolDownloader)
+    /// 1. Version override env var (CALAMARI_TOOL_{NAME}_VERSION) → download that version
+    /// 2. Skip download env var (CALAMARI_TOOL_SKIP_DOWNLOAD=true) → PATH only, fail if not found
+    /// 3. Default → download the manifest's highest version
     /// </summary>
     public class ToolResolver
     {
         readonly ToolManifest manifest;
         readonly Action<string> log;
+
+        public const string SkipDownloadEnvVar = "CALAMARI_TOOL_SKIP_DOWNLOAD";
 
         public ToolResolver(ToolManifest manifest, Action<string> log)
         {
@@ -27,6 +29,9 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
         {
             return $"CALAMARI_TOOL_{toolName.Replace("-", "_").ToUpperInvariant()}_VERSION";
         }
+
+        public static bool ShouldSkipDownload
+            => string.Equals(Environment.GetEnvironmentVariable(SkipDownloadEnvVar), "true", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Resolves the version to use for a tool, considering env var overrides.
