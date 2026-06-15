@@ -205,7 +205,7 @@ public class EcsClusterDiscoveryBehaviour(ILog log) : IDeployBehaviour
     /// </summary>
     static class AwsEcsServiceMessageNames
     {
-        public const string CreateTargetName = "create-awsecstarget";
+        public const string CreateTargetName = "create-aws-ecs-target";
         public const string AccountIdOrNameAttribute = "octopusAccountIdOrName";
         public const string ClusterNameAttribute = "clusterName";
         public const string WorkerPoolIdOrNameAttribute = "octopusDefaultWorkerPoolIdOrName";
