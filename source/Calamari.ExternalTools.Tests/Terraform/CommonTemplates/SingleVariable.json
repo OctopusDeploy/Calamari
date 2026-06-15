@@ -1,0 +1,13 @@
+﻿{
+  "variable": {
+    "ami": {
+      "type": "string",
+      "description": "the AMI to use"
+    }
+  },
+  "output": {
+    "ami": {
+      "value": "${var.ami}"
+    }
+  }
+}
