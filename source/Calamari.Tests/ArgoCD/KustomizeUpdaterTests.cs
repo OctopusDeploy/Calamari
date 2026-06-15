@@ -277,7 +277,7 @@ spec:
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
-            result.UpdatedImages.Should().Contain("busybox:stable");
+            result.UpdatedImages.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedImages.Count.Should().Be(2);
 
             var updatedDeploymentContent = fileSystem.ReadFile(Path.Combine(tempDir,"deployment-patch.yaml"));

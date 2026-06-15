@@ -91,6 +91,8 @@ namespace Calamari.ArgoCD
                 }
 
                 //update or insert the newTag node
+                var resultingRef = matchedUpdate.CurrentReference.WithTag(matchedUpdate.Reference.Tag);
+
                 if (matchedUpdate.ExistingTagNode != null)
                 {
                     if (!matchedUpdate.Comparison.TagMatch)
@@ -100,17 +102,17 @@ namespace Calamari.ArgoCD
                         {
                             matchedUpdate.ExistingTagNode.Style = ScalarStyle.DoubleQuoted;
                         }
-                        replacementsMade.Add(matchedUpdate.Reference.FriendlyName());
+                        replacementsMade.Add(resultingRef.FriendlyName());
                     }
                     else
                     {
-                        alreadyUpToDateImages.Add(matchedUpdate.Reference.FriendlyName());
+                        alreadyUpToDateImages.Add(resultingRef.FriendlyName());
                     }
                 }
                 else
                 {
                     imageNode.Children.Add(new YamlScalarNode(NewTagNodeKey), new YamlScalarNode(matchedUpdate.Reference.Tag) { Style = ScalarStyle.DoubleQuoted });
-                    replacementsMade.Add(matchedUpdate.Reference.FriendlyName());
+                    replacementsMade.Add(resultingRef.FriendlyName());
                 }
 
                 //remove any digest node (as we want the newTag node to dictate the container version)
@@ -152,7 +154,7 @@ namespace Calamari.ArgoCD
 
             var currentReference = ContainerImageReference.FromReferenceString(testReference, defaultRegistry);
 
-            return imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference), existingTagNode))
+            return imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference), existingTagNode, currentReference))
                                               .FirstOrDefault(i => i.Comparison.MatchesImage());
         }
 
@@ -186,7 +188,7 @@ namespace Calamari.ArgoCD
                    .Insert(originalImagesSequenceStartIndex, updatedImagesYaml);
         }
         
-        record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison, YamlScalarNode? ExistingTagNode);
+        record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison, YamlScalarNode? ExistingTagNode, ContainerImageReference CurrentReference);
     }
 }
 

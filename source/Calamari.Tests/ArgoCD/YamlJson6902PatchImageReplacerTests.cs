@@ -80,9 +80,9 @@ namespace Calamari.Tests.ArgoCD
             var result = replacer.UpdateImages(imagesToUpdate);
 
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("nginx:1.25");
-            result.UpdatedContents.Should().Contain("busybox:stable");
+            result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -165,10 +165,10 @@ namespace Calamari.Tests.ArgoCD
             var result = replacer.UpdateImages(imagesToUpdate);
 
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedImageReferences.Should().HaveCount(2);
             result.UpdatedContents.Should().Contain("nginx:1.25");
-            result.UpdatedContents.Should().Contain("busybox:stable");
+            result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("redis:6.0"); // Should remain unchanged
         }
 

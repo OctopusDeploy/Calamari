@@ -187,7 +187,8 @@ namespace Calamari.ArgoCD
             if (matchedUpdate == null || matchedUpdate.Comparison.TagMatch)
                 return;
 
-            var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
+            var currentImageRef = ContainerImageReference.FromReferenceString(currentImageString, defaultRegistry);
+            var newImageRef = currentImageRef.WithTag(matchedUpdate.Reference.Tag);
             UpdateJsonImageValue(imageValue, newImageRef.FriendlyName());
 
             changes.Add(newImageRef.FriendlyName());

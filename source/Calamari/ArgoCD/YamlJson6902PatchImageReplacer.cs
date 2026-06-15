@@ -175,7 +175,7 @@ namespace Calamari.ArgoCD
 
             if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
             {
-                var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
+                var newImageRef = currentImageRef.WithTag(matchedUpdate.Reference.Tag);
                 imageScalar.Value = newImageRef.FriendlyName();
 
                 if (imageScalar.Style != ScalarStyle.SingleQuoted && imageScalar.Style != ScalarStyle.DoubleQuoted)
@@ -183,10 +183,9 @@ namespace Calamari.ArgoCD
                     imageScalar.Style = ScalarStyle.DoubleQuoted;
                 }
 
-                var replacement = $"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}";
                 log.Verbose($"Updated container image in YAML JSON 6902 patch: {newImageRef}");
 
-                return new ImageReplacementResult(yamlContent, new HashSet<string> { replacement }, new HashSet<string>());
+                return new ImageReplacementResult(yamlContent, new HashSet<string> { newImageRef.FriendlyName() }, new HashSet<string>());
             }
 
             return NoChangeResult;
