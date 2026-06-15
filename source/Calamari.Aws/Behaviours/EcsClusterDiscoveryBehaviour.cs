@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Amazon;
 using Amazon.ECS;
 using Amazon.ECS.Model;
 using Amazon.Runtime;
