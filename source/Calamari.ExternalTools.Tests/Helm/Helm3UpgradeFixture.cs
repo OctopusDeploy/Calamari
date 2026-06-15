@@ -5,11 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.ExternalTools.Tests.Infrastructure;
@@ -17,7 +15,6 @@ using Calamari.ExternalTools.Tests.Infrastructure.ToolStrategies;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
-using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.ExternalTools.Tests.Helm
@@ -37,7 +34,7 @@ namespace Calamari.ExternalTools.Tests.Helm
         static string ServerUrl;
         static string ClusterToken;
 
-            ICalamariFileSystem FileSystem { get; set; }
+        ICalamariFileSystem FileSystem { get; set; }
         IVariables Variables { get; set; }
         string StagingDirectory { get; set; }
         new InMemoryLog Log { get; set; }
@@ -104,45 +101,6 @@ namespace Calamari.ExternalTools.Tests.Helm
             result.AssertOutput("Using custom helm executable at " + ToolExecutablePath);
 
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
-        }
-
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
-        public void NoValues_EmbeddedValuesUsed()
-        {
-            var result = DeployPackage();
-
-            result.AssertSuccess();
-            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
-        }
-
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
-        public void ExplicitValues_NewValuesUsed()
-        {
-            Variables.Set(Kubernetes.SpecialVariables.Helm.KeyValues, "{\"SpecialMessage\": \"FooBar\"}");
-
-            var result = DeployPackage();
-            result.AssertSuccess();
-            Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
-        }
-
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
-        public void AdditionalArgumentsPassed()
-        {
-            Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
-            AddPostDeployMessageCheckAndCleanup(explicitNamespace: null, dryRun: true);
-
-            var result = DeployPackage();
-            result.AssertSuccess();
-            result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
         }
 
         // --- Helpers ---

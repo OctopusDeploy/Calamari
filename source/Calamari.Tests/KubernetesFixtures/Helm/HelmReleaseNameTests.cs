@@ -5,7 +5,7 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.Helm
+namespace Calamari.Tests.KubernetesFixtures.Helm
 {
     /// <summary>
     /// Tests for release name sanitisation in HelmUpgradeWithKOSConvention.GetReleaseName.

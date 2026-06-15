@@ -6,7 +6,7 @@ using Calamari.Kubernetes;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.Helm
+namespace Calamari.Tests.KubernetesFixtures.Helm
 {
     /// <summary>
     /// Tests for the chart location resolution logic in HelmUpgradeExecutor.GetChartLocation.
