@@ -14,6 +14,8 @@ namespace Calamari.Aws.Kubernetes.Discovery;
 
 public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
 {
+    readonly ILog log = log;
+
     /// <remarks>
     /// This type value here must be the same as in Octopus.Server.Orchestration.ServerTasks.Deploy.TargetDiscovery.AwsAuthenticationContext
     /// This value is hardcoded because:
@@ -58,7 +60,7 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
             Log.Verbose("  Role: No IAM Role provided.");
         }
 
-        if (!authenticationDetails.TryGetCredentials(Log, out var credentials))
+        if (!authenticationDetails.TryGetCredentials(log, out var credentials))
             yield break;
 
         foreach (var region in authenticationDetails.Regions)
