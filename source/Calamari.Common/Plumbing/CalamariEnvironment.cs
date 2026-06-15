@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing
@@ -15,6 +16,7 @@ namespace Calamari.Common.Plumbing
         /// </summary>
         public static bool IsRunningOnNix => Environment.OSVersion.Platform == PlatformID.Unix && !IsRunningOnMac;
 
+        [SupportedOSPlatformGuard("windows")]
         public static bool IsRunningOnWindows => Environment.OSVersion.Platform == PlatformID.Win32NT ||
             Environment.OSVersion.Platform == PlatformID.Win32S ||
             Environment.OSVersion.Platform == PlatformID.Win32Windows ||
