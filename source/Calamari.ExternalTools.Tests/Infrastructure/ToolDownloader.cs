@@ -82,9 +82,10 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
 
         public static async Task DownloadFile(string url, string destinationPath, HttpClient client)
         {
+            using var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
             using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            using var stream = await client.GetStreamAsync(url);
-            await stream.CopyToAsync(fileStream);
+            await response.Content.CopyToAsync(fileStream);
         }
 
         public static async Task DownloadAndExtractZip(string url, string destinationDir, HttpClient client)

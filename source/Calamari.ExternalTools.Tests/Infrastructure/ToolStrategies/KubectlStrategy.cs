@@ -12,7 +12,8 @@ namespace Calamari.ExternalTools.Tests.Infrastructure.ToolStrategies
             var platform = ToolDownloader.GetPlatform();
             var arch = ToolDownloader.GetArchitecture();
             var fileName = CalamariEnvironment.IsRunningOnWindows ? "kubectl.exe" : "kubectl";
-            var url = $"https://dl.k8s.io/release/{version}/bin/{platform}/{arch}/{fileName}";
+            var versionPrefix = version.StartsWith("v") ? "" : "v";
+            var url = $"https://dl.k8s.io/release/{versionPrefix}{version}/bin/{platform}/{arch}/{fileName}";
 
             var destPath = Path.Combine(destinationDir, fileName);
             await ToolDownloader.DownloadFile(url, destPath, client);
