@@ -126,6 +126,10 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                     case ContentBlockType.Text:
                     {
                         var block = element.Deserialize<TextContentBlock>(JsonOptions);
+                        if (string.IsNullOrEmpty(block?.Text))
+                        {
+                            continue;
+                        }
                         if (logText)
                         {
                             responseBuilder.Append(block?.Text);

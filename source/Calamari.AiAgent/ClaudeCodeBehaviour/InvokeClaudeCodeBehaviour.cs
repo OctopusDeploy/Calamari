@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour
 {
@@ -24,50 +25,43 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             this.nonSensitiveVariables = nonSensitiveVariables;
         }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return true;
-            //var provider = context.Variables.Get(SpecialVariables.Action.AiAgent.Provider);
-            //return provider == "ClaudeCode";
-        }
+        public bool IsEnabled(RunningDeployment context) => true;
 
         public async Task Execute(RunningDeployment context)
         {
             var variables = context.Variables;
 
-            var prompt = variables.Get(SpecialVariables.Action.AiAgent.Prompt);
+            var prompt = variables.Get(SpecialVariables.Action.Claude.Prompt);
             if (string.IsNullOrWhiteSpace(prompt))
-                throw new CommandException($"Variable '{SpecialVariables.Action.AiAgent.Prompt}' is required but was not provided.");
+                throw new CommandException($"Variable '{SpecialVariables.Action.Claude.Prompt}' is required but was not provided.");
 
-            var apiToken = variables.Get(SpecialVariables.Action.AiAgent.ApiToken);
+            var apiToken = variables.Get(SpecialVariables.Action.Claude.ApiToken);
             if (string.IsNullOrWhiteSpace(apiToken))
-                throw new CommandException($"Variable '{SpecialVariables.Action.AiAgent.ApiToken}' is required but was not provided.");
+                throw new CommandException($"Variable '{SpecialVariables.Action.Claude.ApiToken}' is required but was not provided.");
 
-            var model = variables.Get(SpecialVariables.Action.AiAgent.Model);
-            if (string.IsNullOrWhiteSpace(model))
-                model = "claude-sonnet-4-20250514";
-
-            log.Info($"Invoking Claude Code CLI with model '{model}'...");
+            
 
             var runAs = BuildRunAs(variables);
 
             var argsBuilder = new ClaudeCommandArgsBuilder()
-                              .WithPrompt(prompt)
-                              .WithModel(model);
+                              .WithPrompt(prompt);
+                
+            var model = variables.Get(SpecialVariables.Action.Claude.Model);
+            if (!string.IsNullOrWhiteSpace(model))      
+                argsBuilder = argsBuilder.WithModel(model);
 
-            var maxTurns = variables.GetInt32(SpecialVariables.Action.AiAgent.MaxTurns);
+            var maxTurns = variables.GetInt32(SpecialVariables.Action.Claude.MaxTurns);
             if (maxTurns.HasValue)
                 argsBuilder.WithMaxTurns(maxTurns.Value);
 
-            var maxBudgetUsdRaw = variables.Get(SpecialVariables.Action.AiAgent.MaxBudgetUsd);
+            var maxBudgetUsdRaw = variables.Get(SpecialVariables.Action.Claude.MaxBudgetUsd);
             if (!string.IsNullOrWhiteSpace(maxBudgetUsdRaw)
                 && decimal.TryParse(maxBudgetUsdRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var budgetUsd))
                 argsBuilder.WithMaxBudgetUsd(budgetUsd);
 
-            var effort = variables.Get(SpecialVariables.Action.AiAgent.Effort);
+            var effort = variables.Get(SpecialVariables.Action.Claude.Effort);
             if (!string.IsNullOrWhiteSpace(effort))
                 argsBuilder.WithEffort(effort);
-
 
             using var tempDir = TemporaryDirectory.Create(); 
             //TODO: Fiddling with workdir for user perms
@@ -100,18 +94,14 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 context.CurrentDirectory,
                 cancellationToken.Token);
 
-            Log.SetOutputVariable(SpecialVariables.Action.AiAgent.Response, response, variables);
+            Log.SetOutputVariable(SpecialVariables.Action.Claude.Response, response, variables);
             log.Info("Claude Code invocation complete.");
         }
 
-        static List<string> AllowedTools(IVariables variables)
+        static string[] AllowedTools(IVariables variables)
         {
-            var defaultAllowedTools = new[] { "Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch" };
-            var allowedToolsRaw = variables.Get(SpecialVariables.Action.AiAgent.AllowedTools);
-            var allowedTools = new List<string>(!string.IsNullOrWhiteSpace(allowedToolsRaw)
-                ? allowedToolsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                : defaultAllowedTools);
-            return allowedTools;
+            var allowedToolsRaw = variables.Get(SpecialVariables.Action.Claude.AllowedTools) ?? "";
+            return allowedToolsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         }
 
         void SetupDeploymentVariables(string workingDir)
@@ -122,14 +112,14 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
         static ProcessCredentials? BuildRunAs(IVariables variables)
         {
-            var username = variables.Get(SpecialVariables.Action.AiAgent.RunAsUsername);
+            var username = variables.Get(SpecialVariables.Action.Claude.RunAsUsername);
             if (string.IsNullOrWhiteSpace(username))
                 return null;
 
             return new ProcessCredentials
             {
                 Username = username,
-                Password = variables.Get(SpecialVariables.Action.AiAgent.RunAsPassword),
+                Password = variables.Get(SpecialVariables.Action.Claude.RunAsPassword),
             };
         }
     }

@@ -42,7 +42,7 @@ public class McpWriter(IVariables variables)
 
     void AddOctopusMcp(Dictionary<string, McpServerConfig> servers, string path)
     {
-        var octopusToken = variables.Get(SpecialVariables.Action.AiAgent.OctopusToken);
+        var octopusToken = variables.Get(SpecialVariables.Action.Claude.OctopusToken);
         if (string.IsNullOrWhiteSpace(octopusToken))
             return;
 
@@ -72,7 +72,7 @@ public class McpWriter(IVariables variables)
 
     List<McpServerEntry> GetCustomMcpServers()
     {
-        var mcpServersJson = variables.Get(SpecialVariables.Action.AiAgent.McpServers);
+        var mcpServersJson = variables.Get(SpecialVariables.Action.Claude.McpServers);
         if (string.IsNullOrWhiteSpace(mcpServersJson))
         {
             return new List<McpServerEntry>();

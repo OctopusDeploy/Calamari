@@ -116,40 +116,6 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             }
             return responseBuilder;
         }
-        
-/*
-        internal static string WriteWrapperScript(ProcessStartInfo startInfo, Dictionary<string, string> customEnvVars, string workingDir)
-        {
-            var scriptPath = Path.Combine(workingDir, "run-claude.sh");
-            var sb = new StringBuilder();
-            sb.AppendLine("#!/bin/bash");
-            foreach (var kvp in customEnvVars)
-                sb.AppendLine($"export {kvp.Key}={ShellQuote(kvp.Value)}");
-            sb.AppendLine($"exec {startInfo.FileName} {startInfo.Arguments}");
-            File.WriteAllText(scriptPath, sb.ToString());
-
-            // Ensure the target su user can read the working directory and script.
-            // The directory may have been created with a restrictive umask (e.g. 077).
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                File.SetUnixFileMode(scriptPath,
-                    UnixFileMode.UserRead
-                    | UnixFileMode.UserWrite
-                    | UnixFileMode.GroupRead
-                    | UnixFileMode.OtherRead);
-                File.SetUnixFileMode(workingDir,
-                    UnixFileMode.UserRead
-                    | UnixFileMode.UserWrite
-                    | UnixFileMode.UserExecute
-                    | UnixFileMode.GroupRead
-                    | UnixFileMode.GroupExecute
-                    | UnixFileMode.OtherRead
-                    | UnixFileMode.OtherExecute);
-            }
-
-            return scriptPath;
-        }
-        */
     }
 
     public record ProcessCredentials

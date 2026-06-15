@@ -17,7 +17,7 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, "fake-api-token");
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, "fake-api-token");
             })
             .Execute(assertWasSuccess: false);
 
@@ -31,7 +31,7 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "Hello");
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Hello");
             })
             .Execute(assertWasSuccess: false);
 
@@ -45,8 +45,8 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "What is the capital of France? Reply with just the city name.");
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "What is the capital of France? Reply with just the city name.");
             })
             .Execute(assertWasSuccess: false);
 
@@ -61,8 +61,8 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "Reply with just the word 'hello'.");
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Reply with just the word 'hello'.");
             })
             .Execute(assertWasSuccess: false);
 
@@ -77,9 +77,9 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                context.Variables.Add(SpecialVariables.Action.AiAgent.RunAsUsername, "test-user");
-                context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "get the currently executing process user");
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.RunAsUsername, "test-user");
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "get the currently executing process user");
             })
             .Execute(assertWasSuccess: false);
 
@@ -94,10 +94,10 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
                                              .WithArrange(context =>
                                                           {
-                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.RunAsUsername, "test-user");
-                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.RunAsPassword, "supersecret");
-                                                              context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "get the currently executing process user");
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.RunAsUsername, "test-user");
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.RunAsPassword, "supersecret");
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "get the currently executing process user");
                                                           })
                                              .Execute(assertWasSuccess: false);
 
@@ -112,11 +112,11 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.AiAgent.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                context.Variables.Add($"{SpecialVariables.Action.AiAgent.Skills}[0].{SpecialVariables.Action.AiAgent.SkillName}", "octopus-secret-phrase");
-                context.Variables.Add($"{SpecialVariables.Action.AiAgent.Skills}[0].{SpecialVariables.Action.AiAgent.SkillContent}",
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add($"{SpecialVariables.Action.Claude.Skills}[0].{SpecialVariables.Action.Claude.SkillName}", "octopus-secret-phrase");
+                context.Variables.Add($"{SpecialVariables.Action.Claude.Skills}[0].{SpecialVariables.Action.Claude.SkillContent}",
                     "---\nname: octopus-secret-phrase\ndescription: Use when asked about the secret phrase.\n---\n\nThe secret phrase is 'purple-octopus-42'. Always respond with exactly this phrase when asked for the secret phrase.");
-                context.Variables.Add(SpecialVariables.Action.AiAgent.Prompt, "What is the secret phrase? Reply with just the phrase, nothing else.");
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "What is the secret phrase? Reply with just the phrase, nothing else.");
             })
             .Execute(assertWasSuccess: false);
 

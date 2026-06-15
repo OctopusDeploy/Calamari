@@ -33,8 +33,8 @@ public class SkillsWriterFixture
         var vars = new CalamariVariables();
         for (var i = 0; i < skills.Length; i++)
         {
-            vars.Set($"{SpecialVariables.Action.AiAgent.Skills}[{i}].{SpecialVariables.Action.AiAgent.SkillName}", skills[i].Name);
-            vars.Set($"{SpecialVariables.Action.AiAgent.Skills}[{i}].{SpecialVariables.Action.AiAgent.SkillContent}", skills[i].Content);
+            vars.Set($"{SpecialVariables.Action.Claude.Skills}[{i}].{SpecialVariables.Action.Claude.SkillName}", skills[i].Name);
+            vars.Set($"{SpecialVariables.Action.Claude.Skills}[{i}].{SpecialVariables.Action.Claude.SkillContent}", skills[i].Content);
         }
         return vars;
     }
@@ -90,10 +90,10 @@ public class SkillsWriterFixture
     public void SetupSkills_SkipsSkillsWithEmptyNameOrContent()
     {
         var vars = new CalamariVariables();
-        vars.Set($"{SpecialVariables.Action.AiAgent.Skills}[0].{SpecialVariables.Action.AiAgent.SkillName}", "");
-        vars.Set($"{SpecialVariables.Action.AiAgent.Skills}[0].{SpecialVariables.Action.AiAgent.SkillContent}", "some content");
-        vars.Set($"{SpecialVariables.Action.AiAgent.Skills}[1].{SpecialVariables.Action.AiAgent.SkillName}", "valid-name");
-        vars.Set($"{SpecialVariables.Action.AiAgent.Skills}[1].{SpecialVariables.Action.AiAgent.SkillContent}", "");
+        vars.Set($"{SpecialVariables.Action.Claude.Skills}[0].{SpecialVariables.Action.Claude.SkillName}", "");
+        vars.Set($"{SpecialVariables.Action.Claude.Skills}[0].{SpecialVariables.Action.Claude.SkillContent}", "some content");
+        vars.Set($"{SpecialVariables.Action.Claude.Skills}[1].{SpecialVariables.Action.Claude.SkillName}", "valid-name");
+        vars.Set($"{SpecialVariables.Action.Claude.Skills}[1].{SpecialVariables.Action.Claude.SkillContent}", "");
 
         new SkillsWriter(vars).SetupSkills(workingDir);
 

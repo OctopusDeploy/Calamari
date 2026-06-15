@@ -10,7 +10,7 @@ namespace Calamari.AiAgent
 
         public static class Action
         {
-            public static class AiAgent
+            public static class Claude
             {
                 public const string Prompt = "Octopus.Action.Claude.Prompt";
                 public const string ApiToken = "Octopus.Action.Claude.ApiToken";

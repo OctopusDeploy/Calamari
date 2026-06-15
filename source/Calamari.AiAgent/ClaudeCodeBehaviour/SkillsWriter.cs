@@ -61,12 +61,12 @@ public class SkillsWriter(IVariables variables)
     List<UserSkill> BuildUserSkills()
     {
         var skills = new List<UserSkill>();
-        var indexes = variables.GetIndexes(SpecialVariables.Action.AiAgent.Skills);
+        var indexes = variables.GetIndexes(SpecialVariables.Action.Claude.Skills);
         foreach (var index in indexes)
         {
-            var prefix = $"{SpecialVariables.Action.AiAgent.Skills}[{index}].";
-            var name = variables.Get(prefix + SpecialVariables.Action.AiAgent.SkillName);
-            var content = variables.Get(prefix + SpecialVariables.Action.AiAgent.SkillContent);
+            var prefix = $"{SpecialVariables.Action.Claude.Skills}[{index}].";
+            var name = variables.Get(prefix + SpecialVariables.Action.Claude.SkillName);
+            var content = variables.Get(prefix + SpecialVariables.Action.Claude.SkillContent);
 
             if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(content))
                 skills.Add(new UserSkill { Name = name, Content = content });

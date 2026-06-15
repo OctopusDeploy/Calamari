@@ -42,7 +42,7 @@ public class McpWriterFixture
                 env = new Dictionary<string, string> { ["TOKEN"] = "abc123" },
             },
         });
-        vars.Set(SpecialVariables.Action.AiAgent.McpServers, mcpJson);
+        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
         var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
 
@@ -75,7 +75,7 @@ public class McpWriterFixture
             new { name = "github", command = "npx" },
             new { name = "slack", command = "npx" },
         });
-        vars.Set(SpecialVariables.Action.AiAgent.McpServers, mcpJson);
+        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
         var tools = new McpWriter(vars).GetAllowedTools();
 
@@ -95,7 +95,7 @@ public class McpWriterFixture
     public void SetupMcpConfig_AddsOctopusMcpServer_WhenTokenAndUrlProvided()
     {
         var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.AiAgent.OctopusToken, "API-TESTKEY");
+        vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-TESTKEY");
         vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
         var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
@@ -128,7 +128,7 @@ public class McpWriterFixture
     public void SetupMcpConfig_ThrowsOnInvalidMcpJson()
     {
         var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.AiAgent.McpServers, "not valid json {{{");
+        vars.Set(SpecialVariables.Action.Claude.McpServers, "not valid json {{{");
 
         var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
 
@@ -140,7 +140,7 @@ public class McpWriterFixture
     {
         var vars = new CalamariVariables();
         var mcpJson = JsonSerializer.Serialize(new[] { new { command = "npx" } });
-        vars.Set(SpecialVariables.Action.AiAgent.McpServers, mcpJson);
+        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
         var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
 
@@ -152,7 +152,7 @@ public class McpWriterFixture
     {
         var vars = new CalamariVariables();
         var mcpJson = JsonSerializer.Serialize(new[] { new { name = "my-server" } });
-        vars.Set(SpecialVariables.Action.AiAgent.McpServers, mcpJson);
+        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
         var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
 
@@ -167,7 +167,7 @@ public class McpWriterFixture
         {
             new { name = "test-server", command = "node" },
         });
-        vars.Set(SpecialVariables.Action.AiAgent.McpServers, mcpJson);
+        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
         var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
 
@@ -193,7 +193,7 @@ public class McpWriterFixture
                 env = new Dictionary<string, string> { ["PATH"] = "/custom/path" },
             },
         });
-        vars.Set(SpecialVariables.Action.AiAgent.McpServers, mcpJson);
+        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
         var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
 
