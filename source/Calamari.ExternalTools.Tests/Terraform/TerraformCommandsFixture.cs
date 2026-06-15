@@ -95,16 +95,12 @@ namespace Calamari.ExternalTools.Tests.Terraform
                 TryDeleteDirectory(Path.Combine(fullPath, "terraformplugins"), true);
             }
 
-            ClearTerraformDirectory("AdditionalParams");
             ClearTerraformDirectory("AWS");
             ClearTerraformDirectory("Azure");
             ClearTerraformDirectory("GoogleCloud");
             ClearTerraformDirectory("PlanDetailedExitCode");
             ClearTerraformDirectory("Simple");
-            ClearTerraformDirectory($"TemplateDirectory{Path.DirectorySeparatorChar}SubFolder");
-            ClearTerraformDirectory("TemplateDirectory");
             ClearTerraformDirectory("WithOutputSensitiveVariables");
-            ClearTerraformDirectory("WithVariables");
             ClearTerraformDirectory("WithVariablesSubstitution");
         }
 
