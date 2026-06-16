@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Amazon.ECS;
 using Amazon.ECS.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Discovery;
@@ -18,11 +16,8 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Calamari.Aws.Behaviours;
 
-public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, ILog log) : IDeployBehaviour
+public class EcsClusterDiscoveryBehaviour(IEcsDiscoverer ecsDiscoverer, IAwsTargetDiscoveryContextResolver contextResolver, IEcsClusterDiscoveryWriter clusterDiscoveryWriter, ILog log) : IDeployBehaviour
 {
-    // DescribeClusters accepts at most 100 cluster identifiers per request.
-    const int DescribeClustersBatchSize = 100;
-
     public bool IsEnabled(RunningDeployment context) => true;
 
     public async Task Execute(RunningDeployment deployment)
@@ -37,9 +32,9 @@ public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, IL
             return;
         }
 
-        if (!AwsTargetDiscoveryContextResolver.TryResolve(contextJson, log, out var discoveryContext))
+        if (!contextResolver.TryResolve(contextJson, log, out var discoveryContext))
         {
-            log.Warn("Aborting target discovery.");
+            log.Warn("Aborting target discovery. Could not resolve context.");
             return;
         }
 
@@ -50,7 +45,7 @@ public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, IL
 
         if (!authentication.TryGetCredentials(log, out var credentials))
         {
-            log.Warn("Aborting target discovery.");
+            log.Warn("Aborting target discovery. Invalid credentials.");
             return;
         }
 
@@ -59,11 +54,9 @@ public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, IL
         {
             foreach (var region in authentication.Regions)
             {
-                using var client = ecsClientFactory.Create(credentials, region);
-
-                foreach (var cluster in await DiscoverClustersInRegion(client, region))
+                foreach (var cluster in await ecsDiscoverer.DiscoverClustersInRegion(credentials, region))
                 {
-                    var tags = (cluster.Tags ?? new List<Tag>())
+                    var tags = (cluster.Tags ?? [])
                                .Select(tag => new KeyValuePair<string, string>(tag.Key, tag.Value))
                                .ToTargetTags();
 
@@ -72,7 +65,7 @@ public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, IL
                     {
                         discoveredTargetCount++;
                         log.Info($"Discovered matching ECS cluster '{cluster.ClusterName}' in {region}.");
-                        WriteTargetCreationServiceMessage(region, cluster, authentication, scope, matchResult);
+                        clusterDiscoveryWriter.WriteTargetCreationServiceMessage(region, cluster, authentication, scope, matchResult);
                     }
                     else
                     {
@@ -97,37 +90,7 @@ public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, IL
                      ? $"{discoveredTargetCount} ECS cluster target{(discoveredTargetCount > 1 ? "s" : "")} found."
                      : "Could not find any ECS cluster targets.");
     }
-
-    async Task<IReadOnlyList<Cluster>> DiscoverClustersInRegion(IAmazonECS client, string region)
-    {
-        log.Verbose($"Listing ECS clusters in region {region}.");
-
-        var clusterArns = new List<string>();
-        string nextToken = null;
-        do
-        {
-            var response = await client.ListClustersAsync(new ListClustersRequest { NextToken = nextToken });
-            clusterArns.AddRange(response.ClusterArns ?? Enumerable.Empty<string>());
-            nextToken = response.NextToken;
-        } while (!string.IsNullOrEmpty(nextToken));
-
-        var clusters = new List<Cluster>();
-        foreach (var batch in clusterArns.Chunk(DescribeClustersBatchSize))
-        {
-            var response = await client.DescribeClustersAsync(new DescribeClustersRequest
-            {
-                Clusters = batch.ToList(),
-                // Tags aren't returned by default and are required to match the discovery scope.
-                Include = [ClusterField.TAGS]
-            });
-
-            clusters.AddRange((response.Clusters ?? Enumerable.Empty<Cluster>())
-                              .Where(cluster => cluster.Status != "INACTIVE"));
-        }
-
-        log.Verbose($"Found {clusters.Count} active ECS cluster(s) in region {region}.");
-        return clusters;
-    }
+    
 
     void LogAuthenticationDetails(IAwsAuthenticationDetails authentication)
     {
@@ -157,48 +120,7 @@ public class EcsClusterDiscoveryBehaviour(IEcsClientFactory ecsClientFactory, IL
             log.Verbose("\tRole: No IAM Role provided.");
         }
     }
-
-    void WriteTargetCreationServiceMessage(
-        string region,
-        Cluster cluster,
-        IAwsAuthenticationDetails authentication,
-        TargetDiscoveryScope scope,
-        TargetMatchResult matchResult)
-    {
-        var role = authentication.Role;
-        var assumesRole = role?.Type == "assumeRole";
-
-        var useInstanceRole = authentication is AwsWorkerAuthenticationDetails;
-
-        var properties = new Dictionary<string, string>
-        {
-            // Generic create-target attributes consumed by the server's target-creation framework.
-            { DefaultKeyNames.Name, $"aws-ecs/{region}/{cluster.ClusterName}" },
-            { DefaultKeyNames.OctopusRoles, matchResult.Role },
-            { DefaultKeyNames.UpdateIfExisting, bool.TrueString },
-            { DefaultKeyNames.IsDynamic, bool.TrueString },
-            { DefaultKeyNames.TenantedDeploymentParticipation, matchResult.TenantedDeploymentMode },
-
-            // ECS-cluster-specific attributes (see server-side AwsEcsClusterMessageHandler).
-            { AwsEcsServiceMessageNames.AccountIdOrNameAttribute, authentication.AccountId },
-            { AwsEcsServiceMessageNames.ClusterNameAttribute, cluster.ClusterName },
-            { AwsEcsServiceMessageNames.WorkerPoolIdOrNameAttribute, scope.WorkerPoolId },
-            { AwsEcsServiceMessageNames.ClusterRegionAttribute, region },
-            { AwsEcsServiceMessageNames.UseInstanceRole, useInstanceRole.ToString() },
-            { AwsEcsServiceMessageNames.AssumeRole, assumesRole.ToString() },
-            { AwsEcsServiceMessageNames.AssumeRoleArn, assumesRole ? role.Arn : null },
-            { AwsEcsServiceMessageNames.AssumeRoleSession, assumesRole ? role.SessionName : null },
-            { AwsEcsServiceMessageNames.AssumeRoleSessionDurationSeconds, assumesRole ? role.SessionDuration?.ToString() : null },
-            { AwsEcsServiceMessageNames.AssumeRoleExternalId, assumesRole ? role.ExternalId : null },
-        };
-
-        var serviceMessage = new ServiceMessage(
-            AwsEcsServiceMessageNames.CreateTargetName,
-            properties.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value));
-
-        log.WriteServiceMessage(serviceMessage);
-    }
-
+    
     /// <summary>
     /// The service message name and attribute keys used by server.
     /// Note: Should these migrate to CalamariContracts?

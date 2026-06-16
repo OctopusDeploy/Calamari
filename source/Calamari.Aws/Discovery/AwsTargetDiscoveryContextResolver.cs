@@ -5,12 +5,17 @@ using Octopus.Calamari.Contracts.TargetDiscovery;
 
 namespace Calamari.Aws.Discovery;
 
+public interface IAwsTargetDiscoveryContextResolver
+{
+    bool TryResolve(string contextJson, ILog log, out TargetDiscoveryContext<IAwsAuthenticationDetails> context);
+}
+
 /// <summary>
 /// Deserializes the Discovery Context into AWS Credentials
 /// </summary>
-public static class AwsTargetDiscoveryContextResolver
+public class AwsTargetDiscoveryContextResolver: IAwsTargetDiscoveryContextResolver
 {
-    public static bool TryResolve(string contextJson, ILog log, out TargetDiscoveryContext<IAwsAuthenticationDetails> context)
+    public bool TryResolve(string contextJson, ILog log, out TargetDiscoveryContext<IAwsAuthenticationDetails> context)
     {
         context = null;
         try
