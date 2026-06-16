@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests;
 
 [TestFixture]
-
+[Ignore("Most of these use real claude. we should reduce that.")]
 public class RunAgentCommandFixture
 {
     [Test]
@@ -67,7 +67,7 @@ public class RunAgentCommandFixture
             .Execute(assertWasSuccess: false);
 
         result.WasSuccessful.Should().BeTrue();
-        result.ServiceMessages.Should().Contain(m => m.Name == AiAgentServiceMessageNames.Name);
+        result.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeUsageServiceMessageNames.Name);
     }
 
     [Test]

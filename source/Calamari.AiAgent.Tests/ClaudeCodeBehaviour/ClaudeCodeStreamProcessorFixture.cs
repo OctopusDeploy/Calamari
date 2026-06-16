@@ -108,17 +108,17 @@ public class ClaudeCodeStreamProcessorFixture
 
         processor.ProcessLine(json);
 
-        log.ServiceMessages.Should().Contain(m => m.Name == AiAgentServiceMessageNames.Name);
+        log.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeUsageServiceMessageNames.Name);
 
-        var msg = log.ServiceMessages.First(m => m.Name == AiAgentServiceMessageNames.Name);
-        msg.GetValue(AiAgentServiceMessageNames.CostUsdAttribute).Should().NotBeNull();
-        msg.GetValue(AiAgentServiceMessageNames.TotalCostUsdAttribute).Should().NotBeNull();
-        msg.GetValue(AiAgentServiceMessageNames.DurationMsAttribute).Should().NotBeNull();
-        msg.GetValue(AiAgentServiceMessageNames.NumTurnsAttribute).Should().NotBeNull();
-        msg.GetValue(AiAgentServiceMessageNames.InputTokensAttribute).Should().NotBeNull();
-        msg.GetValue(AiAgentServiceMessageNames.OutputTokensAttribute).Should().NotBeNull();
-        msg.GetValue(AiAgentServiceMessageNames.CacheReadInputTokensAttribute).Should().NotBeNull();
-        msg.GetValue(AiAgentServiceMessageNames.CacheCreationInputTokensAttribute).Should().NotBeNull();
+        var msg = log.ServiceMessages.First(m => m.Name == ClaudeCodeUsageServiceMessageNames.Name);
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.CostUsdAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.TotalCostUsdAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.DurationMsAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.NumTurnsAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.InputTokensAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.OutputTokensAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.CacheReadInputTokensAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeUsageServiceMessageNames.CacheCreationInputTokensAttribute).Should().NotBeNull();
     }
 
     [Test]

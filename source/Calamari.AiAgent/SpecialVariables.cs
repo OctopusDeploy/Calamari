@@ -32,9 +32,9 @@ namespace Calamari.AiAgent
         }
     }
 
-    public static class AiAgentServiceMessageNames
+    public static class ClaudeCodeUsageServiceMessageNames
     {
-        public const string Name = "ai-agent-usage";
+        public const string Name = "claude-code-usage";
 
         public const string CostUsdAttribute = "costUsd";
         public const string TotalCostUsdAttribute = "totalCostUsd";
@@ -45,7 +45,6 @@ namespace Calamari.AiAgent
         public const string OutputTokensAttribute = "outputTokens";
         public const string CacheReadInputTokensAttribute = "cacheReadInputTokens";
         public const string CacheCreationInputTokensAttribute = "cacheCreationInputTokens";
-        public const string ModelAttribute = "model";
-        public const string ProviderAttribute = "provider";
+        public const string ModelAttribute = "model"; //TODO: @team-modern-deployments ensure we capture the model used
     }
 }
