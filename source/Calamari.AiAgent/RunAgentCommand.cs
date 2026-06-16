@@ -5,7 +5,7 @@ using Calamari.Common.Plumbing.Pipeline;
 
 namespace Calamari.AiAgent
 {
-    [Command("run-agent", Description = "Invokes an AI agent")]
+    [Command("run-claude-code", Description = "Invokes an Claude Code CLI")]
     public class RunAgentCommand : PipelineCommand
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
