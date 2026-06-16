@@ -5,6 +5,7 @@ using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour.JsonResponseModels;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
+using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour
 {
@@ -232,32 +233,32 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             var properties = new Dictionary<string, string>();
 
             if (evt.CostUsd.HasValue)
-                properties[ClaudeCodeUsageServiceMessageNames.CostUsdAttribute] = evt.CostUsd.Value.ToString("F6");
+                properties[ClaudeCodeServiceMessages.Usage.CostUsdAttribute] = evt.CostUsd.Value.ToString("F6");
             if (evt.TotalCostUsd.HasValue)
-                properties[ClaudeCodeUsageServiceMessageNames.TotalCostUsdAttribute] = evt.TotalCostUsd.Value.ToString("F6");
+                properties[ClaudeCodeServiceMessages.Usage.TotalCostUsdAttribute] = evt.TotalCostUsd.Value.ToString("F6");
             if (evt.DurationMs.HasValue)
-                properties[ClaudeCodeUsageServiceMessageNames.DurationMsAttribute] = evt.DurationMs.Value.ToString("F0");
+                properties[ClaudeCodeServiceMessages.Usage.DurationMsAttribute] = evt.DurationMs.Value.ToString("F0");
             if (evt.DurationApiMs.HasValue)
-                properties[ClaudeCodeUsageServiceMessageNames.DurationApiMsAttribute] = evt.DurationApiMs.Value.ToString("F0");
+                properties[ClaudeCodeServiceMessages.Usage.DurationApiMsAttribute] = evt.DurationApiMs.Value.ToString("F0");
             if (evt.NumTurns.HasValue)
-                properties[ClaudeCodeUsageServiceMessageNames.NumTurnsAttribute] = evt.NumTurns.Value.ToString();
+                properties[ClaudeCodeServiceMessages.Usage.NumTurnsAttribute] = evt.NumTurns.Value.ToString();
             log.Info($"AI Agent Usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
             
             if (evt.Usage is { } usage)
             {
                 if (usage.InputTokens.HasValue)
-                    properties[ClaudeCodeUsageServiceMessageNames.InputTokensAttribute] = usage.InputTokens.Value.ToString();
+                    properties[ClaudeCodeServiceMessages.Usage.InputTokensAttribute] = usage.InputTokens.Value.ToString();
                 if (usage.OutputTokens.HasValue)
-                    properties[ClaudeCodeUsageServiceMessageNames.OutputTokensAttribute] = usage.OutputTokens.Value.ToString();
+                    properties[ClaudeCodeServiceMessages.Usage.OutputTokensAttribute] = usage.OutputTokens.Value.ToString();
                 if (usage.CacheReadInputTokens.HasValue)
-                    properties[ClaudeCodeUsageServiceMessageNames.CacheReadInputTokensAttribute] = usage.CacheReadInputTokens.Value.ToString();
+                    properties[ClaudeCodeServiceMessages.Usage.CacheReadInputTokensAttribute] = usage.CacheReadInputTokens.Value.ToString();
                 if (usage.CacheCreationInputTokens.HasValue)
-                    properties[ClaudeCodeUsageServiceMessageNames.CacheCreationInputTokensAttribute] = usage.CacheCreationInputTokens.Value.ToString();
+                    properties[ClaudeCodeServiceMessages.Usage.CacheCreationInputTokensAttribute] = usage.CacheCreationInputTokens.Value.ToString();
                 
                 log.Info($"AI Agent Tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
             }
 
-            log.WriteServiceMessage(new ServiceMessage(ClaudeCodeUsageServiceMessageNames.Name, properties));
+            log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Usage.Name, properties));
         }
     }
 }

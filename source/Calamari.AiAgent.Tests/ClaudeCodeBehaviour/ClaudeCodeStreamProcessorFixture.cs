@@ -5,6 +5,7 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
@@ -108,17 +109,17 @@ public class ClaudeCodeStreamProcessorFixture
 
         processor.ProcessLine(json);
 
-        log.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeUsageServiceMessageNames.Name);
+        log.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
 
-        var msg = log.ServiceMessages.First(m => m.Name == ClaudeCodeUsageServiceMessageNames.Name);
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.CostUsdAttribute).Should().NotBeNull();
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.TotalCostUsdAttribute).Should().NotBeNull();
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.DurationMsAttribute).Should().NotBeNull();
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.NumTurnsAttribute).Should().NotBeNull();
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.InputTokensAttribute).Should().NotBeNull();
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.OutputTokensAttribute).Should().NotBeNull();
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.CacheReadInputTokensAttribute).Should().NotBeNull();
-        msg.GetValue(ClaudeCodeUsageServiceMessageNames.CacheCreationInputTokensAttribute).Should().NotBeNull();
+        var msg = log.ServiceMessages.First(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.CostUsdAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.TotalCostUsdAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.DurationMsAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.NumTurnsAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.InputTokensAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.OutputTokensAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.CacheReadInputTokensAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.CacheCreationInputTokensAttribute).Should().NotBeNull();
     }
 
     [Test]

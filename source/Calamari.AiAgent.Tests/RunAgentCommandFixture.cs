@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.Tests;
 
@@ -67,7 +68,7 @@ public class RunAgentCommandFixture
             .Execute(assertWasSuccess: false);
 
         result.WasSuccessful.Should().BeTrue();
-        result.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeUsageServiceMessageNames.Name);
+        result.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
     }
 
     [Test]
