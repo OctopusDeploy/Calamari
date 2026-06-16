@@ -1,0 +1,14 @@
+source/Calamari.Tests/ArgoCD/KustomizeUpdaterTests.cs
+  h_1903a5d928fbe4 290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "248c95c1a75488bb578b55a0663329007f67e1b8",
+  "prompts": {},
+  "humans": {
+    "h_1903a5d928fbe4": {
+      "author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
