@@ -1,4 +1,3 @@
-
 using Amazon.ECS;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;

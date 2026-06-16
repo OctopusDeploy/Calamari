@@ -1,4 +1,3 @@
-
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 using Octopus.Calamari.Contracts.TargetDiscovery;

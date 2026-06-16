@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Amazon.ECS.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Discovery;
 using Calamari.Aws.Integration.Ecs;
@@ -9,7 +8,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Octopus.Calamari.Contracts.TargetDiscovery;
 using Octopus.CoreUtilities.Extensions;
 using Task = System.Threading.Tasks.Task;
@@ -119,24 +117,5 @@ public class EcsClusterDiscoveryBehaviour(IEcsDiscoverer ecsDiscoverer, IAwsTarg
         {
             log.Verbose("\tRole: No IAM Role provided.");
         }
-    }
-    
-    /// <summary>
-    /// The service message name and attribute keys used by server.
-    /// Note: Should these migrate to CalamariContracts?
-    /// </summary>
-    static class AwsEcsServiceMessageNames
-    {
-        public const string CreateTargetName = "create-aws-ecs-target";
-        public const string AccountIdOrNameAttribute = "octopusAccountIdOrName";
-        public const string ClusterNameAttribute = "clusterName";
-        public const string WorkerPoolIdOrNameAttribute = "octopusDefaultWorkerPoolIdOrName";
-        public const string ClusterRegionAttribute = "clusterRegion";
-        public const string UseInstanceRole = "useInstanceRole";
-        public const string AssumeRole = "assumeRole";
-        public const string AssumeRoleArn = "assumeRoleArn";
-        public const string AssumeRoleSession = "assumeRoleSession";
-        public const string AssumeRoleSessionDurationSeconds = "assumeRoleSessionDurationSeconds";
-        public const string AssumeRoleExternalId = "assumeRoleExternalId";
     }
 }
