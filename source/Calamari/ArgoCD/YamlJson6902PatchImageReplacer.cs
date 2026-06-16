@@ -183,7 +183,7 @@ namespace Calamari.ArgoCD
                     imageScalar.Style = ScalarStyle.DoubleQuoted;
                 }
 
-                log.Verbose($"Updated container image in YAML JSON 6902 patch: {newImageRef}");
+                log.Verbose($"Updated container image in YAML JSON 6902 patch: {newImageRef.FriendlyName()}");
 
                 return new ImageReplacementResult(yamlContent, new HashSet<string> { newImageRef.FriendlyName() }, new HashSet<string>());
             }

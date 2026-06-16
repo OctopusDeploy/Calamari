@@ -192,7 +192,7 @@ namespace Calamari.ArgoCD
             UpdateJsonImageValue(imageValue, newImageRef.FriendlyName());
 
             changes.Add(newImageRef.FriendlyName());
-            log.Verbose($"Updated container image in JSON patch: {newImageRef}");
+            log.Verbose($"Updated container image in JSON patch: {newImageRef.FriendlyName()}");
         }
 
         ImageReferenceMatch? FindMatchingImageUpdate(string currentImageString, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
