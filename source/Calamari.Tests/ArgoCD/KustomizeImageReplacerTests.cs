@@ -304,6 +304,35 @@ images:
             result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
         }
 
+        [Theory]
+        [TestCase("docker.io/nginx", "1.28.0")]
+        [TestCase("nginx", "1.28.0")]
+        [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld", "v2")]
+        public void ReturnsSameImageBaseAsInYaml(string originalName, string newTag)
+        {
+            var inputYaml = $@"
+images:
+- name: {originalName}
+";
+            var expectedYaml = $@"
+images:
+- name: {originalName}
+  newTag: ""{newTag}""
+";
+
+            var imageReplacer = new KustomizeImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var update = new List<ContainerImageReferenceAndHelmReference>
+            {
+                new(ContainerImageReference.FromReferenceString($"{originalName}:{newTag}", ArgoCDConstants.DefaultContainerRegistry))
+            };
+
+            var result = imageReplacer.UpdateImages(update);
+
+            result.UpdatedContents.Should().Be(expectedYaml);
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be($"{originalName}:{newTag}");
+        }
+
         [Test]
         public void UpdateImages_EmptyYamlContent_LogsAppropriateWarning()
         {

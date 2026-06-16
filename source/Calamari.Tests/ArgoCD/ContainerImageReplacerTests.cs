@@ -212,6 +212,39 @@ spec:
             .Which.Should().Be("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2");
     }
 
+    [Theory]
+    [TestCase("docker.io/nginx:1.27.1", "docker.io/nginx:1.28.0")]
+    [TestCase("nginx:1.27.1", "nginx:1.28.0")]
+    [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1",
+              "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2")]
+    public void ReturnsSameImageBaseAsInYaml(string originalImage, string expectedImage)
+    {
+      var inputYaml = $@"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      image: {originalImage}";
+      var expectedYaml = $@"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      image: {expectedImage}";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var update = new List<ContainerImageReferenceAndHelmReference>
+      {
+        new(ContainerImageReference.FromReferenceString(expectedImage, DefaultContainerRegistry))
+      };
+
+      var result = imageReplacer.UpdateImages(update);
+
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be(expectedImage);
+    }
+
     [Test]
     public void DoesNotUpdateComments()
     {

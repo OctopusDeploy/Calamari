@@ -183,6 +183,30 @@ image:
         result.UpdatedContents.Should().Be(yaml);
     }
 
+    [Theory]
+    [TestCase("docker.io/nginx:1.27.1", "docker.io/nginx:1.28.0")]
+    [TestCase("nginx:1.27.1", "nginx:1.28.0")]
+    [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1",
+              "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2")]
+    public void ReturnsSameImageBaseAsInYaml(string originalImage, string expectedImage)
+    {
+        var yaml = $@"
+image:
+  name: {originalImage}
+";
+        var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
+        var images = new List<ContainerImageReferenceAndHelmReference>
+        {
+            new(ContainerImageReference.FromReferenceString(expectedImage, DefaultRegistry), "image.name")
+        };
+
+        var result = replacer.UpdateImages(images);
+
+        using var scope = new AssertionScope();
+        result.UpdatedImageReferences.Should().BeEquivalentTo(new[] { expectedImage });
+        result.UpdatedContents.Should().Contain($"name: {expectedImage}");
+    }
+
     [Test]
     public void StructuredValue_MismatchedImageName_DoesNotUpdate()
     {

@@ -457,6 +457,44 @@ patches:
             result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
         }
 
+        [Theory]
+        [TestCase("docker.io/nginx:1.27.1", "docker.io/nginx:1.28.0")]
+        [TestCase("nginx:1.27.1", "nginx:1.28.0")]
+        [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1",
+                  "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2")]
+        public void ReturnsSameImageBaseAsInYaml(string originalImage, string expectedImage)
+        {
+            var inputYaml = $@"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- target:
+    kind: Deployment
+    name: my-deployment
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    spec:
+      template:
+        spec:
+          containers:
+          - name: my-container
+            image: {originalImage}
+";
+
+            var imageReplacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var update = new List<ContainerImageReferenceAndHelmReference>
+            {
+                new(ContainerImageReference.FromReferenceString(expectedImage, ArgoCDConstants.DefaultContainerRegistry))
+            };
+
+            var result = imageReplacer.UpdateImages(update);
+
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be(expectedImage);
+            result.UpdatedContents.Should().Contain(expectedImage);
+        }
+
         [Test]
         public void UpdateImages_WithJson6902PatchNonImageOperation_DoesNotUpdate()
         {
