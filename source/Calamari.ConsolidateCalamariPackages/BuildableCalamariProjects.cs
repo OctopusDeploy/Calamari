@@ -14,6 +14,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
         static readonly string[] NonWindows =
         [
             "Calamari",
+            "Calamari.AiAgent",
             "Calamari.AzureAppService",
             "Calamari.AzureResourceGroup",
             "Calamari.GoogleCloudScripting",
