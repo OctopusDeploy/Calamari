@@ -6,7 +6,7 @@ using Calamari.ExternalTools.Tests.Infrastructure.ToolStrategies;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.Helm
+namespace Calamari.ExternalTools.Tests.ExternalTools.Helm
 {
     [TestFixture]
     public class HelmFixture : ExternalToolFixture

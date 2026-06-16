@@ -6,7 +6,7 @@ using Calamari.ExternalTools.Tests.Infrastructure.ToolStrategies;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.Kubectl
+namespace Calamari.ExternalTools.Tests.ExternalTools.Kubectl
 {
     [TestFixture]
     public class KubectlFixture : ExternalToolFixture

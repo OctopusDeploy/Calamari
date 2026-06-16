@@ -22,7 +22,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.Terraform
+namespace Calamari.ExternalTools.Tests.ExternalTools.Terraform
 {
     [TestFixture]
     public class TerraformCommandsFixture : ExternalToolFixture
@@ -43,7 +43,7 @@ namespace Calamari.ExternalTools.Tests.Terraform
         /// Path prefix for test resource directories, relative to the output directory.
         /// Resources live under Terraform/ in the ExternalTools.Tests project.
         /// </summary>
-        const string ResourceRoot = "Terraform";
+        const string ResourceRoot = "ExternalTools/Terraform";
 
         static string GetTestResourcePath(string relativePath)
             => TestEnvironment.GetTestPath(ResourceRoot, relativePath);

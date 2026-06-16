@@ -20,7 +20,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.AzureCli
+namespace Calamari.ExternalTools.Tests.ExternalTools.AzureCli
 {
     /// <summary>
     /// Bicep template deployment tests — require Azure CLI (az bicep).
@@ -46,7 +46,7 @@ namespace Calamari.ExternalTools.Tests.AzureCli
         static readonly CancellationTokenSource CancellationTokenSource = new(TimeSpan.FromMinutes(5));
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
-        string PackagePath => Path.Combine(TestEnvironment.CurrentWorkingDirectory, "AzureCli", "Packages", "Bicep");
+        string PackagePath => Path.Combine(TestEnvironment.CurrentWorkingDirectory, "ExternalTools", "AzureCli", "Packages", "Bicep");
 
         const string ParameterContent = """[{"Key":"storageAccountName","Value":"#{StorageAccountName}"},{"Key":"location","Value":"#{Location}"},{"Key":"sku","Value":"#{SKU}"}]""";
 

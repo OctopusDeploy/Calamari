@@ -11,7 +11,7 @@ using Calamari.Testing;
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.AzureCli
+namespace Calamari.ExternalTools.Tests.ExternalTools.AzureCli
 {
     /// <summary>
     /// Azure PowerShell scripting tests — require Azure CLI and PowerShell Az module.

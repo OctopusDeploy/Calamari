@@ -50,7 +50,7 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
             try
             {
                 // Run the key integration test — ApplySimple uses the Simple/ directory, no cloud creds needed
-                var fixture = new Terraform.TerraformCommandsFixture();
+                var fixture = new ExternalTools.Terraform.TerraformCommandsFixture();
                 await fixture.ResolveTool();
 
                 fixture.ToolExecutablePath.Should().NotBeNullOrEmpty();
@@ -92,7 +92,7 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
             Environment.SetEnvironmentVariable(envVar, latestVersion.ToString());
             try
             {
-                var fixture = new Kubectl.KubectlFixture();
+                var fixture = new ExternalTools.Kubectl.KubectlFixture();
                 await fixture.ResolveTool();
 
                 fixture.ToolExecutablePath.Should().NotBeNullOrEmpty();
@@ -129,7 +129,7 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
             Environment.SetEnvironmentVariable(envVar, latestVersion.ToString());
             try
             {
-                var fixture = new Helm.HelmFixture();
+                var fixture = new ExternalTools.Helm.HelmFixture();
                 await fixture.ResolveTool();
 
                 fixture.ToolExecutablePath.Should().NotBeNullOrEmpty();

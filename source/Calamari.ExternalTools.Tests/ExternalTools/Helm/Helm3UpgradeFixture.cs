@@ -17,7 +17,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
-namespace Calamari.ExternalTools.Tests.Helm
+namespace Calamari.ExternalTools.Tests.ExternalTools.Helm
 {
     [TestFixture]
     public class Helm3UpgradeFixture : ExternalToolFixture
@@ -106,7 +106,7 @@ namespace Calamari.ExternalTools.Tests.Helm
         // --- Helpers ---
 
         string GetChartPath(params string[] paths)
-            => Path.Combine(TestEnvironment.CurrentWorkingDirectory, "Helm", "Charts", Path.Combine(paths));
+            => Path.Combine(TestEnvironment.CurrentWorkingDirectory, "ExternalTools", "Helm", "Charts", Path.Combine(paths));
 
         void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false)
         {
