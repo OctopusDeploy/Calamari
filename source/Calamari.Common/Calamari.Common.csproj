@@ -48,4 +48,8 @@
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
+    </ItemGroup>
+
 </Project>

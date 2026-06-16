@@ -15,6 +15,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.TargetDiscovery;
 
 #nullable enable
 namespace Calamari.AzureAppService.Behaviors
@@ -41,7 +42,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         public async Task Execute(RunningDeployment runningDeployment)
         {
-            const string contextVariableName = "Octopus.TargetDiscovery.Context";
+            const string contextVariableName = TargetDiscoverySpecialVariables.TargetDiscoveryContext;
             var json = runningDeployment.Variables.Get(contextVariableName);
             if (string.IsNullOrEmpty(json))
             {
@@ -163,10 +164,10 @@ namespace Calamari.AzureAppService.Behaviors
                     matchResult.TenantedDeploymentMode));
         }
 
-        private TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? GetTargetDiscoveryContext<T>(
+        TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? GetTargetDiscoveryContext<T>(
             string json) where T : IAzureAccount
         {
-            const string contextVariableName = "Octopus.TargetDiscovery.Context";
+            const string contextVariableName = TargetDiscoverySpecialVariables.TargetDiscoveryContext;
             try
             {
                 var context = JsonConvert
