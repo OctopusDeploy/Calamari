@@ -1141,7 +1141,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             updater.Install(runningDeployment);
 
             // Assert
-            //using var scope = new AssertionScope();
+            using var scope = new AssertionScope();
             var results = getResults();
             results.Should().NotBeNull();
             var actual = results.Single();

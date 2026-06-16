@@ -287,7 +287,7 @@ spec:
             updatedServiceContent.Should().Contain("busybox:stable");
 
             var updatedKustomizationContent = fileSystem.ReadFile(Path.Combine(tempDir, "kustomization.yaml"));
-            updatedKustomizationContent.Should().Contain("my-registry.com/busybox:");
+            updatedKustomizationContent.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]
