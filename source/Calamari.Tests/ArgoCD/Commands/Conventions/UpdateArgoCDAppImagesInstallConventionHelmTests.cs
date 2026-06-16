@@ -1383,7 +1383,6 @@ service:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.IndexedImage("alpine")] = "alpine:2.2",
                 [PackageVariables.IndexedPackagePurpose("alpine")] = "DockerImageReference",
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             };
 
             //Act
@@ -1431,7 +1430,6 @@ service:
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1556,7 +1554,6 @@ image:
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.tag",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             });
 
             // Act
@@ -1581,7 +1578,6 @@ image:
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1669,7 +1665,6 @@ image:
                 // NOTE: no HelmReplacementPath for alpine
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             };
 
             var runningDeployment = new RunningDeployment(null, variables);
@@ -1764,7 +1759,6 @@ image:
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.tag",
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             });
 
             // Act
@@ -1795,7 +1789,6 @@ redis:
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.HelmReplacementPath("nginx")] = "nginx.tag",
-                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             });
 
             // Act
