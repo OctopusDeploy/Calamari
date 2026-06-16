@@ -9,10 +9,6 @@ namespace Calamari.Common.Features.Discovery;
 
 public abstract class KubernetesDiscovererBase(ILog log) : IKubernetesDiscoverer
 {
-    protected readonly ILog Log = log;
-
-
-
     protected bool TryGetDiscoveryContext<TAuthenticationDetails>(string json, 
                                                                   [NotNullWhen(returnValue: true)] out TAuthenticationDetails? authenticationDetails,
                                                                   out string? workerPoolId) where TAuthenticationDetails : class, ITargetDiscoveryAuthenticationDetails
