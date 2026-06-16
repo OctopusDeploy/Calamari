@@ -1,3 +1,5 @@
+[![calamari Latest Production Release](https://deploy.octopus.app/api/Spaces-1795/projects/calamari/badge/production/latest_release?label=release)](https://deploy.octopus.app/app#/Spaces-1795/projects/calamari)
+
 Calamari is the command-line tool invoked by Tentacle during a deployment. It knows how to extract and install NuGet packages, run the Deploy.ps1 etc. conventions, modify configuration files, and all the other things that happen during a deployment.
 
 ## Building
