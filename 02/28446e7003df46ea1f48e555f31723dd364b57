@@ -1,0 +1,21 @@
+source/Calamari/ArgoCD/YamlJson6902PatchImageReplacer.cs
+  s_6b1a8c1bd2af3e::t_cb318e946bc46d 186
+source/Calamari/ArgoCD/JsonPatchImageReplacer.cs
+  s_6b1a8c1bd2af3e::t_f79e4e088ae1d1 195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "0228446e7003df46ea1f48e555f31723dd364b57",
+  "prompts": {},
+  "sessions": {
+    "s_6b1a8c1bd2af3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63f46904-ec5d-4e99-ab50-f1c3bb22c4dc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
