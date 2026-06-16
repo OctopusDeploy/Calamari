@@ -1,0 +1,37 @@
+source/Calamari.Tests/ArgoCD/InlineJson6902ImageReplacerTest.cs
+  s_6b1a8c1bd2af3e::t_d383d0332db472 44-73
+source/Calamari.Tests/ArgoCD/Helm/HelmValuesImageReplaceStepVariablesTests.cs
+  s_6b1a8c1bd2af3e::t_58e53c2402b5bb 186-209
+source/Calamari.Tests/ArgoCD/Helm/HelmContainerImageReplacerTests.cs
+  s_6b1a8c1bd2af3e::t_812ed480ef266f 1-39
+source/Calamari.Tests/ArgoCD/ContainerImageReplacerTests.cs
+  s_6b1a8c1bd2af3e::t_8e8cce701b5ccf 215-247
+source/Calamari.Tests/ArgoCD/InlineJsonPatchReplacerTests.cs
+  s_6b1a8c1bd2af3e::t_f5e40002e46569 460-497
+source/Calamari.Tests/ArgoCD/YamlJson6902PatchImageReplacerTests.cs
+  s_6b1a8c1bd2af3e::t_c4f38def712eda 240-264
+source/Calamari.Tests/ArgoCD/KustomizeImageReplacerTests.cs
+  s_6b1a8c1bd2af3e::t_438bc4cde1be37 307-335
+source/Calamari.Tests/ArgoCD/InlineStrategicMergeTest.cs
+  s_6b1a8c1bd2af3e::t_b22c51fdb401a9 45-76
+source/Calamari.Tests/ArgoCD/JsonPatchImageReplacerTests.cs
+  s_6b1a8c1bd2af3e::t_51a782a6721bd4 284-311
+source/Calamari.Tests/ArgoCD/KustomizeContainerImageReplacerTests.cs
+  s_6b1a8c1bd2af3e::t_5c56e1806f21ea 2,4,7,9,19-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "1ffd0ef87297a5768122dc52e5b9d2cdddd7d2d5",
+  "prompts": {},
+  "sessions": {
+    "s_6b1a8c1bd2af3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63f46904-ec5d-4e99-ab50-f1c3bb22c4dc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "oleksandr-codefresh <oleksandr.saulyak@octopus.com>"
+    }
+  }
+}
