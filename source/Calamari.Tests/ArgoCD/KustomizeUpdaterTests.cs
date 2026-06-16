@@ -69,7 +69,7 @@ namespace Calamari.Tests.ArgoCD
         private static UpdateArgoCDAppDeploymentConfig CreateMockDeploymentConfig(List<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var gitCommitParameters = new GitCommitParameters("Test commit", "Test description", false);
-            return new UpdateArgoCDAppDeploymentConfig(gitCommitParameters, imagesToUpdate, false, true);
+            return new UpdateArgoCDAppDeploymentConfig(gitCommitParameters, imagesToUpdate,  true);
         }
 
         [Test]

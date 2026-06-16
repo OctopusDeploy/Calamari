@@ -21,22 +21,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var config = new UpdateArgoCDAppDeploymentConfig(
                 DefaultCommitParameters,
                 new List<ContainerImageReferenceAndHelmReference> { ImageRefWithHelmRef("image.tag") },
-                useHelmReferenceFromContainer: true,
                 false);
 
             config.HasStepBasedHelmValueReferences().Should().BeTrue();
-        }
-
-        [Test]
-        public void HasStepBasedHelmValueReferences_WhenUseHelmReferenceFromContainerFalse_ReturnsFalse()
-        {
-            var config = new UpdateArgoCDAppDeploymentConfig(
-                DefaultCommitParameters,
-                new List<ContainerImageReferenceAndHelmReference> { ImageRefWithHelmRef("image.tag") },
-                useHelmReferenceFromContainer: false,
-                false);
-
-            config.HasStepBasedHelmValueReferences().Should().BeFalse();
         }
 
         [Test]
@@ -45,7 +32,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var config = new UpdateArgoCDAppDeploymentConfig(
                 DefaultCommitParameters,
                 new List<ContainerImageReferenceAndHelmReference> { ImageRefWithoutHelmRef() },
-                useHelmReferenceFromContainer: true,
                 false);
 
             config.HasStepBasedHelmValueReferences().Should().BeFalse();
@@ -57,7 +43,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var config = new UpdateArgoCDAppDeploymentConfig(
                 DefaultCommitParameters,
                 new List<ContainerImageReferenceAndHelmReference>(),
-                useHelmReferenceFromContainer: true,
                 false);
 
             config.HasStepBasedHelmValueReferences().Should().BeFalse();
@@ -73,7 +58,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                     ImageRefWithoutHelmRef(),
                     ImageRefWithHelmRef("image.tag")
                 },
-                useHelmReferenceFromContainer: true,
                 false);
 
             config.HasStepBasedHelmValueReferences().Should().BeTrue();
@@ -85,7 +69,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var config = new UpdateArgoCDAppDeploymentConfig(
                 DefaultCommitParameters,
                 new List<ContainerImageReferenceAndHelmReference> { ImageRefWithHelmRef(helmRef: "") },
-                useHelmReferenceFromContainer: true,
                 false);
 
             config.HasStepBasedHelmValueReferences().Should().BeFalse();
@@ -98,7 +81,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var config = new UpdateArgoCDAppDeploymentConfig(
                 commitParams,
                 new List<ContainerImageReferenceAndHelmReference>(),
-                useHelmReferenceFromContainer: false,
                 false);
 
             config.CommitParameters.Should().BeSameAs(commitParams);
