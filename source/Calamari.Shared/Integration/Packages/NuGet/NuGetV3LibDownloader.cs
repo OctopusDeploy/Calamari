@@ -43,6 +43,12 @@ namespace Calamari.Integration.Packages.NuGet
                                                               .GetAwaiter()
                                                               .GetResult();
 
+                // GetResourceAsync returns null (rather than throwing) when no provider can supply the resource for this
+                // feed, so guard it explicitly — otherwise the dereference below would resurface the very
+                // NullReferenceException this change exists to eliminate (FD-440).
+                if (findPackageByIdResource == null)
+                    throw new Exception($"The NuGet feed '{feedUri}' did not return a package lookup resource (FindPackageByIdResource). Make sure the feed URL is a valid NuGet V3 feed.");
+
                 var packageIdentity = new PackageIdentity(packageId, version.ToNuGetVersion());
 
                 string targetTempNupkg = Path.Combine(targetPath, Path.GetRandomFileName());
