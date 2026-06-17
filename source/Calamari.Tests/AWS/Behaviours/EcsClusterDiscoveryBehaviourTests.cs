@@ -172,6 +172,7 @@ public class EcsClusterDiscoveryBehaviourTests
         await sut.Execute(deployment);
 
         // Assert
+        fakeLog.Received().Info("Could not find any ECS cluster targets.");
         fakeWriter.DidNotReceive()
                   .WriteTargetCreationServiceMessage(
                       Arg.Any<string>(),
@@ -311,6 +312,8 @@ public class EcsClusterDiscoveryBehaviourTests
         await sut.Execute(deployment);
 
         // Assert
+        fakeLog.Received().Info("2 ECS cluster targets found.");
+        
         fakeWriter.ReceivedWithAnyArgs(2).WriteTargetCreationServiceMessage(null, null, null, null, null);
         
         fakeWriter.Received()
