@@ -7,5 +7,4 @@ public static class DefaultKeyNames
     public const string UpdateIfExisting = "updateIfExisting";
     public const string IsDynamic = "isDynamic";
     public const string TenantedDeploymentParticipation = "tenantedDeploymentParticipation";
-
 }
