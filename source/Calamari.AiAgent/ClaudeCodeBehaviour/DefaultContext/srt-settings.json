@@ -1,0 +1,11 @@
+{
+  "network": {
+    "allowedDomains": ["api.anthropic.com", "api.claude.com", "*.claude.ai"],
+    "deniedDomains": []
+  },
+  "filesystem": {
+    "allowWrite": [".", "/tmp"],
+    "denyRead": ["~/.ssh", "~/.aws"],
+    "denyWrite": []
+  }
+}

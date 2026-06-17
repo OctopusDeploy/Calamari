@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
@@ -21,6 +22,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                                            ProcessCredentials? runAs,
                                            string workingDir,
                                            string calamariDir, //RunAs might not be able to access this dir.. but we need to preserve the logs.
+                                           string? wrapperCommand,
                                            CancellationToken cancellationToken)
         {
             
@@ -31,13 +33,15 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             // Temporarily here while working out the user process issues
             //await File.Create(debugLogPath).DisposeAsync();
             
-            log.Verbose($"Claude Code command: claude {argsBuilder.Build()}");
+            var (logFileName, logArgs) = ClaudeCodeProcessStartInfo.ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
+            log.Verbose($"Claude Code command: {logFileName} {logArgs}");
 
             var runner = new ClaudeCodeProcessStartInfo();
             var process = await runner.StartClaudeProcess(workingDir,
                 runAs,
                 argsBuilder.WithDebugLogPath(debugLogPath),
                 customEnvVars,
+                wrapperCommand,
                 cancellationToken);
 
             var stdoutTask = Task.Run(() => ProcessLine(process, verboseLogPath, cancellationToken), cancellationToken);
@@ -82,6 +86,11 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             }
         }
 
+        // Covers CSI sequences (\x1b[...m), OSC sequences (\x1b]...BEL), and other Fe sequences
+        static readonly Regex AnsiEscapeRegex = new(@"\x1b(?:[@-Z\\-_]|\[[0-9;]*[@-~]|\][^\x07]*\x07)", RegexOptions.Compiled);
+
+        static string StripAnsiEscapes(string line) => AnsiEscapeRegex.Replace(line, string.Empty);
+
         async Task<StringBuilder> ProcessLine(Process process, string verboseLogPath, CancellationToken cancellationToken)
         {
             var responseBuilder = new StringBuilder();
@@ -93,11 +102,10 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 var c = (char)ch;
                 if (c == '\n')
                 {
-                    line = line.TrimEnd('\r');
+                    line = StripAnsiEscapes(line.TrimEnd('\r'));
 
                     await File.AppendAllTextAsync(verboseLogPath, line + "\n", cancellationToken);
-                    
-                     streamProcessor.ProcessLine(line);
+                    streamProcessor.ProcessLine(line);
 
                     line = "";
                 }
@@ -109,7 +117,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
             if (line != "")
             {
-                line = line.TrimEnd('\r');
+                line = StripAnsiEscapes(line.TrimEnd('\r'));
 
                 await File.AppendAllTextAsync(verboseLogPath, line + "\n", cancellationToken);
                 streamProcessor.ProcessLine(line);

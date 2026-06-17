@@ -63,6 +63,12 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             if (!string.IsNullOrWhiteSpace(effort))
                 argsBuilder.WithEffort(effort);
 
+            var useSandbox = variables.GetFlag(SpecialVariables.Action.Claude.Sandbox);
+            var wrapperCommand = variables.Get(SpecialVariables.Action.Claude.WrapperCommand);
+
+            if (useSandbox && !string.IsNullOrWhiteSpace(wrapperCommand))
+                throw new CommandException($"'{SpecialVariables.Action.Claude.Sandbox}' and '{SpecialVariables.Action.Claude.WrapperCommand}' cannot both be set.");
+
             using var tempDir = TemporaryDirectory.Create(); 
             //TODO: Fiddling with workdir for user perms
             //new TemporaryDirectory($"/tmp/{Guid.NewGuid():N}");
@@ -82,6 +88,10 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             
             new SkillsWriter(variables).SetupSkills(workingDir);
             SetupDeploymentVariables(workingDir);
+            if (useSandbox)
+                SetupSandboxSettings(workingDir);
+            if (!string.IsNullOrWhiteSpace(wrapperCommand))
+                SetupSrtSettings();
             argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
             argsBuilder.WithMcpConfigPath(mcpConfig);
             
@@ -90,8 +100,9 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 ["ANTHROPIC_API_KEY"] = apiToken,
             };
             
-            var response = await new ClaudeCodeCliRunner(log).RunAsync(argsBuilder, customEnvVars,  runAs, workingDir,
+            var response = await new ClaudeCodeCliRunner(log).RunAsync(argsBuilder, customEnvVars, runAs, workingDir,
                 context.CurrentDirectory,
+                wrapperCommand,
                 cancellationToken.Token);
 
             Log.SetOutputVariable(SpecialVariables.Action.Claude.Response, response, variables);
@@ -108,6 +119,23 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
         {
             var json = JsonSerializer.Serialize(nonSensitiveVariables, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(Path.Combine(workingDir, "deployment-variables.json"), json);
+        }
+
+        static void SetupSrtSettings()
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var resourceName = "Calamari.AiAgent.ClaudeCodeBehaviour.DefaultContext.srt-settings.json";
+            using var stream = assembly.GetManifestResourceStream(resourceName)
+                               ?? throw new Exception("Could not find embedded srt-settings.json resource.");
+            using var reader = new StreamReader(stream);
+            var destPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".srt-settings.json");
+            File.WriteAllText(destPath, reader.ReadToEnd());
+        }
+
+        static void SetupSandboxSettings(string workingDir)
+        {
+            var claudeDir = Directory.CreateDirectory(Path.Combine(workingDir, ".claude"));
+            File.WriteAllText(Path.Combine(claudeDir.FullName, "settings.json"), """{"sandbox":{"enabled":true}}""");
         }
 
         static ProcessCredentials? BuildRunAs(IVariables variables)

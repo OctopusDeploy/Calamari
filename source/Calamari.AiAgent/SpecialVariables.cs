@@ -25,6 +25,9 @@ namespace Calamari.AiAgent
                 public const string RunAsUsername = "Octopus.Action.Claude.RunAsUsername";
                 public const string RunAsPassword = "Octopus.Action.Claude.RunAsPassword";
 
+                public const string Sandbox = "Octopus.Action.Claude.Sandbox";
+                public const string WrapperCommand = "Octopus.Action.Claude.WrapperCommand";
+
                 public const string Skills = "Octopus.Action.Claude.Skills";
                 public const string SkillName = "Name";
                 public const string SkillContent = "Content";

@@ -20,14 +20,40 @@ public class ClaudeCodeProcessStartInfo
         return "'" + value.Replace("'", @"'\''") + "'";
     }
 
-    
+    // Resolves the final executable and arguments, applying the wrapper if provided.
+    // Three tokens are supported:
+    //   {claude}      — expands to the claude executable name: "claude"
+    //   {claude-args} — expands to just the arguments:        "--model ... -p <prompt>"
+    //   {workdir}     — expands to the working directory path (needed so sbx mounts it into the sandbox)
+    // For sbx use: "sbx run {claude} {workdir} -- {claude-args}"
+    // If no wrapper is provided, FileName="claude" and Arguments=argsBuilder.Build().
+    internal static (string fileName, string arguments) ResolveInvocation(ClaudeCommandArgsBuilder argsBuilder, string? wrapperCommand, string workingDir)
+    {
+        var claudeArgs = argsBuilder.Build();
+
+        if (string.IsNullOrWhiteSpace(wrapperCommand))
+            return (ClaudeCodePath, claudeArgs);
+
+        var resolved = wrapperCommand
+            .Replace("{claude}", ClaudeCodePath)
+            .Replace("{claude-args}", claudeArgs.TrimStart())
+            .Replace("{workdir}", workingDir);
+
+        var spaceIndex = resolved.IndexOf(' ');
+        if (spaceIndex < 0)
+            return (resolved, string.Empty);
+
+        return (resolved[..spaceIndex], resolved[(spaceIndex + 1)..]);
+    }
+
     async Task<Process> StartWindowsProcess(string workingDir,
                                             ProcessCredentials? runAs,
                                             ClaudeCommandArgsBuilder argsBuilder,
-                                            Dictionary<string, string> environmentVariables)
+                                            Dictionary<string, string> environmentVariables,
+                                            string? wrapperCommand)
     {
-        var startInfo = StartSimpleProcess(workingDir, argsBuilder, environmentVariables);
-            
+        var startInfo = StartSimpleProcess(workingDir, argsBuilder, environmentVariables, wrapperCommand);
+
         if (runAs != null)
         {
             startInfo.UserName = runAs.Username;
@@ -45,12 +71,13 @@ public class ClaudeCodeProcessStartInfo
         return Process.Start(startInfo)!;
     }
 
-    static ProcessStartInfo StartSimpleProcess(string workingDir, ClaudeCommandArgsBuilder argsBuilder, Dictionary<string, string> environmentVariables)
+    static ProcessStartInfo StartSimpleProcess(string workingDir, ClaudeCommandArgsBuilder argsBuilder, Dictionary<string, string> environmentVariables, string? wrapperCommand)
     {
+        var (fileName, arguments) = ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
         var startInfo = new ProcessStartInfo
         {
-            FileName = ClaudeCodePath,
-            Arguments = argsBuilder.Build(),
+            FileName = fileName,
+            Arguments = arguments,
             WorkingDirectory = workingDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -66,41 +93,85 @@ public class ClaudeCodeProcessStartInfo
                                                   ProcessCredentials? runAs,
                                                   ClaudeCommandArgsBuilder argsBuilder,
                                                   Dictionary<string, string> environmentVariables,
+                                                  string? wrapperCommand,
                                                   CancellationToken ct)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            return await StartWindowsProcess(workingDir, runAs, argsBuilder, environmentVariables);
+            return await StartWindowsProcess(workingDir, runAs, argsBuilder, environmentVariables, wrapperCommand);
         }
 
         return await StartMacOrLinuxProcess(workingDir,
             runAs,
             argsBuilder,
             environmentVariables,
+            wrapperCommand,
             ct);
     }
 
+
+    // Wrapper tools like sbx require a PTY to function — without one, Docker's exec API times out.
+    // We write a shell script and run it under `script` (same approach as the RunAs path) to allocate one.
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Higher up checks enforce the correct OS")]
+    async Task<Process> StartWithPty(string workingDir,
+                                     ClaudeCommandArgsBuilder argsBuilder,
+                                     Dictionary<string, string> environmentVariables,
+                                     string wrapperCommand,
+                                     CancellationToken ct)
+    {
+        var (fileName, arguments) = ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
+        var scriptPath = Path.Combine(workingDir, "run-wrapper.sh");
+        await File.WriteAllTextAsync(scriptPath, $"#!/bin/bash\n{fileName} {arguments}\n", ct);
+        File.SetUnixFileMode(scriptPath,
+            UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+            UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+            UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "script",
+            WorkingDirectory = workingDir,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            startInfo.ArgumentList.AddRange(["-q", "/dev/null", scriptPath]);
+        else
+            startInfo.ArgumentList.AddRange(["-q", "-e", "-c", scriptPath, "/dev/null"]);
+
+        foreach (var kvp in environmentVariables)
+            startInfo.Environment[kvp.Key] = kvp.Value;
+
+        return Process.Start(startInfo)!;
+    }
 
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Higher up checks enforce the correct OS")]
     async Task<Process> StartMacOrLinuxProcess(string workingDir,
                                                ProcessCredentials? runAs,
                                                ClaudeCommandArgsBuilder argsBuilder,
                                                Dictionary<string, string> environmentVariables,
+                                               string? wrapperCommand,
                                                CancellationToken ct)
     {
 
         var username = runAs?.Username!;
         if (runAs == null || string.IsNullOrEmpty(username))
         {
-            var startInfo1 = StartSimpleProcess(workingDir, argsBuilder, environmentVariables);
-            var process1 = Process.Start(startInfo1)!;
-            return process1;
+            if (!string.IsNullOrWhiteSpace(wrapperCommand))
+                return await StartWithPty(workingDir, argsBuilder, environmentVariables, wrapperCommand, ct);
+
+            var startInfo1 = StartSimpleProcess(workingDir, argsBuilder, environmentVariables, null);
+            return Process.Start(startInfo1)!;
         }
 
+        var (scriptFileName, scriptArgs) = ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
         var filePath = Path.Combine(workingDir, "my-command.sh");
         await File.WriteAllTextAsync(Path.Combine(workingDir, "my-command.sh"), $@"#!/bin/bash
 cd {workingDir}
-{ClaudeCodePath} {argsBuilder.Build()}
+{scriptFileName} {scriptArgs}
 ", ct);
         File.SetUnixFileMode(filePath,
             UnixFileMode.UserRead
