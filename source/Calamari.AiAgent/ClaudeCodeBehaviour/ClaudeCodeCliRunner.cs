@@ -8,7 +8,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour
@@ -40,16 +39,14 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 customEnvVars,
                 cancellationToken);
 
-            var stdoutTask = Task.Run(() => ProcessLine(process, verboseLogPath, cancellationToken), cancellationToken);
+            var responseBuilder = new StringBuilder();
+            var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder);
+
+            var stdoutTask = Task.Run(() => ProcessLine(process, streamProcessor, verboseLogPath, cancellationToken), cancellationToken);
             var stderrTask = Task.Run(() => ProcessError(process), cancellationToken);
 
             await Task.WhenAll(stdoutTask, stderrTask);
             await process.WaitForExitAsync(cancellationToken);
-
-            if (process.ExitCode != 0)
-            {
-                throw new CommandException($"Claude Code exited with code {process.ExitCode}");
-            }
 
             Directory.CreateDirectory(Path.Combine(calamariDir, "log"));
             if (File.Exists(debugLogPath))
@@ -68,7 +65,9 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 log.NewOctopusArtifact(movedFilePath, "claude-agent-verbose.log", fileInfo.Length);
             }
 
-            return stdoutTask.Result.ToString();
+            new ClaudeAgentOutcomeEvaluator().EnsureSuccessful(process.ExitCode, streamProcessor.Result);
+
+            return responseBuilder.ToString();
         }
 
         async Task ProcessError(Process process)
@@ -82,10 +81,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             }
         }
 
-        async Task<StringBuilder> ProcessLine(Process process, string verboseLogPath, CancellationToken cancellationToken)
+        async Task ProcessLine(Process process, ClaudeCodeStreamProcessor streamProcessor, string verboseLogPath, CancellationToken cancellationToken)
         {
-            var responseBuilder = new StringBuilder();
-            var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder);
             var line = string.Empty;
             int ch;
             while ((ch = process.StandardOutput.Read()) >= 0)
@@ -114,7 +111,6 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 await File.AppendAllTextAsync(verboseLogPath, line + "\n", cancellationToken);
                 streamProcessor.ProcessLine(line);
             }
-            return responseBuilder;
         }
     }
 
