@@ -44,7 +44,7 @@ public class EcsClusterDiscoveryBehaviourTests
     }
 
     [Test]
-    public async Task Execute_WithValidContext_ExitsAndLogsWarning()
+    public async Task Execute_WithInalidContext_ExitsAndLogsWarning()
     {
         const string missingAuthContext = """
                                           {
