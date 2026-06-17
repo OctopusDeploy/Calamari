@@ -423,7 +423,5 @@ namespace Calamari.Deployment
         {
             public static readonly string Manifest = "Octopus.Steps.Manifest";
         }
-        
-        public const string TargetDiscoveryContext = "Octopus.TargetDiscovery.Context";
     }
 }
