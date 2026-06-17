@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -63,6 +64,26 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             });
 
             return calledCount;
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        public void GivesActionableErrorWhenV3FeedIsMissingTheRequestedVersion()
+        {
+            // FD-440: requesting a version that doesn't exist on a NuGet V3 feed used to throw a bare
+            // NullReferenceException from inside the NuGet client. It should give a clear "not found" message instead.
+            var targetFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.nupkg");
+
+            var ex = Assert.Throws<Exception>(() =>
+                NuGetV3LibDownloader.DownloadPackage(
+                    "Newtonsoft.Json",
+                    VersionFactory.CreateSemanticVersion("999.999.999"),
+                    new Uri("https://api.nuget.org/v3/index.json"),
+                    null,
+                    targetFilePath));
+
+            ex.Should().NotBeOfType<NullReferenceException>("the missing version should surface an actionable message, not a bare NRE");
+            ex!.Message.Should().Contain("was not found");
         }
     }
 }
