@@ -89,7 +89,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                     BashSandboxSettingsWriter.Write(workingDir, variables);
                     break;
                 case SandboxMode.Srt:
-                    SrtVersionGuard.Ensure(log);
+                    SrtVersionGuard.EnsureAboveMinimum(log);
                     argsBuilder.WithSrtSettingsPath(SrtSettingsWriter.Write(workingDir, variables));
                     break;
                 case SandboxMode.None:

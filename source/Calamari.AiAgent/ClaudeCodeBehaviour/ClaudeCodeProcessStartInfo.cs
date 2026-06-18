@@ -14,13 +14,12 @@ public class ClaudeCodeProcessStartInfo
 {
     //TODO: Should this be configurable?
     const string ClaudeCodePath = "claude";
+    const string SrtPath = "srt";
 
     internal static string ShellQuote(string value)
     {
         return "'" + value.Replace("'", @"'\''") + "'";
     }
-
-    const string SrtPath = "srt";
 
     internal static (string fileName, string arguments) ResolveInvocation(ClaudeCommandArgsBuilder argsBuilder)
     {
