@@ -22,37 +22,26 @@ public class ClaudeCodeProcessStartInfo
 
     const string SrtPath = "srt";
 
-    // Resolves the final executable and arguments for the chosen sandbox mode.
-    //   None / Bash — runs claude directly:  fileName="claude", arguments=<claude args>
-    //   Srt          — wraps claude with srt: fileName="srt",    arguments="--settings <srtSettingsPath> claude <claude args>"
-    // The srt settings path is carried on the args builder (argsBuilder.SrtSettingsPath). srt's CLI form
-    // is: srt --settings <path> <command> <args>. The process cwd is the working directory and the
-    // srt-settings allowWrite includes ".", so no mount token is needed.
-    internal static (string fileName, string arguments) ResolveInvocation(ClaudeCommandArgsBuilder argsBuilder, SandboxMode sandboxMode)
+    internal static (string fileName, string arguments) ResolveInvocation(ClaudeCommandArgsBuilder argsBuilder)
     {
         var claudeArgs = argsBuilder.Build();
-
-        if (sandboxMode != SandboxMode.Srt) return (ClaudeCodePath, claudeArgs);
-
-        if (string.IsNullOrWhiteSpace(argsBuilder.SrtSettingsPath))
+        return argsBuilder.SandboxMode switch
         {
-            throw new InvalidOperationException("Srt sandbox mode requires an srt settings file path.");
-        }
-
-        return (SrtPath, $"--settings {argsBuilder.SrtSettingsPath} {ClaudeCodePath}{claudeArgs}");
+            SandboxMode.Srt when string.IsNullOrWhiteSpace(argsBuilder.SrtSettingsPath)
+                => throw new InvalidOperationException("Srt sandbox mode requires an srt settings file path."),
+            SandboxMode.Srt
+                => (SrtPath, $"--settings {argsBuilder.SrtSettingsPath} {ClaudeCodePath}{claudeArgs}"),
+            _ => (ClaudeCodePath, claudeArgs),
+        };
     }
 
     async Task<Process> StartWindowsProcess(
         string workingDir,
         ProcessCredentials? runAs,
         ClaudeCommandArgsBuilder argsBuilder,
-        Dictionary<string, string> environmentVariables,
-        SandboxMode sandboxMode)
+        Dictionary<string, string> environmentVariables)
     {
-        var startInfo = StartSimpleProcess(workingDir,
-            argsBuilder,
-            environmentVariables,
-            sandboxMode);
+        var startInfo = StartSimpleProcess(workingDir, argsBuilder, environmentVariables);
 
         if (runAs != null)
         {
@@ -74,10 +63,9 @@ public class ClaudeCodeProcessStartInfo
     static ProcessStartInfo StartSimpleProcess(
         string workingDir,
         ClaudeCommandArgsBuilder argsBuilder,
-        Dictionary<string, string> environmentVariables,
-        SandboxMode sandboxMode)
+        Dictionary<string, string> environmentVariables)
     {
-        var (fileName, arguments) = ResolveInvocation(argsBuilder, sandboxMode);
+        var (fileName, arguments) = ResolveInvocation(argsBuilder);
         var startInfo = new ProcessStartInfo
         {
             FileName = fileName,
@@ -102,7 +90,6 @@ public class ClaudeCodeProcessStartInfo
         ProcessCredentials? runAs,
         ClaudeCommandArgsBuilder argsBuilder,
         Dictionary<string, string> environmentVariables,
-        SandboxMode sandboxMode,
         CancellationToken ct)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -110,15 +97,13 @@ public class ClaudeCodeProcessStartInfo
             return await StartWindowsProcess(workingDir,
                 runAs,
                 argsBuilder,
-                environmentVariables,
-                sandboxMode);
+                environmentVariables);
         }
 
         return await StartMacOrLinuxProcess(workingDir,
             runAs,
             argsBuilder,
             environmentVariables,
-            sandboxMode,
             ct);
     }
 
@@ -128,25 +113,16 @@ public class ClaudeCodeProcessStartInfo
         ProcessCredentials? runAs,
         ClaudeCommandArgsBuilder argsBuilder,
         Dictionary<string, string> environmentVariables,
-        SandboxMode sandboxMode,
         CancellationToken ct)
     {
         var username = runAs?.Username!;
         if (runAs == null || string.IsNullOrEmpty(username))
         {
-            // srt and the Bash sandbox both run claude directly with piped stdio — no PTY needed.
-            // srt spawns a local child (bubblewrap/sandbox-exec) rather than going through a Docker-style
-            // exec API, and headless `claude --output-format stream-json` is designed for non-TTY use.
-            // Only the run-as path below needs `script`, to drive the interactive `su` password prompt.
-            var startInfo1 = StartSimpleProcess(workingDir,
-                argsBuilder,
-                environmentVariables,
-                sandboxMode);
-
-            return Process.Start(startInfo1)!;
+            return Process.Start(StartSimpleProcess(workingDir, argsBuilder, environmentVariables))
+                   ?? throw new Exception("Failed to start the claude code process");
         }
 
-        var (scriptFileName, scriptArgs) = ResolveInvocation(argsBuilder, sandboxMode);
+        var (scriptFileName, scriptArgs) = ResolveInvocation(argsBuilder);
         var filePath = Path.Combine(workingDir, "my-command.sh");
         await File.WriteAllTextAsync(Path.Combine(workingDir, "my-command.sh"),
             $"""
@@ -155,6 +131,7 @@ public class ClaudeCodeProcessStartInfo
              {scriptFileName} {scriptArgs}
              """,
             ct);
+
         File.SetUnixFileMode(filePath,
             UnixFileMode.UserRead
             | UnixFileMode.UserWrite
@@ -187,7 +164,10 @@ public class ClaudeCodeProcessStartInfo
             CreateNoWindow = true,
         };
 
-        var argumentList = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? new[] { "-q", "/dev/null", "su", "-m", username, "-c", filePath } : new[] { "-qec", "su", "-", username, "-c", filePath, "/dev/null" };
+        var argumentList = RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+            ? new[] { "-q", "/dev/null", "su", "-m", username, "-c", filePath }
+            : new[] { "-qec", "su", "-", username, "-c", filePath, "/dev/null" };
+
         startInfo.ArgumentList.AddRange(argumentList);
 
         startInfo.Environment.Clear();
@@ -240,6 +220,7 @@ public class ClaudeCodeProcessStartInfo
                       | UnixFileMode.OtherRead
                       | UnixFileMode.OtherExecute
                       | UnixFileMode.OtherWrite;
+
         var fileMode = UnixFileMode.UserRead
                        | UnixFileMode.UserWrite
                        | UnixFileMode.UserExecute

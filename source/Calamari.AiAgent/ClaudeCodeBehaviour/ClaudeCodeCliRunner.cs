@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -22,7 +20,6 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                                            ProcessCredentials? runAs,
                                            string workingDir,
                                            string calamariDir, //RunAs might not be able to access this dir.. but we need to preserve the logs.
-                                           SandboxMode sandboxMode,
                                            CancellationToken cancellationToken)
         {
             
@@ -33,7 +30,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             // Temporarily here while working out the user process issues
             //await File.Create(debugLogPath).DisposeAsync();
             
-            var (logFileName, logArgs) = ClaudeCodeProcessStartInfo.ResolveInvocation(argsBuilder, sandboxMode);
+            var (logFileName, logArgs) = ClaudeCodeProcessStartInfo.ResolveInvocation(argsBuilder);
             log.Verbose($"Claude Code command: {logFileName} {logArgs}");
 
             var runner = new ClaudeCodeProcessStartInfo();
@@ -41,7 +38,6 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 runAs,
                 argsBuilder.WithDebugLogPath(debugLogPath),
                 customEnvVars,
-                sandboxMode,
                 cancellationToken);
 
             var stdoutTask = Task.Run(() => ProcessLine(process, verboseLogPath, cancellationToken), cancellationToken);
