@@ -1,5 +1,4 @@
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using Calamari.Common.Plumbing.Variables;
 using ClaudeVariables = Calamari.AiAgent.SpecialVariables.Action.Claude;
@@ -27,29 +26,24 @@ public static class SrtSettingsWriter
         var network = settings.Network;
         var filesystem = settings.Filesystem;
 
-        network.AllowedDomains = variables.GetStrings(ClaudeVariables.SrtNetworkAllowedDomains, '\n', '\r').Concat(network.AllowedDomains).Distinct().ToList();
-        network.DeniedDomains = variables.GetStrings(ClaudeVariables.SrtNetworkDeniedDomains, '\n', '\r').Concat(network.DeniedDomains).Distinct().ToList();
-        filesystem.AllowWrite = variables.GetStrings(ClaudeVariables.SrtFilesystemAllowWrite, '\n', '\r').Concat(filesystem.AllowWrite).Distinct().ToList();
-        filesystem.DenyWrite = variables.GetStrings(ClaudeVariables.SrtFilesystemDenyWrite, '\n', '\r').Concat(filesystem.DenyWrite).Distinct().ToList();
-        filesystem.DenyRead = variables.GetStrings(ClaudeVariables.SrtFilesystemDenyRead, '\n', '\r').Concat(filesystem.DenyRead).Distinct().ToList();
-        filesystem.AllowRead = variables.GetStrings(ClaudeVariables.SrtFilesystemAllowRead, '\n', '\r').Concat(filesystem.AllowRead).Distinct().ToList();
+        network.AllowedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.SrtNetworkAllowedDomains, SandboxDefaults.AllowedDomains);
+        network.DeniedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.SrtNetworkDeniedDomains, network.DeniedDomains);
+        filesystem.AllowWrite = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemAllowWrite, SandboxDefaults.AllowWrite);
+        filesystem.DenyWrite = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemDenyWrite, filesystem.DenyWrite);
+        filesystem.DenyRead = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemDenyRead, SandboxDefaults.DenyRead);
+        filesystem.AllowRead = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemAllowRead, filesystem.AllowRead);
 
         return settings;
     }
 
-    // Users extend these via the step's allow/deny lists
+    // Hardened secure baseline, always retained. Customers extend the allow/deny lists via the step.
     static SrtSettings Defaults() => new()
     {
-        Network = new() { AllowedDomains = ["api.anthropic.com", "statsig.anthropic.com"] },
+        Network = new() { AllowedDomains = [..SandboxDefaults.AllowedDomains] },
         Filesystem = new()
         {
-            AllowWrite = [".", "/tmp"],
-            DenyRead =
-            [
-                "~/.ssh", "~/.aws", "~/.azure", "~/.config/gcloud", "~/.kube", "~/.docker",
-                "~/.config/gh", "~/.git-credentials", "~/.netrc", "~/.npmrc", "~/.gnupg",
-                "~/.claude/.credentials.json",
-            ],
+            AllowWrite = [..SandboxDefaults.AllowWrite],
+            DenyRead = [..SandboxDefaults.DenyRead],
         },
     };
 }

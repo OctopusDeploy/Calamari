@@ -1,5 +1,4 @@
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using Calamari.Common.Plumbing.Variables;
 using ClaudeVariables = Calamari.AiAgent.SpecialVariables.Action.Claude;
@@ -28,13 +27,13 @@ public static class BashSandboxSettingsWriter
         var network = sandbox.Network;
         var filesystem = sandbox.Filesystem;
 
-        network.AllowedDomains = variables.GetStrings(ClaudeVariables.BashNetworkAllowedDomains, '\n', '\r').Concat(network.AllowedDomains).Distinct().ToList();
-        network.DeniedDomains = variables.GetStrings(ClaudeVariables.BashNetworkDeniedDomains, '\n', '\r').Concat(network.DeniedDomains).Distinct().ToList();
-        filesystem.AllowWrite = variables.GetStrings(ClaudeVariables.BashFilesystemAllowWrite, '\n', '\r').Concat(filesystem.AllowWrite).Distinct().ToList();
-        filesystem.DenyWrite = variables.GetStrings(ClaudeVariables.BashFilesystemDenyWrite, '\n', '\r').Concat(filesystem.DenyWrite).Distinct().ToList();
-        filesystem.DenyRead = variables.GetStrings(ClaudeVariables.BashFilesystemDenyRead, '\n', '\r').Concat(filesystem.DenyRead).Distinct().ToList();
-        filesystem.AllowRead = variables.GetStrings(ClaudeVariables.BashFilesystemAllowRead, '\n', '\r').Concat(filesystem.AllowRead).Distinct().ToList();
-        sandbox.ExcludedCommands = variables.GetStrings(ClaudeVariables.BashExcludedCommands, '\n', '\r').Concat(sandbox.ExcludedCommands).Distinct().ToList();
+        network.AllowedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.BashNetworkAllowedDomains, SandboxDefaults.AllowedDomains);
+        network.DeniedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.BashNetworkDeniedDomains, network.DeniedDomains);
+        filesystem.AllowWrite = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemAllowWrite, SandboxDefaults.AllowWrite);
+        filesystem.DenyWrite = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemDenyWrite, filesystem.DenyWrite);
+        filesystem.DenyRead = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemDenyRead, SandboxDefaults.DenyRead);
+        filesystem.AllowRead = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemAllowRead, filesystem.AllowRead);
+        sandbox.ExcludedCommands = SandboxDefaults.Merge(variables, ClaudeVariables.BashExcludedCommands, sandbox.ExcludedCommands);
 
         return settings;
     }
@@ -47,16 +46,11 @@ public static class BashSandboxSettingsWriter
             Enabled = true,
             FailIfUnavailable = true,
             AllowUnsandboxedCommands = false,
-            Network = new() { AllowedDomains = ["api.anthropic.com", "statsig.anthropic.com"] },
+            Network = new() { AllowedDomains = [..SandboxDefaults.AllowedDomains] },
             Filesystem = new()
             {
-                AllowWrite = [".", "/tmp"],
-                DenyRead =
-                [
-                    "~/.ssh", "~/.aws", "~/.azure", "~/.config/gcloud", "~/.kube", "~/.docker",
-                    "~/.config/gh", "~/.git-credentials", "~/.netrc", "~/.npmrc", "~/.gnupg",
-                    "~/.claude/.credentials.json",
-                ],
+                AllowWrite = [..SandboxDefaults.AllowWrite],
+                DenyRead = [..SandboxDefaults.DenyRead],
             },
         },
     };

@@ -62,6 +62,14 @@ public static class ClaudeCodeEnvironment
     // Machine and CPU information some tools read to size their work.
     static readonly string[] MachineInfo = ["NUMBER_OF_PROCESSORS", "PROCESSOR_ARCHITECTURE", "OS"];
 
+    // Proxy configuration and custom CA trust.
+    static readonly string[] ProxyAndTls =
+    [
+        "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
+        "http_proxy", "https_proxy", "no_proxy",
+        "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR",
+    ];
+
     static readonly string[] DefaultAllowList =
     [
         .. ExecutableResolution,
@@ -72,5 +80,6 @@ public static class ClaudeCodeEnvironment
         .. XdgBaseDirectories,
         .. WindowsSystemDirectories,
         .. MachineInfo,
+        .. ProxyAndTls,
     ];
 }

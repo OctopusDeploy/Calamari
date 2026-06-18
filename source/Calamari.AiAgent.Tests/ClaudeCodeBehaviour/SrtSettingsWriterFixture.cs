@@ -20,7 +20,8 @@ public class SrtSettingsWriterFixture
         settings.Filesystem.DenyRead.Should().BeEquivalentTo(
             "~/.ssh", "~/.aws", "~/.azure", "~/.config/gcloud", "~/.kube", "~/.docker",
             "~/.config/gh", "~/.git-credentials", "~/.netrc", "~/.npmrc", "~/.gnupg",
-            "~/.claude/.credentials.json");
+            "~/.claude/.credentials.json",
+            "~/.config/git", "~/.config/op", "~/.terraform.d");
     }
 
     [Test]

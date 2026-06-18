@@ -6,8 +6,8 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
-// sandbox-runtime must be >= 0.0.55 because this tool is in active development and
-// older versions had some bad failure modes.
+// sandbox-runtime must be >= 0.0.55 because older versions fail open on network access,
+// allowing sandboxed processes to make outbound network connections they should not be able to.
 public static class SrtVersionGuard
 {
     static readonly Version Minimum = new(0, 0, 55);
@@ -53,8 +53,10 @@ public static class SrtVersionGuard
             using var process = Process.Start(startInfo)
                                 ?? throw new CommandException($"Could not start 'srt'. The Srt sandbox level requires sandbox-runtime >= {Minimum} on the worker's PATH.");
 
-            output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
             process.WaitForExit();
+            output = stdoutTask.GetAwaiter().GetResult() + stderrTask.GetAwaiter().GetResult();
         }
         catch (Exception ex) when (ex is not CommandException)
         {

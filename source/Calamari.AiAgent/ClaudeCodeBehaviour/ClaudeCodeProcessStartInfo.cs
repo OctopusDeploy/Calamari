@@ -123,34 +123,14 @@ public class ClaudeCodeProcessStartInfo
 
         var (scriptFileName, scriptArgs) = ResolveInvocation(argsBuilder);
         var filePath = Path.Combine(workingDir, "my-command.sh");
-        await File.WriteAllTextAsync(Path.Combine(workingDir, "my-command.sh"),
+        await File.WriteAllTextAsync(
+            filePath,
             $"""
              #!/bin/bash
              cd {workingDir}
              {scriptFileName} {scriptArgs}
              """,
             ct);
-
-        File.SetUnixFileMode(filePath,
-            UnixFileMode.UserRead
-            | UnixFileMode.UserWrite
-            | UnixFileMode.UserExecute
-            | UnixFileMode.GroupRead
-            | UnixFileMode.GroupWrite
-            | UnixFileMode.GroupExecute
-            | UnixFileMode.OtherExecute
-            | UnixFileMode.OtherRead);
-
-        File.SetUnixFileMode(workingDir,
-            UnixFileMode.UserRead
-            | UnixFileMode.UserWrite
-            | UnixFileMode.UserExecute
-            | UnixFileMode.GroupWrite
-            | UnixFileMode.GroupRead
-            | UnixFileMode.GroupExecute
-            | UnixFileMode.OtherRead
-            | UnixFileMode.OtherExecute
-            | UnixFileMode.OtherWrite);
 
         var startInfo = new ProcessStartInfo
         {
@@ -165,7 +145,7 @@ public class ClaudeCodeProcessStartInfo
 
         var argumentList = RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
             ? new[] { "-q", "/dev/null", "su", "-m", username, "-c", filePath }
-            : new[] { "-qec", "su", "-", username, "-c", filePath, "/dev/null" };
+            : new[] { "-qec", "su", "-m", username, "-c", filePath, "/dev/null" };
 
         startInfo.ArgumentList.AddRange(argumentList);
 
@@ -175,13 +155,7 @@ public class ClaudeCodeProcessStartInfo
             startInfo.Environment[kvp.Key] = kvp.Value;
         }
 
-        //SetPermissionsRecursively(workingDir);
-        var o = Process.Start("chmod", ["-R", "777", workingDir]);
-        await o.WaitForExitAsync(ct);
-        if (o.ExitCode != 0)
-        {
-            throw new Exception($"Failed to set permissions on working directory: {workingDir}");
-        }
+        GrantRunAsAccess(workingDir);
 
         var process = Process.Start(startInfo)!;
 
@@ -207,18 +181,18 @@ public class ClaudeCodeProcessStartInfo
         return process;
     }
 
-    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-    static void SetPermissionsRecursively(string path)
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Only invoked on the macOS/Linux run-as path")]
+    static void GrantRunAsAccess(string workingDir)
     {
         var dirMode = UnixFileMode.UserRead
                       | UnixFileMode.UserWrite
                       | UnixFileMode.UserExecute
-                      | UnixFileMode.GroupWrite
                       | UnixFileMode.GroupRead
+                      | UnixFileMode.GroupWrite
                       | UnixFileMode.GroupExecute
                       | UnixFileMode.OtherRead
-                      | UnixFileMode.OtherExecute
-                      | UnixFileMode.OtherWrite;
+                      | UnixFileMode.OtherWrite
+                      | UnixFileMode.OtherExecute;
 
         var fileMode = UnixFileMode.UserRead
                        | UnixFileMode.UserWrite
@@ -226,18 +200,31 @@ public class ClaudeCodeProcessStartInfo
                        | UnixFileMode.GroupRead
                        | UnixFileMode.GroupWrite
                        | UnixFileMode.GroupExecute
-                       | UnixFileMode.OtherExecute
-                       | UnixFileMode.OtherRead;
+                       | UnixFileMode.OtherRead
+                       | UnixFileMode.OtherWrite
+                       | UnixFileMode.OtherExecute;
 
-        new DirectoryInfo(path).UnixFileMode = dirMode;
-        foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+        // The sandbox policy must stay readable but never writable by the run-as user or co-tenants.
+        var policyMode = UnixFileMode.UserRead | UnixFileMode.GroupRead | UnixFileMode.OtherRead;
+
+        new DirectoryInfo(workingDir).UnixFileMode = dirMode;
+        foreach (var dir in Directory.EnumerateDirectories(workingDir, "*", SearchOption.AllDirectories))
+        {
+            new DirectoryInfo(dir).UnixFileMode = dirMode;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(workingDir, "*", SearchOption.AllDirectories))
         {
             File.SetUnixFileMode(file, fileMode);
         }
 
-        foreach (var dir in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories))
+        var claudeDir = Path.Combine(workingDir, ".claude");
+        if (Directory.Exists(claudeDir))
         {
-            new DirectoryInfo(dir).UnixFileMode = dirMode;
+            foreach (var policyFile in Directory.EnumerateFiles(claudeDir, "*.json", SearchOption.TopDirectoryOnly))
+            {
+                File.SetUnixFileMode(policyFile, policyMode);
+            }
         }
     }
 }

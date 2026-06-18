@@ -23,7 +23,8 @@ public class BashSandboxSettingsWriterFixture
         sandbox.Filesystem.DenyRead.Should().BeEquivalentTo(
             "~/.ssh", "~/.aws", "~/.azure", "~/.config/gcloud", "~/.kube", "~/.docker",
             "~/.config/gh", "~/.git-credentials", "~/.netrc", "~/.npmrc", "~/.gnupg",
-            "~/.claude/.credentials.json");
+            "~/.claude/.credentials.json",
+            "~/.config/git", "~/.config/op", "~/.terraform.d");
     }
 
     [Test]
@@ -39,6 +40,21 @@ public class BashSandboxSettingsWriterFixture
         sandbox.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com", "example.com");
         sandbox.Filesystem.DenyRead.Should().Contain("/etc/secrets").And.Contain("~/.ssh");
         sandbox.ExcludedCommands.Should().BeEquivalentTo("docker *", "gh *");
+    }
+
+    [Test]
+    public void BuildSettings_AppendsUserEntries_RetainingDefaults_TrimmedAndDeduped()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkAllowedDomains, "  api.anthropic.com \n\n example.com \n");
+        vars.Set(SpecialVariables.Action.Claude.BashFilesystemAllowWrite, "/var/data");
+        vars.Set(SpecialVariables.Action.Claude.BashFilesystemDenyRead, "/etc/secrets");
+
+        var sandbox = BashSandboxSettingsWriter.BuildSettings(vars).Sandbox;
+
+        sandbox.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com", "example.com");
+        sandbox.Filesystem.AllowWrite.Should().BeEquivalentTo(".", "/tmp", "/var/data");
+        sandbox.Filesystem.DenyRead.Should().Contain("/etc/secrets").And.Contain("~/.ssh");
     }
 
     [Test]
