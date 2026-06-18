@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.AiAgent.ClaudeCodeBehaviour.JsonResponseModels;
@@ -10,33 +11,30 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 [TestFixture]
 public class ClaudeAgentOutcomeEvaluatorFixture
 {
-    ClaudeAgentOutcomeEvaluator evaluator = null!;
-
-    [SetUp]
-    public void SetUp()
-    {
-        evaluator = new ClaudeAgentOutcomeEvaluator();
-    }
-
     [Test]
     public void ExitZeroWithSuccessResult_DoesNotThrow()
     {
         var result = new ResultStreamEvent { Subtype = "success", IsError = false };
 
-        evaluator.Invoking(e => e.EnsureSuccessful(0, result)).Should().NotThrow();
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().NotThrow();
     }
 
     [Test]
     public void NullResult_WithZeroExit_DoesNotThrow()
     {
-        evaluator.Invoking(e => e.EnsureSuccessful(0, null)).Should().NotThrow();
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, null);
+
+        act.Should().NotThrow();
     }
 
     [Test]
     public void NonZeroExit_Throws_WithExitCodeInMessage()
     {
-        evaluator.Invoking(e => e.EnsureSuccessful(2, new ResultStreamEvent { Subtype = "success", IsError = false }))
-                 .Should().Throw<CommandException>().WithMessage("*exited with code 2*");
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(2, new ResultStreamEvent { Subtype = "success", IsError = false });
+
+        act.Should().Throw<CommandException>().WithMessage("*exited with code 2*");
     }
 
     [Test]
@@ -44,9 +42,10 @@ public class ClaudeAgentOutcomeEvaluatorFixture
     {
         var result = new ResultStreamEvent { Subtype = "error_max_turns", IsError = false, StopReason = "max_turns" };
 
-        evaluator.Invoking(e => e.EnsureSuccessful(0, result))
-                 .Should().Throw<CommandException>()
-                 .Which.Message.Should().Contain("error_max_turns").And.Contain("max_turns");
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>()
+           .Which.Message.Should().Contain("error_max_turns").And.Contain("max_turns");
     }
 
     [Test]
@@ -54,8 +53,9 @@ public class ClaudeAgentOutcomeEvaluatorFixture
     {
         var result = new ResultStreamEvent { Subtype = "success", IsError = true };
 
-        evaluator.Invoking(e => e.EnsureSuccessful(0, result))
-                 .Should().Throw<CommandException>().WithMessage("*did not complete successfully*");
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>().WithMessage("*did not complete successfully*");
     }
 
     [Test]
@@ -72,8 +72,9 @@ public class ClaudeAgentOutcomeEvaluatorFixture
             },
         };
 
-        evaluator.Invoking(e => e.EnsureSuccessful(0, result))
-                 .Should().Throw<CommandException>()
-                 .Which.Message.Should().Contain("denied permission").And.Contain("Bash").And.Contain("WebFetch");
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>()
+           .Which.Message.Should().Contain("denied permission").And.Contain("Bash").And.Contain("WebFetch");
     }
 }

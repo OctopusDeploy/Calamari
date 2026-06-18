@@ -65,7 +65,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 log.NewOctopusArtifact(movedFilePath, "claude-agent-verbose.log", fileInfo.Length);
             }
 
-            new ClaudeAgentOutcomeEvaluator().EnsureSuccessful(process.ExitCode, streamProcessor.Result);
+            ClaudeAgentOutcomeEvaluator.EnsureSuccessful(process.ExitCode, streamProcessor.Result);
 
             return responseBuilder.ToString();
         }

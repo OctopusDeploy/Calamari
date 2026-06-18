@@ -5,9 +5,9 @@ using Calamari.Common.Commands;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour
 {
-    public class ClaudeAgentOutcomeEvaluator
+    public static class ClaudeAgentOutcomeEvaluator
     {
-        public void EnsureSuccessful(int exitCode, ResultStreamEvent? result)
+        public static void EnsureSuccessful(int exitCode, ResultStreamEvent? result)
         {
             if (exitCode != 0)
             {
