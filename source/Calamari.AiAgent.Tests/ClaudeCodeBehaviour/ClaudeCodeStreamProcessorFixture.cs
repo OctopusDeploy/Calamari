@@ -123,6 +123,24 @@ public class ClaudeCodeStreamProcessorFixture
     }
 
     [Test]
+    public void ResultEvent_CapturesResultWithPermissionDenials()
+    {
+        var json = """
+            {"type":"result","subtype":"success","is_error":false,"result":"done","cost_usd":0.001,"permission_denials":[{"tool_name":"Bash","tool_use_id":"toolu_1","tool_input":{"command":"rm -rf /"}}]}
+            """;
+
+        processor.ProcessLine(json);
+
+        log.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
+
+        processor.Result.Should().NotBeNull();
+        processor.Result!.Subtype.Should().Be("success");
+        processor.Result.IsError.Should().BeFalse();
+        processor.Result.PermissionDenials.Should().ContainSingle()
+                 .Which.ToolName.Should().Be("Bash");
+    }
+
+    [Test]
     public void ResultEvent_FallsBackToResultText_WhenNoAssistantText()
     {
         var json = """
