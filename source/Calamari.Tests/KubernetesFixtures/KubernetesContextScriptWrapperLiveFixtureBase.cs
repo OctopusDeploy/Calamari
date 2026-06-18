@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.Aws.Discovery;
 using Calamari.Commands;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;

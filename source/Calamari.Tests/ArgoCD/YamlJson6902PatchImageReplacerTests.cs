@@ -80,9 +80,9 @@ namespace Calamari.Tests.ArgoCD
             var result = replacer.UpdateImages(imagesToUpdate);
 
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("nginx:1.25");
-            result.UpdatedContents.Should().Contain("busybox:stable");
+            result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -165,10 +165,10 @@ namespace Calamari.Tests.ArgoCD
             var result = replacer.UpdateImages(imagesToUpdate);
 
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedImageReferences.Should().HaveCount(2);
             result.UpdatedContents.Should().Contain("nginx:1.25");
-            result.UpdatedContents.Should().Contain("busybox:stable");
+            result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("redis:6.0"); // Should remain unchanged
         }
 
@@ -235,6 +235,31 @@ namespace Calamari.Tests.ArgoCD
 
             var updatedLines = result.UpdatedContents.Split('\n').Where(line => line.Contains("nginx:1.25")).ToArray();
             updatedLines.Should().HaveCount(3);
+        }
+
+        [Theory]
+        [TestCase("docker.io/nginx:1.27.1", "docker.io/nginx:1.28.0")]
+        [TestCase("nginx:1.27.1", "nginx:1.28.0")]
+        [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1",
+                  "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2")]
+        public void ReturnsSameImageBaseAsInYaml(string originalImage, string expectedImage)
+        {
+            var yamlContent = $@"
+- op: replace
+  path: /spec/template/spec/containers/0/image
+  value: {originalImage}";
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var update = new List<ContainerImageReferenceAndHelmReference>
+            {
+                new(ContainerImageReference.FromReferenceString(expectedImage, ArgoCDConstants.DefaultContainerRegistry))
+            };
+
+            var result = replacer.UpdateImages(update);
+
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be(expectedImage);
+            result.UpdatedContents.Should().Contain(expectedImage);
         }
 
         [Test]
