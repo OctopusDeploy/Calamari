@@ -71,7 +71,7 @@ class DeployAzureResourceGroupBehaviour(
                                                                                     deploymentMode,
                                                                                     template,
                                                                                     parameters);
-        await azureResourceGroupOperator.PollForCompletionWithTimeout(deploymentOperation, variables);
+        await azureResourceGroupOperator.PollForCompletionWithTimeout(deploymentOperation, resourceGroupResource, deploymentName, variables);
         await azureResourceGroupOperator.FinalizeDeployment(deploymentOperation, variables);
     }
 }

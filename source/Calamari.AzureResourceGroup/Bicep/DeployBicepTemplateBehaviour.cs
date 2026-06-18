@@ -50,7 +50,7 @@ class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, Templat
                                                                                deploymentMode,
                                                                                template,
                                                                                parameters);
-        await resourceGroupOperator.PollForCompletion(deploymentOperation);
+        await resourceGroupOperator.PollForCompletion(deploymentOperation, resourceGroup, armDeploymentName);
         await resourceGroupOperator.FinalizeDeployment(deploymentOperation, context.Variables);
     }
 
