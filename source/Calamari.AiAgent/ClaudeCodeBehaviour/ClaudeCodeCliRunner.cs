@@ -22,7 +22,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                                            ProcessCredentials? runAs,
                                            string workingDir,
                                            string calamariDir, //RunAs might not be able to access this dir.. but we need to preserve the logs.
-                                           string? wrapperCommand,
+                                           SandboxMode sandboxMode,
                                            CancellationToken cancellationToken)
         {
             
@@ -33,7 +33,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             // Temporarily here while working out the user process issues
             //await File.Create(debugLogPath).DisposeAsync();
             
-            var (logFileName, logArgs) = ClaudeCodeProcessStartInfo.ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
+            var (logFileName, logArgs) = ClaudeCodeProcessStartInfo.ResolveInvocation(argsBuilder, sandboxMode);
             log.Verbose($"Claude Code command: {logFileName} {logArgs}");
 
             var runner = new ClaudeCodeProcessStartInfo();
@@ -41,7 +41,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 runAs,
                 argsBuilder.WithDebugLogPath(debugLogPath),
                 customEnvVars,
-                wrapperCommand,
+                sandboxMode,
                 cancellationToken);
 
             var stdoutTask = Task.Run(() => ProcessLine(process, verboseLogPath, cancellationToken), cancellationToken);

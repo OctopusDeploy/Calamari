@@ -20,39 +20,39 @@ public class ClaudeCodeProcessStartInfo
         return "'" + value.Replace("'", @"'\''") + "'";
     }
 
-    // Resolves the final executable and arguments, applying the wrapper if provided.
-    // Three tokens are supported:
-    //   {claude}      — expands to the claude executable name: "claude"
-    //   {claude-args} — expands to just the arguments:        "--model ... -p <prompt>"
-    //   {workdir}     — expands to the working directory path (needed so sbx mounts it into the sandbox)
-    // For sbx use: "sbx run {claude} {workdir} -- {claude-args}"
-    // If no wrapper is provided, FileName="claude" and Arguments=argsBuilder.Build().
-    internal static (string fileName, string arguments) ResolveInvocation(ClaudeCommandArgsBuilder argsBuilder, string? wrapperCommand, string workingDir)
+    const string SrtPath = "srt";
+
+    // Resolves the final executable and arguments for the chosen sandbox mode.
+    //   None / Bash — runs claude directly:  fileName="claude", arguments=<claude args>
+    //   Srt          — wraps claude with srt: fileName="srt",    arguments="--settings <srtSettingsPath> claude <claude args>"
+    // The srt settings path is carried on the args builder (argsBuilder.SrtSettingsPath). srt's CLI form
+    // is: srt --settings <path> <command> <args>. The process cwd is the working directory and the
+    // srt-settings allowWrite includes ".", so no mount token is needed.
+    internal static (string fileName, string arguments) ResolveInvocation(ClaudeCommandArgsBuilder argsBuilder, SandboxMode sandboxMode)
     {
         var claudeArgs = argsBuilder.Build();
 
-        if (string.IsNullOrWhiteSpace(wrapperCommand))
-            return (ClaudeCodePath, claudeArgs);
+        if (sandboxMode != SandboxMode.Srt) return (ClaudeCodePath, claudeArgs);
 
-        var resolved = wrapperCommand
-            .Replace("{claude}", ClaudeCodePath)
-            .Replace("{claude-args}", claudeArgs.TrimStart())
-            .Replace("{workdir}", workingDir);
+        if (string.IsNullOrWhiteSpace(argsBuilder.SrtSettingsPath))
+        {
+            throw new InvalidOperationException("Srt sandbox mode requires an srt settings file path.");
+        }
 
-        var spaceIndex = resolved.IndexOf(' ');
-        if (spaceIndex < 0)
-            return (resolved, string.Empty);
-
-        return (resolved[..spaceIndex], resolved[(spaceIndex + 1)..]);
+        return (SrtPath, $"--settings {argsBuilder.SrtSettingsPath} {ClaudeCodePath}{claudeArgs}");
     }
 
-    async Task<Process> StartWindowsProcess(string workingDir,
-                                            ProcessCredentials? runAs,
-                                            ClaudeCommandArgsBuilder argsBuilder,
-                                            Dictionary<string, string> environmentVariables,
-                                            string? wrapperCommand)
+    async Task<Process> StartWindowsProcess(
+        string workingDir,
+        ProcessCredentials? runAs,
+        ClaudeCommandArgsBuilder argsBuilder,
+        Dictionary<string, string> environmentVariables,
+        SandboxMode sandboxMode)
     {
-        var startInfo = StartSimpleProcess(workingDir, argsBuilder, environmentVariables, wrapperCommand);
+        var startInfo = StartSimpleProcess(workingDir,
+            argsBuilder,
+            environmentVariables,
+            sandboxMode);
 
         if (runAs != null)
         {
@@ -71,9 +71,13 @@ public class ClaudeCodeProcessStartInfo
         return Process.Start(startInfo)!;
     }
 
-    static ProcessStartInfo StartSimpleProcess(string workingDir, ClaudeCommandArgsBuilder argsBuilder, Dictionary<string, string> environmentVariables, string? wrapperCommand)
+    static ProcessStartInfo StartSimpleProcess(
+        string workingDir,
+        ClaudeCommandArgsBuilder argsBuilder,
+        Dictionary<string, string> environmentVariables,
+        SandboxMode sandboxMode)
     {
-        var (fileName, arguments) = ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
+        var (fileName, arguments) = ResolveInvocation(argsBuilder, sandboxMode);
         var startInfo = new ProcessStartInfo
         {
             FileName = fileName,
@@ -84,95 +88,73 @@ public class ClaudeCodeProcessStartInfo
             UseShellExecute = false,
             CreateNoWindow = true,
         };
+        startInfo.Environment.Clear();
         foreach (var kvp in environmentVariables)
+        {
             startInfo.Environment[kvp.Key] = kvp.Value;
+        }
+
         return startInfo;
     }
 
-    public async Task<Process> StartClaudeProcess(string workingDir,
-                                                  ProcessCredentials? runAs,
-                                                  ClaudeCommandArgsBuilder argsBuilder,
-                                                  Dictionary<string, string> environmentVariables,
-                                                  string? wrapperCommand,
-                                                  CancellationToken ct)
+    public async Task<Process> StartClaudeProcess(
+        string workingDir,
+        ProcessCredentials? runAs,
+        ClaudeCommandArgsBuilder argsBuilder,
+        Dictionary<string, string> environmentVariables,
+        SandboxMode sandboxMode,
+        CancellationToken ct)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            return await StartWindowsProcess(workingDir, runAs, argsBuilder, environmentVariables, wrapperCommand);
+            return await StartWindowsProcess(workingDir,
+                runAs,
+                argsBuilder,
+                environmentVariables,
+                sandboxMode);
         }
 
         return await StartMacOrLinuxProcess(workingDir,
             runAs,
             argsBuilder,
             environmentVariables,
-            wrapperCommand,
+            sandboxMode,
             ct);
     }
 
-
-    // Wrapper tools like sbx require a PTY to function — without one, Docker's exec API times out.
-    // We write a shell script and run it under `script` (same approach as the RunAs path) to allocate one.
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Higher up checks enforce the correct OS")]
-    async Task<Process> StartWithPty(string workingDir,
-                                     ClaudeCommandArgsBuilder argsBuilder,
-                                     Dictionary<string, string> environmentVariables,
-                                     string wrapperCommand,
-                                     CancellationToken ct)
+    async Task<Process> StartMacOrLinuxProcess(
+        string workingDir,
+        ProcessCredentials? runAs,
+        ClaudeCommandArgsBuilder argsBuilder,
+        Dictionary<string, string> environmentVariables,
+        SandboxMode sandboxMode,
+        CancellationToken ct)
     {
-        var (fileName, arguments) = ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
-        var scriptPath = Path.Combine(workingDir, "run-wrapper.sh");
-        await File.WriteAllTextAsync(scriptPath, $"#!/bin/bash\n{fileName} {arguments}\n", ct);
-        File.SetUnixFileMode(scriptPath,
-            UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
-            UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
-            UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
-
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "script",
-            WorkingDirectory = workingDir,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            startInfo.ArgumentList.AddRange(["-q", "/dev/null", scriptPath]);
-        else
-            startInfo.ArgumentList.AddRange(["-q", "-e", "-c", scriptPath, "/dev/null"]);
-
-        foreach (var kvp in environmentVariables)
-            startInfo.Environment[kvp.Key] = kvp.Value;
-
-        return Process.Start(startInfo)!;
-    }
-
-    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Higher up checks enforce the correct OS")]
-    async Task<Process> StartMacOrLinuxProcess(string workingDir,
-                                               ProcessCredentials? runAs,
-                                               ClaudeCommandArgsBuilder argsBuilder,
-                                               Dictionary<string, string> environmentVariables,
-                                               string? wrapperCommand,
-                                               CancellationToken ct)
-    {
-
         var username = runAs?.Username!;
         if (runAs == null || string.IsNullOrEmpty(username))
         {
-            if (!string.IsNullOrWhiteSpace(wrapperCommand))
-                return await StartWithPty(workingDir, argsBuilder, environmentVariables, wrapperCommand, ct);
+            // srt and the Bash sandbox both run claude directly with piped stdio — no PTY needed.
+            // srt spawns a local child (bubblewrap/sandbox-exec) rather than going through a Docker-style
+            // exec API, and headless `claude --output-format stream-json` is designed for non-TTY use.
+            // Only the run-as path below needs `script`, to drive the interactive `su` password prompt.
+            var startInfo1 = StartSimpleProcess(workingDir,
+                argsBuilder,
+                environmentVariables,
+                sandboxMode);
 
-            var startInfo1 = StartSimpleProcess(workingDir, argsBuilder, environmentVariables, null);
             return Process.Start(startInfo1)!;
         }
 
-        var (scriptFileName, scriptArgs) = ResolveInvocation(argsBuilder, wrapperCommand, workingDir);
+        var (scriptFileName, scriptArgs) = ResolveInvocation(argsBuilder, sandboxMode);
         var filePath = Path.Combine(workingDir, "my-command.sh");
-        await File.WriteAllTextAsync(Path.Combine(workingDir, "my-command.sh"), $@"#!/bin/bash
-cd {workingDir}
-{scriptFileName} {scriptArgs}
-", ct);
+        await File.WriteAllTextAsync(Path.Combine(workingDir, "my-command.sh"),
+            $"""
+             #!/bin/bash
+             cd {workingDir}
+             {scriptFileName} {scriptArgs}
+             """,
+            ct);
         File.SetUnixFileMode(filePath,
             UnixFileMode.UserRead
             | UnixFileMode.UserWrite
@@ -182,8 +164,7 @@ cd {workingDir}
             | UnixFileMode.GroupExecute
             | UnixFileMode.OtherExecute
             | UnixFileMode.OtherRead);
-        
-        
+
         File.SetUnixFileMode(workingDir,
             UnixFileMode.UserRead
             | UnixFileMode.UserWrite
@@ -206,41 +187,47 @@ cd {workingDir}
             CreateNoWindow = true,
         };
 
-        var argumentList = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ?
-            new[] { "-q", "/dev/null", "su", "-m", username, "-c", filePath } :
-            new[] { "-qec", "su", "-", username, "-c", filePath, "/dev/null" };
+        var argumentList = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? new[] { "-q", "/dev/null", "su", "-m", username, "-c", filePath } : new[] { "-qec", "su", "-", username, "-c", filePath, "/dev/null" };
         startInfo.ArgumentList.AddRange(argumentList);
-            
+
+        startInfo.Environment.Clear();
         foreach (var kvp in environmentVariables)
+        {
             startInfo.Environment[kvp.Key] = kvp.Value;
+        }
+
         //SetPermissionsRecursively(workingDir);
         var o = Process.Start("chmod", ["-R", "777", workingDir]);
         await o.WaitForExitAsync(ct);
-         if(o.ExitCode != 0)
+        if (o.ExitCode != 0)
+        {
             throw new Exception($"Failed to set permissions on working directory: {workingDir}");
-        
-        
+        }
+
         var process = Process.Start(startInfo)!;
-        
+
         // TODO: Should just wait as long as it takes to read "Password:" below
         await Task.Delay(1000, ct).WaitAsync(ct);
-        
+
         // Parse password prompt so consuming code can ignore this initial password check.
         var passwordReq = "Password:".Length;
         var buff = new char[passwordReq];
         await process.StandardOutput.ReadAsync(buff, 0, passwordReq);
         var message = new string(buff);
-        if(message != "Password:"){
+        if (message != "Password:")
+        {
             throw new Exception($"Unexpected startup message: {message}");
         }
+
         await process.StandardInput.WriteLineAsync(runAs!.Password);
-        if(process.StandardOutput.Read() != '\r' || process.StandardOutput.Read() != '\n'){
+        if (process.StandardOutput.Read() != '\r' || process.StandardOutput.Read() != '\n')
+        {
             throw new Exception("Expecting new line");
         }
 
         return process;
     }
-    
+
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
     static void SetPermissionsRecursively(string path)
     {
@@ -260,12 +247,17 @@ cd {workingDir}
                        | UnixFileMode.GroupWrite
                        | UnixFileMode.GroupExecute
                        | UnixFileMode.OtherExecute
-                       | UnixFileMode.OtherRead;                                                                                                                                            
-                                                                                                                                                                                                               
-      new DirectoryInfo(path).UnixFileMode = dirMode;                                                                                                                                                            
-      foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))                                                                                                                     
-          File.SetUnixFileMode(file, fileMode);                                             
-      foreach (var dir in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories))                                                                                                                
-          new DirectoryInfo(dir).UnixFileMode = dirMode;                                                                                                                                                         
-  }     
+                       | UnixFileMode.OtherRead;
+
+        new DirectoryInfo(path).UnixFileMode = dirMode;
+        foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+        {
+            File.SetUnixFileMode(file, fileMode);
+        }
+
+        foreach (var dir in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories))
+        {
+            new DirectoryInfo(dir).UnixFileMode = dirMode;
+        }
+    }
 }

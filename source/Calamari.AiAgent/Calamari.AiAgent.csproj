@@ -23,6 +23,7 @@
         <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\Skills\**\*.md" />
         <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\system-prompt.md" />
         <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\srt-settings.json" />
+        <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\bash-sandbox-settings.json" />
     </ItemGroup>
 
     <ItemGroup>

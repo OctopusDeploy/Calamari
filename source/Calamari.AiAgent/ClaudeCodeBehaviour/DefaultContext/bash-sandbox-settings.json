@@ -1,0 +1,18 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": ["api.anthropic.com", "api.claude.com", "*.claude.ai"],
+      "deniedDomains": []
+    },
+    "filesystem": {
+      "allowWrite": [".", "/tmp"],
+      "denyWrite": [],
+      "denyRead": ["~/.ssh", "~/.aws"],
+      "allowRead": []
+    },
+    "excludedCommands": []
+  }
+}

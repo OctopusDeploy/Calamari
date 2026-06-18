@@ -16,6 +16,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
         decimal? maxBudgetUsd;
         IReadOnlyList<string>? allowedTools;
         string? effort;
+        string? srtSettingsPath;
 
         public ClaudeCommandArgsBuilder WithPrompt(string prompt)
         {
@@ -70,6 +71,17 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             this.effort = effort;
             return this;
         }
+
+        // Optional. When set (Srt sandbox mode), the runner wraps claude in `srt --settings <path>`.
+        // This is not part of claude's own arguments — Build() never emits it — so the runner reads it
+        // from SrtSettingsPath to construct the wrapper invocation.
+        public ClaudeCommandArgsBuilder WithSrtSettingsPath(string? srtSettingsPath)
+        {
+            this.srtSettingsPath = srtSettingsPath;
+            return this;
+        }
+
+        public string? SrtSettingsPath => srtSettingsPath;
 
         public string Build()
         {

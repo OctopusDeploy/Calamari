@@ -63,11 +63,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             if (!string.IsNullOrWhiteSpace(effort))
                 argsBuilder.WithEffort(effort);
 
-            var useSandbox = variables.GetFlag(SpecialVariables.Action.Claude.Sandbox);
-            var wrapperCommand = variables.Get(SpecialVariables.Action.Claude.WrapperCommand);
-
-            if (useSandbox && !string.IsNullOrWhiteSpace(wrapperCommand))
-                throw new CommandException($"'{SpecialVariables.Action.Claude.Sandbox}' and '{SpecialVariables.Action.Claude.WrapperCommand}' cannot both be set.");
+            var sandboxMode = ResolveSandboxMode(variables);
 
             using var tempDir = TemporaryDirectory.Create(); 
             //TODO: Fiddling with workdir for user perms
@@ -88,21 +84,38 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             
             new SkillsWriter(variables).SetupSkills(workingDir);
             SetupDeploymentVariables(workingDir);
-            if (useSandbox)
-                SetupSandboxSettings(workingDir);
-            if (!string.IsNullOrWhiteSpace(wrapperCommand))
-                SetupSrtSettings();
+
+            if (sandboxMode == SandboxMode.Bash)
+            {
+                BashSandboxSettingsWriter.Write(workingDir, variables);
+            }
+            else if (sandboxMode == SandboxMode.Srt)
+            {
+                // sandbox-runtime < 0.0.55 fails open on the network — verify before relying on it.
+                SrtVersionGuard.Ensure(log);
+                // The srt settings path travels on the args builder; the runner reads it to wrap claude.
+                argsBuilder.WithSrtSettingsPath(SrtSettingsWriter.Write(workingDir, variables));
+            }
+
             argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
             argsBuilder.WithMcpConfigPath(mcpConfig);
-            
-            var customEnvVars = new Dictionary<string, string>
-            {
-                ["ANTHROPIC_API_KEY"] = apiToken,
-            };
-            
-            var response = await new ClaudeCodeCliRunner(log).RunAsync(argsBuilder, customEnvVars, runAs, workingDir,
+
+            // The agent does NOT inherit the worker's environment wholesale — it is the main carrier
+            // of injected secrets. Only an allowlist (plus step opt-ins) is passed through, with the
+            // freshly-injected token and the subprocess credential scrub always set.
+            var environment = AgentEnvironment.Build(
+                Environment.GetEnvironmentVariables(),
+                PassThroughEnvironmentVariables(variables),
+                new Dictionary<string, string>
+                {
+                    ["ANTHROPIC_API_KEY"] = apiToken,
+                    // Strip Anthropic/cloud credentials from Bash, hook, and MCP subprocess environments.
+                    ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1",
+                });
+
+            var response = await new ClaudeCodeCliRunner(log).RunAsync(argsBuilder, environment, runAs, workingDir,
                 context.CurrentDirectory,
-                wrapperCommand,
+                sandboxMode,
                 cancellationToken.Token);
 
             Log.SetOutputVariable(SpecialVariables.Action.Claude.Response, response, variables);
@@ -115,27 +128,31 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             return allowedToolsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         }
 
+        // Names of worker environment variables the step explicitly opts in to pass through to the agent.
+        static string[] PassThroughEnvironmentVariables(IVariables variables)
+        {
+            var raw = variables.Get(SpecialVariables.Action.Claude.PassEnvironmentVariables) ?? "";
+            return raw.Split([',', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
         void SetupDeploymentVariables(string workingDir)
         {
             var json = JsonSerializer.Serialize(nonSensitiveVariables, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(Path.Combine(workingDir, "deployment-variables.json"), json);
         }
 
-        static void SetupSrtSettings()
+        static SandboxMode ResolveSandboxMode(IVariables variables)
         {
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            var resourceName = "Calamari.AiAgent.ClaudeCodeBehaviour.DefaultContext.srt-settings.json";
-            using var stream = assembly.GetManifestResourceStream(resourceName)
-                               ?? throw new Exception("Could not find embedded srt-settings.json resource.");
-            using var reader = new StreamReader(stream);
-            var destPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".srt-settings.json");
-            File.WriteAllText(destPath, reader.ReadToEnd());
-        }
+            var raw = variables.Get(SpecialVariables.Action.Claude.SandboxMode);
+            if (string.IsNullOrWhiteSpace(raw))
+                return SandboxMode.None;
 
-        static void SetupSandboxSettings(string workingDir)
-        {
-            var claudeDir = Directory.CreateDirectory(Path.Combine(workingDir, ".claude"));
-            File.WriteAllText(Path.Combine(claudeDir.FullName, "settings.json"), """{"sandbox":{"enabled":true}}""");
+            if (Enum.TryParse<SandboxMode>(raw, ignoreCase: true, out var mode))
+            {
+                return mode;
+            }
+
+            throw new CommandException($"Unknown value '{raw}' for '{SpecialVariables.Action.Claude.SandboxMode}'. Expected one of: None, Bash, Srt.");
         }
 
         static ProcessCredentials? BuildRunAs(IVariables variables)

@@ -4,8 +4,9 @@
     "deniedDomains": []
   },
   "filesystem": {
-    "allowWrite": [".", "/tmp"],
+    "allowRead": [],
     "denyRead": ["~/.ssh", "~/.aws"],
+    "allowWrite": [".", "/tmp"],
     "denyWrite": []
   }
 }

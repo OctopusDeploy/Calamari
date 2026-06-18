@@ -17,7 +17,7 @@ public class ClaudeCodeProcessStartInfoFixture
         ClaudeCodeProcessStartInfo.ShellQuote(input).Should().Be(expected);
     }
 
-    const string TestWorkDir = "/tmp/test-workdir";
+    const string TestSrtSettingsPath = "/tmp/test-workdir/srt-settings.json";
 
     static ClaudeCommandArgsBuilder MinimalBuilder() =>
         new ClaudeCommandArgsBuilder()
@@ -25,49 +25,41 @@ public class ClaudeCodeProcessStartInfoFixture
             .WithModel("claude-sonnet-4-20250514");
 
     [Test]
-    public void ResolveInvocation_NoWrapper_UsesClaude()
+    public void ResolveInvocation_NoneMode_RunsClaudeDirectly()
     {
-        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), null, TestWorkDir);
+        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), SandboxMode.None);
 
         fileName.Should().Be("claude");
         arguments.Should().StartWith(" --model");
+        arguments.Should().NotContain("srt");
     }
 
     [Test]
-    public void ResolveInvocation_ClaudeToken_ExpandsToExecutableOnly()
+    public void ResolveInvocation_BashMode_RunsClaudeDirectly()
     {
-        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), "sbx run {claude}", TestWorkDir);
+        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), SandboxMode.Bash);
 
-        fileName.Should().Be("sbx");
-        arguments.Should().Be("run claude");
-        arguments.Should().NotContain("--model");
+        fileName.Should().Be("claude");
+        arguments.Should().StartWith(" --model");
+        arguments.Should().NotContain("srt");
     }
 
     [Test]
-    public void ResolveInvocation_SbxFormat_AllThreeTokens()
+    public void ResolveInvocation_SrtMode_WrapsClaudeWithSrt()
     {
-        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), "sbx run {claude} {workdir} -- {claude-args}", TestWorkDir);
+        var builder = MinimalBuilder().WithSrtSettingsPath(TestSrtSettingsPath);
 
-        fileName.Should().Be("sbx");
-        arguments.Should().StartWith($"run claude {TestWorkDir} -- --model");
-        arguments.Should().NotContain("--  ");
+        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(builder, SandboxMode.Srt);
+
+        fileName.Should().Be("srt");
+        arguments.Should().StartWith($"--settings {TestSrtSettingsPath} claude --model");
     }
 
     [Test]
-    public void ResolveInvocation_WorkdirToken_ExpandsToWorkingDirectory()
+    public void ResolveInvocation_SrtMode_WithoutSettingsPath_Throws()
     {
-        var (_, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), "sbx run {claude} {workdir} -- {claude-args}", "/my/work/dir");
+        var act = () => ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), SandboxMode.Srt);
 
-        arguments.Should().Contain("/my/work/dir");
-    }
-
-    [Test]
-    public void ResolveInvocation_ClaudeArgsToken_ContainsArgsNotExecutable()
-    {
-        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder(), "wrap -- {claude-args}", TestWorkDir);
-
-        fileName.Should().Be("wrap");
-        arguments.Should().StartWith("-- --model");
-        arguments.Should().NotContain("claude ");
+        act.Should().Throw<System.InvalidOperationException>();
     }
 }
