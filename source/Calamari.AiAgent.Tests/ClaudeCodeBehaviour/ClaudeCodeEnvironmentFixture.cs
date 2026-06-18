@@ -55,7 +55,6 @@ public class ClaudeCodeEnvironmentFixture
 
         var env = ClaudeCodeEnvironment.Build(source, [], new Dictionary<string, string>());
 
-        // The encoding-critical locale vars are explicitly allowlisted; other LC_* categories are not.
         env.Should().ContainKey("LC_ALL");
         env.Should().ContainKey("LC_CTYPE");
         env.Should().ContainKey("LANG");
@@ -65,7 +64,7 @@ public class ClaudeCodeEnvironmentFixture
     [Test]
     public void Build_AlwaysSetVars_ArePresentEvenWhenNotAllowlisted()
     {
-        // ANTHROPIC_API_KEY is not allowlisted, so it never inherits from source; alwaysSet injects it directly.
+        // ANTHROPIC_API_KEY isn't allowlisted, so it only reaches the child via alwaysSet.
         var source = new Dictionary<string, string>
         {
             ["PATH"] = "/usr/bin",
@@ -85,8 +84,6 @@ public class ClaudeCodeEnvironmentFixture
     [Test]
     public void Build_AlwaysSet_OverridesAllowlistedSourceValue()
     {
-        // PATH is allowlisted, so it would normally be inherited from source. When it also appears in alwaysSet,
-        // the alwaysSet value must win.
         var source = new Dictionary<string, string>
         {
             ["PATH"] = "/usr/bin",
@@ -103,8 +100,7 @@ public class ClaudeCodeEnvironmentFixture
     [Test]
     public void Build_PassesProxyVars_FromSource()
     {
-        // HTTPS_PROXY (added in the ProxyAndTls segment) must flow through from source so the
-        // child process can reach api.anthropic.com when behind a corporate proxy.
+        // HTTPS_PROXY must flow through so the child can reach api.anthropic.com behind a corporate proxy.
         var source = new Dictionary<string, string>
         {
             ["HTTPS_PROXY"] = "http://proxy.corp.example:3128",

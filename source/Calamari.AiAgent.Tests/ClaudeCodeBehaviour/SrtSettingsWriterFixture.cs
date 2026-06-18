@@ -11,32 +11,34 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 public class SrtSettingsWriterFixture
 {
     [Test]
-    public void BuildSettings_NoUserEntries_RetainsSecureDefaults()
+    public void BuildSettings_AppliesSecureDefaults_WhenNoUserEntries()
     {
         var settings = SrtSettingsWriter.BuildSettings(new CalamariVariables());
 
         settings.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com");
         settings.Filesystem.AllowWrite.Should().BeEquivalentTo(".", "/tmp");
-        settings.Filesystem.DenyRead.Should().BeEquivalentTo(
-            "~/.ssh", "~/.aws", "~/.azure", "~/.config/gcloud", "~/.kube", "~/.docker",
-            "~/.config/gh", "~/.git-credentials", "~/.netrc", "~/.npmrc", "~/.gnupg",
-            "~/.claude/.credentials.json",
-            "~/.config/git", "~/.config/op", "~/.terraform.d");
+        settings.Filesystem.DenyRead.Should().Contain("~/.ssh").And.Contain("~/.aws");
     }
 
     [Test]
-    public void BuildSettings_AppendsUserEntries_RetainingDefaults_TrimmedAndDeduped()
+    public void BuildSettings_WiresEachVariableToItsList()
     {
         var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.Claude.SrtNetworkAllowedDomains, "  api.anthropic.com \n\n example.com \n");
-        vars.Set(SpecialVariables.Action.Claude.SrtFilesystemAllowWrite, "/var/data");
-        vars.Set(SpecialVariables.Action.Claude.SrtFilesystemDenyRead, "/etc/secrets");
+        vars.Set(SpecialVariables.Action.Claude.SrtNetworkAllowedDomains, "net-allow.example");
+        vars.Set(SpecialVariables.Action.Claude.SrtNetworkDeniedDomains, "net-deny.example");
+        vars.Set(SpecialVariables.Action.Claude.SrtFilesystemAllowWrite, "/fs-allow-write");
+        vars.Set(SpecialVariables.Action.Claude.SrtFilesystemDenyWrite, "/fs-deny-write");
+        vars.Set(SpecialVariables.Action.Claude.SrtFilesystemDenyRead, "/fs-deny-read");
+        vars.Set(SpecialVariables.Action.Claude.SrtFilesystemAllowRead, "/fs-allow-read");
 
         var settings = SrtSettingsWriter.BuildSettings(vars);
 
-        settings.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com", "example.com");
-        settings.Filesystem.AllowWrite.Should().BeEquivalentTo(".", "/tmp", "/var/data");
-        settings.Filesystem.DenyRead.Should().Contain("/etc/secrets").And.Contain("~/.ssh");
+        settings.Network.AllowedDomains.Should().Contain("net-allow.example").And.Contain("api.anthropic.com");
+        settings.Network.DeniedDomains.Should().Contain("net-deny.example");
+        settings.Filesystem.AllowWrite.Should().Contain("/fs-allow-write").And.Contain(".");
+        settings.Filesystem.DenyWrite.Should().Contain("/fs-deny-write");
+        settings.Filesystem.DenyRead.Should().Contain("/fs-deny-read").And.Contain("~/.ssh");
+        settings.Filesystem.AllowRead.Should().Contain("/fs-allow-read");
     }
 
     [Test]

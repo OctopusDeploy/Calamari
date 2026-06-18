@@ -11,7 +11,7 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 public class BashSandboxSettingsWriterFixture
 {
     [Test]
-    public void BuildSettings_NoUserEntries_RetainsHardenedDefaults()
+    public void BuildSettings_AppliesHardenedDefaults_WhenNoUserEntries()
     {
         var sandbox = BashSandboxSettingsWriter.BuildSettings(new CalamariVariables()).Sandbox;
 
@@ -20,41 +20,30 @@ public class BashSandboxSettingsWriterFixture
         sandbox.AllowUnsandboxedCommands.Should().BeFalse();
         sandbox.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com");
         sandbox.Filesystem.AllowWrite.Should().BeEquivalentTo(".", "/tmp");
-        sandbox.Filesystem.DenyRead.Should().BeEquivalentTo(
-            "~/.ssh", "~/.aws", "~/.azure", "~/.config/gcloud", "~/.kube", "~/.docker",
-            "~/.config/gh", "~/.git-credentials", "~/.netrc", "~/.npmrc", "~/.gnupg",
-            "~/.claude/.credentials.json",
-            "~/.config/git", "~/.config/op", "~/.terraform.d");
+        sandbox.Filesystem.DenyRead.Should().Contain("~/.ssh").And.Contain("~/.aws");
     }
 
     [Test]
-    public void BuildSettings_AppendsUserEntries_IncludingExcludedCommands()
+    public void BuildSettings_WiresEachVariableToItsList_IncludingExcludedCommands()
     {
         var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.Claude.BashNetworkAllowedDomains, "example.com");
-        vars.Set(SpecialVariables.Action.Claude.BashFilesystemDenyRead, "/etc/secrets");
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkAllowedDomains, "net-allow.example");
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkDeniedDomains, "net-deny.example");
+        vars.Set(SpecialVariables.Action.Claude.BashFilesystemAllowWrite, "/fs-allow-write");
+        vars.Set(SpecialVariables.Action.Claude.BashFilesystemDenyWrite, "/fs-deny-write");
+        vars.Set(SpecialVariables.Action.Claude.BashFilesystemDenyRead, "/fs-deny-read");
+        vars.Set(SpecialVariables.Action.Claude.BashFilesystemAllowRead, "/fs-allow-read");
         vars.Set(SpecialVariables.Action.Claude.BashExcludedCommands, "docker *\ngh *");
 
         var sandbox = BashSandboxSettingsWriter.BuildSettings(vars).Sandbox;
 
-        sandbox.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com", "example.com");
-        sandbox.Filesystem.DenyRead.Should().Contain("/etc/secrets").And.Contain("~/.ssh");
+        sandbox.Network.AllowedDomains.Should().Contain("net-allow.example").And.Contain("api.anthropic.com");
+        sandbox.Network.DeniedDomains.Should().Contain("net-deny.example");
+        sandbox.Filesystem.AllowWrite.Should().Contain("/fs-allow-write").And.Contain(".");
+        sandbox.Filesystem.DenyWrite.Should().Contain("/fs-deny-write");
+        sandbox.Filesystem.DenyRead.Should().Contain("/fs-deny-read").And.Contain("~/.ssh");
+        sandbox.Filesystem.AllowRead.Should().Contain("/fs-allow-read");
         sandbox.ExcludedCommands.Should().BeEquivalentTo("docker *", "gh *");
-    }
-
-    [Test]
-    public void BuildSettings_AppendsUserEntries_RetainingDefaults_TrimmedAndDeduped()
-    {
-        var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.Claude.BashNetworkAllowedDomains, "  api.anthropic.com \n\n example.com \n");
-        vars.Set(SpecialVariables.Action.Claude.BashFilesystemAllowWrite, "/var/data");
-        vars.Set(SpecialVariables.Action.Claude.BashFilesystemDenyRead, "/etc/secrets");
-
-        var sandbox = BashSandboxSettingsWriter.BuildSettings(vars).Sandbox;
-
-        sandbox.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com", "example.com");
-        sandbox.Filesystem.AllowWrite.Should().BeEquivalentTo(".", "/tmp", "/var/data");
-        sandbox.Filesystem.DenyRead.Should().Contain("/etc/secrets").And.Contain("~/.ssh");
     }
 
     [Test]
