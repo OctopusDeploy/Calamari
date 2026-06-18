@@ -78,8 +78,12 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
             var args = new StringBuilder();
 
-            args.Append(" --model ");
-            args.Append(EscapeArg(model ?? "claude-sonnet-4-20250514"));
+            if (!string.IsNullOrWhiteSpace(model))
+            {
+                args.Append(" --model ");
+                args.Append(EscapeArg(model));
+            }
+
             args.Append(" --bare");
             args.Append(" --strict-mcp-config");
             args.Append(" --output-format stream-json");
