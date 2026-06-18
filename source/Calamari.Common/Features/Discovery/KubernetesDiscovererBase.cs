@@ -26,19 +26,6 @@ public abstract class KubernetesDiscovererBase(ILog log) : IKubernetesDiscoverer
                 return false;
             }
 
-            // These moved to non-nullable in Contracts
-            // if (discoveryContext.Authentication == null)
-            // {
-            //     LogDeserialisationError("authentication details");
-            //     return false;
-            // }
-            //
-            // if (discoveryContext.Scope == null)
-            // {
-            //     LogDeserialisationError("scope");
-            //     return false;
-            // }
-
             authenticationDetails = discoveryContext.Authentication;
             workerPoolId = discoveryContext.Scope.WorkerPoolId;
             return true;

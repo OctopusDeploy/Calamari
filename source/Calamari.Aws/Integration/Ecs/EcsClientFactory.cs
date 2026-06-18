@@ -1,11 +1,18 @@
+using Amazon;
 using Amazon.ECS;
-using Calamari.Aws.Util;
-using Calamari.CloudAccounts;
+using Amazon.Runtime;
 
 namespace Calamari.Aws.Integration.Ecs;
 
-public static class EcsClientFactory
+public interface IEcsClientFactory
 {
-    public static IAmazonECS Create(AwsEnvironmentGeneration environment) =>
-        new AmazonECSClient(environment.AwsCredentials, environment.AsClientConfig<AmazonECSConfig>());
+    IAmazonECS Create(AWSCredentials credentials, string region);
+}
+
+public class EcsClientFactory : IEcsClientFactory
+{
+    public IAmazonECS Create(AWSCredentials credentials, string region)
+    {
+        return new AmazonECSClient(credentials, RegionEndpoint.GetBySystemName(region));
+    }
 }
