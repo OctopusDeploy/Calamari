@@ -9,8 +9,7 @@ public class ClaudeCommandArgsBuilderFixture
 {
     ClaudeCommandArgsBuilder MinimalBuilder() =>
         new ClaudeCommandArgsBuilder()
-            .WithPrompt("test prompt")
-            .WithModel("claude-sonnet-4-20250514");
+            .WithPrompt("test prompt");
 
     [Test]
     public void Build_IncludesRequiredFlags()
@@ -18,13 +17,29 @@ public class ClaudeCommandArgsBuilderFixture
         var args = MinimalBuilder().Build();
 
         args.Should().Contain("-p");
-        args.Should().Contain("--model claude-sonnet-4-20250514");
         args.Should().Contain("--output-format stream-json");
         args.Should().Contain("--verbose");
         args.Should().Contain("--permission-mode dontAsk");
         args.Should().Contain("--no-session-persistence");
         args.Should().Contain("--bare");
         args.Should().Contain("--strict-mcp-config");
+    }
+
+    [Test]
+    public void Build_IncludesModel_WhenSet()
+    {
+        var args = MinimalBuilder().WithModel("claude-sonnet-4-6").Build();
+
+        args.Should().Contain("--model claude-sonnet-4-6");
+    }
+
+    [Test]
+    public void Build_OmitsModel_WhenNotSet()
+    {
+        // No default: a blank model lets the Claude CLI choose its own current default.
+        var args = MinimalBuilder().Build();
+
+        args.Should().NotContain("--model");
     }
 
     [Test]
