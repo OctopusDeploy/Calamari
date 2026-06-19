@@ -163,4 +163,5 @@ public class ClaudeCommandArgsBuilderFixture
         act.Should().Throw<System.InvalidOperationException>()
             .WithMessage("*prompt*");
     }
+
 }

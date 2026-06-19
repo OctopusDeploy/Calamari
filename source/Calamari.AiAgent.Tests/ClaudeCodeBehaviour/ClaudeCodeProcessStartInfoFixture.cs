@@ -16,4 +16,50 @@ public class ClaudeCodeProcessStartInfoFixture
     {
         ClaudeCodeProcessStartInfo.ShellQuote(input).Should().Be(expected);
     }
+
+    const string TestSrtSettingsPath = "/tmp/test-workdir/srt-settings.json";
+
+    static ClaudeCommandArgsBuilder MinimalBuilder() =>
+        new ClaudeCommandArgsBuilder()
+            .WithPrompt("test prompt")
+            .WithModel("claude-sonnet-4-20250514");
+
+    [Test]
+    public void ResolveInvocation_NoneMode_RunsClaudeDirectly()
+    {
+        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder().WithSandboxMode(SandboxMode.None));
+
+        fileName.Should().Be("claude");
+        arguments.Should().StartWith(" --model");
+        arguments.Should().NotContain("srt");
+    }
+
+    [Test]
+    public void ResolveInvocation_BashMode_RunsClaudeDirectly()
+    {
+        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder().WithSandboxMode(SandboxMode.Bash));
+
+        fileName.Should().Be("claude");
+        arguments.Should().StartWith(" --model");
+        arguments.Should().NotContain("srt");
+    }
+
+    [Test]
+    public void ResolveInvocation_SrtMode_WrapsClaudeWithSrt()
+    {
+        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.Srt).WithSrtSettingsPath(TestSrtSettingsPath);
+
+        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(builder);
+
+        fileName.Should().Be("srt");
+        arguments.Should().StartWith($"--settings {TestSrtSettingsPath} claude --model");
+    }
+
+    [Test]
+    public void ResolveInvocation_SrtMode_WithoutSettingsPath_Throws()
+    {
+        var act = () => ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder().WithSandboxMode(SandboxMode.Srt));
+
+        act.Should().Throw<System.InvalidOperationException>();
+    }
 }
