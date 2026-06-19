@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
 [TestFixture]
-public class SrtVersionGuardFixture
+public class SrtVersionGuardTests
 {
     [TestCase("0.0.55", true)]
     [TestCase("0.0.56", true)]

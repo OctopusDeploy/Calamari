@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
 [TestFixture]
-public class SandboxDefaultsFixture
+public class SandboxDefaultsTests
 {
     const string Key = "Test.List";
     static readonly string[] Defaults = { "default-a", "default-b" };

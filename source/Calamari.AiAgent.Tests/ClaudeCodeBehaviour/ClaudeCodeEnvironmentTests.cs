@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
 [TestFixture]
-public class ClaudeCodeEnvironmentFixture
+public class ClaudeCodeEnvironmentTests
 {
     [Test]
     public void Build_PassesAllowlistedVars_AndDropsEverythingElse()

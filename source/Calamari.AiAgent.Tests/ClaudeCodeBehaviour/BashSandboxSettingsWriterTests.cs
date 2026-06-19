@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
 [TestFixture]
-public class BashSandboxSettingsWriterFixture
+public class BashSandboxSettingsWriterTests
 {
     [Test]
     public void BuildSettings_AppliesHardenedDefaults_WhenNoUserEntries()

@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 
 [TestFixture]
-public class SrtSettingsWriterFixture
+public class SrtSettingsWriterTests
 {
     [Test]
     public void BuildSettings_AppliesSecureDefaults_WhenNoUserEntries()
