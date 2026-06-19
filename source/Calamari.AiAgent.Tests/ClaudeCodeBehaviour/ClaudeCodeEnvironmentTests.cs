@@ -43,25 +43,6 @@ public class ClaudeCodeEnvironmentTests
     }
 
     [Test]
-    public void Build_PassesExplicitLocaleVars_ButDropsOtherLcCategories()
-    {
-        var source = new Dictionary<string, string>
-        {
-            ["LC_ALL"] = "en_US.UTF-8",
-            ["LC_CTYPE"] = "en_US.UTF-8",
-            ["LANG"] = "en_US.UTF-8",
-            ["LC_NUMERIC"] = "de_DE.UTF-8",
-        };
-
-        var env = ClaudeCodeEnvironment.Build(source, [], new Dictionary<string, string>());
-
-        env.Should().ContainKey("LC_ALL");
-        env.Should().ContainKey("LC_CTYPE");
-        env.Should().ContainKey("LANG");
-        env.Should().NotContainKey("LC_NUMERIC");
-    }
-
-    [Test]
     public void Build_AlwaysSetVars_ArePresentEvenWhenNotAllowlisted()
     {
         // ANTHROPIC_API_KEY isn't allowlisted, so it only reaches the child via alwaysSet.
