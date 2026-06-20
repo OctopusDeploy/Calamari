@@ -6,11 +6,13 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Scripting;
 using NUnit.Framework;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 
 namespace Calamari.AzureScripting.Tests
 {
     [TestFixture]
+    [Category(TestCategory.ExternalCloudIntegration)]
     class AzurePowerShellCommandFixture
     {
         string? clientId;
