@@ -20,12 +20,15 @@ using Calamari.Testing.Azure;
 using FluentAssertions;
 using JetBrains.TeamCity.ServiceMessages.Write.Special.Impl.Writer;
 using Newtonsoft.Json;
+using Calamari.Testing.Helpers;
 using NUnit.Framework;
 using Octostache;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Tests
 {
+    // Creates and deploys to real Azure resources. Derived fixtures inherit this category (NUnit categories are inherited).
+    [Category(TestCategory.ExternalCloudIntegration)]
     public abstract class AppServiceIntegrationTest
     {
         protected string ClientId { get; private set; }

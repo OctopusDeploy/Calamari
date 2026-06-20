@@ -9,12 +9,15 @@ using Calamari.Azure;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using NUnit.Framework;
 using Octostache;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Tests;
 
+// Queries real Azure resources. Derived fixtures inherit this category (NUnit categories are inherited).
+[Category(TestCategory.ExternalCloudIntegration)]
 public abstract class AppServiceIntegrationTestWithStaticResources
 {
     //https://portal.azure.com/#@octopusdeploy.onmicrosoft.com/resource/subscriptions/cf21dc34-73dc-4d7d-bd86-041884e0bc75/resourceGroups/calamari-testing-static-rg/overview
