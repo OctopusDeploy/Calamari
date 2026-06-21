@@ -15,10 +15,10 @@ namespace Calamari.AzureAppService.Behaviors
 
         ILog Log { get; }
 
-        public AppDeployBehaviour(ILog log, ICalamariFileSystem fileSystem)
+        public AppDeployBehaviour(ILog log, ICalamariFileSystem fileSystem, IAzureAppServiceContainerConfigurer containerConfigurer)
         {
             Log = log;
-            containerBehaviour = new AzureAppServiceContainerDeployBehaviour(log);
+            containerBehaviour = new AzureAppServiceContainerDeployBehaviour(log, containerConfigurer);
             zipDeployBehaviour = new AzureAppServiceZipDeployBehaviour(log, fileSystem);
         }
 

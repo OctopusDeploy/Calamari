@@ -15,10 +15,10 @@ using Calamari.Testing.Helpers;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Calamari.AzureAppService.Tests
+namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
     [TestFixture]
-    public class AppServiceSettingsBehaviorFixture : AppServiceIntegrationTest
+    public class AzureAppServiceSettingsBehaviorFixture : AzureAppServiceWithProvisionedResourcesTestBase
     {
         string slotName;
         AppServiceConfigurationDictionary existingSettings;
