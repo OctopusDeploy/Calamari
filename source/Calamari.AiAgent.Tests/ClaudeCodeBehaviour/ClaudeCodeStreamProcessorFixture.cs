@@ -123,6 +123,29 @@ public class ClaudeCodeStreamProcessorFixture
     }
 
     [Test]
+    public void ResultEvent_EmitsModelUsageAsJson_WhenModelUsagePresent()
+    {
+        var json = """
+            {"type":"result","result":"Paris","cost_usd":0.003,"total_cost_usd":0.005,"duration_ms":4521,"duration_api_ms":3200,"num_turns":1,"modelUsage":{"claude-opus-4-5":{"inputTokens":80,"outputTokens":40,"cacheReadInputTokens":5,"cacheCreationInputTokens":3,"costUSD":0.002},"claude-haiku-4-5":{"inputTokens":20,"outputTokens":10,"costUSD":0.001}}}
+            """;
+
+        processor.ProcessLine(json);
+
+        log.ServiceMessages.Count(m => m.Name == ClaudeCodeServiceMessages.Usage.Name).Should().Be(1);
+
+        var msg = log.ServiceMessages.First(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.CostUsdAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.TotalCostUsdAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.DurationMsAttribute).Should().NotBeNull();
+        msg.GetValue(ClaudeCodeServiceMessages.Usage.NumTurnsAttribute).Should().Be("1");
+
+        var modelUsageJson = msg.GetValue(ClaudeCodeServiceMessages.Usage.ModelUsageAttribute);
+        modelUsageJson.Should().NotBeNull();
+        modelUsageJson.Should().Contain("claude-opus-4-5");
+        modelUsageJson.Should().Contain("claude-haiku-4-5");
+    }
+
+    [Test]
     public void ResultEvent_FallsBackToResultText_WhenNoAssistantText()
     {
         var json = """

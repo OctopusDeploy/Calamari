@@ -230,6 +230,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 log.Info(evt.Result);
             }
 
+            log.Info($"AI Agent Usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
+
             var properties = new Dictionary<string, string>();
 
             if (evt.CostUsd.HasValue)
@@ -242,8 +244,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 properties[ClaudeCodeServiceMessages.Usage.DurationApiMsAttribute] = evt.DurationApiMs.Value.ToString("F0");
             if (evt.NumTurns.HasValue)
                 properties[ClaudeCodeServiceMessages.Usage.NumTurnsAttribute] = evt.NumTurns.Value.ToString();
-            log.Info($"AI Agent Usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
-            
+
             if (evt.Usage is { } usage)
             {
                 if (usage.InputTokens.HasValue)
@@ -254,8 +255,25 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                     properties[ClaudeCodeServiceMessages.Usage.CacheReadInputTokensAttribute] = usage.CacheReadInputTokens.Value.ToString();
                 if (usage.CacheCreationInputTokens.HasValue)
                     properties[ClaudeCodeServiceMessages.Usage.CacheCreationInputTokensAttribute] = usage.CacheCreationInputTokens.Value.ToString();
-                
+
                 log.Info($"AI Agent Tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
+            }
+
+            if (evt.ModelUsage is { Count: > 0 } modelUsage)
+            {
+                var usageList = new ClaudeCodeModelUsage[modelUsage.Count];
+                var i = 0;
+                foreach (var (model, info) in modelUsage)
+                    usageList[i++] = new ClaudeCodeModelUsage
+                    {
+                        Model = model,
+                        InputTokens = info.InputTokens,
+                        OutputTokens = info.OutputTokens,
+                        CacheReadInputTokens = info.CacheReadInputTokens,
+                        CacheCreationInputTokens = info.CacheCreationInputTokens,
+                        CostUsd = info.CostUsd,
+                    };
+                properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList, JsonOptions);
             }
 
             log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Usage.Name, properties));

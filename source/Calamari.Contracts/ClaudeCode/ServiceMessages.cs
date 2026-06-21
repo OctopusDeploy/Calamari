@@ -1,5 +1,3 @@
-using System;
-
 namespace Octopus.Calamari.Contracts.ClaudeCode;
 
 public static class ClaudeCodeServiceMessages
@@ -17,6 +15,6 @@ public static class ClaudeCodeServiceMessages
         public const string OutputTokensAttribute = "outputTokens";
         public const string CacheReadInputTokensAttribute = "cacheReadInputTokens";
         public const string CacheCreationInputTokensAttribute = "cacheCreationInputTokens";
-        public const string ModelAttribute = "model"; //TODO: @team-modern-deployments ensure we capture the model used
+        public const string ModelUsageAttribute = "modelUsage";
     }
 }
