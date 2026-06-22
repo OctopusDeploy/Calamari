@@ -17,4 +17,20 @@ public static class ClaudeCodeServiceMessages
         public const string CacheCreationInputTokensAttribute = "cacheCreationInputTokens";
         public const string ModelUsageAttribute = "modelUsage";
     }
+    
+    public static class Transcript
+    {
+        public const string Name = "claude-code-transcript";
+
+        /// <summary>
+        /// The attribute carrying the full session transcript content (raw JSONL/text).
+        /// </summary>
+        public const string TranscriptAttribute = "transcript";
+
+        /// <summary>
+        /// Optional attribute carrying the ISO-8601 timestamp the session occurred at. When absent,
+        /// the server stamps the current time.
+        /// </summary>
+        public const string OccurredAtAttribute = "occurredAt";
+    }
 }
