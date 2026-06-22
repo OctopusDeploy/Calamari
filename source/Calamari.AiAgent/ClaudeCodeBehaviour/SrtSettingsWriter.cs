@@ -21,29 +21,23 @@ public static class SrtSettingsWriter
     }
 
     internal static SrtSettings BuildSettings(IVariables variables)
-    {
-        var settings = Defaults();
-        var network = settings.Network;
-        var filesystem = settings.Filesystem;
-
-        network.AllowedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.SrtNetworkAllowedDomains, SandboxDefaults.AllowedDomains);
-        network.DeniedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.SrtNetworkDeniedDomains, network.DeniedDomains);
-        filesystem.AllowWrite = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemAllowWrite, SandboxDefaults.AllowWrite);
-        filesystem.DenyWrite = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemDenyWrite, filesystem.DenyWrite);
-        filesystem.DenyRead = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemDenyRead, SandboxDefaults.DenyRead);
-        filesystem.AllowRead = SandboxDefaults.Merge(variables, ClaudeVariables.SrtFilesystemAllowRead, filesystem.AllowRead);
-
-        return settings;
-    }
-
-    // Hardened secure baseline, always retained. Customers extend the allow/deny lists via the step.
-    static SrtSettings Defaults() => new()
-    {
-        Network = new() { AllowedDomains = [..SandboxDefaults.AllowedDomains] },
-        Filesystem = new()
+        => new()
         {
-            AllowWrite = [..SandboxDefaults.AllowWrite],
-            DenyRead = [..SandboxDefaults.DenyRead],
-        },
-    };
+            Network = SandboxDefaults.BuildNetworkOptions(
+                variables,
+                ClaudeVariables.SrtNetworkAllowedDomains,
+                ClaudeVariables.SrtNetworkDeniedDomains,
+                ClaudeVariables.SrtNetworkAllowUnixSockets,
+                ClaudeVariables.SrtNetworkAllowAllUnixSockets,
+                ClaudeVariables.SrtNetworkAllowLocalBinding,
+                ClaudeVariables.SrtNetworkHttpProxyPort,
+                ClaudeVariables.SrtNetworkSocksProxyPort),
+            Filesystem = SandboxDefaults.BuildFilesystemOptions(
+                variables,
+                ClaudeVariables.SrtFilesystemAllowWrite,
+                ClaudeVariables.SrtFilesystemDenyWrite,
+                ClaudeVariables.SrtFilesystemDenyRead,
+                ClaudeVariables.SrtFilesystemAllowRead),
+            EnableWeakerNestedSandbox = SandboxDefaults.OptionalFlag(variables, ClaudeVariables.SrtEnableWeakerNestedSandbox),
+        };
 }

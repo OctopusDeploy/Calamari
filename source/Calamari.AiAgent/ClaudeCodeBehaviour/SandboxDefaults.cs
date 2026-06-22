@@ -31,11 +31,42 @@ static class SandboxDefaults
     ];
 
     internal static List<string> Merge(IVariables variables, string variableName, IReadOnlyList<string> defaults)
-    {
-        return variables
-               .GetStrings(variableName, '\n', '\r')
-               .Concat(defaults)
-               .Distinct()
-               .ToList();
-    }
+        => variables.GetStrings(variableName, '\n', '\r').Concat(defaults).Distinct().ToList();
+
+    internal static bool? OptionalFlag(IVariables variables, string variableName)
+        => variables.IsSet(variableName) ? variables.GetFlag(variableName) : null;
+
+    internal static SandboxNetwork BuildNetworkOptions(
+        IVariables variables,
+        string allowedDomainsVar,
+        string deniedDomainsVar,
+        string allowUnixSocketsVar,
+        string allowAllUnixSocketsVar,
+        string allowLocalBindingVar,
+        string httpProxyPortVar,
+        string socksProxyPortVar)
+        => new()
+        {
+            AllowedDomains = Merge(variables, allowedDomainsVar, AllowedDomains),
+            DeniedDomains = Merge(variables, deniedDomainsVar, []),
+            AllowUnixSockets = variables.IsSet(allowUnixSocketsVar) ? variables.GetStrings(allowUnixSocketsVar, '\n', '\r') : null,
+            AllowAllUnixSockets = OptionalFlag(variables, allowAllUnixSocketsVar),
+            AllowLocalBinding = OptionalFlag(variables, allowLocalBindingVar),
+            HttpProxyPort = variables.GetInt32(httpProxyPortVar),
+            SocksProxyPort = variables.GetInt32(socksProxyPortVar),
+        };
+
+    internal static SandboxFilesystem BuildFilesystemOptions(
+        IVariables variables,
+        string allowWriteVar,
+        string denyWriteVar,
+        string denyReadVar,
+        string allowReadVar)
+        => new()
+        {
+            AllowWrite = Merge(variables, allowWriteVar, AllowWrite),
+            DenyWrite = Merge(variables, denyWriteVar, []),
+            DenyRead = Merge(variables, denyReadVar, DenyRead),
+            AllowRead = Merge(variables, allowReadVar, []),
+        };
 }

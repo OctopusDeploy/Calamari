@@ -47,6 +47,55 @@ public class BashSandboxSettingsWriterTests
     }
 
     [Test]
+    public void BuildSettings_LeavesOptionalControlsUnset_WhenNoUserEntries()
+    {
+        var sandbox = BashSandboxSettingsWriter.BuildSettings(new CalamariVariables()).Sandbox;
+
+        sandbox.AutoAllowBashIfSandboxed.Should().BeFalse();
+        sandbox.EnableWeakerNestedSandbox.Should().BeNull();
+        sandbox.Network.AllowUnixSockets.Should().BeNull();
+        sandbox.Network.AllowAllUnixSockets.Should().BeNull();
+        sandbox.Network.AllowLocalBinding.Should().BeNull();
+        sandbox.Network.HttpProxyPort.Should().BeNull();
+        sandbox.Network.SocksProxyPort.Should().BeNull();
+    }
+
+    [Test]
+    public void BuildSettings_WiresOptionalNetworkAndSandboxControls()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkAllowUnixSockets, "/var/run/one.sock\n/var/run/two.sock");
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkAllowAllUnixSockets, "true");
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkAllowLocalBinding, "true");
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkHttpProxyPort, "8080");
+        vars.Set(SpecialVariables.Action.Claude.BashNetworkSocksProxyPort, "1080");
+        vars.Set(SpecialVariables.Action.Claude.BashAutoAllowBashIfSandboxed, "true");
+        vars.Set(SpecialVariables.Action.Claude.BashEnableWeakerNestedSandbox, "true");
+
+        var sandbox = BashSandboxSettingsWriter.BuildSettings(vars).Sandbox;
+
+        sandbox.Network.AllowUnixSockets.Should().BeEquivalentTo("/var/run/one.sock", "/var/run/two.sock");
+        sandbox.Network.AllowAllUnixSockets.Should().BeTrue();
+        sandbox.Network.AllowLocalBinding.Should().BeTrue();
+        sandbox.Network.HttpProxyPort.Should().Be(8080);
+        sandbox.Network.SocksProxyPort.Should().Be(1080);
+        sandbox.AutoAllowBashIfSandboxed.Should().BeTrue();
+        sandbox.EnableWeakerNestedSandbox.Should().BeTrue();
+    }
+
+    [Test]
+    public void BuildSettings_OmitsUnsetOptionalControls_FromJson()
+    {
+        var json = JsonSerializer.Serialize(BashSandboxSettingsWriter.BuildSettings(new CalamariVariables()), SandboxSettingsJsonContext.Default.BashSandboxSettings);
+
+        using var doc = JsonDocument.Parse(json);
+        var sandbox = doc.RootElement.GetProperty("sandbox");
+        sandbox.TryGetProperty("enableWeakerNestedSandbox", out _).Should().BeFalse();
+        sandbox.GetProperty("network").TryGetProperty("allowUnixSockets", out _).Should().BeFalse();
+        sandbox.GetProperty("network").TryGetProperty("httpProxyPort", out _).Should().BeFalse();
+    }
+
+    [Test]
     public void BuildSettings_SerializesUnderSandboxKey_CamelCase()
     {
         var json = JsonSerializer.Serialize(BashSandboxSettingsWriter.BuildSettings(new CalamariVariables()), SandboxSettingsJsonContext.Default.BashSandboxSettings);

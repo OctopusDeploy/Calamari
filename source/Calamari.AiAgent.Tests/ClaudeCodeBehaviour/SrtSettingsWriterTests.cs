@@ -42,6 +42,40 @@ public class SrtSettingsWriterTests
     }
 
     [Test]
+    public void BuildSettings_LeavesOptionalControlsUnset_WhenNoUserEntries()
+    {
+        var settings = SrtSettingsWriter.BuildSettings(new CalamariVariables());
+
+        settings.EnableWeakerNestedSandbox.Should().BeNull();
+        settings.Network.AllowUnixSockets.Should().BeNull();
+        settings.Network.AllowAllUnixSockets.Should().BeNull();
+        settings.Network.AllowLocalBinding.Should().BeNull();
+        settings.Network.HttpProxyPort.Should().BeNull();
+        settings.Network.SocksProxyPort.Should().BeNull();
+    }
+
+    [Test]
+    public void BuildSettings_WiresOptionalNetworkAndSandboxControls()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.SrtNetworkAllowUnixSockets, "/var/run/one.sock\n/var/run/two.sock");
+        vars.Set(SpecialVariables.Action.Claude.SrtNetworkAllowAllUnixSockets, "true");
+        vars.Set(SpecialVariables.Action.Claude.SrtNetworkAllowLocalBinding, "true");
+        vars.Set(SpecialVariables.Action.Claude.SrtNetworkHttpProxyPort, "8080");
+        vars.Set(SpecialVariables.Action.Claude.SrtNetworkSocksProxyPort, "1080");
+        vars.Set(SpecialVariables.Action.Claude.SrtEnableWeakerNestedSandbox, "true");
+
+        var settings = SrtSettingsWriter.BuildSettings(vars);
+
+        settings.Network.AllowUnixSockets.Should().BeEquivalentTo("/var/run/one.sock", "/var/run/two.sock");
+        settings.Network.AllowAllUnixSockets.Should().BeTrue();
+        settings.Network.AllowLocalBinding.Should().BeTrue();
+        settings.Network.HttpProxyPort.Should().Be(8080);
+        settings.Network.SocksProxyPort.Should().Be(1080);
+        settings.EnableWeakerNestedSandbox.Should().BeTrue();
+    }
+
+    [Test]
     public void BuildSettings_SerializesToValidCamelCaseJson()
     {
         var json = JsonSerializer.Serialize(SrtSettingsWriter.BuildSettings(new CalamariVariables()), SandboxSettingsJsonContext.Default.SrtSettings);
@@ -50,5 +84,7 @@ public class SrtSettingsWriterTests
         var root = doc.RootElement;
         root.GetProperty("network").GetProperty("allowedDomains").EnumerateArray().Select(e => e.GetString()).Should().Contain("api.anthropic.com");
         root.GetProperty("filesystem").GetProperty("denyRead").EnumerateArray().Select(e => e.GetString()).Should().Contain("~/.ssh");
+        root.TryGetProperty("enableWeakerNestedSandbox", out _).Should().BeFalse();
+        root.GetProperty("network").TryGetProperty("allowUnixSockets", out _).Should().BeFalse();
     }
 }

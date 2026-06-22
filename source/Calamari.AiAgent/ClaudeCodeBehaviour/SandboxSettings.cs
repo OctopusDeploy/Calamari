@@ -38,12 +38,12 @@ public sealed class BashSandbox
     public bool Enabled { get; set; } = true;
     public bool FailIfUnavailable { get; set; } = true;
     public bool AllowUnsandboxedCommands { get; set; } = false;
-    public bool? AutoAllowBashIfSandboxed { get; set; } = false;
 
     // Configurable
     public SandboxNetwork Network { get; set; } = new();
     public SandboxFilesystem Filesystem { get; set; } = new();
     public List<string> ExcludedCommands { get; set; } = [];
+    public bool? AutoAllowBashIfSandboxed { get; set; } = false;
     public bool? EnableWeakerNestedSandbox { get; set; }
 }
 
@@ -52,7 +52,7 @@ public sealed class BashSandboxSettings
     public BashSandbox Sandbox { get; set; } = new();
 }
 
-[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(SrtSettings))]
 [JsonSerializable(typeof(BashSandboxSettings))]
 partial class SandboxSettingsJsonContext : JsonSerializerContext;

@@ -24,21 +24,32 @@ public static class BashSandboxSettingsWriter
     {
         var settings = Defaults();
         var sandbox = settings.Sandbox;
-        var network = sandbox.Network;
-        var filesystem = sandbox.Filesystem;
 
-        network.AllowedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.BashNetworkAllowedDomains, SandboxDefaults.AllowedDomains);
-        network.DeniedDomains = SandboxDefaults.Merge(variables, ClaudeVariables.BashNetworkDeniedDomains, network.DeniedDomains);
-        filesystem.AllowWrite = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemAllowWrite, SandboxDefaults.AllowWrite);
-        filesystem.DenyWrite = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemDenyWrite, filesystem.DenyWrite);
-        filesystem.DenyRead = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemDenyRead, SandboxDefaults.DenyRead);
-        filesystem.AllowRead = SandboxDefaults.Merge(variables, ClaudeVariables.BashFilesystemAllowRead, filesystem.AllowRead);
+        sandbox.Network = SandboxDefaults.BuildNetworkOptions(
+            variables,
+            ClaudeVariables.BashNetworkAllowedDomains,
+            ClaudeVariables.BashNetworkDeniedDomains,
+            ClaudeVariables.BashNetworkAllowUnixSockets,
+            ClaudeVariables.BashNetworkAllowAllUnixSockets,
+            ClaudeVariables.BashNetworkAllowLocalBinding,
+            ClaudeVariables.BashNetworkHttpProxyPort,
+            ClaudeVariables.BashNetworkSocksProxyPort);
+
+        sandbox.Filesystem = SandboxDefaults.BuildFilesystemOptions(
+            variables,
+            ClaudeVariables.BashFilesystemAllowWrite,
+            ClaudeVariables.BashFilesystemDenyWrite,
+            ClaudeVariables.BashFilesystemDenyRead,
+            ClaudeVariables.BashFilesystemAllowRead);
+
         sandbox.ExcludedCommands = SandboxDefaults.Merge(variables, ClaudeVariables.BashExcludedCommands, sandbox.ExcludedCommands);
+
+        sandbox.AutoAllowBashIfSandboxed = SandboxDefaults.OptionalFlag(variables, ClaudeVariables.BashAutoAllowBashIfSandboxed) ?? sandbox.AutoAllowBashIfSandboxed;
+        sandbox.EnableWeakerNestedSandbox = SandboxDefaults.OptionalFlag(variables, ClaudeVariables.BashEnableWeakerNestedSandbox);
 
         return settings;
     }
 
-    // Hardened secure baseline, always retained. Customers extend the allow/deny lists via the step.
     static BashSandboxSettings Defaults() => new()
     {
         Sandbox = new()
@@ -46,12 +57,7 @@ public static class BashSandboxSettingsWriter
             Enabled = true,
             FailIfUnavailable = true,
             AllowUnsandboxedCommands = false,
-            Network = new() { AllowedDomains = [..SandboxDefaults.AllowedDomains] },
-            Filesystem = new()
-            {
-                AllowWrite = [..SandboxDefaults.AllowWrite],
-                DenyRead = [..SandboxDefaults.DenyRead],
-            },
+            AutoAllowBashIfSandboxed = false,
         },
     };
 }
