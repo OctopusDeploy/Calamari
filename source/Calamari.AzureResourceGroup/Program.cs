@@ -20,10 +20,11 @@ namespace Calamari.AzureResourceGroup
         {
             base.ConfigureContainer(builder, options);
 
-            builder.RegisterType<TemplateService>();
+            builder.RegisterType<TemplateService>().As<ITemplateService>();
             builder.RegisterType<ResourceGroupTemplateNormalizer>().As<IResourceGroupTemplateNormalizer>();
             builder.RegisterType<TemplateResolver>().As<ITemplateResolver>().SingleInstance();
-            builder.RegisterType<AzureResourceGroupOperator>();
+            builder.RegisterType<AzureResourceGroupOperator>().As<IAzureResourceGroupOperator>();
+            builder.RegisterType<Bicep.BicepCompiler>().As<Bicep.IBicepCompiler>();
         }
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()

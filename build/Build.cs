@@ -60,12 +60,9 @@ partial class Build : NukeBuild
         // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
         OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
                                                      {
-                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0"};
-
-                                                         // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
-                                                         var version = attribute.GetValue(null!, this);
-
-                                                         return version as OctoVersionInfo;
+                                                         return new OctoVersionInfo(1,1,1,"1.0","1.0","1.0","1.0","1.0","1.0","1.0","1.0","1.0");
+                                                         
+                                                         
                                                      }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         NugetVersion = new Lazy<string>(GetNugetVersion);
