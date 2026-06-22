@@ -21,8 +21,17 @@ public class ClaudeCommandArgsBuilderFixture
         args.Should().Contain("--verbose");
         args.Should().Contain("--permission-mode dontAsk");
         args.Should().Contain("--no-session-persistence");
-        args.Should().Contain("--bare");
         args.Should().Contain("--strict-mcp-config");
+    }
+
+    [Test]
+    public void Build_DoesNotUseBareMode()
+    {
+        // --bare (Agent SDK mode) defers HTTP MCP tools behind tool search, which would hide the
+        // Octopus MCP server now served over loopback HTTP by the credential broker (MD-2096).
+        var args = MinimalBuilder().Build();
+
+        args.Should().NotContain("--bare");
     }
 
     [Test]

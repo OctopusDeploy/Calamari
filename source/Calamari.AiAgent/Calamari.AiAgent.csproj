@@ -16,6 +16,12 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- MD-2096 credential-broker spike: in-process MCP client (upstream) + loopback HTTP MCP server
+             (downstream). The AspNetCore package transitively brings ModelContextProtocol(.Core). -->
+        <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.4.0" />
+    </ItemGroup>
+
+    <ItemGroup>
         <InternalsVisibleTo Include="Calamari.AiAgent.Tests" />
     </ItemGroup>
 

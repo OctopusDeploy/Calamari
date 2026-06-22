@@ -9,13 +9,42 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
+/// <summary>
+/// Prepares MCP configuration for a Claude Code run. Every MCP server (the Octopus server and any
+/// user-configured custom servers) now runs as a Calamari child behind the credential broker
+/// (see <see cref="McpBroker"/>), so this no longer writes any secret to disk. It parses the
+/// configured servers into specs for the broker to spawn, and writes a secret-free mcp-config.json
+/// that points Claude Code at the broker's loopback HTTP endpoints.
+/// </summary>
 public class McpWriter(IVariables variables)
 {
-    static readonly string ConfigName = "mcp-config.json";
-    
-    public string SetupMcpConfig(string workingDir)
+    const string ConfigName = "mcp-config.json";
+
+    /// <summary>
+    /// The set of MCP servers to front: the Octopus server (when a token + URL are available) plus any
+    /// user-configured custom servers. The broker spawns each as a Calamari child holding its secrets.
+    /// </summary>
+    public IReadOnlyList<McpServerSpec> BuildServerSpecs()
     {
-        var mcpServers = BuildMcpServers();
+        var specs = new List<McpServerSpec>();
+        specs.AddRange(BuildCustomServerSpecs());
+
+        var octopus = BuildOctopusServerSpec();
+        if (octopus != null)
+            specs.Add(octopus);
+
+        return specs;
+    }
+
+    /// <summary>
+    /// Writes a secret-free mcp-config.json mapping each brokered server to its loopback HTTP endpoint.
+    /// </summary>
+    public string WriteConfig(string workingDir, IReadOnlyDictionary<string, Uri> brokerEndpoints)
+    {
+        var mcpServers = brokerEndpoints.ToDictionary(
+            endpoint => endpoint.Key,
+            endpoint => new HttpMcpServerConfig { Url = endpoint.Value.ToString() });
+
         var config = new { mcpServers };
         var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
         var path = Path.Combine(workingDir, ConfigName);
@@ -23,109 +52,74 @@ public class McpWriter(IVariables variables)
         return path;
     }
 
-    public IEnumerable<string> GetAllowedTools()
-    {
-        var mcpServers = GetCustomMcpServers();
-            
-        // TODO: Use explicitly allowed MCP tools
-        return mcpServers.Select(serverName => $"mcp__{serverName.Name}__*");
-    }
-    
-    Dictionary<string, McpServerConfig> BuildMcpServers()
-    {
-        var path = Environment.GetEnvironmentVariable("PATH") ?? "";
-        
-        var servers = AddCustomMcpServer(path);
-        AddOctopusMcp(servers, path);
-        return servers;
-    }
+    // TODO: Use explicitly allowed MCP tools rather than a per-server wildcard.
+    public IEnumerable<string> GetAllowedTools(IReadOnlyList<McpServerSpec> specs)
+        => specs.Select(spec => $"mcp__{spec.Name}__*");
 
-    void AddOctopusMcp(Dictionary<string, McpServerConfig> servers, string path)
+    McpServerSpec? BuildOctopusServerSpec()
     {
         var octopusToken = variables.Get(SpecialVariables.Action.Claude.OctopusToken);
         if (string.IsNullOrWhiteSpace(octopusToken))
-            return;
+            return null;
 
-
-        // Octopus MCP server is always added when a token is available
         var octopusServerUrl = variables.Get(SpecialVariables.Web.ServerUri);
         if (string.IsNullOrWhiteSpace(octopusServerUrl))
         {
-            Log.Warn("Unable to find Octopus Server URL");
+            Log.Warn("Unable to find Octopus Server URL; the Octopus MCP server will not be available.");
+            return null;
         }
-        else
+
+        Log.Verbose("Octopus Server URL: " + octopusServerUrl);
+        return new McpServerSpec
         {
-            Log.Verbose("Octopus Server URL: " + octopusServerUrl);
-            servers["octopus"] = new McpServerConfig
+            Name = "octopus",
+            Command = "npx",
+            Args = new[] { "-y", "@octopusdeploy/mcp-server" },
+            Env = new Dictionary<string, string?>
             {
-                Command = "npx",
-                Args = new[] { "-y", "@octopusdeploy/mcp-server" },
-                Env = new Dictionary<string, string>
-                {
-                    ["OCTOPUS_SERVER_URL"] = octopusServerUrl,
-                    ["OCTOPUS_API_KEY"] = octopusToken,
-                    ["PATH"] = path,
-                },
-            };
-        }
+                ["OCTOPUS_SERVER_URL"] = octopusServerUrl,
+                ["OCTOPUS_API_KEY"] = octopusToken,
+            },
+        };
     }
 
-    List<McpServerEntry> GetCustomMcpServers()
+    IReadOnlyList<McpServerSpec> BuildCustomServerSpecs()
     {
         var mcpServersJson = variables.Get(SpecialVariables.Action.Claude.McpServers);
         if (string.IsNullOrWhiteSpace(mcpServersJson))
-        {
-            return new List<McpServerEntry>();
-        }
-        
+            return Array.Empty<McpServerSpec>();
+
+        List<McpServerEntry>? entries;
         try
         {
-            var customServers = JsonSerializer.Deserialize<List<McpServerEntry>>(mcpServersJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            return customServers ?? new List<McpServerEntry>();
+            entries = JsonSerializer.Deserialize<List<McpServerEntry>>(mcpServersJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch (JsonException ex)
         {
             throw new CommandException($"Failed to parse MCP servers configuration: {ex.Message}");
         }
-    }
 
-     Dictionary<string, McpServerConfig> AddCustomMcpServer(string path)
-    {
-        var entries = GetCustomMcpServers();
+        if (entries == null)
+            return Array.Empty<McpServerSpec>();
 
-        var mcpServerConfigs = new Dictionary<string, McpServerConfig>();
-        if (entries.Any())
+        var specs = new List<McpServerSpec>();
+        foreach (var entry in entries)
         {
-            foreach (var entry in entries)
+            if (string.IsNullOrWhiteSpace(entry.Name))
+                throw new CommandException("Each MCP server must have a name.");
+            if (string.IsNullOrWhiteSpace(entry.Command))
+                throw new CommandException($"MCP server '{entry.Name}' must have a command.");
+
+            Log.Verbose($"MCP server '{entry.Name}' added.");
+            specs.Add(new McpServerSpec
             {
-                if (string.IsNullOrWhiteSpace(entry.Name))
-                    throw new CommandException("Each MCP server must have a name.");
-                if (string.IsNullOrWhiteSpace(entry.Command))
-                    throw new CommandException($"MCP server '{entry.Name}' must have a command.");
-
-                var env = entry.Env != null
-                    ? new Dictionary<string, string>(entry.Env)
-                    : new Dictionary<string, string>();
-
-                if (!env.ContainsKey("PATH"))
-                    env["PATH"] = path;
-
-                mcpServerConfigs[entry.Name] = new McpServerConfig
-                {
-                    Type = entry.Type ?? "stdio",
-                    Command = entry.Command,
-                    Args = entry.Args,
-                    Env = env,
-                };
-                Log.Verbose($"MCP server '{entry.Name}' added.");
-            }
+                Name = entry.Name,
+                Command = entry.Command,
+                Args = entry.Args,
+                Env = entry.Env?.ToDictionary(kv => kv.Key, kv => (string?)kv.Value),
+            });
         }
 
-        return mcpServerConfigs;
+        return specs;
     }
-
-
-        
-
 }

@@ -125,25 +125,18 @@ public record UserSkill
     public required string Content { get; init; }
 }
 
-public record McpServerConfig
+public record HttpMcpServerConfig
 {
     [JsonPropertyName("type")]
-    public string Type { get; init; } = "stdio";
+    public string Type { get; init; } = "http";
 
-    [JsonPropertyName("command")]
-    public required string Command { get; init; }
-
-    [JsonPropertyName("args")]
-    public IReadOnlyList<string>? Args { get; init; }
-
-    [JsonPropertyName("env")]
-    public IReadOnlyDictionary<string, string>? Env { get; init; }
+    [JsonPropertyName("url")]
+    public required string Url { get; init; }
 }
 
 public record McpServerEntry
 {
     public string? Name { get; init; }
-    public string? Type { get; init; }
     public string? Command { get; init; }
     public IReadOnlyList<string>? Args { get; init; }
     public IReadOnlyDictionary<string, string>? Env { get; init; }
