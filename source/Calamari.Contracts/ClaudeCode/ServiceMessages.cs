@@ -19,4 +19,14 @@ public static class ClaudeCodeServiceMessages
         public const string CacheCreationInputTokensAttribute = "cacheCreationInputTokens";
         public const string ModelAttribute = "model"; //TODO: @team-modern-deployments ensure we capture the model used
     }
+    
+    public static class Transcript
+    {
+        public const string Name = "claude-code-transcript";
+
+        /// <summary>
+        /// The attribute carrying the full session transcript content (raw JSONL/text).
+        /// </summary>
+        public const string TranscriptAttribute = "transcript";
+    }
 }

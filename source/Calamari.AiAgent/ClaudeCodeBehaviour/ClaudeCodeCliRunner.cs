@@ -7,6 +7,8 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
@@ -62,6 +64,11 @@ public class ClaudeCodeCliRunner(ILog log)
             var movedFilePath = Path.Combine(calamariDir, "log", fileInfo.Name);
             fileInfo.MoveTo(movedFilePath);
             log.NewOctopusArtifact(movedFilePath, "claude-agent-verbose.log", fileInfo.Length);
+            
+            log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Transcript.Name, new Dictionary<string, string>()
+            {
+                {ClaudeCodeServiceMessages.Transcript.TranscriptAttribute, await File.ReadAllTextAsync(movedFilePath, cancellationToken)},
+            }));
         }
 
         ClaudeAgentOutcomeEvaluator.EnsureSuccessful(process.ExitCode, streamProcessor.Result);
