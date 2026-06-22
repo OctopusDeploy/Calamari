@@ -222,6 +222,33 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             log.StandardOut.Should().ContainMatch("Cannot create symbolic link*");
         }
 
+        [Test]
+        [TestCase(typeof(NupkgExtractor), "nupkg", ArchiveType.Zip, CompressionType.Deflate)]
+        [TestCase(typeof(ZipPackageExtractor), "zip", ArchiveType.Zip, CompressionType.Deflate)]
+        [TestCase(typeof(TarPackageExtractor), "tar", ArchiveType.Tar, CompressionType.None)]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", ArchiveType.Tar, CompressionType.GZip)]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", ArchiveType.Tar, CompressionType.BZip2)]
+        public void ExtractThrowsWhenArchiveEntryAttemptsPathTraversal(Type extractorType, string extension, ArchiveType archiveType, CompressionType compressionType)
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var packageFile = Path.Combine(tempFolder.DirectoryPath, $"malicious.{extension}");
+            var extractionDir = Path.Combine(tempFolder.DirectoryPath, "extraction");
+            Directory.CreateDirectory(extractionDir);
+
+            using (var stream = File.OpenWrite(packageFile))
+            using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType) { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } }))
+            {
+                var payload = "malicious content"u8.ToArray();
+                writer.Write("safe-file.txt", new MemoryStream(payload));
+                writer.Write("../traversal.txt", new MemoryStream(payload));
+            }
+
+            var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType, ConsoleLog.Instance);
+
+            Assert.Throws<InvalidOperationException>(() => extractor.Extract(packageFile, extractionDir));
+            Assert.That(File.Exists(Path.Combine(tempFolder.DirectoryPath, "traversal.txt")), Is.False, "Traversal file should not have been written outside the extraction directory");
+        }
+
         private string GetFileName(string extension)
         {
             return GetFixtureResource("Samples", string.Format("{0}.{1}.{2}", PackageId, PackageVersion, extension));
