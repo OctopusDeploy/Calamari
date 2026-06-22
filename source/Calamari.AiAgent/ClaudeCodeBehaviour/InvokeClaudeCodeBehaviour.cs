@@ -104,16 +104,23 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         }
 
         argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
-        argsBuilder.WithMcpConfigPath(mcpConfig);
+        argsBuilder.WithMcpConfigPath(mcpConfig.Path);
+
+        // MCP secrets are referenced as ${VAR} in mcp-config.json and supplied to the claude
+        // process env here, so they aren't written to disk in plaintext. Claude expands them
+        // into each stdio server's env block at launch.
+        var alwaysSet = new Dictionary<string, string>
+        {
+            ["ANTHROPIC_API_KEY"] = apiToken,
+            ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1", // Strips Anthropic/cloud credentials from Bash, hook, and MCP subprocess environments
+        };
+        foreach (var kvp in mcpConfig.SecretEnvVars)
+            alwaysSet[kvp.Key] = kvp.Value;
 
         var environment = ClaudeCodeEnvironment.Build(
             ClaudeCodeEnvironment.GetCurrentEnvironmentVariables(),
             PassThroughEnvironmentVariables(variables),
-            new Dictionary<string, string>
-            {
-                ["ANTHROPIC_API_KEY"] = apiToken,
-                ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1", // Strips Anthropic/cloud credentials from Bash, hook, and MCP subprocess environments
-            });
+            alwaysSet);
 
         var response = await new ClaudeCodeCliRunner(log).RunAsync(
             argsBuilder,

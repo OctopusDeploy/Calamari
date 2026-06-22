@@ -44,23 +44,30 @@ public class McpWriterFixture
         });
         vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var result = new McpWriter(vars).SetupMcpConfig(workingDir);
 
-        File.Exists(configPath).Should().BeTrue();
+        File.Exists(result.Path).Should().BeTrue();
 
-        var json = File.ReadAllText(configPath);
+        var json = File.ReadAllText(result.Path);
         var doc = JsonDocument.Parse(json);
         doc.RootElement.TryGetProperty("mcpServers", out var mcpServers).Should().BeTrue();
         mcpServers.TryGetProperty("github", out var github).Should().BeTrue();
         github.GetProperty("command").GetString().Should().Be("npx");
+
+        // The secret env value is referenced as a ${VAR} placeholder on disk, with the real
+        // value surfaced for injection into the claude process env.
+        var tokenPlaceholder = github.GetProperty("env").GetProperty("TOKEN").GetString();
+        tokenPlaceholder.Should().Be("${MCP_GITHUB_TOKEN}");
+        result.SecretEnvVars["MCP_GITHUB_TOKEN"].Should().Be("abc123");
+        json.Should().NotContain("abc123");
     }
 
     [Test]
     public void SetupMcpConfig_WritesEmptyServers_WhenNoneProvided()
     {
-        var configPath = new McpWriter(new CalamariVariables()).SetupMcpConfig(workingDir);
+        var result = new McpWriter(new CalamariVariables()).SetupMcpConfig(workingDir);
 
-        var json = File.ReadAllText(configPath);
+        var json = File.ReadAllText(result.Path);
         var doc = JsonDocument.Parse(json);
         doc.RootElement.TryGetProperty("mcpServers", out var mcpServers).Should().BeTrue();
         mcpServers.EnumerateObject().Should().BeEmpty();
@@ -98,9 +105,9 @@ public class McpWriterFixture
         vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-TESTKEY");
         vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var result = new McpWriter(vars).SetupMcpConfig(workingDir);
 
-        var json = File.ReadAllText(configPath);
+        var json = File.ReadAllText(result.Path);
         var doc = JsonDocument.Parse(json);
         var mcpServers = doc.RootElement.GetProperty("mcpServers");
         mcpServers.TryGetProperty("octopus", out var octopus).Should().BeTrue();
@@ -108,7 +115,12 @@ public class McpWriterFixture
 
         var env = octopus.GetProperty("env");
         env.GetProperty("OCTOPUS_SERVER_URL").GetString().Should().Be("https://octopus.example.com");
-        env.GetProperty("OCTOPUS_API_KEY").GetString().Should().Be("API-TESTKEY");
+
+        // The Octopus token is referenced as a ${VAR} placeholder on disk, with the real value
+        // surfaced for injection into the claude process env.
+        env.GetProperty("OCTOPUS_API_KEY").GetString().Should().Be("${OCTOPUS_API_KEY}");
+        result.SecretEnvVars["OCTOPUS_API_KEY"].Should().Be("API-TESTKEY");
+        json.Should().NotContain("API-TESTKEY");
     }
 
     [Test]
@@ -117,9 +129,9 @@ public class McpWriterFixture
         var vars = new CalamariVariables();
         vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var result = new McpWriter(vars).SetupMcpConfig(workingDir);
 
-        var json = File.ReadAllText(configPath);
+        var json = File.ReadAllText(result.Path);
         var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("mcpServers").TryGetProperty("octopus", out _).Should().BeFalse();
     }
@@ -169,9 +181,9 @@ public class McpWriterFixture
         });
         vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var result = new McpWriter(vars).SetupMcpConfig(workingDir);
 
-        var json = File.ReadAllText(configPath);
+        var json = File.ReadAllText(result.Path);
         var doc = JsonDocument.Parse(json);
         var env = doc.RootElement
             .GetProperty("mcpServers")
@@ -195,9 +207,9 @@ public class McpWriterFixture
         });
         vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var result = new McpWriter(vars).SetupMcpConfig(workingDir);
 
-        var json = File.ReadAllText(configPath);
+        var json = File.ReadAllText(result.Path);
         var doc = JsonDocument.Parse(json);
         var env = doc.RootElement
             .GetProperty("mcpServers")

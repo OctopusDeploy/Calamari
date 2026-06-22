@@ -13,14 +13,18 @@ public class McpWriter(IVariables variables)
 {
     static readonly string ConfigName = "mcp-config.json";
     
-    public string SetupMcpConfig(string workingDir)
+    public McpConfigResult SetupMcpConfig(string workingDir)
     {
-        var mcpServers = BuildMcpServers();
+        // Secret env values are referenced from mcp-config.json as ${VAR} placeholders and
+        // passed to the claude process env instead of being written to disk in plaintext.
+        // Claude expands ${VAR} in stdio server env values from its own process env at launch.
+        var secretEnvVars = new Dictionary<string, string>();
+        var mcpServers = BuildMcpServers(secretEnvVars);
         var config = new { mcpServers };
         var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
         var path = Path.Combine(workingDir, ConfigName);
         File.WriteAllText(path, json);
-        return path;
+        return new McpConfigResult(path, secretEnvVars);
     }
 
     public IEnumerable<string> GetAllowedTools()
@@ -31,16 +35,16 @@ public class McpWriter(IVariables variables)
         return mcpServers.Select(serverName => $"mcp__{serverName.Name}__*");
     }
     
-    Dictionary<string, McpServerConfig> BuildMcpServers()
+    Dictionary<string, McpServerConfig> BuildMcpServers(Dictionary<string, string> secretEnvVars)
     {
         var path = Environment.GetEnvironmentVariable("PATH") ?? "";
-        
-        var servers = AddCustomMcpServer(path);
-        AddOctopusMcp(servers, path);
+
+        var servers = AddCustomMcpServer(path, secretEnvVars);
+        AddOctopusMcp(servers, path, secretEnvVars);
         return servers;
     }
 
-    void AddOctopusMcp(Dictionary<string, McpServerConfig> servers, string path)
+    void AddOctopusMcp(Dictionary<string, McpServerConfig> servers, string path, Dictionary<string, string> secretEnvVars)
     {
         var octopusToken = variables.Get(SpecialVariables.Action.Claude.OctopusToken);
         if (string.IsNullOrWhiteSpace(octopusToken))
@@ -56,6 +60,7 @@ public class McpWriter(IVariables variables)
         else
         {
             Log.Verbose("Octopus Server URL: " + octopusServerUrl);
+            secretEnvVars["OCTOPUS_API_KEY"] = octopusToken;
             servers["octopus"] = new McpServerConfig
             {
                 Command = "npx",
@@ -63,7 +68,7 @@ public class McpWriter(IVariables variables)
                 Env = new Dictionary<string, string>
                 {
                     ["OCTOPUS_SERVER_URL"] = octopusServerUrl,
-                    ["OCTOPUS_API_KEY"] = octopusToken,
+                    ["OCTOPUS_API_KEY"] = "${OCTOPUS_API_KEY}",
                     ["PATH"] = path,
                 },
             };
@@ -90,7 +95,7 @@ public class McpWriter(IVariables variables)
         }
     }
 
-     Dictionary<string, McpServerConfig> AddCustomMcpServer(string path)
+     Dictionary<string, McpServerConfig> AddCustomMcpServer(string path, Dictionary<string, string> secretEnvVars)
     {
         var entries = GetCustomMcpServers();
 
@@ -104,9 +109,25 @@ public class McpWriter(IVariables variables)
                 if (string.IsNullOrWhiteSpace(entry.Command))
                     throw new CommandException($"MCP server '{entry.Name}' must have a command.");
 
-                var env = entry.Env != null
-                    ? new Dictionary<string, string>(entry.Env)
-                    : new Dictionary<string, string>();
+                var env = new Dictionary<string, string>();
+                if (entry.Env != null)
+                {
+                    foreach (var kvp in entry.Env)
+                    {
+                        // PATH is not a secret and is needed verbatim to locate the server command.
+                        if (kvp.Key == "PATH")
+                        {
+                            env[kvp.Key] = kvp.Value;
+                            continue;
+                        }
+
+                        // Custom server env values may be secrets, so reference them as ${VAR}
+                        // placeholders and pass the real values via the claude process env.
+                        var placeholder = ReserveEnvVarName(secretEnvVars, entry.Name, kvp.Key);
+                        secretEnvVars[placeholder] = kvp.Value;
+                        env[kvp.Key] = $"${{{placeholder}}}";
+                    }
+                }
 
                 if (!env.ContainsKey("PATH"))
                     env["PATH"] = path;
@@ -125,7 +146,22 @@ public class McpWriter(IVariables variables)
         return mcpServerConfigs;
     }
 
+    // Builds a deterministic, collision-safe env var name for a custom server's env entry.
+    static string ReserveEnvVarName(Dictionary<string, string> secretEnvVars, string serverName, string key)
+    {
+        var raw = $"MCP_{serverName}_{key}".ToUpperInvariant();
+        var chars = raw.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray();
+        var name = new string(chars);
+        if (name.Length == 0 || char.IsDigit(name[0]))
+            name = "_" + name;
 
-        
+        var candidate = name;
+        var suffix = 1;
+        while (secretEnvVars.ContainsKey(candidate))
+            candidate = $"{name}_{suffix++}";
 
+        return candidate;
+    }
 }
+
+public record McpConfigResult(string Path, IReadOnlyDictionary<string, string> SecretEnvVars);
