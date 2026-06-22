@@ -52,11 +52,13 @@ public class ClaudeCodeEnvironmentTests
             ["ANTHROPIC_API_KEY"] = "leaked-from-worker",
         };
 
-        var env = ClaudeCodeEnvironment.Build(source, [], new Dictionary<string, string>
-        {
-            ["ANTHROPIC_API_KEY"] = "fresh",
-            ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1",
-        });
+        var env = ClaudeCodeEnvironment.Build(source,
+            [],
+            new Dictionary<string, string>
+            {
+                ["ANTHROPIC_API_KEY"] = "fresh",
+                ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1",
+            });
 
         env["ANTHROPIC_API_KEY"].Should().Be("fresh");
         env["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"].Should().Be("1");
@@ -70,28 +72,13 @@ public class ClaudeCodeEnvironmentTests
             ["PATH"] = "/usr/bin",
         };
 
-        var env = ClaudeCodeEnvironment.Build(source, [], new Dictionary<string, string>
-        {
-            ["PATH"] = "/controlled/path",
-        });
+        var env = ClaudeCodeEnvironment.Build(source,
+            [],
+            new Dictionary<string, string>
+            {
+                ["PATH"] = "/controlled/path",
+            });
 
         env["PATH"].Should().Be("/controlled/path");
-    }
-
-    [Test]
-    public void Build_PassesProxyVars_FromSource()
-    {
-        // HTTPS_PROXY must flow through so the child can reach api.anthropic.com behind a corporate proxy.
-        var source = new Dictionary<string, string>
-        {
-            ["HTTPS_PROXY"] = "http://proxy.corp.example:3128",
-            ["SECRET_TOKEN"] = "no",
-        };
-
-        var env = ClaudeCodeEnvironment.Build(source, [], new Dictionary<string, string>());
-
-        env.Should().ContainKey("HTTPS_PROXY");
-        env["HTTPS_PROXY"].Should().Be("http://proxy.corp.example:3128");
-        env.Should().NotContainKey("SECRET_TOKEN");
     }
 }

@@ -70,6 +70,19 @@ public static class ClaudeCodeEnvironment
         "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR",
     ];
 
+    // Proxy configuration and custom CA trust.
+    static readonly string[] ClaudeCode =
+    [
+        "ANTHROPIC_BASE_URL",
+        "CLAUDE_CODE_CERT_STORE",
+        "CLAUDE_CODE_CLIENT_CERT",
+        "CLAUDE_CODE_CLIENT_KEY",
+        "CLAUDE_CODE_CLIENT_KEY_PASSPHRASE",
+        "API_TIMEOUT_MS",
+        "BASH_DEFAULT_TIMEOUT_MS",
+        "BASH_MAX_TIMEOUT_MS",
+    ];
+
     static readonly string[] DefaultAllowList =
     [
         .. ExecutableResolution,
@@ -81,5 +94,6 @@ public static class ClaudeCodeEnvironment
         .. WindowsSystemDirectories,
         .. MachineInfo,
         .. ProxyAndTls,
+        .. ClaudeCode,
     ];
 }
