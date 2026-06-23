@@ -93,10 +93,10 @@ public class McpWriterFixture
     }
 
     [Test]
-    public void BuildServerSpecs_ThrowsWhenServerMissingName()
+    public void BuildServerSpecs_ThrowsWhenServerNameBlank()
     {
         var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.Claude.McpServers, JsonSerializer.Serialize(new[] { new { command = "npx" } }));
+        vars.Set(SpecialVariables.Action.Claude.McpServers, JsonSerializer.Serialize(new[] { new { name = "", command = "npx" } }));
 
         var act = () => new McpWriter(vars).BuildServerSpecs();
 
@@ -104,10 +104,10 @@ public class McpWriterFixture
     }
 
     [Test]
-    public void BuildServerSpecs_ThrowsWhenServerMissingCommand()
+    public void BuildServerSpecs_ThrowsWhenServerCommandBlank()
     {
         var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.Claude.McpServers, JsonSerializer.Serialize(new[] { new { name = "my-server" } }));
+        vars.Set(SpecialVariables.Action.Claude.McpServers, JsonSerializer.Serialize(new[] { new { name = "my-server", command = "" } }));
 
         var act = () => new McpWriter(vars).BuildServerSpecs();
 

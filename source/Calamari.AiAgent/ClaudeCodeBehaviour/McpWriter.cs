@@ -84,54 +84,39 @@ public class McpWriter(IVariables variables)
         };
     }
 
+    // The McpServers variable is just a list of server specs the user declares; deserialize straight
+    // into McpServerSpec and validate, rather than maintaining a separate near-identical parse type.
     IReadOnlyList<McpServerSpec> BuildCustomServerSpecs()
     {
         var mcpServersJson = variables.Get(SpecialVariables.Action.Claude.McpServers);
         if (string.IsNullOrWhiteSpace(mcpServersJson))
             return Array.Empty<McpServerSpec>();
 
-        List<CustomMcpServerJson>? entries;
+        List<McpServerSpec>? servers;
         try
         {
-            entries = JsonSerializer.Deserialize<List<CustomMcpServerJson>>(mcpServersJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            servers = JsonSerializer.Deserialize<List<McpServerSpec>>(mcpServersJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch (JsonException ex)
         {
             throw new CommandException($"Failed to parse MCP servers configuration: {ex.Message}");
         }
 
-        if (entries == null)
+        if (servers == null)
             return Array.Empty<McpServerSpec>();
 
-        var specs = new List<McpServerSpec>();
-        foreach (var entry in entries)
+        foreach (var server in servers)
         {
-            if (string.IsNullOrWhiteSpace(entry.Name))
+            if (string.IsNullOrWhiteSpace(server.Name))
                 throw new CommandException("Each MCP server must have a name.");
-            if (string.IsNullOrWhiteSpace(entry.Command))
-                throw new CommandException($"MCP server '{entry.Name}' must have a command.");
+            if (string.IsNullOrWhiteSpace(server.Command))
+                throw new CommandException($"MCP server '{server.Name}' must have a command.");
 
-            Log.Verbose($"MCP server '{entry.Name}' added.");
-            specs.Add(new McpServerSpec
-            {
-                Name = entry.Name,
-                Command = entry.Command,
-                Args = entry.Args,
-                Env = entry.Env?.ToDictionary(kv => kv.Key, kv => (string?)kv.Value),
-            });
+            Log.Verbose($"MCP server '{server.Name}' added.");
         }
 
-        return specs;
+        return servers;
     }
-}
-
-/// <summary>The raw, untrusted shape of one entry in the McpServers variable; validated into an <see cref="McpServerSpec"/>.</summary>
-file record CustomMcpServerJson
-{
-    public string? Name { get; init; }
-    public string? Command { get; init; }
-    public IReadOnlyList<string>? Args { get; init; }
-    public IReadOnlyDictionary<string, string>? Env { get; init; }
 }
 
 /// <summary>One entry written to the agent's mcp-config.json — always the broker's loopback HTTP endpoint.</summary>

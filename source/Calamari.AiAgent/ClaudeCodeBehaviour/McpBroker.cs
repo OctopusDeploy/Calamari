@@ -13,7 +13,10 @@ using ModelContextProtocol.Protocol;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
-/// <summary>An MCP server for the broker to front: the command Calamari spawns and the secrets it holds.</summary>
+/// <summary>
+/// An MCP server for the broker to front: the command Calamari spawns and the secrets it holds.
+/// This is also the shape of each entry in the user's McpServers variable, deserialized directly.
+/// </summary>
 public record McpServerSpec
 {
     public required string Name { get; init; }
