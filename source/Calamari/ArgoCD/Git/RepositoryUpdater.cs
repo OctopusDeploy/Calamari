@@ -37,6 +37,7 @@ public class RepositoryUpdater
                                       commitParameters.Summary,
                                       changeDescription,
                                       branchName,
+                                      commitParameters.PushRetryAttempts,
                                       CancellationToken.None)
                          .GetAwaiter()
                          .GetResult();

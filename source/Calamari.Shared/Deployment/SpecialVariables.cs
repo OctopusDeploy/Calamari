@@ -367,6 +367,8 @@ namespace Calamari.Deployment
                 public const string CommitMessageSummary = "Octopus.Action.Git.CommitMessageSummary";
                 public const string CommitMessageDescription = "Octopus.Action.Git.CommitMessageDescription";
 
+                public const string PushRetryAttempts = "Octopus.Action.Git.PushRetryAttempts";
+
                 public static class PullRequest
                 {
                     public const string Create = "Octopus.Action.Git.PullRequest.Create";
