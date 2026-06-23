@@ -74,23 +74,33 @@ namespace Calamari.ArgoCD.Conventions
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
-            var applicationUpdater = new ApplicationUpdater(authenticatingRepositoryFactory,
-                                                            deploymentScope,
+            var applicationUpdater = new ApplicationUpdater(deploymentScope,
                                                             deploymentConfig,
                                                             log,
                                                             fileSystem,
                                                             argoCdApplicationManifestParser,
                                                             outputVariablesWriter,
-                                                            packageFiles,
-                                                            new UserDefinedCommitMessageGenerator(deploymentConfig.CommitParameters.Description));
+                                                            packageFiles);
 
-            var applicationResults = argoProperties.Applications
-                                                   .Select(application =>
-                                                           {
-                                                               var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
-                                                               return applicationUpdater.ProcessApplication(application, gateway);
-                                                           })
-                                                   .ToList();
+            // Phase 1: plan every application's in-scope sources.
+            var plans = argoProperties.Applications
+                                      .Select(application =>
+                                              {
+                                                  var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
+                                                  return applicationUpdater.Plan(application, gateway);
+                                              })
+                                      .ToList();
+
+            // Phase 2: process all sources, grouped so each repository is cloned once and each branch checked out once.
+            var commitMessageGenerator = new UserDefinedCommitMessageGenerator(deploymentConfig.CommitParameters.Description);
+            var processor = new GroupedRepositoryProcessor(authenticatingRepositoryFactory, deploymentConfig.CommitParameters, commitMessageGenerator);
+
+            var updates = plans.SelectMany(p => p.Sources.Select(s => s.Update)).ToList();
+            var results = processor.Process(updates);
+            var resultsByUpdate = updates.Zip(results, (update, result) => (update, result)).ToDictionary(x => x.update, x => x.result);
+
+            // Phase 3: assemble per-application results (also writes per-source output variables).
+            var applicationResults = plans.Select(p => applicationUpdater.AssembleResult(p, resultsByUpdate)).ToList();
 
             reporter.ReportFilesUpdated(deploymentConfig.CommitParameters, applicationResults);
 

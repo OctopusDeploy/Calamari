@@ -1281,6 +1281,114 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             source1.CommitSha.Should().HaveLength(40, "source 1 was updated and committed");
         }
 
+        [Test]
+        public void MultipleApplications_SharingRepoAndBranch_AreClonedOnce_AndCommittedPerApplication()
+        {
+            // Arrange: two applications that point at the same repository + branch, each with its own outdated image.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var file1 = Path.Combine("app1", "deployment.yaml");
+            var file2 = Path.Combine("app2", "deployment.yaml");
+            originRepo.AddFilesToBranch(argoCDBranchName, [
+                (file1, MakeDeploymentYaml("app1-deployment", "nginx:1.19")),
+                (file2, MakeDeploymentYaml("app2-deployment", "nginx:1.19")),
+            ]);
+
+            customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>()
+                                  .Returns(new ArgoCDCustomPropertiesDto(
+                                                                         [new ArgoCDGatewayDto(GatewayId, "Gateway1")],
+                                                                         [
+                                                                             new ArgoCDApplicationDto(GatewayId, "App1", "argocd", "yaml1", "docker.io", "http://my-argo.com"),
+                                                                             new ArgoCDApplicationDto(GatewayId, "App2", "argocd", "yaml2", "docker.io", "http://my-argo.com"),
+                                                                         ],
+                                                                         [new GitCredentialDto(OriginUrl, "", "")]));
+
+            argoCdApplicationManifestParser.ParseManifest("yaml1").Returns(BuildDirectoryApp("App1", "app1"));
+            argoCdApplicationManifestParser.ParseManifest("yaml2").Returns(BuildDirectoryApp("App2", "app2"));
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+
+            // The shared repository is cloned exactly once, even though two applications use it.
+            log.StandardOut.Count(m => m.Contains("Cloning repository")).Should().Be(1, "the shared repository should only be cloned once");
+
+            var results = getResults();
+            results.Should().HaveCount(2);
+            var app1 = results.Single(r => r.ApplicationName.Value == "argocd/App1");
+            var app2 = results.Single(r => r.ApplicationName.Value == "argocd/App2");
+
+            var app1Sha = app1.TrackedSourceDetails.Single().CommitSha;
+            var app2Sha = app2.TrackedSourceDetails.Single().CommitSha;
+            app1Sha.Should().HaveLength(40, "App1 had an outdated image and was committed");
+            app2Sha.Should().HaveLength(40, "App2 had an outdated image and was committed");
+            app1Sha.Should().NotBe(app2Sha, "each application is committed separately within the shared clone");
+
+            // Both applications' changes reached the remote.
+            originRepo.ReadFileFromBranch(argoCDBranchName, file1).Should().Contain("nginx:1.27.1");
+            originRepo.ReadFileFromBranch(argoCDBranchName, file2).Should().Contain("nginx:1.27.1");
+        }
+
+        [Test]
+        public void MultipleApplications_SameRepoDifferentBranches_AreClonedOnce_AndCheckedOutPerBranch()
+        {
+            // Arrange: two applications in the same repository but targeting different branches.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+
+            var mainBranch = RepositoryHelpers.MainBranchName;
+            var file = Path.Combine("app", "deployment.yaml");
+            originRepo.AddFilesToBranch(argoCDBranchName, [(file, MakeDeploymentYaml("dev-deployment", "nginx:1.19"))]);
+            originRepo.AddFilesToBranch(mainBranch, [(file, MakeDeploymentYaml("main-deployment", "nginx:1.19"))]);
+
+            customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>()
+                                  .Returns(new ArgoCDCustomPropertiesDto(
+                                                                         [new ArgoCDGatewayDto(GatewayId, "Gateway1")],
+                                                                         [
+                                                                             new ArgoCDApplicationDto(GatewayId, "App1", "argocd", "yaml1", "docker.io", "http://my-argo.com"),
+                                                                             new ArgoCDApplicationDto(GatewayId, "App2", "argocd", "yaml2", "docker.io", "http://my-argo.com"),
+                                                                         ],
+                                                                         [new GitCredentialDto(OriginUrl, "", "")]));
+
+            argoCdApplicationManifestParser.ParseManifest("yaml1").Returns(BuildDirectoryApp("App1", "app", ArgoCDBranchFriendlyName));
+            argoCdApplicationManifestParser.ParseManifest("yaml2").Returns(BuildDirectoryApp("App2", "app", mainBranch.ToFriendlyName()));
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+
+            log.StandardOut.Count(m => m.Contains("Cloning repository")).Should().Be(1, "the shared repository should only be cloned once across both branches");
+            log.MessagesVerboseFormatted.Should().Contain(m => m.Contains($"Checking out '{argoCDBranchName.Value}'"));
+            log.MessagesVerboseFormatted.Should().Contain(m => m.Contains($"Checking out '{mainBranch.Value}'"));
+
+            var results = getResults();
+            results.Should().HaveCount(2);
+            results.Should().OnlyContain(r => r.Updated, "both applications had an outdated image on their respective branch");
+
+            originRepo.ReadFileFromBranch(argoCDBranchName, file).Should().Contain("nginx:1.27.1");
+            originRepo.ReadFileFromBranch(mainBranch, file).Should().Contain("nginx:1.27.1");
+        }
+
+        Application BuildDirectoryApp(string name, string path, string targetRevision = ArgoCDBranchFriendlyName)
+            => new ArgoCDApplicationBuilder()
+               .WithName(name).WithNamespace("argocd")
+               .WithAnnotations(new Dictionary<string, string>
+               {
+                   [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                   [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+               })
+               .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = path, TargetRevision = targetRevision }, SourceTypeConstants.Directory)
+               .Build();
+
         static string MakeDeploymentYaml(string name, params string[] images)
         {
             var containerName = (string image) => image.Split('/').Last().Split(':').First();

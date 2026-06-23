@@ -1,5 +1,5 @@
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -7,37 +7,30 @@ using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions.ManifestTemplating;
 
+// Determines whether a source is in scope for this deployment and builds the file updater (which copies the
+// templated package files into the source path). Clone/commit/push is handled by the GroupedRepositoryProcessor.
 public class ApplicationSourceUpdater
 {
     readonly Application applicationFromYaml;
     readonly DeploymentScope deploymentScope;
-    readonly RepositoryAdapter repositoryAdapter;
     readonly ArgoCommitToGitConfig deploymentConfig;
     readonly IPackageRelativeFile[] packageFiles;
-    readonly ArgoCDGatewayDto gateway;
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
-    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
     public ApplicationSourceUpdater(Application applicationFromYaml,
-                                    ArgoCDGatewayDto gateway,
                                     DeploymentScope deploymentScope,
                                     ArgoCommitToGitConfig deploymentConfig,
                                     IPackageRelativeFile[] packageFiles,
                                     ILog log,
-                                    ICalamariFileSystem fileSystem,
-                                    ArgoCDOutputVariablesWriter outputVariablesWriter,
-                                    RepositoryAdapter repositoryAdapter)
+                                    ICalamariFileSystem fileSystem)
     {
         this.applicationFromYaml = applicationFromYaml;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
         this.packageFiles = packageFiles;
-        this.gateway = gateway;
         this.log = log;
         this.fileSystem = fileSystem;
-        this.outputVariablesWriter = outputVariablesWriter;
-        this.repositoryAdapter = repositoryAdapter;
     }
 
     public bool IsAppInScope(ApplicationSourceWithMetadata sourceWithMetadata)
@@ -50,28 +43,11 @@ public class ApplicationSourceUpdater
         return deploymentScope.Matches(annotatedScope);
     }
 
-    public ManifestUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    public ISourceUpdater CreateSourceUpdater(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var applicationSource = sourceWithMetadata.Source;
-        log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationFromYaml.Metadata.Name}'");
+        applicationFromYaml.Metadata.Annotations.TryGetValue(ArgoCDConstants.Annotations.OctopusPathAnnotationKey(applicationSource.Name.ToApplicationSourceName()), out var pathOverrideFromAnnotation);
 
-        applicationFromYaml.Metadata.Annotations.TryGetValue(ArgoCDConstants.Annotations.OctopusPathAnnotationKey(applicationSource.Name.ToApplicationSourceName()), out var pathOverrideFromAnnotation); 
-        
-        var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory, pathOverrideFromAnnotation);
-
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
-        
-        outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
-            NamespacedApplicationName.Create(applicationFromYaml.Metadata.Name, applicationFromYaml.Metadata.Namespace),
-                                                            sourceWithMetadata.Index,
-                                                            sourceUpdateResult);
-
-        if (sourceUpdateResult.PushResult is not null)
-        {
-            return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.PushResult.CommitTimestamp, sourceUpdateResult.ReplacedFiles);
-        }
-
-        log.Info("No changes were committed");
-        return new ManifestUpdateResult(false, null, null, sourceUpdateResult.ReplacedFiles);
+        return new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory, pathOverrideFromAnnotation);
     }
 }
