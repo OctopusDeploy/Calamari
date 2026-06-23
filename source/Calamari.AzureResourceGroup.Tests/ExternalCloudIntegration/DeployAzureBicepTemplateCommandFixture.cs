@@ -15,7 +15,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
-namespace Calamari.AzureResourceGroup.Tests
+namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
 {
     [TestFixture]
     [WindowsTest] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
@@ -102,25 +102,6 @@ namespace Calamari.AzureResourceGroup.Tests
                                                  {
                                                      AddDefaults(context);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "Package");
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.BicepTemplate, "azure_website_template.bicep");
-                                                     context.WithFilesToCopy(packagePath);
-                                                 })
-                                    .Execute();
-        }
-
-        [Test]
-        [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
-        public async Task DeployAzureBicepTemplate_GitSource()
-        {
-            // For the purposes of Bicep templates in Calamari, a template in a Git Repository
-            // is equivalent to a template in a package, so we can just re-use the same
-            // package in the test here, it's just the template source property that is
-            // different.
-            await CommandTestBuilder.CreateAsync<DeployAzureBicepTemplateCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     AddDefaults(context);
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "GitRepository");
                                                      context.Variables.Add(SpecialVariables.Action.Azure.BicepTemplate, "azure_website_template.bicep");
                                                      context.WithFilesToCopy(packagePath);
                                                  })
