@@ -55,8 +55,15 @@ public static class ClaudeCodeEnvironment
     // Windows system and application directories that many Windows programs require to start.
     static readonly string[] WindowsSystemDirectories =
     [
-        "SystemRoot", "windir", "SystemDrive", "APPDATA", "LOCALAPPDATA",
-        "ProgramData", "ProgramFiles", "ProgramFiles(x86)", "CommonProgramFiles",
+        "SystemRoot",
+        "windir",
+        "SystemDrive",
+        "APPDATA",
+        "LOCALAPPDATA",
+        "ProgramData",
+        "ProgramFiles",
+        "ProgramFiles(x86)",
+        "CommonProgramFiles",
     ];
 
     // Machine and CPU information some tools read to size their work.
@@ -65,22 +72,16 @@ public static class ClaudeCodeEnvironment
     // Proxy configuration and custom CA trust.
     static readonly string[] ProxyAndTls =
     [
-        "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
-        "http_proxy", "https_proxy", "no_proxy",
-        "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR",
-    ];
-
-    // Proxy configuration and custom CA trust.
-    static readonly string[] ClaudeCode =
-    [
         "ANTHROPIC_BASE_URL",
-        "CLAUDE_CODE_CERT_STORE",
-        "CLAUDE_CODE_CLIENT_CERT",
-        "CLAUDE_CODE_CLIENT_KEY",
-        "CLAUDE_CODE_CLIENT_KEY_PASSPHRASE",
-        "API_TIMEOUT_MS",
-        "BASH_DEFAULT_TIMEOUT_MS",
-        "BASH_MAX_TIMEOUT_MS",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "NO_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "NODE_EXTRA_CA_CERTS",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
     ];
 
     static readonly string[] DefaultAllowList =
@@ -94,6 +95,5 @@ public static class ClaudeCodeEnvironment
         .. WindowsSystemDirectories,
         .. MachineInfo,
         .. ProxyAndTls,
-        .. ClaudeCode,
     ];
 }
