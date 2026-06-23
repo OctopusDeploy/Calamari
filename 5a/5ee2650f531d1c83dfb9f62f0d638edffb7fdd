@@ -1,0 +1,25 @@
+source/Calamari/ArgoCD/Git/RepositoryWrapper.cs
+  s_da8cd166b30abe::t_304e7616c2c290 90
+  h_0abc1f0694f983 89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "5a5ee2650f531d1c83dfb9f62f0d638edffb7fdd",
+  "prompts": {},
+  "humans": {
+    "h_0abc1f0694f983": {
+      "author": "Denys Melnyk <denis.melnyk@octopus.com>"
+    }
+  },
+  "sessions": {
+    "s_da8cd166b30abe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ad00f2d3-36f7-4251-8e99-628e38095968",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Denys Melnyk <denis.melnyk@octopus.com>"
+    }
+  }
+}
