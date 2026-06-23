@@ -7,14 +7,12 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public static class SrtSettingsWriter
 {
-    const string ClaudeDirName = ".claude";
-    const string SrtSettingsFileName = "srt-settings.json";
+    const string SrtSettingsFileName = ".srt-settings.json";
 
-    // Writes the merged srt settings to <workingDir>/.claude/srt-settings.json and returns the path.
+    // Writes the merged srt settings to <workingDir>/.srt-settings.json and returns the path.
     public static string Write(string workingDir, IVariables variables)
     {
-        var claudeDir = Directory.CreateDirectory(Path.Combine(workingDir, ClaudeDirName));
-        var destPath = Path.Combine(claudeDir.FullName, SrtSettingsFileName);
+        var destPath = Path.Combine(workingDir, SrtSettingsFileName);
         var json = JsonSerializer.Serialize(BuildSettings(variables), SandboxSettingsJsonContext.Default.SrtSettings);
         File.WriteAllText(destPath, json);
         return destPath;

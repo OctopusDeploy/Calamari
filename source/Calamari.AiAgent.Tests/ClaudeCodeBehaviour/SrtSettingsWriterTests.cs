@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
@@ -18,6 +20,24 @@ public class SrtSettingsWriterTests
         settings.Network.AllowedDomains.Should().BeEquivalentTo("api.anthropic.com", "statsig.anthropic.com");
         settings.Filesystem.AllowWrite.Should().BeEquivalentTo(".", "/tmp");
         settings.Filesystem.DenyRead.Should().Contain("~/.ssh").And.Contain("~/.aws");
+    }
+
+    [Test]
+    public void Write_PlacesSettingsFileAtWorkingDirRoot_NotUnderClaudeConfigDir()
+    {
+        var workingDir = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "srt-writer-" + Guid.NewGuid().ToString("N"))).FullName;
+        try
+        {
+            var path = SrtSettingsWriter.Write(workingDir, new CalamariVariables());
+
+            path.Should().Be(Path.Combine(workingDir, ".srt-settings.json"));
+            File.Exists(path).Should().BeTrue();
+            Directory.Exists(Path.Combine(workingDir, ".claude")).Should().BeFalse();
+        }
+        finally
+        {
+            Directory.Delete(workingDir, recursive: true);
+        }
     }
 
     [Test]
