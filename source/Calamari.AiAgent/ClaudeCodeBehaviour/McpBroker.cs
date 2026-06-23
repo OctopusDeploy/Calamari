@@ -166,12 +166,17 @@ public sealed class McpBroker : IAsyncDisposable
             }
 
             // Because we don't inherit the parent environment, hand the child the minimal non-secret
-            // system variables a launcher (e.g. npx/node) needs to start and resolve its cache cross-platform.
+            // system variables a launcher (e.g. npx/node) needs to start and resolve its cache cross-platform,
+            // plus the HTTP proxy routing variables a proxied worker needs to reach the npm registry and the
+            // Octopus Server (the Octopus MCP server's HTTP client honours these). These are routing config,
+            // not secrets.
             string[] passThrough =
             {
                 "PATH", "Path", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA",
                 "SystemRoot", "windir", "TEMP", "TMP", "PATHEXT", "ComSpec",
                 "ProgramFiles", "ProgramFiles(x86)",
+                "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
+                "http_proxy", "https_proxy", "no_proxy",
             };
             foreach (var name in passThrough)
             {
