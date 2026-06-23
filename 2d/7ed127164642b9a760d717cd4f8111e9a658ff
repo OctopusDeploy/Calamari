@@ -1,0 +1,49 @@
+source/Calamari/ArgoCD/Git/RepositoryWrapper.cs
+  s_92562eaf475e0e::t_e1685bfc5ec694 2
+  s_92562eaf475e0e::t_be7e3e9158d9f8 40-44,47-90
+  s_92562eaf475e0e::t_efdcc6161398b8 92-103
+source/Calamari/ArgoCD/Conventions/ManifestTemplating/ApplicationUpdater.cs
+  s_92562eaf475e0e::t_44748b254fda16 3,23-25,29,39-41,47,52,55-83,86,88-89,91-92,95-99,101,103
+source/Calamari/ArgoCD/Conventions/UpdateArgoCDApplicationManifestsInstallConvention.cs
+  s_92562eaf475e0e::t_ed393b931cb164 77,83,85-95,97-103
+  s_92562eaf475e0e::t_9944b9d4cbb4d4 96
+source/Calamari/ArgoCD/Conventions/PlannedApplication.cs
+  s_92562eaf475e0e::t_bd89da748653d5 1-44
+source/Calamari/ArgoCD/Git/RepositoryFactory.cs
+  s_92562eaf475e0e::t_421635adcc2b38 60-64,98-117
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/FileUpdateResult.cs
+  s_92562eaf475e0e::t_5fb22063664be6 3,15-25
+source/Calamari/ArgoCD/Conventions/UpdateArgoCDAppImagesInstallConvention.cs
+  s_92562eaf475e0e::t_5f5ea91d43f6b4 77-87,89-95
+  s_92562eaf475e0e::t_5b7088865112c0 88
+source/Calamari/ArgoCD/Conventions/ManifestTemplating/ApplicationSourceUpdater.cs
+  s_92562eaf475e0e::t_a4e5dc2907cd48 1,10-11,26,46,49,51
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/ApplicationSourceUpdater.cs
+  s_92562eaf475e0e::t_a63ed20bab714e 10-11,47,95
+source/Calamari/ArgoCD/Git/GroupedRepositoryProcessor.cs
+  s_92562eaf475e0e::t_64947458acd883 46
+  s_92562eaf475e0e::t_18cbb2ca2862bd 98-110,113,116,128
+  s_92562eaf475e0e::t_a4d01e88c109d1 1-45,47-97,111-112,114-115,117-127,129-174
+source/Calamari.Tests/ArgoCD/Conventions/FileUpdateResultTests.cs
+  s_92562eaf475e0e::t_739e1f78c5f143 1-38
+source/Calamari/ArgoCD/Conventions/UpdateImageTag/ApplicationUpdater.cs
+  s_92562eaf475e0e::t_406c91071cb02c 1,36-65,67-70,73-84,86-107,109,112,114-123
+source/Calamari.Tests/ArgoCD/Commands/Conventions/UpdateArgoCDAppImagesInstallConventionTest.cs
+  s_92562eaf475e0e::t_2b4c75c2cf651f 1284-1318,1321-1369,1371-1391
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.10",
+  "base_commit_sha": "2d7ed127164642b9a760d717cd4f8111e9a658ff",
+  "prompts": {},
+  "sessions": {
+    "s_92562eaf475e0e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "58e6fee1-f4f3-4aef-b306-63fcb3954067",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Noam Gal <noam.gal@octopus.com>"
+    }
+  }
+}
