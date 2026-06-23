@@ -21,43 +21,28 @@ public static class BashSandboxSettingsWriter
     }
 
     internal static BashSandboxSettings BuildSettings(IVariables variables)
-    {
-        var settings = Defaults();
-        var sandbox = settings.Sandbox;
-
-        sandbox.Network = SandboxDefaults.BuildNetworkOptions(
-            variables,
-            ClaudeVariables.BashNetworkAllowedDomains,
-            ClaudeVariables.BashNetworkDeniedDomains,
-            ClaudeVariables.BashNetworkAllowUnixSockets,
-            ClaudeVariables.BashNetworkAllowAllUnixSockets,
-            ClaudeVariables.BashNetworkAllowLocalBinding,
-            ClaudeVariables.BashNetworkHttpProxyPort,
-            ClaudeVariables.BashNetworkSocksProxyPort);
-
-        sandbox.Filesystem = SandboxDefaults.BuildFilesystemOptions(
-            variables,
-            ClaudeVariables.BashFilesystemAllowWrite,
-            ClaudeVariables.BashFilesystemDenyWrite,
-            ClaudeVariables.BashFilesystemDenyRead,
-            ClaudeVariables.BashFilesystemAllowRead);
-
-        sandbox.ExcludedCommands = SandboxDefaults.Merge(variables, ClaudeVariables.BashExcludedCommands, sandbox.ExcludedCommands);
-
-        sandbox.AutoAllowBashIfSandboxed = SandboxDefaults.OptionalFlag(variables, ClaudeVariables.BashAutoAllowBashIfSandboxed) ?? sandbox.AutoAllowBashIfSandboxed;
-        sandbox.EnableWeakerNestedSandbox = SandboxDefaults.OptionalFlag(variables, ClaudeVariables.BashEnableWeakerNestedSandbox);
-
-        return settings;
-    }
-
-    static BashSandboxSettings Defaults() => new()
-    {
-        Sandbox = new()
+        => new()
         {
-            Enabled = true,
-            FailIfUnavailable = true,
-            AllowUnsandboxedCommands = false,
-            AutoAllowBashIfSandboxed = false,
-        },
-    };
+            Sandbox = new()
+            {
+                Network = SandboxDefaults.BuildNetworkOptions(
+                    variables,
+                    ClaudeVariables.BashNetworkAllowedDomains,
+                    ClaudeVariables.BashNetworkDeniedDomains,
+                    ClaudeVariables.BashNetworkAllowUnixSockets,
+                    ClaudeVariables.BashNetworkAllowAllUnixSockets,
+                    ClaudeVariables.BashNetworkAllowLocalBinding,
+                    ClaudeVariables.BashNetworkHttpProxyPort,
+                    ClaudeVariables.BashNetworkSocksProxyPort),
+                Filesystem = SandboxDefaults.BuildFilesystemOptions(
+                    variables,
+                    ClaudeVariables.BashFilesystemAllowWrite,
+                    ClaudeVariables.BashFilesystemDenyWrite,
+                    ClaudeVariables.BashFilesystemDenyRead,
+                    ClaudeVariables.BashFilesystemAllowRead),
+                ExcludedCommands = SandboxDefaults.Merge(variables, ClaudeVariables.BashExcludedCommands, []),
+                AutoAllowBashIfSandboxed = SandboxDefaults.OptionalFlag(variables, ClaudeVariables.BashAutoAllowBashIfSandboxed) ?? false,
+                EnableWeakerNestedSandbox = SandboxDefaults.OptionalFlag(variables, ClaudeVariables.BashEnableWeakerNestedSandbox),
+            },
+        };
 }

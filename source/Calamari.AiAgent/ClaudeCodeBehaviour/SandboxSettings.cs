@@ -5,51 +5,51 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public sealed class SandboxNetwork
 {
-    public List<string> AllowedDomains { get; set; } = [];
-    public List<string> DeniedDomains { get; set; } = [];
+    public IReadOnlyList<string> AllowedDomains { get; init; } = [];
+    public IReadOnlyList<string> DeniedDomains { get; init; } = [];
 
-    public List<string>? AllowUnixSockets { get; set; }
-    public bool? AllowAllUnixSockets { get; set; }
-    public bool? AllowLocalBinding { get; set; }
+    public IReadOnlyList<string>? AllowUnixSockets { get; init; }
+    public bool? AllowAllUnixSockets { get; init; }
+    public bool? AllowLocalBinding { get; init; }
 
-    public int? HttpProxyPort { get; set; }
-    public int? SocksProxyPort { get; set; }
+    public int? HttpProxyPort { get; init; }
+    public int? SocksProxyPort { get; init; }
 }
 
 public sealed class SandboxFilesystem
 {
-    public List<string> AllowWrite { get; set; } = [];
-    public List<string> DenyWrite { get; set; } = [];
-    public List<string> DenyRead { get; set; } = [];
-    public List<string> AllowRead { get; set; } = [];
+    public IReadOnlyList<string> AllowWrite { get; init; } = [];
+    public IReadOnlyList<string> DenyWrite { get; init; } = [];
+    public IReadOnlyList<string> DenyRead { get; init; } = [];
+    public IReadOnlyList<string> AllowRead { get; init; } = [];
 }
 
 public sealed class SrtSettings
 {
     // Configurable
-    public SandboxNetwork Network { get; set; } = new();
-    public SandboxFilesystem Filesystem { get; set; } = new();
-    public bool? EnableWeakerNestedSandbox { get; set; }
+    public SandboxNetwork Network { get; init; } = new();
+    public SandboxFilesystem Filesystem { get; init; } = new();
+    public bool? EnableWeakerNestedSandbox { get; init; }
 }
 
 public sealed class BashSandbox
 {
     // Not configurable
-    public bool Enabled { get; set; } = true;
-    public bool FailIfUnavailable { get; set; } = true;
-    public bool AllowUnsandboxedCommands { get; set; } = false;
+    public bool Enabled { get; init; } = true;
+    public bool FailIfUnavailable { get; init; } = true;
+    public bool AllowUnsandboxedCommands { get; init; } = false;
 
     // Configurable
-    public SandboxNetwork Network { get; set; } = new();
-    public SandboxFilesystem Filesystem { get; set; } = new();
-    public List<string> ExcludedCommands { get; set; } = [];
-    public bool? AutoAllowBashIfSandboxed { get; set; } = false;
-    public bool? EnableWeakerNestedSandbox { get; set; }
+    public SandboxNetwork Network { get; init; } = new();
+    public SandboxFilesystem Filesystem { get; init; } = new();
+    public IReadOnlyList<string> ExcludedCommands { get; init; } = [];
+    public bool? AutoAllowBashIfSandboxed { get; init; } = false;
+    public bool? EnableWeakerNestedSandbox { get; init; }
 }
 
 public sealed class BashSandboxSettings
 {
-    public BashSandbox Sandbox { get; set; } = new();
+    public BashSandbox Sandbox { get; init; } = new();
 }
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
