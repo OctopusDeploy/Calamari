@@ -71,11 +71,19 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
 
         // TODO: THis should be moved up higher in execution Chain.
         var cancellationToken = new CancellationTokenSource();
-        var mcpWriter = new McpWriter(variables);
-        var mcpConfig = mcpWriter.SetupMcpConfig(workingDir);
 
-        var allowedTools = AllowedTools(variables);
-        allowedTools.AddRange(mcpWriter.GetAllowedTools());
+        // Every MCP server runs as a Calamari child behind the credential broker, so no MCP secret
+        // (the Octopus token or any custom server's secrets) ever reaches Claude Code's environment,
+        // disk, or descendants. The broker is torn down (terminating each child) on completion,
+        // cancellation, or throw.
+        var mcpWriter = new McpWriter(variables);
+        var serverSpecs = mcpWriter.BuildServerSpecs();
+        await using var mcpBroker = await McpBroker.StartAsync(serverSpecs, log, cancellationToken.Token);
+
+        var mcpConfig = mcpWriter.WriteConfig(workingDir, mcpBroker.Endpoints);
+
+        var allowedTools = new List<string>(AllowedTools(variables));
+        allowedTools.AddRange(mcpWriter.GetAllowedTools(serverSpecs));
         argsBuilder = argsBuilder.WithAllowedTools(allowedTools);
 
         new SkillsWriter(variables).SetupSkills(workingDir);

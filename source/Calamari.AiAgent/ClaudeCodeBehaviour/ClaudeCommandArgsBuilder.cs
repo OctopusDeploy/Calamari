@@ -102,7 +102,9 @@ public class ClaudeCommandArgsBuilder
             args.Append(EscapeArg(model));
         }
 
-        args.Append(" --bare");
+        // --bare (Agent SDK mode) is intentionally NOT used: under --bare, tool search defaults on and
+        // defers HTTP MCP tools, so the broker's loopback HTTP Octopus server would not load under
+        // --allowedTools. Standard headless mode loads HTTP MCP tools normally (MD-2096 broker spike).
         args.Append(" --strict-mcp-config");
         args.Append(" --output-format stream-json");
         args.Append(" --verbose");
