@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
@@ -123,21 +122,4 @@ public record UserSkill
 {
     public required string Name { get; init; }
     public required string Content { get; init; }
-}
-
-public record HttpMcpServerConfig
-{
-    [JsonPropertyName("type")]
-    public string Type { get; init; } = "http";
-
-    [JsonPropertyName("url")]
-    public required string Url { get; init; }
-}
-
-public record McpServerEntry
-{
-    public string? Name { get; init; }
-    public string? Command { get; init; }
-    public IReadOnlyList<string>? Args { get; init; }
-    public IReadOnlyDictionary<string, string>? Env { get; init; }
 }

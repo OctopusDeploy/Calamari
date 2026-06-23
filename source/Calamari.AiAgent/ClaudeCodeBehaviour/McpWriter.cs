@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -13,8 +14,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 /// Prepares MCP configuration for a Claude Code run. Every MCP server (the Octopus server and any
 /// user-configured custom servers) now runs as a Calamari child behind the credential broker
 /// (see <see cref="McpBroker"/>), so this no longer writes any secret to disk. It parses the
-/// configured servers into specs for the broker to spawn, and writes a secret-free mcp-config.json
-/// that points Claude Code at the broker's loopback HTTP endpoints.
+/// configured servers into <see cref="McpServerSpec"/>s for the broker to spawn, and writes a
+/// secret-free mcp-config.json that points Claude Code at the broker's loopback HTTP endpoints.
 /// </summary>
 public class McpWriter(IVariables variables)
 {
@@ -43,7 +44,7 @@ public class McpWriter(IVariables variables)
     {
         var mcpServers = brokerEndpoints.ToDictionary(
             endpoint => endpoint.Key,
-            endpoint => new HttpMcpServerConfig { Url = endpoint.Value.ToString() });
+            endpoint => new McpConfigEntry { Url = endpoint.Value.ToString() });
 
         var config = new { mcpServers };
         var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
@@ -89,10 +90,10 @@ public class McpWriter(IVariables variables)
         if (string.IsNullOrWhiteSpace(mcpServersJson))
             return Array.Empty<McpServerSpec>();
 
-        List<McpServerEntry>? entries;
+        List<CustomMcpServerJson>? entries;
         try
         {
-            entries = JsonSerializer.Deserialize<List<McpServerEntry>>(mcpServersJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            entries = JsonSerializer.Deserialize<List<CustomMcpServerJson>>(mcpServersJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch (JsonException ex)
         {
@@ -122,4 +123,23 @@ public class McpWriter(IVariables variables)
 
         return specs;
     }
+}
+
+/// <summary>The raw, untrusted shape of one entry in the McpServers variable; validated into an <see cref="McpServerSpec"/>.</summary>
+file record CustomMcpServerJson
+{
+    public string? Name { get; init; }
+    public string? Command { get; init; }
+    public IReadOnlyList<string>? Args { get; init; }
+    public IReadOnlyDictionary<string, string>? Env { get; init; }
+}
+
+/// <summary>One entry written to the agent's mcp-config.json — always the broker's loopback HTTP endpoint.</summary>
+file record McpConfigEntry
+{
+    [JsonPropertyName("type")]
+    public string Type { get; init; } = "http";
+
+    [JsonPropertyName("url")]
+    public required string Url { get; init; }
 }
