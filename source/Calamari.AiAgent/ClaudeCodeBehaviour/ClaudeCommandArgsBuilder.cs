@@ -102,7 +102,6 @@ public class ClaudeCommandArgsBuilder
             args.Append(EscapeArg(model));
         }
 
-        args.Append(" --bare");
         args.Append(" --strict-mcp-config");
         args.Append(" --output-format stream-json");
         args.Append(" --verbose");

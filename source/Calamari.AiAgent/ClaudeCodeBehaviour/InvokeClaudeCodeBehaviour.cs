@@ -106,6 +106,8 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
         argsBuilder.WithMcpConfigPath(mcpConfig);
 
+        var claudeConfigDir = Path.Combine(workingDir, ".claude");
+
         var environment = ClaudeCodeEnvironment.Build(
             ClaudeCodeEnvironment.GetCurrentEnvironmentVariables(),
             PassThroughEnvironmentVariables(variables),
@@ -113,6 +115,10 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             {
                 ["ANTHROPIC_API_KEY"] = apiToken,
                 ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1", // Strips Anthropic/cloud credentials from Bash, hook, and MCP subprocess environments
+                ["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1", // Disables the auto-updater, telemetry, error reporting, and feedback surveys
+                ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1",
+                ["CLAUDE_CODE_DISABLE_CRON"] = "1",
+                ["CLAUDE_CONFIG_DIR"] = claudeConfigDir,
             });
 
         var response = await new ClaudeCodeCliRunner(log).RunAsync(
