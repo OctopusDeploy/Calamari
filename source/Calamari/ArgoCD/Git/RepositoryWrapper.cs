@@ -86,8 +86,8 @@ namespace Calamari.ArgoCD.Git
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
 
-            // maxRetryAttempts is clamped to 0..10 by the caller. Polly rejects a retry strategy with MaxRetryAttempts < 1.
-            var retryPipeline = maxRetryAttempts == 0
+            // Polly rejects a retry strategy with MaxRetryAttempts < 1
+            var retryPipeline = maxRetryAttempts <= 0
                 ? ResiliencePipeline.Empty
                 : new ResiliencePipelineBuilder()
                   .AddRetry(new RetryStrategyOptions
