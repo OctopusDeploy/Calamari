@@ -44,18 +44,7 @@ class DeployAzureResourceGroupBehaviour(
         var deploymentModeVariable = variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode);
         var deploymentMode = (ArmDeploymentMode)Enum.Parse(typeof(ArmDeploymentMode), deploymentModeVariable);
 
-        var templateParametersFile = variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
-        var templateSource = variables.Get(SpecialVariables.Action.Azure.TemplateSource, string.Empty);
-
-        var filesInPackageOrRepository = templateSource is "Package" or "GitRepository";
-
-        var templateFile = filesInPackageOrRepository
-            ? variables.GetMandatoryVariable(SpecialVariables.Action.Azure.ResourceGroupTemplate) // For now, we know that Server enforces a template when reading from a Package or Git so we treat it as mandatory
-            : variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
-        if (filesInPackageOrRepository)
-        {
-            templateParametersFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters);
-        }
+        var (templateFile, templateParametersFile, filesInPackageOrRepository) = variables.SelectTemplateInputs();
 
         var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackageOrRepository, variables);
         var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
