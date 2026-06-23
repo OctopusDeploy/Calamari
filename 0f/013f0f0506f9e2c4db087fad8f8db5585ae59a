@@ -1,0 +1,56 @@
+source/Calamari/ArgoCD/Conventions/GitCommitParameters.cs
+  s_da8cd166b30abe::t_0c5b7b115c4db2 8-10,14,16,21-27,30
+  s_da8cd166b30abe::t_c035548d8f3598 7
+source/Calamari/ArgoCD/Conventions/DeploymentConfigFactory.cs
+  s_da8cd166b30abe::t_b89def335973a3 55-56
+source/Calamari/ArgoCD/Git/RepositoryWrapper.cs
+  s_da8cd166b30abe::t_1bb6a79f26e7bc 90
+  s_da8cd166b30abe::t_15de176efdfa22 91-106
+  h_0abc1f0694f983 89
+  s_da8cd166b30abe::t_41fb92bccc6519 81
+source/Calamari/ArgoCD/Git/RepositoryUpdater.cs
+  s_da8cd166b30abe::t_e663ff5b18575f 40
+source/Calamari.Tests/ArgoCD/Commands/Conventions/DeploymentConfigFactoryTests.cs
+  s_da8cd166b30abe::t_80688837c1c1e2 98
+  s_da8cd166b30abe::t_0f9334f982ad19 91-97,99-118
+source/Calamari.Tests/CommitToGit/CommitToGitConfigFactoryTests.cs
+  s_da8cd166b30abe::t_486ee20bfd9ab1 2
+  s_da8cd166b30abe::t_39d742a7136cbc 72-90
+source/Calamari.Tests/ArgoCD/Git/RepositoryWrapperTest.cs
+  s_da8cd166b30abe::t_030bf35dbef24e 227-238,240-246
+  s_da8cd166b30abe::t_5d82d289faa1bb 6
+  s_da8cd166b30abe::t_17c7abd1c5eb50 111,117
+  s_da8cd166b30abe::t_9d8f405906c22b 92
+  s_da8cd166b30abe::t_f6a9ce3151036b 239
+  s_da8cd166b30abe::t_1074410effd860 263
+  s_da8cd166b30abe::t_123b3285728b47 196
+  s_da8cd166b30abe::t_dd6140f896354e 220
+  s_da8cd166b30abe::t_96e4ab5b288b28 135
+source/Calamari/CommitToGit/CommitToGitConfigFactory.cs
+  s_da8cd166b30abe::t_d0a0107484caf9 36-37
+source/Calamari.Shared/Deployment/SpecialVariables.cs
+  s_da8cd166b30abe::t_539c8dfcf16f87 370-371
+source/Calamari/Kubernetes/SpecialVariables.cs
+  s_da8cd166b30abe::t_faef3d2e1e07df 83-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "0f013f0f0506f9e2c4db087fad8f8db5585ae59a",
+  "prompts": {},
+  "humans": {
+    "h_0abc1f0694f983": {
+      "author": "Denys Melnyk <denis.melnyk@octopus.com>"
+    }
+  },
+  "sessions": {
+    "s_da8cd166b30abe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ad00f2d3-36f7-4251-8e99-628e38095968",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Denys Melnyk <denis.melnyk@octopus.com>"
+    }
+  }
+}
