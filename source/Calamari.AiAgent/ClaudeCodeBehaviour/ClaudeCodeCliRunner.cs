@@ -60,14 +60,9 @@ public class ClaudeCodeCliRunner(ILog log)
 
         if (File.Exists(verboseLogPath))
         {
-            var fileInfo = new FileInfo(verboseLogPath);
-            var movedFilePath = Path.Combine(calamariDir, "log", fileInfo.Name);
-            fileInfo.MoveTo(movedFilePath);
-            log.NewOctopusArtifact(movedFilePath, "claude-agent-verbose.log", fileInfo.Length);
-            
             log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Transcript.Name, new Dictionary<string, string>()
             {
-                {ClaudeCodeServiceMessages.Transcript.TranscriptAttribute, await File.ReadAllTextAsync(movedFilePath, cancellationToken)},
+                {ClaudeCodeServiceMessages.Transcript.TranscriptAttribute, await File.ReadAllTextAsync(verboseLogPath, cancellationToken)},
             }));
         }
 
