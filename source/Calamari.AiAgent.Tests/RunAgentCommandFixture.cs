@@ -127,4 +127,24 @@ public class RunAgentCommandFixture
         result.WasSuccessful.Should().BeTrue();
         result.FullLog.Should().Contain("purple-octopus-42");
     }
+
+    [Test]
+    [Category("Integration")]
+    public async Task ClaudeCode_AttachesArtifact_WhenExplicitlyAsked()
+    {
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+            .WithArrange(context =>
+            {
+                context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file named report.txt containing the word Octopus, then attach it as an Octopus artifact.");
+                context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write,Read,Edit");
+            })
+            .Execute(assertWasSuccess: true);
+
+        result.WasSuccessful.Should().BeTrue();
+        // NewOctopusArtifact emits an Info "##octopus[createArtifact ...]" service message
+        // (path/name are base64-encoded, so assert on the message verb, not the file name).
+        result.FullLog.Should().Contain("createArtifact");
+    }
 }
