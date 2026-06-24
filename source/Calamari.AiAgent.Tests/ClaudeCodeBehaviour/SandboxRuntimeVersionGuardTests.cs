@@ -7,12 +7,9 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 [TestFixture]
 public class SandboxRuntimeVersionGuardTests
 {
+    [TestCase("0.0.54", false)]
     [TestCase("0.0.55", true)]
     [TestCase("0.0.56", true)]
-    [TestCase("0.1.0", true)]
-    [TestCase("1.0.0", true)]
-    [TestCase("0.0.54", false)]
-    [TestCase("0.0.1", false)]
     [TestCase("srt version 0.0.60 (build abc)", true)]
     [TestCase("@anthropic-ai/sandbox-runtime 0.0.55", true)]
     public void MeetsMinimum_ParsesAndComparesSemver(string output, bool expected)

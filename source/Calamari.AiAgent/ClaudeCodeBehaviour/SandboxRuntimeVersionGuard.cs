@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
@@ -10,10 +11,10 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 // allowing sandboxed processes to make outbound network connections they should not be able to.
 public static class SandboxRuntimeVersionGuard
 {
-    static readonly Version Minimum = new(0, 0, 55);
-    static readonly Regex SemVer = new(@"(\d+)\.(\d+)\.(\d+)", RegexOptions.Compiled);
+    static readonly SemanticVersion Minimum = new("0.0.55");
+    static readonly Regex SemVer = new(@"\d+\.\d+\.\d+", RegexOptions.Compiled);
 
-    internal static bool MeetsMinimum(string? versionOutput, out Version? parsed)
+    internal static bool MeetsMinimum(string? versionOutput, out SemanticVersion? parsed)
     {
         parsed = null;
         if (string.IsNullOrWhiteSpace(versionOutput))
@@ -27,12 +28,9 @@ public static class SandboxRuntimeVersionGuard
             return false;
         }
 
-        parsed = new Version(
-            int.Parse(match.Groups[1].Value),
-            int.Parse(match.Groups[2].Value),
-            int.Parse(match.Groups[3].Value));
+        parsed = new SemanticVersion(match.Value);
 
-        return parsed >= Minimum;
+        return parsed.CompareTo(Minimum) >= 0;
     }
 
     public static void EnsureAboveMinimum(ILog log)
