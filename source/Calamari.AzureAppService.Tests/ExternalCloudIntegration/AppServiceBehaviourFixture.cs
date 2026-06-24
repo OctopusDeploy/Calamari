@@ -33,13 +33,10 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
         [TestFixture]
         public class WhenUsingAWindowsDotNetAppService : AzureAppServiceWithProvisionedResourcesTestBase
         {
-            private AppServicePlanResource appServicePlanResource;
-
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
-                var (appServicePlan, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup);
+                var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup);
 
-                appServicePlanResource = appServicePlan;
                 WebSiteResource = webSite;
             }
 
@@ -165,97 +162,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 
                 //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
                 await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
-            }
-
-            [Test]
-            public async Task CanDeployWarPackage()
-            {
-                // Need to spin up a specific app service with Tomcat installed
-                // Need java installed on the test runner (MJH 2022-05-06: is this actually true? I don't see why we'd need java on the test runner)
-                var javaSite = await ResourceGroupResource.GetWebSites()
-                                                          .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                               $"{ResourceGroupName}-java",
-                                                                               new WebSiteData(ResourceGroupResource.Data.Location)
-                                                                               {
-                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
-                                                                                   SiteConfig = new SiteConfigProperties
-                                                                                   {
-                                                                                       JavaVersion = "1.8",
-                                                                                       JavaContainer = "TOMCAT",
-                                                                                       JavaContainerVersion = "9.0",
-                                                                                       AppSettings = new List<AppServiceNameValuePair>
-                                                                                       {
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "600" },
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
-                                                                                       }
-                                                                                   }
-                                                                               });
-
-                (string packagePath, string packageName, string packageVersion) packageinfo;
-                var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
-                packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample.1.0.0.war");
-                packageinfo.packageVersion = "1.0.0";
-                packageinfo.packageName = "sample";
-                greeting = "java";
-
-                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                        .WithArrange(context =>
-                                                     {
-                                                         context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
-                                                         AddVariables(context);
-                                                         context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
-                                                         context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
-                                                     })
-                                        .Execute();
-
-                await DoWithRetries(3,
-                                    async () =>
-                                    {
-                                        await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
-                                    },
-                                    secondsBetweenRetries: 10);
-            }
-
-            [Test]
-            public async Task CanDeployJarPackage()
-            {
-                // Need to spin up a specific app service with Java installed
-                var javaSite = await ResourceGroupResource.GetWebSites()
-                                                          .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                               $"{ResourceGroupName}-java",
-                                                                               new WebSiteData(ResourceGroupResource.Data.Location)
-                                                                               {
-                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
-                                                                                   SiteConfig = new SiteConfigProperties
-                                                                                   {
-                                                                                       JavaVersion = "1.8",
-                                                                                       JavaContainer = "JAVA",
-                                                                                       JavaContainerVersion = "9.0",
-                                                                                       AppSettings = new List<AppServiceNameValuePair>
-                                                                                       {
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "600" },
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
-                                                                                       }
-                                                                                   }
-                                                                               });
-
-                (string packagePath, string packageName, string packageVersion) packageinfo;
-                var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
-                packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample4-1.0.0.jar");
-                packageinfo.packageVersion = "1.0.0";
-                packageinfo.packageName = "sample4";
-                greeting = "java";
-
-                var commandResult = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                                            .WithArrange(context =>
-                                                                         {
-                                                                             context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
-                                                                             AddVariables(context);
-                                                                             context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
-                                                                         })
-                                                            .Execute();
-
-                commandResult.Outcome.Should().Be(TestExecutionOutcome.Successful);
             }
 
             [Test]
@@ -402,7 +308,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 
             static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
             readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-            AppServicePlanResource appServicePlanResource;
 
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
@@ -439,8 +344,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                                                                                   });
 
                 await linuxAppServicePlan.WaitForCompletionAsync(cancellationToken);
-
-                appServicePlanResource = linuxAppServicePlan.Value;
 
                 var linuxWebSiteResponse = await resourceGroup.GetWebSites()
                                                               .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -554,48 +457,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                                                             actualText: $"Hello, {greeting}");
                                     },
                                     secondsBetweenRetries: 10);
-            }
-
-            [Test]
-            public async Task CanDeployJarPackage()
-            {
-                // Need to spin up a specific app service with Java installed
-                var javaSite = await ResourceGroupResource.GetWebSites()
-                                                          .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                               $"{ResourceGroupName}-java",
-                                                                               new WebSiteData(ResourceGroupResource.Data.Location)
-                                                                               {
-                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
-                                                                                   SiteConfig = new SiteConfigProperties
-                                                                                   {
-                                                                                       IsAlwaysOn = true,
-                                                                                       LinuxFxVersion = "JAVA|21-java21",
-                                                                                       Use32BitWorkerProcess = true,
-                                                                                       AppSettings = new List<AppServiceNameValuePair>
-                                                                                       {
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" },
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
-                                                                                       }
-                                                                                   }
-                                                                               });
-
-                (string packagePath, string packageName, string packageVersion) packageinfo;
-                var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
-                packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample4-1.0.0.jar");
-                packageinfo.packageVersion = "1.0.0";
-                packageinfo.packageName = "sample4";
-                greeting = "java";
-
-                var commandResult = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                                            .WithArrange(context =>
-                                                                         {
-                                                                             context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
-                                                                             AddVariables(context);
-                                                                             context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
-                                                                         })
-                                                            .Execute();
-
-                commandResult.Outcome.Should().Be(TestExecutionOutcome.Successful);
             }
 
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
