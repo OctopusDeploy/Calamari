@@ -20,6 +20,7 @@ namespace Calamari.AzureAppService
             base.ConfigureContainer(builder, options);
 
             builder.RegisterType<AzureWebAppDiscoverer>().As<IAzureWebAppDiscoverer>();
+            builder.RegisterType<AzureAppServiceContainerConfigurer>().As<IAzureAppServiceContainerConfigurer>();
         }
 
         public static Task<int> Main(string[] args)
