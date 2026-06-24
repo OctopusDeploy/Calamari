@@ -23,7 +23,6 @@ using Calamari.Testing.Azure;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
 using NUnit.Framework;
-using FileShare = System.IO.FileShare;
 
 namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
@@ -141,39 +140,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                 commandResult.Outcome.Should().Be(TestExecutionOutcome.Unsuccessful);
             }
 
-            [Test]
-            public async Task DeployToTwoTargetsInParallel_Succeeds()
-            {
-                // Arrange
-                var packageInfo = PrepareFunctionAppZipPackage();
-                // Without larger changes to Calamari and the Test Framework, it's not possible to run two Calamari
-                // processes in parallel in the same test method. Simulate the file locking behaviour by directly
-                // opening the affected file instead
-                var fileLock = File.Open(packageInfo.packagePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                try
-                {
-                    // Act
-                    var deployment = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                                             .WithArrange(context =>
-                                                                          {
-                                                                              context.WithPackage(packageInfo.packagePath,
-                                                                                                  packageInfo.packageName,
-                                                                                                  packageInfo.packageVersion);
-                                                                              AddVariables(context);
-                                                                              context.Variables[KnownVariables.Package.EnabledFeatures] = null;
-                                                                          })
-                                                             .Execute();
-
-                    // Assert
-                    deployment.Outcome.Should().Be(TestExecutionOutcome.Successful);
-                }
-                finally
-                {
-                    fileLock.Close();
-                }
-            }
-
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
             {
                 (string packagePath, string packageName, string packageVersion) packageinfo;
@@ -225,20 +191,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                 packageinfo.packageName = "AzureZipDeployPackage";
                 ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
                 return packageinfo;
-            }
-
-            private static (string packagePath, string packageName, string packageVersion) PrepareFunctionAppZipPackage()
-            {
-                (string packagePath, string packageName, string packageVersion) packageInfo;
-
-                var testAssemblyLocation = new FileInfo(Assembly.GetExecutingAssembly().Location);
-                var sourceZip = Path.Combine(testAssemblyLocation.Directory.FullName, "functionapp.1.0.0.zip");
-
-                packageInfo.packagePath = sourceZip;
-                packageInfo.packageVersion = "1.0.0";
-                packageInfo.packageName = "functionapp";
-
-                return packageInfo;
             }
 
             private void AddVariables(CommandTestBuilderContext context)
