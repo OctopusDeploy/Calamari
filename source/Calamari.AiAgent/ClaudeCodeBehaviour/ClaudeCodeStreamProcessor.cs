@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour.JsonResponseModels;
@@ -265,18 +266,15 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
             if (evt.ModelUsage is { Count: > 0 } modelUsage)
             {
-                var usageList = new ClaudeCodeModelUsage[modelUsage.Count];
-                var i = 0;
-                foreach (var (model, info) in modelUsage)
-                    usageList[i++] = new ClaudeCodeModelUsage
+                var usageList = modelUsage.Select(kvp => new ClaudeCodeModelUsage
                     {
-                        Model = model,
-                        InputTokens = info.InputTokens,
-                        OutputTokens = info.OutputTokens,
-                        CacheReadInputTokens = info.CacheReadInputTokens,
-                        CacheCreationInputTokens = info.CacheCreationInputTokens,
-                        CostUsd = info.CostUsd,
-                    };
+                        Model = kvp.Key,
+                        InputTokens = kvp.Value.InputTokens,
+                        OutputTokens = kvp.Value.OutputTokens,
+                        CacheReadInputTokens = kvp.Value.CacheReadInputTokens,
+                        CacheCreationInputTokens = kvp.Value.CacheCreationInputTokens,
+                        CostUsd = kvp.Value.CostUsd,
+                    }).ToArray();
                 properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList, JsonOptions);
             }
 
