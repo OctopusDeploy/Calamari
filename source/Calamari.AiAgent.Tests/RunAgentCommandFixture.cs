@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
@@ -8,7 +9,7 @@ using Octopus.Calamari.Contracts.ClaudeCode;
 namespace Calamari.AiAgent.Tests;
 
 [TestFixture]
-[Ignore("Most of these use real claude. we should reduce that.")]
+
 public class RunAgentCommandFixture
 {
     [Test]
@@ -46,8 +47,10 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
+                context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "What is the capital of France? Reply with just the city name.");
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file that contains todays date.");
+                context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write");
             })
             .Execute(assertWasSuccess: false);
 

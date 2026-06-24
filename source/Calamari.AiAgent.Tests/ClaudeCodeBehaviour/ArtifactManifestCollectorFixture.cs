@@ -238,7 +238,7 @@ public class ArtifactManifestCollectorFixture
 
         var act = () => Collect();
 
-        act.Should().Throw<CommandException>().WithMessage("*empty*");
+        act.Should().Throw<CommandException>().WithMessage("*is empty*");
     }
 
     [Test]
