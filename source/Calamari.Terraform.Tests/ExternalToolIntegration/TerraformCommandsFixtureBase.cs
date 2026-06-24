@@ -1,15 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using Calamari.CloudAccounts;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -28,7 +23,7 @@ namespace Calamari.Terraform.Tests.ExternalToolIntegration
     // terraform CLI (downloaded per version in InstallTools), so this base centralises the download,
     // execution and cleanup helpers used by both the CLI-only and the real-cloud fixtures.
     // The category is applied here so every derived fixture inherits it (NUnit categories are inherited).
-    [Category(TestCategory.ExternalToolIntegration)]
+    [Category(TestCategory.ExternalCloudIntegration)]
     public abstract class TerraformCommandsFixtureBase
     {
         protected string? customTerraformExecutable;
