@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
+using Autofac;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 
 
@@ -13,6 +13,13 @@ namespace Calamari.AzureAppService
     {
         public Program(ILog log) : base(log)
         {
+        }
+
+        protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
+        {
+            base.ConfigureContainer(builder, options);
+
+            builder.RegisterType<AzureWebAppDiscoverer>().As<IAzureWebAppDiscoverer>();
         }
 
         public static Task<int> Main(string[] args)
