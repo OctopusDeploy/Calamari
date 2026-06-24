@@ -24,6 +24,8 @@ public class ArtifactManifestCollector
         var canonicalWorkingDir = Canonical(workingDir);
         var artifactsDir = Path.Combine(destinationRoot, ArtifactsDirName);
 
+        // Not transactional: an invalid entry throws after earlier ones were copied out.
+        // The caller only emits NewOctopusArtifact for a fully-returned list, so no orphan is ever registered.
         var captured = new List<CapturedArtifact>();
         var lineNumber = 0;
         foreach (var rawLine in File.ReadAllLines(manifestPath))
