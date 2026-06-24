@@ -92,7 +92,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
                 argsBuilder.WithBashSettingsPath(SandboxSettingsWriter.WriteBashSettings(workingDir, variables));
                 break;
             case SandboxMode.SandboxRuntime when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
-                throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux/macOS.");
+                throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux.");
             case SandboxMode.SandboxRuntime:
                 SandboxRuntimeVersionGuard.EnsureAboveMinimum(log);
                 argsBuilder.WithSandboxRuntimeSettingsPath(SandboxSettingsWriter.WriteSandboxRuntimeSettings(workingDir, variables));
