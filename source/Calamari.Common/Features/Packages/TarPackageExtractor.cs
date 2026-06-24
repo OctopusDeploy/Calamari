@@ -33,6 +33,8 @@ namespace Calamari.Common.Features.Packages
                 using var reader = TarReader.Open(compressionStream, new ReaderOptions { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } });
                 while (reader.MoveToNextEntry())
                 {
+                    if (reader.Entry.Key != null)
+                        PackageExtractorUtils.ThrowIfPathTraversalAttempted(reader.Entry.Key, directory);
                     ProcessEvent(ref files, reader.Entry);
                     ExtractEntry(directory, reader);
                 }

@@ -36,6 +36,8 @@ namespace Calamari.Common.Features.Packages
             
             foreach (var entry in archive.Entries)
             {
+                if (entry.Key != null)
+                    PackageExtractorUtils.ThrowIfPathTraversalAttempted(entry.Key, directory);
                 ProcessEvent(ref filesExtracted, entry);
                 ExtractEntry(directory, entry);
             }
