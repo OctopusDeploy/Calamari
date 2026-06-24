@@ -78,6 +78,8 @@ namespace Calamari.Terraform.Tests.ExternalToolIntegration
 
             static void ClearTerraformDirectory(string directory)
             {
+                // Test data lives under the ExternalToolIntegration/ subfolder (mirrored into the output dir).
+                directory = Path.Combine("ExternalToolIntegration", directory);
                 TryDeleteFile(Path.Combine(directory, "terraform.tfstate"));
                 TryDeleteFile(Path.Combine(directory, "terraform.tfstate.backup"));
                 TryDeleteFile(Path.Combine(directory, "terraform.log"));
@@ -222,7 +224,7 @@ namespace Calamari.Terraform.Tests.ExternalToolIntegration
         {
             var assertResult = assert ?? (_ => { });
 
-            var terraformFiles = Path.IsPathRooted(folderName) ? folderName : TestEnvironment.GetTestPath(folderName);
+            var terraformFiles = Path.IsPathRooted(folderName) ? folderName : TestEnvironment.GetTestPath("ExternalToolIntegration", folderName);
 
             var result = await CommandTestBuilder.CreateAsync<Program>(command)
                                                  .WithArrange(context =>

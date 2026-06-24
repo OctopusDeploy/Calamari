@@ -33,7 +33,7 @@ namespace Calamari.Terraform.Tests.ExternalToolIntegration
             var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
             using var temporaryFolder = TemporaryDirectory.Create();
-            CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
+            CopyAllFiles(TestEnvironment.GetTestPath("ExternalToolIntegration", "GoogleCloud"), temporaryFolder.DirectoryPath);
 
             var environmentJsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
@@ -93,7 +93,7 @@ namespace Calamari.Terraform.Tests.ExternalToolIntegration
             var expectedHostName = $"{appName}.azurewebsites.net";
 
             using var temporaryFolder = TemporaryDirectory.Create();
-            CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath, terraformCliVersion);
+            CopyAllFiles(TestEnvironment.GetTestPath("ExternalToolIntegration", "Azure"), temporaryFolder.DirectoryPath, terraformCliVersion);
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
@@ -168,7 +168,7 @@ namespace Calamari.Terraform.Tests.ExternalToolIntegration
             var expectedUrl = $"https://{bucketName}.s3.amazonaws.com/test.txt";
 
             using var temporaryFolder = TemporaryDirectory.Create();
-            CopyAllFiles(TestEnvironment.GetTestPath("AWS"), temporaryFolder.DirectoryPath);
+            CopyAllFiles(TestEnvironment.GetTestPath("ExternalToolIntegration", "AWS"), temporaryFolder.DirectoryPath);
 
             var accessKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None);
             var secretKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None);
