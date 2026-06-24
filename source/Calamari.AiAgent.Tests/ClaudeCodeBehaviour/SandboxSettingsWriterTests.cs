@@ -75,6 +75,38 @@ public class SandboxSettingsWriterTests
     }
 
     [Test]
+    public void WriteBashSettings_Throws_WhenSettingsBlank()
+    {
+        var workingDir = CreateWorkingDir();
+        try
+        {
+            var act = () => SandboxSettingsWriter.WriteBashSettings(workingDir, VariablesWith("   "));
+
+            act.Should().Throw<CommandException>();
+        }
+        finally
+        {
+            Directory.Delete(workingDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public void WriteSandboxRuntimeSettings_Throws_WhenSettingsMissing()
+    {
+        var workingDir = CreateWorkingDir();
+        try
+        {
+            var act = () => SandboxSettingsWriter.WriteSandboxRuntimeSettings(workingDir, new CalamariVariables());
+
+            act.Should().Throw<CommandException>();
+        }
+        finally
+        {
+            Directory.Delete(workingDir, recursive: true);
+        }
+    }
+
+    [Test]
     public void WriteSandboxRuntimeSettings_Throws_WhenSettingsBlank()
     {
         var workingDir = CreateWorkingDir();

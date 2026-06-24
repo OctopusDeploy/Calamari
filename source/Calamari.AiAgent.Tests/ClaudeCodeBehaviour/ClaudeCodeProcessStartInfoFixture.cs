@@ -17,7 +17,8 @@ public class ClaudeCodeProcessStartInfoFixture
         ClaudeCodeProcessStartInfo.ShellQuote(input).Should().Be(expected);
     }
 
-    const string TestSandboxRuntimeSettingsPath = "/tmp/test-workdir/srt-settings.json";
+    const string TestSandboxRuntimeSettingsPath = "/tmp/test-workdir/.srt-settings.json";
+    const string TestBashSettingsPath = "/tmp/test-workdir/.claude/settings.sandbox.json";
 
     static ClaudeCommandArgsBuilder MinimalBuilder() =>
         new ClaudeCommandArgsBuilder()
@@ -35,12 +36,14 @@ public class ClaudeCodeProcessStartInfoFixture
     }
 
     [Test]
-    public void ResolveInvocation_BashMode_RunsClaudeDirectly()
+    public void ResolveInvocation_BashMode_PassesSettingsFlag()
     {
-        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder().WithSandboxMode(SandboxMode.Bash));
+        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.Bash).WithBashSettingsPath(TestBashSettingsPath);
+
+        var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(builder);
 
         fileName.Should().Be("claude");
-        arguments.Should().StartWith(" --model");
+        arguments.Should().Contain($"--settings {TestBashSettingsPath}");
         arguments.Should().NotContain("srt");
     }
 

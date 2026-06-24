@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Calamari.Common.Commands;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
@@ -89,10 +90,21 @@ public class ClaudeCommandArgsBuilder
 
     public string? SandboxRuntimeSettingsPath => sandboxRuntimeSettingsPath;
 
+    string? bashSettingsPath;
+
+    public ClaudeCommandArgsBuilder WithBashSettingsPath(string? value)
+    {
+        bashSettingsPath = value;
+        return this;
+    }
+
     public string Build()
     {
         if (string.IsNullOrWhiteSpace(prompt))
             throw new InvalidOperationException("A prompt is required. Call WithPrompt() before Build().");
+
+        if (SandboxMode == SandboxMode.Bash && string.IsNullOrWhiteSpace(bashSettingsPath))
+            throw new CommandException("Bash sandbox mode requires a settings file path.");
 
         var args = new StringBuilder();
 
@@ -100,6 +112,12 @@ public class ClaudeCommandArgsBuilder
         {
             args.Append(" --model ");
             args.Append(EscapeArg(model));
+        }
+
+        if (!string.IsNullOrWhiteSpace(bashSettingsPath))
+        {
+            args.Append(" --settings ");
+            args.Append(EscapeArg(bashSettingsPath));
         }
 
         args.Append(" --strict-mcp-config");

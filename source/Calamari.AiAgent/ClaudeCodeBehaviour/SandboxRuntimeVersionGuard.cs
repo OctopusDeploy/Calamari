@@ -51,7 +51,7 @@ public static class SandboxRuntimeVersionGuard
             };
 
             using var process = Process.Start(startInfo)
-                                ?? throw new CommandException($"Could not start 'srt'. The Sandbox runtime sandbox level requires sandbox-runtime >= {Minimum} on the worker's PATH.");
+                                ?? throw new CommandException($"Could not start 'srt'. The sandbox runtime requires sandbox-runtime >= {Minimum} on the worker's PATH.");
 
             var stdoutTask = process.StandardOutput.ReadToEndAsync();
             var stderrTask = process.StandardError.ReadToEndAsync();
@@ -60,12 +60,12 @@ public static class SandboxRuntimeVersionGuard
         }
         catch (Exception ex) when (ex is not CommandException)
         {
-            throw new CommandException($"Could not run 'srt --version'. The Sandbox runtime sandbox level requires sandbox-runtime >= {Minimum} on the worker's PATH. {ex.Message}");
+            throw new CommandException($"Could not run 'srt --version'. The sandbox runtime requires sandbox-runtime >= {Minimum} on the worker's PATH. {ex.Message}");
         }
 
         if (!MeetsMinimum(output, out var parsed))
         {
-            throw new CommandException($"sandbox-runtime {(parsed?.ToString() ?? "(version not detected)")} found, but the Sandbox runtime sandbox level requires >= {Minimum} (older versions fail open on the network). 'srt --version' output: {output.Trim()}");
+            throw new CommandException($"sandbox-runtime {(parsed?.ToString() ?? "(version not detected)")} found, but the sandbox runtime requires >= {Minimum} (older versions fail open on the network). 'srt --version' output: {output.Trim()}");
         }
 
         log.Verbose($"sandbox-runtime {parsed} satisfies the >= {Minimum} requirement.");

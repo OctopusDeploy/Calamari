@@ -89,7 +89,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             case SandboxMode.Bash when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
                 throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux/macOS.");
             case SandboxMode.Bash:
-                SandboxSettingsWriter.WriteBashSettings(workingDir, variables);
+                argsBuilder.WithBashSettingsPath(SandboxSettingsWriter.WriteBashSettings(workingDir, variables));
                 break;
             case SandboxMode.SandboxRuntime when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
                 throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux/macOS.");
