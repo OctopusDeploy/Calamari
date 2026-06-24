@@ -19,6 +19,7 @@ public class ClaudeCommandArgsBuilder
     string? effort;
     SandboxMode? sandboxMode;
     string? sandboxRuntimeSettingsPath;
+    string? bashSettingsPath;
 
     public ClaudeCommandArgsBuilder WithPrompt(string prompt)
     {
@@ -90,8 +91,6 @@ public class ClaudeCommandArgsBuilder
 
     public string? SandboxRuntimeSettingsPath => sandboxRuntimeSettingsPath;
 
-    string? bashSettingsPath;
-
     public ClaudeCommandArgsBuilder WithBashSettingsPath(string? value)
     {
         bashSettingsPath = value;
@@ -159,7 +158,7 @@ public class ClaudeCommandArgsBuilder
             args.Append($" --effort {effort}");
 
         args.Append(" -p ");
-            args.Append(EscapeArg(prompt));
+        args.Append(EscapeArg(prompt));
 
         return args.ToString();
     }
