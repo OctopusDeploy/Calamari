@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -88,6 +89,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                          "Summary Message",
                                          "A file has changed",
                                          branchName,
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
 
             //ensure the remote contains the file
@@ -106,11 +108,13 @@ namespace Calamari.Tests.ArgoCD.Git
                                          "Summary Message",
                                          "There is no data to comm it",
                                          GitBranchName.CreateFromFriendlyName("arbitraryBranch1"),
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "There is no data to comm it",
                                          GitBranchName.CreateFromFriendlyName("arbitraryBranch2"),
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
         }
 
@@ -128,6 +132,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                          commitSummary,
                                          commitDescription,
                                          prBranch,
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
             await gitVendorPullRequestClient.Received(1)
                                                  .CreatePullRequest(
@@ -188,7 +193,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin.AddFilesToBranch(branchName, ("concurrentFile.txt", "concurrent content"));
 
             // Act: first push attempt will fail, retry should fetch+merge and succeed
-            await repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
+            await repository.PushChanges(false, "Our commit", "", branchName, GitCommitParameters.DefaultPushRetryAttempts, CancellationToken.None);
 
             // Assert: origin has our file
             bareOrigin.ReadFileFromBranch(branchName, filename).Should().Be(fileContents);
@@ -212,10 +217,31 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin.AddFilesToBranch(branchName, (conflictFile, "their content"));
 
             // Act & Assert: push fails, FetchAndMerge detects conflict and throws
-            Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
+            Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, GitCommitParameters.DefaultPushRetryAttempts, CancellationToken.None);
             await act.Should()
                      .ThrowAsync<CommandException>()
                      .WithMessage("*Rebase conflict*");
+        }
+
+        [Test]
+        public async Task WhenRetriesDisabled_PushFailsImmediatelyWithoutFetchAndRebase()
+        {
+            // Arrange: commit a file in our clone
+            const string filename = "ourFile.txt";
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), "our content");
+            repository.StageAllChanges();
+            repository.CommitChanges("Our commit", "").Should().BeTrue();
+
+            // Simulate a concurrent push to origin (causes non-fast-forward failure)
+            bareOrigin.AddFilesToBranch(branchName, ("concurrentFile.txt", "concurrent content"));
+
+            // Act & Assert: with retries disabled the first failure is final - no fetch/rebase is attempted
+            Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, maxRetryAttempts: 0, CancellationToken.None);
+            await act.Should().ThrowAsync<CommandException>();
+
+            log.MessagesVerboseFormatted
+               .Should()
+               .NotContain(m => m.Contains("fetching and rebasing before retrying"));
         }
 
         [Test]
@@ -234,6 +260,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                          "Summary Message",
                                          "A file has changed",
                                          branchName,
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
 
             //ensure the remote contains the file

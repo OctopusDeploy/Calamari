@@ -78,6 +78,7 @@ namespace Calamari.ArgoCD.Git
                                                   string summary,
                                                   string description,
                                                   GitReference branchName,
+                                                  int maxRetryAttempts,
                                                   CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
@@ -85,21 +86,24 @@ namespace Calamari.ArgoCD.Git
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
 
-            var retryPipeline = new ResiliencePipelineBuilder()
-                                .AddRetry(new RetryStrategyOptions
-                                {
-                                    ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
-                                    MaxRetryAttempts = 2,
-                                    UseJitter =  true,
-                                    Delay = TimeSpan.FromSeconds(2),
-                                    OnRetry = args =>
-                                    {
-                                        log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
-                                        FetchAndRebase(currentBranchName);
-                                        return default;
-                                    }
-                                })
-                                .Build();
+            // Polly rejects a retry strategy with MaxRetryAttempts < 1
+            var retryPipeline = maxRetryAttempts <= 0
+                ? ResiliencePipeline.Empty
+                : new ResiliencePipelineBuilder()
+                  .AddRetry(new RetryStrategyOptions
+                  {
+                      ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
+                      MaxRetryAttempts = maxRetryAttempts,
+                      UseJitter =  true,
+                      Delay = TimeSpan.FromSeconds(2),
+                      OnRetry = args =>
+                      {
+                          log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
+                          FetchAndRebase(currentBranchName);
+                          return default;
+                      }
+                  })
+                  .Build();
 
             try
             {

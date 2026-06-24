@@ -52,7 +52,8 @@ namespace Calamari.ArgoCD.Conventions
             // the variable is sensitive
             var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Git.CommitMessageSummary));
             var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty);
-            return new GitCommitParameters(summary, description, requiresPullRequest);
+            var pushRetryAttempts = GitCommitParameters.ClampPushRetryAttempts(deployment.Variables.GetInt32(SpecialVariables.Git.PushRetryAttempts));
+            return new GitCommitParameters(summary, description, requiresPullRequest, pushRetryAttempts);
         }
         string EvaluateNonsensitiveExpression(string expression)
         {

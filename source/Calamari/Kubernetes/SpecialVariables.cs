@@ -80,6 +80,8 @@ namespace Calamari.Kubernetes
 
             public static readonly string PurgeOutput = "Octopus.Action.ArgoCD.PurgeOutputFolder";
 
+            public static readonly string PushRetryAttempts = "Octopus.Action.ArgoCD.PushRetryAttempts";
+
             public static class PullRequest
             {
                 public static readonly string Create = "Octopus.Action.ArgoCD.PullRequest.Create";
