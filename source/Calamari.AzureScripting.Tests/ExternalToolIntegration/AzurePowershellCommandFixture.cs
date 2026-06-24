@@ -9,10 +9,10 @@ using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 
-namespace Calamari.AzureScripting.Tests
+namespace Calamari.AzureScripting.Tests.ExternalToolIntegration
 {
     [TestFixture]
-    [Category(TestCategory.ExternalCloudIntegration)]
+    [Category(TestCategory.ExternalToolIntegration)]
     class AzurePowerShellCommandFixture
     {
         string? clientId;
