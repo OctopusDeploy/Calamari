@@ -21,7 +21,6 @@ public class ClaudeCommandArgsBuilderFixture
         args.Should().Contain("--verbose");
         args.Should().Contain("--permission-mode dontAsk");
         args.Should().Contain("--no-session-persistence");
-        args.Should().Contain("--bare");
         args.Should().Contain("--strict-mcp-config");
     }
 
@@ -163,4 +162,5 @@ public class ClaudeCommandArgsBuilderFixture
         act.Should().Throw<System.InvalidOperationException>()
             .WithMessage("*prompt*");
     }
+
 }

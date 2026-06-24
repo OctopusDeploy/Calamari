@@ -33,4 +33,14 @@ public static class ClaudeCodeServiceMessages
         /// </summary>
         public const string OccurredAtAttribute = "occurredAt";
     }
+    
+    public static class Transcript
+    {
+        public const string Name = "claude-code-transcript";
+
+        /// <summary>
+        /// The attribute carrying the full session transcript content (raw JSONL/text).
+        /// </summary>
+        public const string TranscriptAttribute = "transcript";
+    }
 }

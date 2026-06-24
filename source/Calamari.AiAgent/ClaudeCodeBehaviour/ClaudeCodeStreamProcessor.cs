@@ -25,6 +25,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
             this.responseBuilder = responseBuilder;
         }
 
+        public ResultStreamEvent? Result { get; private set; }
+
         public void ProcessLine(string json)
         {
             JsonDocument doc;
@@ -224,6 +226,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
         void HandleResultEvent(ResultStreamEvent evt)
         {
+            Result = evt;
+
             if (evt.Result != null && responseBuilder.Length == 0)
             {
                 responseBuilder.Append(evt.Result);
