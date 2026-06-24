@@ -118,10 +118,14 @@ public abstract class CalamariFlavourProgramAsync(ILog log)
             using var container = builder.Build();
             container.Resolve<VariableLogger>().LogVariables();
 #if DEBUG
-            if (CalamariEnvironment.ShouldWaitForDebugger(container.Resolve<IVariables>()))
+            var debuggerWaitMode = CalamariEnvironment.GetDebuggerWaitMode(container.Resolve<IVariables>());
+            if (debuggerWaitMode != DebuggerWaitMode.None)
             {
                 using var proc = Process.GetCurrentProcess();
                 Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+
+                if (debuggerWaitMode == DebuggerWaitMode.AttachRider)
+                    RiderDebuggerAttacher.TryAttach(proc.Id, ConsoleLog.Instance);
 
                 while (!Debugger.IsAttached)
                 {
