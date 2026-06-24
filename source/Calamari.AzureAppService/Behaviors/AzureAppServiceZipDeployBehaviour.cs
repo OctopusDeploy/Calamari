@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using System;
 using System.Collections.Generic;
@@ -95,14 +95,7 @@ namespace Calamari.AzureAppService.Behaviors
 
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
-            IPackageProvider packageProvider = packageFileInfo.Extension switch
-                                               {
-                                                   ".zip" => new ZipPackageProvider(),
-                                                   ".nupkg" => new NugetPackageProvider(),
-                                                   ".war" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/wardeploy"),
-                                                   ".jar" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/publish?type=jar"),
-                                                   _ => throw new Exception("Unsupported archive type")
-                                               };
+            var packageProvider = PackageProviderFactory.GetProvider(packageFileInfo.Extension, Log, fileSystem, variables, context);
 
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
