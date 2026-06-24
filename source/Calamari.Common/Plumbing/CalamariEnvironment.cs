@@ -5,13 +5,6 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing
 {
-    public enum DebuggerWaitMode
-    {
-        None,
-        Wait,
-        AttachRider
-    }
-
     public static class CalamariEnvironment
     {
         public static bool IsRunningOnKubernetes =>
@@ -29,19 +22,16 @@ namespace Calamari.Common.Plumbing
             Environment.OSVersion.Platform == PlatformID.Win32Windows ||
             Environment.OSVersion.Platform == PlatformID.WinCE;
 
-        public static DebuggerWaitMode GetDebuggerWaitMode(IVariables variables)
+        public static bool ShouldWaitForDebugger(IVariables variables)
         {
 #if DEBUG
-            var fromVariable = variables.Get(KnownVariables.Calamari.WaitForDebugger);
-            var fromEnvironment = Environment.GetEnvironmentVariable("_CALAMARI_WAIT_FOR_DEBUGGER");
 
-            if (string.Equals(fromVariable, "rider", StringComparison.OrdinalIgnoreCase) || string.Equals(fromEnvironment, "rider", StringComparison.OrdinalIgnoreCase))
-                return DebuggerWaitMode.AttachRider;
-
-            if (string.Equals(fromVariable, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(fromEnvironment, "true", StringComparison.OrdinalIgnoreCase))
-                return DebuggerWaitMode.Wait;
+            var waitForDebugger = variables.Get(KnownVariables.Calamari.WaitForDebugger);
+            var waitForDebuggerInEnv = Environment.GetEnvironmentVariable("_CALAMARI_WAIT_FOR_DEBUGGER");
+            
+            return string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(waitForDebuggerInEnv, "true", StringComparison.OrdinalIgnoreCase);
 #endif
-            return DebuggerWaitMode.None;
+            return false;
         }
 
         public static bool IsRunningOnMac
