@@ -26,12 +26,12 @@ using FluentAssertions;
 using NUnit.Framework;
 using FileShare = System.IO.FileShare;
 
-namespace Calamari.AzureAppService.Tests
+namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
     public class AppServiceBehaviorFixture
     {
         [TestFixture]
-        public class WhenUsingAWindowsDotNetAppService : AppServiceIntegrationTest
+        public class WhenUsingAWindowsDotNetAppService : AzureAppServiceWithProvisionedResourcesTestBase
         {
             private AppServicePlanResource appServicePlanResource;
 
@@ -395,7 +395,7 @@ namespace Calamari.AzureAppService.Tests
         }
 
         [TestFixture]
-        public class WhenUsingALinuxAppService : AppServiceIntegrationTest
+        public class WhenUsingALinuxAppService : AzureAppServiceWithProvisionedResourcesTestBase
         {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
             protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");

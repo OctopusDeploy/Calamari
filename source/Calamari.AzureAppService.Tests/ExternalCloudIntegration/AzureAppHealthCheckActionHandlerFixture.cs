@@ -2,10 +2,6 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using Azure;
-using Azure.ResourceManager.AppService;
-using Azure.ResourceManager.AppService.Models;
-using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Testing;
@@ -13,10 +9,10 @@ using FluentAssertions;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
-namespace Calamari.AzureAppService.Tests
+namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
     [TestFixture]
-    class AzureWebAppHealthCheckActionHandlerFixture : AppServiceIntegrationTestWithStaticResources
+    class AzureAppHealthCheckActionHandlerFixture : AzureAppServiceWithStaticResourcesTestBase
     {
         // https://portal.azure.com/#@octopusdeploy.onmicrosoft.com/resource/subscriptions/cf21dc34-73dc-4d7d-bd86-041884e0bc75/resourcegroups/calamari-testing-static-rg/providers/Microsoft.Web/sites/calamari-testing-static-health-check/appServices
         const string WebAppName = "calamari-testing-static-health-check";
