@@ -15,11 +15,11 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
-namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
+namespace Calamari.AzureResourceGroup.Tests.ExternalToolIntegration
 {
     [TestFixture]
     [WindowsTest] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
-    [Category(TestCategory.ExternalCloudIntegration)]
+    [Category(TestCategory.ExternalToolIntegration)]
     class DeployAzureBicepTemplateCommandFixture
     {
         string clientId;
