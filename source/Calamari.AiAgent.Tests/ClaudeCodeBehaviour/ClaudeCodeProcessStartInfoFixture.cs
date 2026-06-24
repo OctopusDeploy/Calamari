@@ -17,7 +17,7 @@ public class ClaudeCodeProcessStartInfoFixture
         ClaudeCodeProcessStartInfo.ShellQuote(input).Should().Be(expected);
     }
 
-    const string TestSrtSettingsPath = "/tmp/test-workdir/srt-settings.json";
+    const string TestSandboxRuntimeSettingsPath = "/tmp/test-workdir/srt-settings.json";
 
     static ClaudeCommandArgsBuilder MinimalBuilder() =>
         new ClaudeCommandArgsBuilder()
@@ -45,20 +45,20 @@ public class ClaudeCodeProcessStartInfoFixture
     }
 
     [Test]
-    public void ResolveInvocation_SrtMode_WrapsClaudeWithSrt()
+    public void ResolveInvocation_SandboxRuntimeMode_WrapsClaudeWithSrt()
     {
-        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.Srt).WithSrtSettingsPath(TestSrtSettingsPath);
+        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.SandboxRuntime).WithSandboxRuntimeSettingsPath(TestSandboxRuntimeSettingsPath);
 
         var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(builder);
 
         fileName.Should().Be("srt");
-        arguments.Should().StartWith($"--settings {TestSrtSettingsPath} claude --model");
+        arguments.Should().StartWith($"--settings {TestSandboxRuntimeSettingsPath} claude --model");
     }
 
     [Test]
-    public void ResolveInvocation_SrtMode_WithoutSettingsPath_Throws()
+    public void ResolveInvocation_SandboxRuntimeMode_WithoutSettingsPath_Throws()
     {
-        var act = () => ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder().WithSandboxMode(SandboxMode.Srt));
+        var act = () => ClaudeCodeProcessStartInfo.ResolveInvocation(MinimalBuilder().WithSandboxMode(SandboxMode.SandboxRuntime));
 
         act.Should().Throw<System.InvalidOperationException>();
     }

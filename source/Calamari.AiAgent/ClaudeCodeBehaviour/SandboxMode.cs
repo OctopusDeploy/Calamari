@@ -6,5 +6,5 @@ public enum SandboxMode
 {
     None,
     Bash,
-    Srt,
+    SandboxRuntime,
 }

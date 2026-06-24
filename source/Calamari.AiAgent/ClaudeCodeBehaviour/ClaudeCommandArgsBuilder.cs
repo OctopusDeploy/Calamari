@@ -17,7 +17,7 @@ public class ClaudeCommandArgsBuilder
     IReadOnlyList<string>? allowedTools;
     string? effort;
     SandboxMode? sandboxMode;
-    string? srtSettingsPath;
+    string? sandboxRuntimeSettingsPath;
 
     public ClaudeCommandArgsBuilder WithPrompt(string prompt)
     {
@@ -81,13 +81,13 @@ public class ClaudeCommandArgsBuilder
 
     public SandboxMode SandboxMode => sandboxMode ?? SandboxMode.None;
 
-    public ClaudeCommandArgsBuilder WithSrtSettingsPath(string? value)
+    public ClaudeCommandArgsBuilder WithSandboxRuntimeSettingsPath(string? value)
     {
-        srtSettingsPath = value;
+        sandboxRuntimeSettingsPath = value;
         return this;
     }
 
-    public string? SrtSettingsPath => srtSettingsPath;
+    public string? SandboxRuntimeSettingsPath => sandboxRuntimeSettingsPath;
 
     public string Build()
     {
