@@ -20,10 +20,11 @@ using NUnit.Framework;
 using GoogleStorageObject = Google.Apis.Storage.v1.Data.Object;
 using ZipFile = System.IO.Compression.ZipFile;
 
-namespace Calamari.GoogleCloudScripting.Tests
+namespace Calamari.GoogleCloudScripting.Tests.ExternalToolIntegration
 {
     [TestFixture]
     [TestFixtureSource(typeof(DownloadCli))]
+    [Category(TestCategory.ExternalToolIntegration)]
     class GoogleCloudActionHandlerFixture
     {
         private readonly string cliPath;
