@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Text.Json;
 using Calamari.Common.Commands;
 
@@ -61,12 +62,25 @@ public class ArtifactManifestCollector
     {
         var full = Path.GetFullPath(Path.IsPathRooted(entry.Path!) ? entry.Path! : Path.Combine(workingDir, entry.Path!));
 
-        if (!File.Exists(full))
+        var isDirectory = Directory.Exists(full);
+        if (!isDirectory && !File.Exists(full))
             throw new CommandException($"Artifact manifest line {lineNumber}: '{entry.Path}' does not exist.");
 
-        EnsureInsideWorkingDir(entry, lineNumber, full, canonicalWorkingDir);
+        var canonical = Canonical(full);
+        if (string.Equals(canonical, canonicalWorkingDir, StringComparison.Ordinal))
+            throw new CommandException($"Artifact manifest line {lineNumber}: cannot attach the working directory itself; use a file or subdirectory.");
+        if (!canonical.StartsWith(canonicalWorkingDir + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            throw new CommandException($"Artifact manifest line {lineNumber}: '{entry.Path}' resolves outside the working directory.");
 
         var relative = Path.GetRelativePath(workingDir, full);
+
+        return isDirectory
+            ? CaptureDirectory(entry, lineNumber, full, relative, artifactsDir)
+            : CaptureFile(entry, full, relative, artifactsDir);
+    }
+
+    static CapturedArtifact CaptureFile(ManifestEntry entry, string full, string relative, string artifactsDir)
+    {
         var destPath = Path.Combine(artifactsDir, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
         File.Copy(full, destPath, overwrite: true);
@@ -75,11 +89,20 @@ public class ArtifactManifestCollector
         return new CapturedArtifact(destPath, name, new FileInfo(destPath).Length);
     }
 
-    static void EnsureInsideWorkingDir(ManifestEntry entry, int lineNumber, string full, string canonicalWorkingDir)
+    static CapturedArtifact CaptureDirectory(ManifestEntry entry, int lineNumber, string full, string relative, string artifactsDir)
     {
-        var canonical = Canonical(full);
-        if (!canonical.StartsWith(canonicalWorkingDir + Path.DirectorySeparatorChar, StringComparison.Ordinal))
-            throw new CommandException($"Artifact manifest line {lineNumber}: '{entry.Path}' resolves outside the working directory.");
+        if (Directory.GetFileSystemEntries(full).Length == 0)
+            throw new CommandException($"Artifact manifest line {lineNumber}: directory '{entry.Path}' is empty.");
+
+        var zipPath = Path.Combine(artifactsDir, relative + ".zip");
+        Directory.CreateDirectory(Path.GetDirectoryName(zipPath)!);
+        if (File.Exists(zipPath))
+            File.Delete(zipPath);
+        ZipFile.CreateFromDirectory(full, zipPath);
+
+        var dirName = new DirectoryInfo(full).Name;
+        var name = entry.Name ?? dirName + ".zip";
+        return new CapturedArtifact(zipPath, name, new FileInfo(zipPath).Length);
     }
 
     // Resolves a symlinked leaf to its real target so a link inside the working dir

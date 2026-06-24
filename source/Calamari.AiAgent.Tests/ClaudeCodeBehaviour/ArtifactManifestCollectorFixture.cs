@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common.Commands;
@@ -199,5 +200,55 @@ public class ArtifactManifestCollectorFixture
         {
             File.Delete(secret);
         }
+    }
+
+    [Test]
+    public void Directory_IsZippedIntoSingleArtifact()
+    {
+        WriteWorkingFile("site/index.html", "<h1>hi</h1>");
+        WriteWorkingFile("site/css/app.css", "body{}");
+        WriteManifest("""{"path":"site","name":"Generated Website"}""");
+
+        var captured = Collect();
+
+        captured.Should().HaveCount(1);
+        captured[0].Name.Should().Be("Generated Website");
+        captured[0].Path.Should().Be(Path.Combine(destinationRoot, "artifacts", "site.zip"));
+        File.Exists(captured[0].Path).Should().BeTrue();
+
+        using var archive = ZipFile.OpenRead(captured[0].Path);
+        archive.Entries.Select(e => e.FullName.Replace('\\', '/'))
+               .Should().BeEquivalentTo("index.html", "css/app.css");
+    }
+
+    [Test]
+    public void Directory_DefaultsNameToDirNameWithZipExtension()
+    {
+        WriteWorkingFile("site/index.html");
+        WriteManifest("""{"path":"site"}""");
+
+        Collect().Single().Name.Should().Be("site.zip");
+    }
+
+    [Test]
+    public void EmptyDirectory_Throws()
+    {
+        Directory.CreateDirectory(Path.Combine(workingDir, "empty"));
+        WriteManifest("""{"path":"empty"}""");
+
+        var act = () => Collect();
+
+        act.Should().Throw<CommandException>().WithMessage("*empty*");
+    }
+
+    [Test]
+    public void WorkingDirRoot_Throws()
+    {
+        WriteWorkingFile("report.csv");
+        WriteManifest("""{"path":"."}""");
+
+        var act = () => Collect();
+
+        act.Should().Throw<CommandException>().WithMessage("*working directory itself*");
     }
 }
