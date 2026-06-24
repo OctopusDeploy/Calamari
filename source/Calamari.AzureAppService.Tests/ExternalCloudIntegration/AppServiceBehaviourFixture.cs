@@ -16,7 +16,6 @@ using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Calamari.AzureAppService.Azure;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
@@ -74,25 +73,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
             }
 
             [Test]
-            public async Task CanDeployWebAppZip_WithAsyncDeploymentAndPolling()
-            {
-                var packageInfo = PrepareZipPackage();
-
-                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                        .WithArrange(context =>
-                                                     {
-                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
-                                                         AddVariables(context);
-
-                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles, existingFeatureToggles);
-                                                     })
-                                        .Execute();
-
-                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
-            }
-
-            [Test]
             public async Task CanDeployWebAppZip_ToDeploymentSlot()
             {
                 const string slotName = "stage";
@@ -137,26 +117,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                                                      {
                                                          context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
                                                          AddVariables(context);
-                                                     })
-                                        .Execute();
-
-                //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
-            }
-
-            [Test]
-            public async Task CanDeployNugetPackage_WithAsyncDeploymentAndPolling()
-            {
-                var packageInfo = await PrepareNugetPackage();
-
-                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                        .WithArrange(context =>
-                                                     {
-                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
-                                                         AddVariables(context);
-
-                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles, existingFeatureToggles);
                                                      })
                                         .Execute();
 
@@ -416,35 +376,6 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                                                      {
                                                          context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
                                                          AddVariables(context);
-                                                     })
-                                        .Execute();
-
-                // Assert
-                await DoWithRetries(2,
-                                    async () =>
-                                    {
-                                        await AssertContent(WebSiteResource.Data.DefaultHostName,
-                                                            rootPath: $"api/HttpExample?name={greeting}",
-                                                            actualText: $"Hello, {greeting}");
-                                    },
-                                    secondsBetweenRetries: 10);
-            }
-
-            [Test]
-            public async Task CanDeployZip_ToLinuxFunctionApp_WithAsyncDeploymentAndPolling()
-            {
-                // Arrange
-                var packageInfo = PrepareZipPackage();
-
-                // Act
-                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                        .WithArrange(context =>
-                                                     {
-                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
-                                                         AddVariables(context);
-
-                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles, existingFeatureToggles);
                                                      })
                                         .Execute();
 
