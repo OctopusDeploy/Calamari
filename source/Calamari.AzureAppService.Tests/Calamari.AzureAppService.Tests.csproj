@@ -28,6 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="sample.1.0.0.war">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="sample4-1.0.0.jar">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="ExternalCloudIntegration/functionapp.1.0.0.zip">
       <Link>functionapp.1.0.0.zip</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
