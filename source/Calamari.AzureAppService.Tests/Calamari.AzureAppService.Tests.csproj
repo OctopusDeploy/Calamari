@@ -34,7 +34,8 @@
     <None Update="sample4-1.0.0.jar">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="functionapp.1.0.0.zip">
+    <None Update="ExternalCloudIntegration/functionapp.1.0.0.zip">
+      <Link>functionapp.1.0.0.zip</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

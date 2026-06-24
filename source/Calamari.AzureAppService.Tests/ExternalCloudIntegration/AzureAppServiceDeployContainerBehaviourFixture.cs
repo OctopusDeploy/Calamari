@@ -21,7 +21,7 @@ using NUnit.Framework;
 using Octostache;
 using Polly;
 
-namespace Calamari.AzureAppService.Tests
+namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
     /// <summary>
     /// Tests that both windows and linux app services can have container deployments
@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService.Tests
     public class AzureAppServiceDeployContainerBehaviourFixture
     {
         [TestFixture]
-        public class WhenUsingAWindowsAppService : AppServiceIntegrationTest
+        public class WhenUsingAWindowsAppService : AzureAppServiceWithProvisionedResourcesTestBase
         {
             CalamariVariables newVariables;
             readonly HttpClient client = new HttpClient();
@@ -175,7 +175,7 @@ namespace Calamari.AzureAppService.Tests
         }
 
         [TestFixture]
-        public class WhenUsingALinuxAppService : AppServiceIntegrationTest
+        public class WhenUsingALinuxAppService : AzureAppServiceWithProvisionedResourcesTestBase
         {
             CalamariVariables newVariables;
             readonly HttpClient client = new HttpClient();
