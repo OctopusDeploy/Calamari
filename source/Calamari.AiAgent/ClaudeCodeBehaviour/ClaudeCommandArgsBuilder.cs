@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Calamari.Common.Commands;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
@@ -17,7 +18,8 @@ public class ClaudeCommandArgsBuilder
     IReadOnlyList<string>? allowedTools;
     string? effort;
     SandboxMode? sandboxMode;
-    string? srtSettingsPath;
+    string? sandboxRuntimeSettingsPath;
+    string? bashSettingsPath;
 
     public ClaudeCommandArgsBuilder WithPrompt(string prompt)
     {
@@ -81,18 +83,27 @@ public class ClaudeCommandArgsBuilder
 
     public SandboxMode SandboxMode => sandboxMode ?? SandboxMode.None;
 
-    public ClaudeCommandArgsBuilder WithSrtSettingsPath(string? value)
+    public ClaudeCommandArgsBuilder WithSandboxRuntimeSettingsPath(string? value)
     {
-        srtSettingsPath = value;
+        sandboxRuntimeSettingsPath = value;
         return this;
     }
 
-    public string? SrtSettingsPath => srtSettingsPath;
+    public string? SandboxRuntimeSettingsPath => sandboxRuntimeSettingsPath;
+
+    public ClaudeCommandArgsBuilder WithBashSettingsPath(string? value)
+    {
+        bashSettingsPath = value;
+        return this;
+    }
 
     public string Build()
     {
         if (string.IsNullOrWhiteSpace(prompt))
             throw new InvalidOperationException("A prompt is required. Call WithPrompt() before Build().");
+
+        if (SandboxMode == SandboxMode.Bash && string.IsNullOrWhiteSpace(bashSettingsPath))
+            throw new CommandException("Bash sandbox mode requires a settings file path.");
 
         var args = new StringBuilder();
 
@@ -100,6 +111,12 @@ public class ClaudeCommandArgsBuilder
         {
             args.Append(" --model ");
             args.Append(EscapeArg(model));
+        }
+
+        if (!string.IsNullOrWhiteSpace(bashSettingsPath))
+        {
+            args.Append(" --settings ");
+            args.Append(EscapeArg(bashSettingsPath));
         }
 
         args.Append(" --strict-mcp-config");
@@ -141,7 +158,7 @@ public class ClaudeCommandArgsBuilder
             args.Append($" --effort {effort}");
 
         args.Append(" -p ");
-            args.Append(EscapeArg(prompt));
+        args.Append(EscapeArg(prompt));
 
         return args.ToString();
     }

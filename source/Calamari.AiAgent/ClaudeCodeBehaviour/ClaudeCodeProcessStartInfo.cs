@@ -26,10 +26,10 @@ public class ClaudeCodeProcessStartInfo
         var claudeArgs = argsBuilder.Build();
         return argsBuilder.SandboxMode switch
         {
-            SandboxMode.Srt when string.IsNullOrWhiteSpace(argsBuilder.SrtSettingsPath)
-                => throw new InvalidOperationException("Srt sandbox mode requires an srt settings file path."),
-            SandboxMode.Srt
-                => (SrtPath, $"--settings {argsBuilder.SrtSettingsPath} {ClaudeCodePath}{claudeArgs}"),
+            SandboxMode.SandboxRuntime when string.IsNullOrWhiteSpace(argsBuilder.SandboxRuntimeSettingsPath)
+                => throw new InvalidOperationException("Sandbox runtime mode requires a settings file path."),
+            SandboxMode.SandboxRuntime
+                => (SrtPath, $"--settings {argsBuilder.SandboxRuntimeSettingsPath} {ClaudeCodePath}{claudeArgs}"),
             _ => (ClaudeCodePath, claudeArgs),
         };
     }

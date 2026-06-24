@@ -89,13 +89,13 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             case SandboxMode.Bash when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
                 throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux/macOS.");
             case SandboxMode.Bash:
-                BashSandboxSettingsWriter.Write(workingDir, variables);
+                argsBuilder.WithBashSettingsPath(SandboxSettingsWriter.WriteBashSettings(workingDir, variables));
                 break;
-            case SandboxMode.Srt when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
-                throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux/macOS.");
-            case SandboxMode.Srt:
-                SrtVersionGuard.EnsureAboveMinimum(log);
-                argsBuilder.WithSrtSettingsPath(SrtSettingsWriter.Write(workingDir, variables));
+            case SandboxMode.SandboxRuntime when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
+                throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux.");
+            case SandboxMode.SandboxRuntime:
+                SandboxRuntimeVersionGuard.EnsureAboveMinimum(log);
+                argsBuilder.WithSandboxRuntimeSettingsPath(SandboxSettingsWriter.WriteSandboxRuntimeSettings(workingDir, variables));
                 break;
             case SandboxMode.None:
                 break;
@@ -159,7 +159,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             return mode;
         }
 
-        throw new CommandException($"Unknown value '{raw}' for '{SpecialVariables.Action.Claude.SandboxMode}'. Expected one of: None, Bash, Srt.");
+        throw new CommandException($"Unknown value '{raw}' for '{SpecialVariables.Action.Claude.SandboxMode}'. Expected one of: None, Bash, SandboxRuntime.");
     }
 
     static ProcessCredentials? BuildRunAs(IVariables variables)
