@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -26,10 +26,12 @@ using NUnit.Framework;
 
 namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
+    // The two nested fixtures cover two deployment targets - a Web App and a (Linux) Function App - not two
+    // operating systems. Both deploy through the same zip-deploy path; they differ only by resource type.
     public class AppServiceBehaviorFixture
     {
         [TestFixture]
-        public class WhenUsingAWindowsDotNetAppService : AzureAppServiceWithProvisionedResourcesTestBase
+        public class WhenDeployingToAWebAzureApp : AzureAppServiceWithProvisionedResourcesTestBase
         {
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
@@ -213,7 +215,7 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
         }
 
         [TestFixture]
-        public class WhenUsingALinuxAppService : AzureAppServiceWithProvisionedResourcesTestBase
+        public class WhenDeployingToAFunctionAzureApp : AzureAppServiceWithProvisionedResourcesTestBase
         {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
             protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");
