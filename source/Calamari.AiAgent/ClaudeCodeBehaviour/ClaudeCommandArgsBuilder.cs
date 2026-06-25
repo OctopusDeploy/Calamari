@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using Calamari.Common.Commands;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
@@ -15,11 +13,11 @@ public class ClaudeCommandArgsBuilder
     string? debugLogPath;
     int maxTurns = 10;
     decimal? maxBudgetUsd;
-    IReadOnlyList<string>? allowedTools;
+    ClaudePermissionMode permissionMode = ClaudePermissionMode.Default;
     string? effort;
     SandboxMode? sandboxMode;
     string? sandboxRuntimeSettingsPath;
-    string? bashSettingsPath;
+    string? settingsPath;
 
     public ClaudeCommandArgsBuilder WithPrompt(string prompt)
     {
@@ -63,9 +61,9 @@ public class ClaudeCommandArgsBuilder
         return this;
     }
 
-    public ClaudeCommandArgsBuilder WithAllowedTools(IReadOnlyList<string> tools)
+    public ClaudeCommandArgsBuilder WithPermissionMode(ClaudePermissionMode mode)
     {
-        this.allowedTools = tools;
+        permissionMode = mode;
         return this;
     }
 
@@ -91,9 +89,9 @@ public class ClaudeCommandArgsBuilder
 
     public string? SandboxRuntimeSettingsPath => sandboxRuntimeSettingsPath;
 
-    public ClaudeCommandArgsBuilder WithBashSettingsPath(string? value)
+    public ClaudeCommandArgsBuilder WithSettingsPath(string path)
     {
-        bashSettingsPath = value;
+        settingsPath = path;
         return this;
     }
 
@@ -101,9 +99,6 @@ public class ClaudeCommandArgsBuilder
     {
         if (string.IsNullOrWhiteSpace(prompt))
             throw new InvalidOperationException("A prompt is required. Call WithPrompt() before Build().");
-
-        if (SandboxMode == SandboxMode.Bash && string.IsNullOrWhiteSpace(bashSettingsPath))
-            throw new CommandException("Bash sandbox mode requires a settings file path.");
 
         var args = new StringBuilder();
 
@@ -113,16 +108,17 @@ public class ClaudeCommandArgsBuilder
             args.Append(EscapeArg(model));
         }
 
-        if (!string.IsNullOrWhiteSpace(bashSettingsPath))
+        if (!string.IsNullOrWhiteSpace(settingsPath))
         {
             args.Append(" --settings ");
-            args.Append(EscapeArg(bashSettingsPath));
+            args.Append(EscapeArg(settingsPath));
         }
 
         args.Append(" --strict-mcp-config");
         args.Append(" --output-format stream-json");
         args.Append(" --verbose");
-        args.Append(" --permission-mode dontAsk");
+        args.Append(" --permission-mode ");
+        args.Append(permissionMode.ToClaudeFlag());
         args.Append(" --no-session-persistence");
 
         if (!string.IsNullOrWhiteSpace(debugLogPath))
@@ -141,12 +137,6 @@ public class ClaudeCommandArgsBuilder
         {
             args.Append(" --system-prompt-file ");
             args.Append(EscapeArg(systemPromptFile));
-        }
-
-        if (allowedTools != null && allowedTools.Count > 0)
-        {
-            args.Append(" --allowedTools ");
-            args.Append(string.Join(",", allowedTools));
         }
 
         args.Append($" --max-turns {maxTurns}");

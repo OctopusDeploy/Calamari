@@ -75,23 +75,36 @@ public class ClaudeCommandArgsBuilderFixture
     }
 
     [Test]
-    public void Build_IncludesAllowedTools_WhenSet()
+    public void Build_MapsAutoPermissionMode_ToAutoFlag()
     {
-        var args = MinimalBuilder()
-            .WithAllowedTools(new[] { "Read", "Bash" })
-            .Build();
+        var args = MinimalBuilder().WithPermissionMode(ClaudePermissionMode.Auto).Build();
 
-        args.Should().Contain("--allowedTools Read,Bash");
+        args.Should().Contain("--permission-mode auto");
+        args.Should().NotContain("--permission-mode dontAsk");
     }
 
     [Test]
-    public void Build_OmitsAllowedTools_WhenEmpty()
+    public void Build_MapsDefaultPermissionMode_ToDontAskFlag()
     {
-        var args = MinimalBuilder()
-            .WithAllowedTools(new string[0])
-            .Build();
+        var args = MinimalBuilder().WithPermissionMode(ClaudePermissionMode.Default).Build();
 
-        args.Should().NotContain("--allowedTools");
+        args.Should().Contain("--permission-mode dontAsk");
+    }
+
+    [Test]
+    public void Build_IncludesSettings_WhenSet()
+    {
+        var args = MinimalBuilder().WithSettingsPath("/tmp/a.json").Build();
+
+        args.Should().Contain("--settings /tmp/a.json");
+    }
+
+    [Test]
+    public void Build_OmitsSettings_WhenNoneSet()
+    {
+        var args = MinimalBuilder().Build();
+
+        args.Should().NotContain("--settings");
     }
 
     [Test]

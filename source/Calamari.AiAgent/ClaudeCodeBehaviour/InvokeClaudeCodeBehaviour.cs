@@ -19,11 +19,13 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
 {
     readonly ILog log;
     readonly INonSensitiveVariables nonSensitiveVariables;
+    readonly ICalamariFileSystem fileSystem;
 
-    public InvokeClaudeCodeBehaviour(ILog log, INonSensitiveVariables nonSensitiveVariables)
+    public InvokeClaudeCodeBehaviour(ILog log, INonSensitiveVariables nonSensitiveVariables, ICalamariFileSystem fileSystem)
     {
         this.log = log;
         this.nonSensitiveVariables = nonSensitiveVariables;
+        this.fileSystem = fileSystem;
     }
 
     public bool IsEnabled(RunningDeployment context) => true;
@@ -61,6 +63,8 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         if (!string.IsNullOrWhiteSpace(effort))
             argsBuilder.WithEffort(effort);
 
+        argsBuilder.WithPermissionMode(ResolvePermissionMode(variables));
+
         using var tempDir = TemporaryDirectory.Create();
         //TODO: Fiddling with workdir for user perms
         //new TemporaryDirectory($"/tmp/{Guid.NewGuid():N}");
@@ -74,9 +78,15 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         var mcpWriter = new McpWriter(variables);
         var mcpConfig = mcpWriter.SetupMcpConfig(workingDir);
 
-        var allowedTools = AllowedTools(variables);
-        allowedTools.AddRange(mcpWriter.GetAllowedTools());
-        argsBuilder = argsBuilder.WithAllowedTools(allowedTools);
+        var settingsWriter = new ClaudeSettingsWriter(fileSystem);
+
+        var permissionsJson = variables.Get(SpecialVariables.Action.Claude.Permissions);
+        if (!string.IsNullOrWhiteSpace(permissionsJson))
+            settingsWriter.Add(new CommandPermissionsSettings(permissionsJson));
+
+        var mcpAllowedTools = new List<string>(mcpWriter.GetAllowedTools());
+        if (mcpAllowedTools.Count > 0)
+            settingsWriter.Add(new McpServerPermissionsSettings(mcpAllowedTools));
 
         new SkillsWriter(variables).SetupSkills(workingDir);
         SetupDeploymentVariables(workingDir);
@@ -89,7 +99,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             case SandboxMode.Bash when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
                 throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux/macOS.");
             case SandboxMode.Bash:
-                argsBuilder.WithBashSettingsPath(SandboxSettingsWriter.WriteBashSettings(workingDir, variables));
+                settingsWriter.Add(new BashSandboxSettings(variables.Get(SpecialVariables.Action.Claude.SandboxSettings)));
                 break;
             case SandboxMode.SandboxRuntime when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
                 throw new CommandException($"Sandbox mode '{sandboxMode}' is not supported on Windows workers; use 'None' or run on Linux.");
@@ -102,6 +112,9 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             default:
                 throw new ArgumentOutOfRangeException(nameof(sandboxMode), sandboxMode, null);
         }
+
+        if (settingsWriter.HasSettings)
+            argsBuilder.WithSettingsPath(settingsWriter.Write(Path.Combine(workingDir, ".claude", "agent-settings.json")));
 
         argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
         argsBuilder.WithMcpConfigPath(mcpConfig);
@@ -133,10 +146,16 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         log.Info("Claude Code invocation complete.");
     }
 
-    static string[] AllowedTools(IVariables variables)
+    internal static ClaudePermissionMode ResolvePermissionMode(IVariables variables)
     {
-        var allowedToolsRaw = variables.Get(SpecialVariables.Action.Claude.AllowedTools) ?? "";
-        return allowedToolsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var raw = variables.Get(SpecialVariables.Action.Claude.PermissionMode);
+        if (string.IsNullOrWhiteSpace(raw))
+            return ClaudePermissionMode.Default;
+
+        if (Enum.TryParse<ClaudePermissionMode>(raw, ignoreCase: true, out var mode))
+            return mode;
+
+        throw new CommandException($"Unknown value '{raw}' for '{SpecialVariables.Action.Claude.PermissionMode}'. Expected one of: {string.Join(", ", Enum.GetNames(typeof(ClaudePermissionMode)))}.");
     }
 
     static string[] PassThroughEnvironmentVariables(IVariables variables)
