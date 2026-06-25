@@ -12,7 +12,6 @@ using Calamari.Testing.Requirements;
 namespace Calamari.AzureScripting.Tests
 {
     [TestFixture]
-    [Category(TestCategory.ExternalCloudIntegration)]
     class AzurePowerShellCommandFixture
     {
         string? clientId;
