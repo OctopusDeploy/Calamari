@@ -9,7 +9,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
-public record CapturedArtifact(string Path, string Name, long Length);
+public record StagedArtifact(string Path, string Name, long Length);
 
 public class ArtifactManifestCollector(IVariables variables)
 {
@@ -19,11 +19,11 @@ public class ArtifactManifestCollector(IVariables variables)
 
     static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot)
+    public IReadOnlyList<StagedArtifact> Collect(string workingDir, string destinationRoot)
     {
         var manifestPath = Path.Combine(workingDir, ".octopus", "artifacts.jsonl");
         if (!File.Exists(manifestPath))
-            return Array.Empty<CapturedArtifact>();
+            return Array.Empty<StagedArtifact>();
 
         var maxTotalBytes = ResolveMaxTotalBytes();
         var canonicalWorkingDir = Canonical(workingDir);
@@ -31,7 +31,7 @@ public class ArtifactManifestCollector(IVariables variables)
 
         // Not transactional: an invalid entry throws after earlier ones were copied out.
         // The caller only emits NewOctopusArtifact for a fully-returned list, so no orphan is ever registered.
-        var captured = new List<CapturedArtifact>();
+        var staged = new List<StagedArtifact>();
         var totalBytes = 0L;
         var lineNumber = 0;
         foreach (var rawLine in File.ReadAllLines(manifestPath))
@@ -42,7 +42,7 @@ public class ArtifactManifestCollector(IVariables variables)
                 continue;
 
             var entry = ParseEntry(line, lineNumber);
-            var artifact = Capture(entry, lineNumber, workingDir, canonicalWorkingDir, artifactsDir);
+            var artifact = Stage(entry, lineNumber, workingDir, canonicalWorkingDir, artifactsDir);
 
             totalBytes += artifact.Length;
             if (totalBytes > maxTotalBytes)
@@ -50,10 +50,10 @@ public class ArtifactManifestCollector(IVariables variables)
                     $"Artifacts exceed the maximum total upload size of {maxTotalBytes.ToFileSizeString()} ({totalBytes.ToFileSizeString()} so far). "
                     + $"Increase '{SpecialVariables.Action.Claude.MaxArtifactSizeInMegaBytes}' (in megabytes) to allow more.");
 
-            captured.Add(artifact);
+            staged.Add(artifact);
         }
 
-        return captured;
+        return staged;
     }
 
     long ResolveMaxTotalBytes()
@@ -80,7 +80,7 @@ public class ArtifactManifestCollector(IVariables variables)
         return entry;
     }
 
-    static CapturedArtifact Capture(ManifestEntry entry, int lineNumber, string workingDir, string canonicalWorkingDir, string artifactsDir)
+    static StagedArtifact Stage(ManifestEntry entry, int lineNumber, string workingDir, string canonicalWorkingDir, string artifactsDir)
     {
         var full = Path.GetFullPath(Path.IsPathRooted(entry.Path!) ? entry.Path! : Path.Combine(workingDir, entry.Path!));
 
@@ -97,21 +97,21 @@ public class ArtifactManifestCollector(IVariables variables)
         var relative = Path.GetRelativePath(workingDir, full);
 
         return isDirectory
-            ? CaptureDirectory(entry, lineNumber, full, relative, artifactsDir)
-            : CaptureFile(entry, full, relative, artifactsDir);
+            ? StageDirectory(entry, lineNumber, full, relative, artifactsDir)
+            : StageFile(entry, full, relative, artifactsDir);
     }
 
-    static CapturedArtifact CaptureFile(ManifestEntry entry, string full, string relative, string artifactsDir)
+    static StagedArtifact StageFile(ManifestEntry entry, string full, string relative, string artifactsDir)
     {
         var destPath = Path.Combine(artifactsDir, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
         File.Copy(full, destPath, overwrite: true);
 
         var name = entry.Name ?? Path.GetFileName(full);
-        return new CapturedArtifact(destPath, name, new FileInfo(destPath).Length);
+        return new StagedArtifact(destPath, name, new FileInfo(destPath).Length);
     }
 
-    static CapturedArtifact CaptureDirectory(ManifestEntry entry, int lineNumber, string full, string relative, string artifactsDir)
+    static StagedArtifact StageDirectory(ManifestEntry entry, int lineNumber, string full, string relative, string artifactsDir)
     {
         if (Directory.GetFileSystemEntries(full).Length == 0)
             throw new CommandException($"Artifact manifest line {lineNumber}: directory '{entry.Path}' is empty.");
@@ -124,12 +124,9 @@ public class ArtifactManifestCollector(IVariables variables)
 
         var dirName = new DirectoryInfo(full).Name;
         var name = entry.Name ?? dirName + ".zip";
-        return new CapturedArtifact(zipPath, name, new FileInfo(zipPath).Length);
+        return new StagedArtifact(zipPath, name, new FileInfo(zipPath).Length);
     }
 
-    // Resolves a symlinked leaf to its real target so a link inside the working dir
-    // cannot point at a file outside it. (Symlinked intermediate directories are a
-    // known v1 limitation — see the design doc follow-ups.)
     static string Canonical(string path)
     {
         var full = Path.GetFullPath(path);
