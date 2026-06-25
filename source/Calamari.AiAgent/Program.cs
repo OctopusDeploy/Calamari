@@ -1,5 +1,8 @@
 using System.Threading.Tasks;
+using Autofac;
+using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.AiAgent
@@ -13,6 +16,12 @@ namespace Calamari.AiAgent
         public static Task<int> Main(string[] args)
         {
             return new Program(ConsoleLog.Instance).Run(args);
+        }
+
+        protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
+        {
+            base.ConfigureContainer(builder, options);
+            builder.RegisterType<ClaudeSettingsWriter>();
         }
     }
 }

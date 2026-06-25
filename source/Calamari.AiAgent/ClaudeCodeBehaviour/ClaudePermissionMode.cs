@@ -2,6 +2,6 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public enum ClaudePermissionMode
 {
-    Default,
+    DontAsk,
     Auto,
 }

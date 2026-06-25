@@ -3,10 +3,11 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
-public class ClaudeSettingsWriter(ICalamariFileSystem fileSystem)
+public class ClaudeSettingsWriter(ICalamariFileSystem fileSystem, ILog log)
 {
     readonly List<IClaudeSettingsJson> sources = new();
 
@@ -24,7 +25,7 @@ public class ClaudeSettingsWriter(ICalamariFileSystem fileSystem)
     {
         var merged = new JsonObject();
         foreach (var source in sources)
-            Merge(merged, source.Build());
+            Merge(merged, source.Build(), "");
 
         fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(filePath)!);
         fileSystem.WriteAllText(filePath, merged.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
@@ -33,17 +34,24 @@ public class ClaudeSettingsWriter(ICalamariFileSystem fileSystem)
 
     // Please remove this from existence once runtime adds a JSON merge
     // ref: https://github.com/dotnet/runtime/issues/31433
-    static void Merge(JsonObject target, JsonObject source)
+    void Merge(JsonObject target, JsonObject source, string path)
     {
         foreach (var property in source)
         {
+            var keyPath = path.Length == 0 ? property.Key : $"{path}.{property.Key}";
+
             if (target[property.Key] is JsonObject targetObject && property.Value is JsonObject sourceObject)
-                Merge(targetObject, sourceObject);
+                Merge(targetObject, sourceObject, keyPath);
             else if (target[property.Key] is JsonArray targetArray && property.Value is JsonArray sourceArray)
                 foreach (var item in sourceArray)
                     targetArray.Add(item?.DeepClone());
             else
+            {
+                if (target.ContainsKey(property.Key))
+                    log.Warn($"Claude settings merge is overwriting '{keyPath}'; the last settings source wins.");
+
                 target[property.Key] = property.Value?.DeepClone();
+            }
         }
     }
 }

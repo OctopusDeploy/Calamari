@@ -19,13 +19,13 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
 {
     readonly ILog log;
     readonly INonSensitiveVariables nonSensitiveVariables;
-    readonly ICalamariFileSystem fileSystem;
+    readonly ClaudeSettingsWriter settingsWriter;
 
-    public InvokeClaudeCodeBehaviour(ILog log, INonSensitiveVariables nonSensitiveVariables, ICalamariFileSystem fileSystem)
+    public InvokeClaudeCodeBehaviour(ILog log, INonSensitiveVariables nonSensitiveVariables, ClaudeSettingsWriter settingsWriter)
     {
         this.log = log;
         this.nonSensitiveVariables = nonSensitiveVariables;
-        this.fileSystem = fileSystem;
+        this.settingsWriter = settingsWriter;
     }
 
     public bool IsEnabled(RunningDeployment context) => true;
@@ -77,8 +77,6 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         var cancellationToken = new CancellationTokenSource();
         var mcpWriter = new McpWriter(variables);
         var mcpConfig = mcpWriter.SetupMcpConfig(workingDir);
-
-        var settingsWriter = new ClaudeSettingsWriter(fileSystem);
 
         var permissionsJson = variables.Get(SpecialVariables.Action.Claude.Permissions);
         if (!string.IsNullOrWhiteSpace(permissionsJson))
@@ -150,7 +148,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
     {
         var raw = variables.Get(SpecialVariables.Action.Claude.PermissionMode);
         if (string.IsNullOrWhiteSpace(raw))
-            return ClaudePermissionMode.Default;
+            return ClaudePermissionMode.DontAsk;
 
         if (Enum.TryParse<ClaudePermissionMode>(raw, ignoreCase: true, out var mode))
             return mode;

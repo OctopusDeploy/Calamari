@@ -7,7 +7,7 @@ public static class ClaudePermissionsModeExtensionMethods
     public static string ToClaudeFlag(this ClaudePermissionMode mode)
         => mode switch
         {
-            ClaudePermissionMode.Default => "dontAsk",
+            ClaudePermissionMode.DontAsk => "dontAsk",
             ClaudePermissionMode.Auto => "auto",
             _ => throw new InvalidOperationException($"Unsupported permission mode '{mode}'."),
         };

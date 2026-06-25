@@ -84,9 +84,9 @@ public class ClaudeCommandArgsBuilderFixture
     }
 
     [Test]
-    public void Build_MapsDefaultPermissionMode_ToDontAskFlag()
+    public void Build_MapsDontAskPermissionMode_ToDontAskFlag()
     {
-        var args = MinimalBuilder().WithPermissionMode(ClaudePermissionMode.Default).Build();
+        var args = MinimalBuilder().WithPermissionMode(ClaudePermissionMode.DontAsk).Build();
 
         args.Should().Contain("--permission-mode dontAsk");
     }

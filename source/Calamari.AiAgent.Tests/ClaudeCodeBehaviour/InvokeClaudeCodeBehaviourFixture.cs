@@ -10,11 +10,11 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 public class InvokeClaudeCodeBehaviourFixture
 {
     [Test]
-    public void ResolvePermissionMode_DefaultsToDefault_WhenUnset()
+    public void ResolvePermissionMode_DefaultsToDontAsk_WhenUnset()
     {
         var mode = InvokeClaudeCodeBehaviour.ResolvePermissionMode(new CalamariVariables());
 
-        mode.Should().Be(ClaudePermissionMode.Default);
+        mode.Should().Be(ClaudePermissionMode.DontAsk);
     }
 
     [Test]

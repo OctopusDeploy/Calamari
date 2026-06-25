@@ -13,7 +13,7 @@ public class ClaudeCommandArgsBuilder
     string? debugLogPath;
     int maxTurns = 10;
     decimal? maxBudgetUsd;
-    ClaudePermissionMode permissionMode = ClaudePermissionMode.Default;
+    ClaudePermissionMode permissionMode = ClaudePermissionMode.DontAsk;
     string? effort;
     SandboxMode? sandboxMode;
     string? sandboxRuntimeSettingsPath;
