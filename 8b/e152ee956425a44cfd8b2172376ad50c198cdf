@@ -1,0 +1,19 @@
+source/Calamari/ArgoCD/Domain/Application.cs
+  s_db618efb3331d9::t_443a6bbf46961d 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.1",
+  "base_commit_sha": "8be152ee956425a44cfd8b2172376ad50c198cdf",
+  "prompts": {},
+  "sessions": {
+    "s_db618efb3331d9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "39e81d73-f423-4b03-b3a0-1a01fd0723df",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Noam Gal <noam.gal@octopus.com>"
+    }
+  }
+}
