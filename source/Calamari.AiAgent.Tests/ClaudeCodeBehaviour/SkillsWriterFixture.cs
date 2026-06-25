@@ -55,6 +55,18 @@ public class SkillsWriterFixture
     }
 
     [Test]
+    public void SetupSkills_WritesArtifactsSkill()
+    {
+        new SkillsWriter(EmptyVariables()).SetupSkills(workingDir);
+
+        var skillMd = Path.Combine(workingDir, ".claude", "skills", "octopus-artifacts", "SKILL.md");
+        File.Exists(skillMd).Should().BeTrue();
+
+        var content = File.ReadAllText(skillMd);
+        content.Should().Contain(".octopus/artifacts.jsonl");
+    }
+
+    [Test]
     public void SetupSkills_WritesUserSkills()
     {
         var vars = VariablesWithSkills(

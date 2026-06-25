@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Testing;
+using Calamari.Testing.LogParser;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ClaudeCode;
@@ -8,11 +10,11 @@ using Octopus.Calamari.Contracts.ClaudeCode;
 namespace Calamari.AiAgent.Tests;
 
 [TestFixture]
-[Ignore("Most of these use real claude. we should reduce that.")]
+
 public class RunAgentCommandFixture
 {
     [Test]
-    [Category("PlatformAgnostic")]
+    [Ignore("Most of these use real claude. we should reduce that.")]
     public async Task FailsWhenPromptIsMissing()
     {
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
@@ -46,13 +48,33 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
+                context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "What is the capital of France? Reply with just the city name.");
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file that contains todays date.");
+                context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write");
             })
             .Execute(assertWasSuccess: false);
 
         result.WasSuccessful.Should().BeTrue();
         result.FullLog.Should().Contain("Paris");
+    }
+    
+    [Test]
+    [Category("Integration")]
+    public async Task ClaudeCode_ReturnsFileAsArtifact()
+    {
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+                                             .WithArrange(context =>
+                                                          {
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Write a file with the current time    . Bundle this website as an attachment for this action.");
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write");
+                                                          })
+                                             .Execute(assertWasSuccess: false);
+
+        // This isnt correct as we also emit a service message for debug logs
+        result.ServiceMessages.Should().Contain(m => m.Name == ScriptServiceMessageNames.CreateArtifact.Name);
     }
 
     [Test]
@@ -123,5 +145,25 @@ public class RunAgentCommandFixture
 
         result.WasSuccessful.Should().BeTrue();
         result.FullLog.Should().Contain("purple-octopus-42");
+    }
+
+    [Test]
+    [Category("Integration")]
+    public async Task ClaudeCode_AttachesArtifact_WhenExplicitlyAsked()
+    {
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+            .WithArrange(context =>
+            {
+                context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file named report.txt containing the word Octopus, then attach it as an Octopus artifact.");
+                context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write,Read,Edit");
+            })
+            .Execute(assertWasSuccess: true);
+
+        result.WasSuccessful.Should().BeTrue();
+        // NewOctopusArtifact emits an Info "##octopus[createArtifact ...]" service message
+        // (path/name are base64-encoded, so assert on the message verb, not the file name).
+        result.FullLog.Should().Contain("createArtifact");
     }
 }
