@@ -16,14 +16,12 @@ namespace Calamari.ArgoCD.Conventions
         public PlannedApplication(ArgoCDApplicationDto application,
                                   ArgoCDGatewayDto gateway,
                                   IReadOnlyList<PlannedSource> sources,
-                                  int totalSourceCount,
-                                  int matchingSourceCount)
+                                  int totalSourceCount)
         {
             Application = application;
             Gateway = gateway;
             Sources = sources;
             TotalSourceCount = totalSourceCount;
-            MatchingSourceCount = matchingSourceCount;
         }
 
         public ArgoCDApplicationDto Application { get; }
@@ -54,6 +52,12 @@ namespace Calamari.ArgoCD.Conventions
 
         public IReadOnlyList<PlannedSource> Sources { get; }
         public int TotalSourceCount { get; }
-        public int MatchingSourceCount { get; }
+        public int MatchingSourceCount
+        {
+            get
+            {
+                return Sources.Count;
+            }
+        }
     }
 }
