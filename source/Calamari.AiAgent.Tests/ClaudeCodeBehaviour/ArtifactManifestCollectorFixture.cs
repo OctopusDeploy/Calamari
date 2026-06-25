@@ -57,7 +57,7 @@ public class ArtifactManifestCollectorFixture
         var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         captured.Should().BeEquivalentTo([
-            new CapturedArtifact(Path.Combine(destinationRoot.DirectoryPath, "artifacts", "report.csv"), "My Report", 5 )
+            new StagedArtifact(Path.Combine(destinationRoot.DirectoryPath, "artifacts", "report.csv"), "My Report", 5 )
         ]);
         File.Exists(captured[0].Path).Should().BeTrue();
         File.ReadAllText(captured[0].Path).Should().Be("hello");
@@ -296,10 +296,10 @@ public class ArtifactManifestCollectorFixture
         return full;
     }
 
-    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot)
+    static IReadOnlyList<StagedArtifact> Collect(string workingDir, string destinationRoot)
         => Collect(workingDir, destinationRoot, new CalamariVariables());
 
-    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot, IVariables variables)
+    static IReadOnlyList<StagedArtifact> Collect(string workingDir, string destinationRoot, IVariables variables)
         => new ArtifactManifestCollector(variables).Collect(workingDir, destinationRoot);
 
     static CalamariVariables VariablesWithMaxArtifactMegaBytes(int megabytes)
