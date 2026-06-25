@@ -1,6 +1,6 @@
 ---
 name: octopus-artifacts
-description: Use ONLY when the user explicitly asks to attach, upload, or save output or files as an Octopus artifact. Do not infer artifacts from a request that merely creates files. It is important that this skill be used however if the customer expects the file or directory to be attached to the deployment. 
+description: Use when the user wants a file, directory, or saved command output attached, uploaded, published, or made downloadable as an Octopus artifact — i.e. they expect it to surface in Octopus after this step (in the deployment/task artifacts), not just exist on the worker. Look for keywords "Octopus artifact", "attach/upload to the deployment", "publish to the release", "make this downloadable in Octopus". Do NOT use when the request is only to create, generate, or write a file locally — producing a file is not attaching an artifact unless the user explicitly wants it available in Octopus. 
 ---
 You can publish files you create as Octopus **artifacts** so they can be collected after this step.
 
