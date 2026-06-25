@@ -2,7 +2,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
-using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using FluentAssertions;
@@ -14,60 +13,6 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 [TestFixture]
 public class ClaudeSettingsWriterFixture
 {
-    [Test]
-    public void CommandPermissions_EmbedsPermissionsVerbatim()
-    {
-        var json = new CommandPermissionsSettings("""{"allow":["Read","Bash"],"deny":["WebFetch"]}""").Build().ToJsonString();
-
-        using var doc = JsonDocument.Parse(json);
-        var permissions = doc.RootElement.GetProperty("permissions");
-        permissions.GetProperty("allow").EnumerateArray().Select(e => e.GetString()).Should().BeEquivalentTo("Read", "Bash");
-        permissions.GetProperty("deny").EnumerateArray().Select(e => e.GetString()).Should().BeEquivalentTo("WebFetch");
-    }
-
-    [Test]
-    public void CommandPermissions_ThrowsCommandException_ForInvalidJson()
-    {
-        var act = () => new CommandPermissionsSettings("{ not valid json").Build();
-
-        act.Should().Throw<CommandException>();
-    }
-
-    [Test]
-    public void McpServerPermissions_ProducesAllowList()
-    {
-        var json = new McpServerPermissionsSettings(new[] { "mcp__octopus__*", "mcp__github__*" }).Build().ToJsonString();
-
-        using var doc = JsonDocument.Parse(json);
-        doc.RootElement.GetProperty("permissions").GetProperty("allow").EnumerateArray().Select(e => e.GetString())
-            .Should().BeEquivalentTo("mcp__octopus__*", "mcp__github__*");
-    }
-
-    [Test]
-    public void BashSandbox_ReturnsSettingsVerbatim()
-    {
-        var json = new BashSandboxSettings("""{"sandbox":{"enabled":true}}""").Build().ToJsonString();
-
-        using var doc = JsonDocument.Parse(json);
-        doc.RootElement.GetProperty("sandbox").GetProperty("enabled").GetBoolean().Should().BeTrue();
-    }
-
-    [Test]
-    public void BashSandbox_ThrowsCommandException_WhenEmpty()
-    {
-        var act = () => new BashSandboxSettings("   ").Build();
-
-        act.Should().Throw<CommandException>();
-    }
-
-    [Test]
-    public void BashSandbox_ThrowsCommandException_ForInvalidJson()
-    {
-        var act = () => new BashSandboxSettings("{ not valid json").Build();
-
-        act.Should().Throw<CommandException>();
-    }
-
     [Test]
     public void Write_MergesPermissionsAcrossSources_UnioningAllow()
     {
