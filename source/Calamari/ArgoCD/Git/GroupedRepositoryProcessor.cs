@@ -133,7 +133,7 @@ namespace Calamari.ArgoCD.Git
             // A single push carries every application's commit on this branch.
             if (committedAnything)
             {
-                repository.PushChanges(false, commitParameters.Summary, string.Empty, reference, CancellationToken.None)
+                repository.PushChanges(false, commitParameters.Summary, string.Empty, reference, commitParameters.PushRetryAttempts, CancellationToken.None)
                           .GetAwaiter()
                           .GetResult();
             }
@@ -164,7 +164,7 @@ namespace Calamari.ArgoCD.Git
                     continue;
                 }
 
-                var pushResult = repository.PushChanges(true, commitParameters.Summary, description, reference, CancellationToken.None)
+                var pushResult = repository.PushChanges(true, commitParameters.Summary, description, reference, commitParameters.PushRetryAttempts, CancellationToken.None)
                                            .GetAwaiter()
                                            .GetResult();
                 results[item.index] = new SourceUpdateResult(fileResult.UpdatedImages, pushResult, fileResult.ReplacedFiles, fileResult.PatchedFiles);
