@@ -41,22 +41,20 @@ public class ApplicationUpdater
         log.InfoFormat("Processing application {0}", application.Name);
         var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
         var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-        var applicationName = applicationFromYaml.Metadata.Name;
-        var namespacedName = NamespacedApplicationName.Create(applicationName, applicationFromYaml.Metadata.Namespace);
 
         ValidateApplication(applicationFromYaml);
         LogHelmAnnotationWarning(applicationFromYaml);
 
-        var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, deploymentScope, deploymentConfig, log, application.DefaultRegistry, fileSystem);
+        var sourceUpdater = new ApplicationSourceFactory(applicationFromYaml, deploymentScope, deploymentConfig, log, application.DefaultRegistry, fileSystem);
 
         var plannedSources = applicationFromYaml.GetSourcesWithMetadata()
                                                 .Where(sourceUpdater.IsAppInScope)
-                                                .Select(source => new PlannedSource(source, new RepositorySourceUpdate(namespacedName, source, sourceUpdater.CreateSourceUpdater(source))))
+                                                .Select(source => new PlannedSource(source, new RepositorySourceUpdate(applicationFromYaml.QualifiedName, source, sourceUpdater.CreateSourceUpdater(source))))
                                                 .ToList();
 
         var matchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources)));
 
-        return new PlannedApplication(application, gateway, applicationFromYaml, namespacedName, applicationName, plannedSources, applicationFromYaml.Spec.Sources.Count, matchingSourceCount);
+        return new PlannedApplication(application, gateway, applicationFromYaml, plannedSources, applicationFromYaml.Spec.Sources.Count, matchingSourceCount);
     }
 
     // Phase 3: turn the processed results back into a per-application result, writing per-source output variables.

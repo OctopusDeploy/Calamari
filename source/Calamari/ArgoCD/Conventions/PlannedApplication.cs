@@ -16,8 +16,6 @@ namespace Calamari.ArgoCD.Conventions
         public PlannedApplication(ArgoCDApplicationDto application,
                                   ArgoCDGatewayDto gateway,
                                   Application applicationFromYaml,
-                                  NamespacedApplicationName namespacedName,
-                                  string applicationName,
                                   IReadOnlyList<PlannedSource> sources,
                                   int totalSourceCount,
                                   int matchingSourceCount)
@@ -25,8 +23,6 @@ namespace Calamari.ArgoCD.Conventions
             Application = application;
             Gateway = gateway;
             ApplicationFromYaml = applicationFromYaml;
-            NamespacedName = namespacedName;
-            ApplicationName = applicationName;
             Sources = sources;
             TotalSourceCount = totalSourceCount;
             MatchingSourceCount = matchingSourceCount;
@@ -35,8 +31,21 @@ namespace Calamari.ArgoCD.Conventions
         public ArgoCDApplicationDto Application { get; }
         public ArgoCDGatewayDto Gateway { get; }
         public Application ApplicationFromYaml { get; }
-        public NamespacedApplicationName NamespacedName { get; }
-        public string ApplicationName { get; }
+        public NamespacedApplicationName NamespacedName
+        {
+            get
+            {
+                return ApplicationFromYaml.QualifiedName;
+            }
+        }
+
+        public string ApplicationName
+        {
+            get
+            {
+                return ApplicationFromYaml.Metadata.Name;
+            }
+        }
         public IReadOnlyList<PlannedSource> Sources { get; }
         public int TotalSourceCount { get; }
         public int MatchingSourceCount { get; }

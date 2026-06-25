@@ -9,7 +9,7 @@ namespace Calamari.ArgoCD.Conventions.ManifestTemplating;
 
 // Determines whether a source is in scope for this deployment and builds the file updater (which copies the
 // templated package files into the source path). Clone/commit/push is handled by the GroupedRepositoryProcessor.
-public class ApplicationSourceUpdater
+public class ApplicationSourceFactory
 {
     readonly Application applicationFromYaml;
     readonly DeploymentScope deploymentScope;
@@ -18,7 +18,7 @@ public class ApplicationSourceUpdater
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
 
-    public ApplicationSourceUpdater(Application applicationFromYaml,
+    public ApplicationSourceFactory(Application applicationFromYaml,
                                     DeploymentScope deploymentScope,
                                     ArgoCommitToGitConfig deploymentConfig,
                                     IPackageRelativeFile[] packageFiles,

@@ -9,7 +9,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
 // Determines whether a source is in scope for this deployment and builds the appropriate file updater for it.
 // The actual clone/commit/push is handled centrally by the GroupedRepositoryProcessor.
-public class ApplicationSourceUpdater
+public class ApplicationSourceFactory
 {
     readonly Application applicationFromYaml;
     readonly DeploymentScope deploymentScope;
@@ -18,7 +18,7 @@ public class ApplicationSourceUpdater
     readonly string defaultRegistry;
     readonly ICalamariFileSystem fileSystem;
 
-    public ApplicationSourceUpdater(Application applicationFromYaml,
+    public ApplicationSourceFactory(Application applicationFromYaml,
                                     DeploymentScope deploymentScope,
                                     UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                     ILog log,
