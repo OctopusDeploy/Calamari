@@ -235,7 +235,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 log.Info(evt.Result);
             }
 
-            log.Info($"AI Agent Usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
+            log.Info($"Claude Code usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
 
             var properties = new Dictionary<string, string>();
 
@@ -261,7 +261,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 if (usage.CacheCreationInputTokens.HasValue)
                     properties[ClaudeCodeServiceMessages.Usage.CacheCreationInputTokensAttribute] = usage.CacheCreationInputTokens.Value.ToString();
 
-                log.Info($"AI Agent Tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
+                log.Info($"Claude Code tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
             }
 
             if (evt.ModelUsage is { Count: > 0 } modelUsages)
@@ -278,7 +278,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 
                 foreach (var modelUsage in usageList)
                 {
-                    log.Verbose($"Per model usage — Model: {modelUsage.Model}, Cost ${modelUsage.CostUsd} USD, Tokens — Input: {modelUsage.InputTokens}, Output: {modelUsage.OutputTokens}, Cache read: {modelUsage.CacheReadInputTokens}, Cache creation: {modelUsage.CacheCreationInputTokens}");
+                    log.Verbose($"Claude Code model usage — Model: {modelUsage.Model}, Cost ${modelUsage.CostUsd} USD, Tokens — Input: {modelUsage.InputTokens}, Output: {modelUsage.OutputTokens}, Cache read: {modelUsage.CacheReadInputTokens}, Cache creation: {modelUsage.CacheCreationInputTokens}");
 
                 }
 
