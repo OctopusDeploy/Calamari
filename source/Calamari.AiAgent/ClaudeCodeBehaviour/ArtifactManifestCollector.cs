@@ -4,14 +4,18 @@ using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public record CapturedArtifact(string Path, string Name, long Length);
 
-public class ArtifactManifestCollector
+public class ArtifactManifestCollector(IVariables variables)
 {
     const string ArtifactsDirName = "artifacts";
+
+    public const long DefaultMaxArtifactSizeBytes = 5L * 1024 * 1024 * 1024; // 5Gb
 
     static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
@@ -21,12 +25,14 @@ public class ArtifactManifestCollector
         if (!File.Exists(manifestPath))
             return Array.Empty<CapturedArtifact>();
 
+        var maxTotalBytes = ResolveMaxTotalBytes();
         var canonicalWorkingDir = Canonical(workingDir);
         var artifactsDir = Path.Combine(destinationRoot, ArtifactsDirName);
 
         // Not transactional: an invalid entry throws after earlier ones were copied out.
         // The caller only emits NewOctopusArtifact for a fully-returned list, so no orphan is ever registered.
         var captured = new List<CapturedArtifact>();
+        var totalBytes = 0L;
         var lineNumber = 0;
         foreach (var rawLine in File.ReadAllLines(manifestPath))
         {
@@ -36,10 +42,24 @@ public class ArtifactManifestCollector
                 continue;
 
             var entry = ParseEntry(line, lineNumber);
-            captured.Add(Capture(entry, lineNumber, workingDir, canonicalWorkingDir, artifactsDir));
+            var artifact = Capture(entry, lineNumber, workingDir, canonicalWorkingDir, artifactsDir);
+
+            totalBytes += artifact.Length;
+            if (totalBytes > maxTotalBytes)
+                throw new CommandException(
+                    $"Artifacts exceed the maximum total upload size of {maxTotalBytes.ToFileSizeString()} ({totalBytes.ToFileSizeString()} so far). "
+                    + $"Increase '{SpecialVariables.Action.Claude.MaxArtifactSizeInMegaBytes}' (in megabytes) to allow more.");
+
+            captured.Add(artifact);
         }
 
         return captured;
+    }
+
+    long ResolveMaxTotalBytes()
+    {
+        var maxSizeMb = variables.GetInt32(SpecialVariables.Action.Claude.MaxArtifactSizeInMegaBytes);
+        return maxSizeMb.HasValue ? (long)maxSizeMb.Value * 1024 * 1024 : DefaultMaxArtifactSizeBytes;
     }
 
     static ManifestEntry ParseEntry(string line, int lineNumber)

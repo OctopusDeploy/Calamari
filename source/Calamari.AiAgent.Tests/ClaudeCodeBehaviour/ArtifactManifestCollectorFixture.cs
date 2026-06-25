@@ -5,6 +5,8 @@ using System.IO.Compression;
 using System.Linq;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -13,33 +15,14 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 [TestFixture]
 public class ArtifactManifestCollectorFixture
 {
-    string workingDir = null!;
-    string destinationRoot = null!;
-
-    [SetUp]
-    public void SetUp()
-    {
-        workingDir = Path.Combine(Path.GetTempPath(), $"test-artifacts-wd-{Path.GetRandomFileName()}");
-        destinationRoot = Path.Combine(Path.GetTempPath(), $"test-artifacts-dest-{Path.GetRandomFileName()}");
-        Directory.CreateDirectory(workingDir);
-        Directory.CreateDirectory(destinationRoot);
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        if (Directory.Exists(workingDir)) Directory.Delete(workingDir, true);
-        if (Directory.Exists(destinationRoot)) Directory.Delete(destinationRoot, true);
-    }
-
-    void WriteManifest(params string[] lines)
+    static void WriteManifest(string workingDir, params string[] lines)
     {
         var dir = Path.Combine(workingDir, ".octopus");
         Directory.CreateDirectory(dir);
         File.WriteAllLines(Path.Combine(dir, "artifacts.jsonl"), lines);
     }
 
-    string WriteWorkingFile(string relativePath, string content = "data")
+    static string WriteWorkingFile(string workingDir, string relativePath, string content = "data")
     {
         var full = Path.Combine(workingDir, relativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
@@ -47,42 +30,63 @@ public class ArtifactManifestCollectorFixture
         return full;
     }
 
-    IReadOnlyList<CapturedArtifact> Collect() => new ArtifactManifestCollector().Collect(workingDir, destinationRoot);
+    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot)
+        => Collect(workingDir, destinationRoot, new CalamariVariables());
+
+    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot, IVariables variables)
+        => new ArtifactManifestCollector(variables).Collect(workingDir, destinationRoot);
+
+    static CalamariVariables VariablesWithMaxArtifactMegaBytes(int megabytes)
+    {
+        var variables = new CalamariVariables();
+        variables.Set(SpecialVariables.Action.Claude.MaxArtifactSizeInMegaBytes, megabytes.ToString());
+        return variables;
+    }
 
     [Test]
     public void NoManifest_ReturnsEmpty()
     {
-        Collect().Should().BeEmpty();
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath).Should().BeEmpty();
     }
 
     [Test]
     public void EmptyManifest_ReturnsEmpty()
     {
-        WriteManifest();
-        Collect().Should().BeEmpty();
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteManifest(workingDir.DirectoryPath);
+
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath).Should().BeEmpty();
     }
 
     [Test]
     public void BlankLines_AreIgnored()
     {
-        WriteWorkingFile("report.csv");
-        WriteManifest("", "   ", """{"path":"report.csv"}""", "");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "report.csv");
+        WriteManifest(workingDir.DirectoryPath, "", "   ", """{"path":"report.csv"}""", "");
 
-        Collect().Should().HaveCount(1);
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath).Should().HaveCount(1);
     }
 
     [Test]
     public void SingleFile_IsCopiedIntoArtifactsDir_AndReturned()
     {
-        WriteWorkingFile("report.csv", "hello");
-        WriteManifest("""{"path":"report.csv","name":"My Report"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "report.csv", "hello");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"report.csv","name":"My Report"}""");
 
-        var captured = Collect();
+        var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         captured.Should().HaveCount(1);
         captured[0].Name.Should().Be("My Report");
         captured[0].Length.Should().Be(5);
-        captured[0].Path.Should().Be(Path.Combine(destinationRoot, "artifacts", "report.csv"));
+        captured[0].Path.Should().Be(Path.Combine(destinationRoot.DirectoryPath, "artifacts", "report.csv"));
         File.Exists(captured[0].Path).Should().BeTrue();
         File.ReadAllText(captured[0].Path).Should().Be("hello");
     }
@@ -90,10 +94,12 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void File_LeftIntactInWorkingDir()
     {
-        var source = WriteWorkingFile("report.csv");
-        WriteManifest("""{"path":"report.csv"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        var source = WriteWorkingFile(workingDir.DirectoryPath, "report.csv");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"report.csv"}""");
 
-        Collect();
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         File.Exists(source).Should().BeTrue();
     }
@@ -101,30 +107,37 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void Name_DefaultsToFileName_WhenOmitted()
     {
-        WriteWorkingFile("output/data.csv");
-        WriteManifest("""{"path":"output/data.csv"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "output/data.csv");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"output/data.csv"}""");
 
-        Collect().Single().Name.Should().Be("data.csv");
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath).Single().Name.Should().Be("data.csv");
     }
 
     [Test]
     public void MultipleFiles_AreEachCaptured()
     {
-        WriteWorkingFile("a.txt");
-        WriteWorkingFile("b.txt");
-        WriteManifest("""{"path":"a.txt"}""", """{"path":"b.txt"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "a.txt");
+        WriteWorkingFile(workingDir.DirectoryPath, "b.txt");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"a.txt"}""", """{"path":"b.txt"}""");
 
-        Collect().Select(c => Path.GetFileName(c.Path)).Should().BeEquivalentTo("a.txt", "b.txt");
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath)
+            .Select(c => Path.GetFileName(c.Path)).Should().BeEquivalentTo("a.txt", "b.txt");
     }
 
     [Test]
     public void TwoFilesSharingBaseName_AreKeptDistinct_ByRelativePath()
     {
-        WriteWorkingFile("one/data.csv", "1");
-        WriteWorkingFile("two/data.csv", "22");
-        WriteManifest("""{"path":"one/data.csv"}""", """{"path":"two/data.csv"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "one/data.csv", "1");
+        WriteWorkingFile(workingDir.DirectoryPath, "two/data.csv", "22");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"one/data.csv"}""", """{"path":"two/data.csv"}""");
 
-        var captured = Collect();
+        var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         captured.Should().HaveCount(2);
         captured.Select(c => c.Path).Should().OnlyHaveUniqueItems();
@@ -135,9 +148,11 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void MissingFile_Throws()
     {
-        WriteManifest("""{"path":"nope.csv"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteManifest(workingDir.DirectoryPath, """{"path":"nope.csv"}""");
 
-        var act = () => Collect();
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         act.Should().Throw<CommandException>().WithMessage("*does not exist*");
     }
@@ -145,9 +160,11 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void MalformedJsonLine_Throws()
     {
-        WriteManifest("not json");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteManifest(workingDir.DirectoryPath, "not json");
 
-        var act = () => Collect();
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         act.Should().Throw<CommandException>().WithMessage("*not valid JSON*");
     }
@@ -155,9 +172,11 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void EmptyPath_Throws()
     {
-        WriteManifest("""{"path":""}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteManifest(workingDir.DirectoryPath, """{"path":""}""");
 
-        var act = () => Collect();
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         act.Should().Throw<CommandException>().WithMessage("*path*");
     }
@@ -165,13 +184,15 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void AbsolutePathOutsideWorkingDir_Throws()
     {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
         var outside = Path.Combine(Path.GetTempPath(), $"outside-{Path.GetRandomFileName()}.txt");
         File.WriteAllText(outside, "secret");
         try
         {
-            WriteManifest($$"""{"path":{{System.Text.Json.JsonSerializer.Serialize(outside)}}}""");
+            WriteManifest(workingDir.DirectoryPath, $$"""{"path":{{System.Text.Json.JsonSerializer.Serialize(outside)}}}""");
 
-            var act = () => Collect();
+            var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
             act.Should().Throw<CommandException>().WithMessage("*outside the working directory*");
         }
@@ -185,14 +206,16 @@ public class ArtifactManifestCollectorFixture
     [Platform(Exclude = "Win", Reason = "Symlink creation requires elevation on Windows.")]
     public void SymlinkEscapingWorkingDir_Throws()
     {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
         var secret = Path.Combine(Path.GetTempPath(), $"secret-{Path.GetRandomFileName()}.txt");
         File.WriteAllText(secret, "secret");
         try
         {
-            File.CreateSymbolicLink(Path.Combine(workingDir, "link.txt"), secret);
-            WriteManifest("""{"path":"link.txt"}""");
+            File.CreateSymbolicLink(Path.Combine(workingDir.DirectoryPath, "link.txt"), secret);
+            WriteManifest(workingDir.DirectoryPath, """{"path":"link.txt"}""");
 
-            var act = () => Collect();
+            var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
             act.Should().Throw<CommandException>().WithMessage("*outside the working directory*");
         }
@@ -205,15 +228,17 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void Directory_IsZippedIntoSingleArtifact()
     {
-        WriteWorkingFile("site/index.html", "<h1>hi</h1>");
-        WriteWorkingFile("site/css/app.css", "body{}");
-        WriteManifest("""{"path":"site","name":"Generated Website"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "site/index.html", "<h1>hi</h1>");
+        WriteWorkingFile(workingDir.DirectoryPath, "site/css/app.css", "body{}");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"site","name":"Generated Website"}""");
 
-        var captured = Collect();
+        var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         captured.Should().HaveCount(1);
         captured[0].Name.Should().Be("Generated Website");
-        captured[0].Path.Should().Be(Path.Combine(destinationRoot, "artifacts", "site.zip"));
+        captured[0].Path.Should().Be(Path.Combine(destinationRoot.DirectoryPath, "artifacts", "site.zip"));
         File.Exists(captured[0].Path).Should().BeTrue();
 
         using var archive = ZipFile.OpenRead(captured[0].Path);
@@ -224,19 +249,23 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void Directory_DefaultsNameToDirNameWithZipExtension()
     {
-        WriteWorkingFile("site/index.html");
-        WriteManifest("""{"path":"site"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "site/index.html");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"site"}""");
 
-        Collect().Single().Name.Should().Be("site.zip");
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath).Single().Name.Should().Be("site.zip");
     }
 
     [Test]
     public void EmptyDirectory_Throws()
     {
-        Directory.CreateDirectory(Path.Combine(workingDir, "empty"));
-        WriteManifest("""{"path":"empty"}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        Directory.CreateDirectory(Path.Combine(workingDir.DirectoryPath, "empty"));
+        WriteManifest(workingDir.DirectoryPath, """{"path":"empty"}""");
 
-        var act = () => Collect();
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         act.Should().Throw<CommandException>().WithMessage("*is empty*");
     }
@@ -244,11 +273,45 @@ public class ArtifactManifestCollectorFixture
     [Test]
     public void WorkingDirRoot_Throws()
     {
-        WriteWorkingFile("report.csv");
-        WriteManifest("""{"path":"."}""");
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "report.csv");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"."}""");
 
-        var act = () => Collect();
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         act.Should().Throw<CommandException>().WithMessage("*working directory itself*");
+    }
+
+    [Test]
+    public void DefaultMaxArtifactSize_IsFiveGiB()
+    {
+        ArtifactManifestCollector.DefaultMaxArtifactSizeBytes.Should().Be(5L * 1024 * 1024 * 1024);
+    }
+
+    [Test]
+    public void TotalSizeWithinLimit_DoesNotThrow()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "small.txt", "tiny");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"small.txt"}""");
+
+        var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath, VariablesWithMaxArtifactMegaBytes(1));
+
+        captured.Should().HaveCount(1);
+    }
+
+    [Test]
+    public void TotalSizeExceedingLimit_Throws()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "big.txt", new string('x', 2 * 1024 * 1024));
+        WriteManifest(workingDir.DirectoryPath, """{"path":"big.txt"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath, VariablesWithMaxArtifactMegaBytes(1));
+
+        act.Should().Throw<CommandException>().WithMessage("*maximum total*");
     }
 }

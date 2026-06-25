@@ -129,7 +129,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             context.CurrentDirectory,
             cancellationToken.Token);
 
-        foreach (var artifact in new ArtifactManifestCollector().Collect(workingDir, context.CurrentDirectory))
+        foreach (var artifact in new ArtifactManifestCollector(variables).Collect(workingDir, context.CurrentDirectory))
             log.NewOctopusArtifact(artifact.Path, artifact.Name, artifact.Length);
 
         Log.SetOutputVariable(SpecialVariables.Action.Claude.Response, response, variables);
