@@ -264,9 +264,9 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 log.Info($"AI Agent Tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
             }
 
-            if (evt.ModelUsage is { Count: > 0 } modelUsage)
+            if (evt.ModelUsage is { Count: > 0 } modelUsages)
             {
-                var usageList = modelUsage.Select(kvp => new ClaudeCodeModelUsage
+                var usageList = modelUsages.Select(kvp => new ClaudeCodeModelUsage
                     {
                         Model = kvp.Key,
                         InputTokens = kvp.Value.InputTokens,
@@ -275,6 +275,13 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                         CacheCreationInputTokens = kvp.Value.CacheCreationInputTokens,
                         CostUsd = kvp.Value.CostUsd,
                     }).ToArray();
+                
+                foreach (var modelUsage in usageList)
+                {
+                    log.Verbose($"Per model usage — Model: {modelUsage.Model}, Cost ${modelUsage.CostUsd} USD, Tokens — Input: {modelUsage.InputTokens}, Output: {modelUsage.OutputTokens}, Cache read: {modelUsage.CacheReadInputTokens}, Cache creation: {modelUsage.CacheCreationInputTokens}");
+
+                }
+
                 properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList, JsonOptions);
             }
 
