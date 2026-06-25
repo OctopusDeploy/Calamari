@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour.JsonResponseModels;
@@ -234,6 +235,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 log.Info(evt.Result);
             }
 
+            log.Info($"Claude Code usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
+
             var properties = new Dictionary<string, string>();
 
             if (evt.CostUsd.HasValue)
@@ -246,8 +249,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 properties[ClaudeCodeServiceMessages.Usage.DurationApiMsAttribute] = evt.DurationApiMs.Value.ToString("F0");
             if (evt.NumTurns.HasValue)
                 properties[ClaudeCodeServiceMessages.Usage.NumTurnsAttribute] = evt.NumTurns.Value.ToString();
-            log.Info($"AI Agent Usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
-            
+
             if (evt.Usage is { } usage)
             {
                 if (usage.InputTokens.HasValue)
@@ -258,8 +260,29 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                     properties[ClaudeCodeServiceMessages.Usage.CacheReadInputTokensAttribute] = usage.CacheReadInputTokens.Value.ToString();
                 if (usage.CacheCreationInputTokens.HasValue)
                     properties[ClaudeCodeServiceMessages.Usage.CacheCreationInputTokensAttribute] = usage.CacheCreationInputTokens.Value.ToString();
+
+                log.Info($"Claude Code tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
+            }
+
+            if (evt.ModelUsage is { Count: > 0 } modelUsages)
+            {
+                var usageList = modelUsages.Select(kvp => new ClaudeCodeModelUsage
+                    {
+                        Model = kvp.Key,
+                        InputTokens = kvp.Value.InputTokens,
+                        OutputTokens = kvp.Value.OutputTokens,
+                        CacheReadInputTokens = kvp.Value.CacheReadInputTokens,
+                        CacheCreationInputTokens = kvp.Value.CacheCreationInputTokens,
+                        CostUsd = kvp.Value.CostUsd,
+                    }).ToArray();
                 
-                log.Info($"AI Agent Tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
+                foreach (var modelUsage in usageList)
+                {
+                    log.Verbose($"Claude Code model usage — Model: {modelUsage.Model}, Cost ${modelUsage.CostUsd} USD, Tokens — Input: {modelUsage.InputTokens}, Output: {modelUsage.OutputTokens}, Cache read: {modelUsage.CacheReadInputTokens}, Cache creation: {modelUsage.CacheCreationInputTokens}");
+
+                }
+
+                properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList, JsonOptions);
             }
 
             log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Usage.Name, properties));
