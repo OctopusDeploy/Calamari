@@ -15,14 +15,12 @@ namespace Calamari.ArgoCD.Conventions
     {
         public PlannedApplication(ArgoCDApplicationDto application,
                                   ArgoCDGatewayDto gateway,
-                                  Application applicationFromYaml,
                                   IReadOnlyList<PlannedSource> sources,
                                   int totalSourceCount,
                                   int matchingSourceCount)
         {
             Application = application;
             Gateway = gateway;
-            ApplicationFromYaml = applicationFromYaml;
             Sources = sources;
             TotalSourceCount = totalSourceCount;
             MatchingSourceCount = matchingSourceCount;
@@ -30,12 +28,11 @@ namespace Calamari.ArgoCD.Conventions
 
         public ArgoCDApplicationDto Application { get; }
         public ArgoCDGatewayDto Gateway { get; }
-        public Application ApplicationFromYaml { get; }
         public NamespacedApplicationName NamespacedName
         {
             get
             {
-                return ApplicationFromYaml.QualifiedName;
+                return NamespacedApplicationName.Create(ApplicationName, ApplicationNamespace);
             }
         }
 
@@ -43,9 +40,18 @@ namespace Calamari.ArgoCD.Conventions
         {
             get
             {
-                return ApplicationFromYaml.Metadata.Name;
+                return Application.Name;
             }
         }
+
+        public string ApplicationNamespace
+        {
+            get
+            {
+                return Application.KubernetesNamespace;
+            }
+        }
+
         public IReadOnlyList<PlannedSource> Sources { get; }
         public int TotalSourceCount { get; }
         public int MatchingSourceCount { get; }

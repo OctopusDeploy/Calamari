@@ -54,12 +54,12 @@ public class ApplicationUpdater
 
         var plannedSources = applicationFromYaml.GetSourcesWithMetadata()
                                                 .Where(sourceUpdater.IsAppInScope)
-                                                .Select(source => new PlannedSource(source, new RepositorySourceUpdate(applicationFromYaml.QualifiedName, source, sourceUpdater.CreateSourceUpdater(source))))
+                                                .Select(source => new PlannedSource(source, new RepositorySourceUpdate(applicationFromYaml.NamespacedName, source, sourceUpdater.CreateSourceUpdater(source))))
                                                 .ToList();
 
         var matchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources)));
 
-        return new PlannedApplication(application, gateway, applicationFromYaml, plannedSources, applicationFromYaml.Spec.Sources.Count, matchingSourceCount);
+        return new PlannedApplication(application, gateway, plannedSources, applicationFromYaml.Spec.Sources.Count, matchingSourceCount);
     }
 
     // Phase 3: turn the processed results back into a per-application result, writing per-source output variables.
@@ -83,7 +83,7 @@ public class ApplicationUpdater
         //if we have links, use that to generate a link, otherwise just put the name there
         var instanceLinks = plan.Application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(plan.Application.InstanceWebUiUrl) : null;
         var linkifiedAppName = instanceLinks != null
-            ? log.FormatLink(instanceLinks.ApplicationDetails(plan.ApplicationName, plan.ApplicationFromYaml.Metadata.Namespace), plan.ApplicationName)
+            ? log.FormatLink(instanceLinks.ApplicationDetails(plan.ApplicationName, plan.ApplicationNamespace), plan.ApplicationName)
             : plan.ApplicationName;
 
         var anyUpdated = plan.Sources.Any(plannedSource => resultsByUpdate[plannedSource.Update].Updated);

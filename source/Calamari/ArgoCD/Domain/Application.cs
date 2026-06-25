@@ -17,6 +17,6 @@ namespace Calamari.ArgoCD.Domain
         [JsonConverter(typeof(ApplicationStatusConverter))]
         public ApplicationStatus Status { get; set; } = new ApplicationStatus();
 
-        public NamespacedApplicationName QualifiedName => NamespacedApplicationName.Create(Metadata.Name, Metadata.Namespace);
+        public NamespacedApplicationName NamespacedName => NamespacedApplicationName.Create(Metadata.Name, Metadata.Namespace);
     }
 }
