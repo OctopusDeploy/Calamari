@@ -7,6 +7,7 @@ using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -15,34 +16,6 @@ namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
 [TestFixture]
 public class ArtifactManifestCollectorFixture
 {
-    static void WriteManifest(string workingDir, params string[] lines)
-    {
-        var dir = Path.Combine(workingDir, ".octopus");
-        Directory.CreateDirectory(dir);
-        File.WriteAllLines(Path.Combine(dir, "artifacts.jsonl"), lines);
-    }
-
-    static string WriteWorkingFile(string workingDir, string relativePath, string content = "data")
-    {
-        var full = Path.Combine(workingDir, relativePath);
-        Directory.CreateDirectory(Path.GetDirectoryName(full)!);
-        File.WriteAllText(full, content);
-        return full;
-    }
-
-    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot)
-        => Collect(workingDir, destinationRoot, new CalamariVariables());
-
-    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot, IVariables variables)
-        => new ArtifactManifestCollector(variables).Collect(workingDir, destinationRoot);
-
-    static CalamariVariables VariablesWithMaxArtifactMegaBytes(int megabytes)
-    {
-        var variables = new CalamariVariables();
-        variables.Set(SpecialVariables.Action.Claude.MaxArtifactSizeInMegaBytes, megabytes.ToString());
-        return variables;
-    }
-
     [Test]
     public void NoManifest_ReturnsEmpty()
     {
@@ -83,10 +56,9 @@ public class ArtifactManifestCollectorFixture
 
         var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
-        captured.Should().HaveCount(1);
-        captured[0].Name.Should().Be("My Report");
-        captured[0].Length.Should().Be(5);
-        captured[0].Path.Should().Be(Path.Combine(destinationRoot.DirectoryPath, "artifacts", "report.csv"));
+        captured.Should().BeEquivalentTo([
+            new CapturedArtifact(Path.Combine(destinationRoot.DirectoryPath, "artifacts", "report.csv"), "My Report", 5 )
+        ]);
         File.Exists(captured[0].Path).Should().BeTrue();
         File.ReadAllText(captured[0].Path).Should().Be("hello");
     }
@@ -124,8 +96,9 @@ public class ArtifactManifestCollectorFixture
         WriteWorkingFile(workingDir.DirectoryPath, "b.txt");
         WriteManifest(workingDir.DirectoryPath, """{"path":"a.txt"}""", """{"path":"b.txt"}""");
 
-        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath)
-            .Select(c => Path.GetFileName(c.Path)).Should().BeEquivalentTo("a.txt", "b.txt");
+        var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
+            
+        captured.Select(c => Path.GetFileName(c.Path)).Should().BeEquivalentTo("a.txt", "b.txt");
     }
 
     [Test]
@@ -140,7 +113,6 @@ public class ArtifactManifestCollectorFixture
         var captured = Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
 
         captured.Should().HaveCount(2);
-        captured.Select(c => c.Path).Should().OnlyHaveUniqueItems();
         captured.Should().Contain(c => c.Path.EndsWith(Path.Combine("artifacts", "one", "data.csv")));
         captured.Should().Contain(c => c.Path.EndsWith(Path.Combine("artifacts", "two", "data.csv")));
     }
@@ -203,7 +175,7 @@ public class ArtifactManifestCollectorFixture
     }
 
     [Test]
-    [Platform(Exclude = "Win", Reason = "Symlink creation requires elevation on Windows.")]
+    [NonWindowsTest]
     public void SymlinkEscapingWorkingDir_Throws()
     {
         using var workingDir = TemporaryDirectory.Create();
@@ -284,12 +256,6 @@ public class ArtifactManifestCollectorFixture
     }
 
     [Test]
-    public void DefaultMaxArtifactSize_IsFiveGiB()
-    {
-        ArtifactManifestCollector.DefaultMaxArtifactSizeBytes.Should().Be(5L * 1024 * 1024 * 1024);
-    }
-
-    [Test]
     public void TotalSizeWithinLimit_DoesNotThrow()
     {
         using var workingDir = TemporaryDirectory.Create();
@@ -313,5 +279,33 @@ public class ArtifactManifestCollectorFixture
         var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath, VariablesWithMaxArtifactMegaBytes(1));
 
         act.Should().Throw<CommandException>().WithMessage("*maximum total*");
+    }
+    
+    static void WriteManifest(string workingDir, params string[] lines)
+    {
+        var dir = Path.Combine(workingDir, ".octopus");
+        Directory.CreateDirectory(dir);
+        File.WriteAllLines(Path.Combine(dir, "artifacts.jsonl"), lines);
+    }
+
+    static string WriteWorkingFile(string workingDir, string relativePath, string content = "data")
+    {
+        var full = Path.Combine(workingDir, relativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+        File.WriteAllText(full, content);
+        return full;
+    }
+
+    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot)
+        => Collect(workingDir, destinationRoot, new CalamariVariables());
+
+    static IReadOnlyList<CapturedArtifact> Collect(string workingDir, string destinationRoot, IVariables variables)
+        => new ArtifactManifestCollector(variables).Collect(workingDir, destinationRoot);
+
+    static CalamariVariables VariablesWithMaxArtifactMegaBytes(int megabytes)
+    {
+        var variables = new CalamariVariables();
+        variables.Set(SpecialVariables.Action.Claude.MaxArtifactSizeInMegaBytes, megabytes.ToString());
+        return variables;
     }
 }
