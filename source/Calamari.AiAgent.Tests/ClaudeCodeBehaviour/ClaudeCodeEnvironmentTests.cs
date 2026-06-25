@@ -57,11 +57,11 @@ public class ClaudeCodeEnvironmentTests
             new Dictionary<string, string>
             {
                 ["ANTHROPIC_API_KEY"] = "fresh",
-                ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1",
+                ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "0",
             });
 
         env["ANTHROPIC_API_KEY"].Should().Be("fresh");
-        env["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"].Should().Be("1");
+        env["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"].Should().Be("0");
     }
 
     [Test]

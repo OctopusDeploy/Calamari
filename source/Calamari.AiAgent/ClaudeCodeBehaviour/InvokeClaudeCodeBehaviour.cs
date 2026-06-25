@@ -125,7 +125,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             new Dictionary<string, string>
             {
                 ["ANTHROPIC_API_KEY"] = apiToken,
-                ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1", // Strips Anthropic/cloud credentials from Bash, hook, and MCP subprocess environments
+                ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "0", // If set, this stops us using auto mode
                 ["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1", // Disables the auto-updater, telemetry, error reporting, and feedback surveys
                 ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1",
                 ["CLAUDE_CODE_DISABLE_CRON"] = "1",
