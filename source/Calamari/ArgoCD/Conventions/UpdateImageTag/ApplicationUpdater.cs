@@ -58,7 +58,7 @@ public class ApplicationUpdater
     // Phase 3: turn the processed results back into a per-application result, writing per-source output variables.
     public ProcessApplicationResult AssembleResult(PlannedApplication plan, IReadOnlyDictionary<RepositorySourceUpdate, SourceUpdateResult> resultsByUpdate)
     {
-        foreach (var plannedSource in plan.Sources)
+        foreach (var plannedSource in plan.MatchingSources)
         {
             outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(plan.Gateway.Name,
                                                                                     plan.NamespacedName,
@@ -66,7 +66,7 @@ public class ApplicationUpdater
                                                                                     resultsByUpdate[plannedSource.Update]);
         }
 
-        var trackedSourceDetails = plan.Sources.Select(plannedSource =>
+        var trackedSourceDetails = plan.MatchingSources.Select(plannedSource =>
                                                         {
                                                             var result = resultsByUpdate[plannedSource.Update];
                                                             return new TrackedSourceDetail(result.PushResult?.CommitSha, result.PushResult?.CommitTimestamp, plannedSource.Source.Index, [], result.PatchedFiles);
@@ -79,7 +79,7 @@ public class ApplicationUpdater
             ? log.FormatLink(instanceLinks.ApplicationDetails(plan.ApplicationName, plan.Application.KubernetesNamespace), plan.ApplicationName)
             : plan.ApplicationName;
 
-        var anyUpdated = plan.Sources.Any(plannedSource => resultsByUpdate[plannedSource.Update].Updated);
+        var anyUpdated = plan.MatchingSources.Any(plannedSource => resultsByUpdate[plannedSource.Update].Updated);
         log.InfoFormat(anyUpdated ? "Updated Application {0}" : "Nothing to update for Application {0}", linkifiedAppName);
 
         return new ProcessApplicationResult(
@@ -88,8 +88,8 @@ public class ApplicationUpdater
                                             plan.TotalSourceCount,
                                             plan.MatchingSourceCount,
                                             trackedSourceDetails,
-                                            plan.Sources.SelectMany(plannedSource => resultsByUpdate[plannedSource.Update].ImagesUpdated).ToHashSet(),
-                                            plan.Sources.Where(plannedSource => resultsByUpdate[plannedSource.Update].Updated).Select(plannedSource => plannedSource.Source.Source.OriginalRepoUrl).ToHashSet());
+                                            plan.MatchingSources.SelectMany(plannedSource => resultsByUpdate[plannedSource.Update].ImagesUpdated).ToHashSet(),
+                                            plan.MatchingSources.Where(plannedSource => resultsByUpdate[plannedSource.Update].Updated).Select(plannedSource => plannedSource.Source.Source.OriginalRepoUrl).ToHashSet());
     }
 
     void LogHelmAnnotationWarning(Application applicationFromYaml)

@@ -95,7 +95,7 @@ namespace Calamari.ArgoCD.Conventions
             var commitMessageGenerator = new UserDefinedCommitMessageGenerator(deploymentConfig.CommitParameters.Description);
             var processor = new GroupedRepositoryProcessor(authenticatingRepositoryFactory, deploymentConfig.CommitParameters, commitMessageGenerator);
 
-            var updates = plans.SelectMany(p => p.Sources.Select(s => s.Update)).ToList();
+            var updates = plans.SelectMany(p => p.MatchingSources.Select(s => s.Update)).ToList();
             var results = processor.Process(updates);
             var resultsByUpdate = updates.Zip(results, (update, result) => (update, result)).ToDictionary(x => x.update, x => x.result);
 

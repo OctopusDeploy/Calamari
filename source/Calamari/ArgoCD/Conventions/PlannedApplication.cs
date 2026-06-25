@@ -20,7 +20,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             Application = application;
             Gateway = gateway;
-            Sources = sources;
+            MatchingSources = sources;
             TotalSourceCount = totalSourceCount;
         }
 
@@ -50,13 +50,13 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        public IReadOnlyList<PlannedSource> Sources { get; }
+        public IReadOnlyList<PlannedSource> MatchingSources { get; }
         public int TotalSourceCount { get; }
         public int MatchingSourceCount
         {
             get
             {
-                return Sources.Count;
+                return MatchingSources.Count;
             }
         }
     }
