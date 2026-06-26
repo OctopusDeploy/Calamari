@@ -15,6 +15,8 @@ namespace Calamari.AzureAppService
         
         string ContentType { get; }
 
-        string AdditionalParameters { get; } 
+        string AdditionalParameters { get; }
+        
+        string PublishingProfileMethod { get; }
     }
 }

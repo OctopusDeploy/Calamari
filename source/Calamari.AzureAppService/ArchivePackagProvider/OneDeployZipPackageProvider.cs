@@ -7,10 +7,10 @@ using SharpCompress.Common;
 
 namespace Calamari.AzureAppService;
 
-public class FlexConsumptionZipPackageProvider : IPackageProvider
+public abstract class BaseZipPackageProvider : IPackageProvider
 {
-    public string UploadUrlPath => @"/api/publish";
-    public bool SupportsAsynchronousDeployment => true;
+    public abstract string UploadUrlPath { get; }
+    public abstract bool SupportsAsynchronousDeployment { get; }
 
     public async Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory)
     {
@@ -18,13 +18,23 @@ public class FlexConsumptionZipPackageProvider : IPackageProvider
                        {
                            using var archive = ZipArchive.Create();
                            archive.AddAllFromDirectory(
-                                                       $"{sourceDirectory}");
+                               $"{sourceDirectory}");
                            archive.SaveTo($"{targetDirectory}/app.zip", CompressionType.Deflate);
                        });
         return new FileInfo($"{targetDirectory}/app.zip");
     }
 
     public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile) => await Task.Run(() => sourceFile);
-    public string ContentType => @"application/zip";
-    public string AdditionalParameters => "?remoteBuild=false&deployer=Octopus";
+    
+    public abstract string ContentType { get; }
+    public abstract string AdditionalParameters { get; }
+    public string PublishingProfileMethod => "ZipDeploy";
+}
+
+public class OneDeployZipPackageProvider : BaseZipPackageProvider
+{
+    public override string UploadUrlPath => @"/api/publish";
+    public override bool SupportsAsynchronousDeployment => false;
+    public override string ContentType => @"application/zip";
+    public override string AdditionalParameters => string.Empty; //"?deployer=Octopus&isAsync=true";
 }

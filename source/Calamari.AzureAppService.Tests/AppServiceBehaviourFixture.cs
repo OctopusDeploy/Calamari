@@ -654,6 +654,11 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                 StorageKind.StorageV2,
                                                                                                                 ResourceGroupResource.Data.Location)
                                                                        );
+                
+                var blobService = storageAccountResponse.Value.GetBlobService();
+                var containerName = $"app-package-{resourceGroup.Data.Name}-linux";
+                await blobService.GetBlobContainers()
+                                 .CreateOrUpdateAsync(WaitUntil.Completed, containerName, new BlobContainerData());
 
                 var keys = await storageAccountResponse
                                  .Value
@@ -696,7 +701,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                   AuthenticationType = FunctionAppStorageAccountAuthenticationType.StorageAccountConnectionString,
                                                                                   StorageAccountConnectionStringName = "AzureWebJobsStorage"
                                                                               },
-                                                                              Value = new Uri("https://windows.net")
+                                                                              Value = new Uri($"https://{storageAccountName}.blob.core.windows.net/app-package-{resourceGroup.Data.Name}-linux")
                                                                           },
                                                                           Runtime = new FunctionAppRuntime()
                                                                           {
@@ -707,13 +712,12 @@ namespace Calamari.AzureAppService.Tests
                                                                           {
                                                                               InstanceMemoryMB = 512,
                                                                               MaximumInstanceCount = 1,
-                                                                              
                                                                           }
                                                                       },
                                                                       IsReserved = true,
                                                                       SiteConfig = new SiteConfigProperties
                                                                       {
-                                                                          Use32BitWorkerProcess = true,
+                                                                          Use32BitWorkerProcess = false,
                                                                           AppSettings = new List<AppServiceNameValuePair>
                                                                           {
                                                                               new() { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
@@ -765,12 +769,12 @@ namespace Calamari.AzureAppService.Tests
                 new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
 
                 var testAssemblyLocation = new FileInfo(Assembly.GetExecutingAssembly().Location);
-                var sourceZip = Path.Combine(testAssemblyLocation.Directory.FullName, "functionapp.1.0.0.zip");
-                var temporaryZipLocationForTest = $"{tempPath.DirectoryPath}/functionapp.1.0.0.zip";
+                var sourceZip = Path.Combine(testAssemblyLocation.Directory.FullName, "functionapp.8.0.0.zip");
+                var temporaryZipLocationForTest = $"{tempPath.DirectoryPath}/functionapp.8.0.0.zip";
                 File.Copy(sourceZip, temporaryZipLocationForTest);
 
                 packageInfo.packagePath = temporaryZipLocationForTest;
-                packageInfo.packageVersion = "1.0.0";
+                packageInfo.packageVersion = "8.0.0";
                 packageInfo.packageName = "functionapp";
 
                 return packageInfo;

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
@@ -93,6 +94,7 @@ namespace Calamari.AzureAppService.Behaviors
             WebSiteResource? webSiteInforResource = null;
             if (siteInfo != null && siteInfo.HasValue && siteInfo.Value.HasData)
             {
+                
                 Log.Verbose($"App Service Plan running on '{siteInfo.Value.Data.Sku}' tier");
                 webSiteInforResource = siteInfo.Value;
             } 
@@ -153,7 +155,7 @@ namespace Calamari.AzureAppService.Behaviors
 
                 Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
                 using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
-                var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
+                var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream, packageProvider.PublishingProfileMethod);
                 
                 Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
@@ -184,7 +186,7 @@ namespace Calamari.AzureAppService.Behaviors
         {
             if (webSiteResource != null && webSiteResource.Data.Sku.Equals("FlexConsumption", StringComparison.OrdinalIgnoreCase))
             {
-                return new FlexConsumptionZipPackageProvider();
+                return new OneDeployZipPackageProvider();
             }
 
             return new ZipPackageProvider();
@@ -346,6 +348,11 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Verbose("Zip upload succeeded. Monitoring for deployment completion");
             var location = uploadResponse.Headers.Location;
+
+            if (packageProvider is OneDeployZipPackageProvider oneDeployZipPackageProvider)
+            {
+                 var deployOptions = new CsmPublishingProfile() { Format = PublishingProfileFormat.}
+            }
 
             //wrap the entire thing in a Polly Timeout policy which uses the cancellation token to raise the timout
             var result = await asyncZipDeployTimeoutPolicy.ExecuteAndCaptureAsync(async timeoutCancellationToken =>

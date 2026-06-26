@@ -57,5 +57,6 @@ namespace Calamari.AzureAppService
         public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile) => await Task.Run(() => sourceFile);
         public string ContentType => "application/octet-stream";
         public string AdditionalParameters => string.Empty;
+        public string PublishingProfileMethod => "MSDeploy";
     }
 }
