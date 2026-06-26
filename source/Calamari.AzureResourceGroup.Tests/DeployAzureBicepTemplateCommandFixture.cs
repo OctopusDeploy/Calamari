@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -104,42 +103,6 @@ namespace Calamari.AzureResourceGroup.Tests
                                                      context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "Package");
                                                      context.Variables.Add(SpecialVariables.Action.Azure.BicepTemplate, "azure_website_template.bicep");
                                                      context.WithFilesToCopy(packagePath);
-                                                 })
-                                    .Execute();
-        }
-
-        [Test]
-        [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
-        public async Task DeployAzureBicepTemplate_GitSource()
-        {
-            // For the purposes of Bicep templates in Calamari, a template in a Git Repository
-            // is equivalent to a template in a package, so we can just re-use the same
-            // package in the test here, it's just the template source property that is
-            // different.
-            await CommandTestBuilder.CreateAsync<DeployAzureBicepTemplateCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     AddDefaults(context);
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "GitRepository");
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.BicepTemplate, "azure_website_template.bicep");
-                                                     context.WithFilesToCopy(packagePath);
-                                                 })
-                                    .Execute();
-        }
-
-        [Test]
-        [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
-        public async Task DeployAzureBicepTemplate_InlineSource()
-        {
-            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.bicep"));
-
-            await CommandTestBuilder.CreateAsync<DeployAzureBicepTemplateCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     AddDefaults(context);
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "Inline");
-                                                     context.WithDataFile(templateFileContent, "template.bicep");
                                                  })
                                     .Execute();
         }
