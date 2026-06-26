@@ -6,7 +6,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureResourceGroup;
 
-class TemplateService(ICalamariFileSystem fileSystem, ITemplateResolver resolver)
+class TemplateService(ICalamariFileSystem fileSystem, ITemplateResolver resolver) : ITemplateService
 {
     public string GetSubstitutedTemplateContent(string relativePath, bool inPackage, IVariables variables)
     {
