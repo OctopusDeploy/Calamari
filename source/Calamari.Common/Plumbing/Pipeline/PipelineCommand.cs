@@ -7,6 +7,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing.Pipeline
@@ -51,6 +52,8 @@ namespace Calamari.Common.Plumbing.Pipeline
         public async Task Execute(ILifetimeScope lifetimeScope, IVariables variables)
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(lifetimeScope.Resolve<ICalamariFileSystem>(), false);
+            var log = lifetimeScope.Resolve<ILog>();
+                
             var deployment = new RunningDeployment(pathToPrimaryPackage, variables);
 
             try
@@ -67,7 +70,7 @@ namespace Calamari.Common.Plumbing.Pipeline
             }
             catch (Exception installException)
             {
-                Console.Error.WriteLine("Running rollback behaviours...");
+                log.Verbose("Running rollback behaviours...");
 
                 deployment.Error(installException);
 
@@ -78,7 +81,7 @@ namespace Calamari.Common.Plumbing.Pipeline
                 }
                 catch (Exception rollbackException)
                 {
-                    Console.Error.WriteLine(rollbackException);
+                    log.Error(rollbackException.Message);
                 }
 
                 throw;
