@@ -7,6 +7,8 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
+using Calamari.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -16,8 +18,28 @@ using Polly.Timeout;
 
 namespace Calamari.AzureResourceGroup;
 
-class AzureResourceGroupOperator(ILog log)
+class AzureResourceGroupOperator(ILog log) : IAzureResourceGroupOperator
 {
+    // Used by the ARM-template deploy behaviour: creates the ArmClient and runs the full submit/poll/finalise flow.
+    public async Task Deploy(IAzureAccount account,
+                             string subscriptionId,
+                             string resourceGroupName,
+                             string deploymentName,
+                             ArmDeploymentMode deploymentMode,
+                             string template,
+                             string? parameters,
+                             IVariables variables)
+    {
+        var armClient = account.CreateArmClient();
+        var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName));
+
+        log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
+
+        var deploymentOperation = await CreateDeployment(resourceGroupResource, deploymentName, deploymentMode, template, parameters);
+        await PollForCompletionWithTimeout(deploymentOperation, variables);
+        await FinalizeDeployment(deploymentOperation, variables);
+    }
+
     public async Task<ArmOperation<ArmDeploymentResource>> CreateDeployment(ResourceGroupResource resourceGroupResource,
                                                                             string deploymentName,
                                                                             ArmDeploymentMode deploymentMode,

@@ -16,7 +16,7 @@ using Calamari.Common.Plumbing.Variables;
 namespace Calamari.AzureResourceGroup.Bicep;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ILog log)
+class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, ITemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ILog log)
     : IDeployBehaviour
 {
     public bool IsEnabled(RunningDeployment context)
