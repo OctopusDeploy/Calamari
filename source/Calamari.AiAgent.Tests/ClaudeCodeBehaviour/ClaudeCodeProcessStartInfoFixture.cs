@@ -38,7 +38,7 @@ public class ClaudeCodeProcessStartInfoFixture
     [Test]
     public void ResolveInvocation_BashMode_PassesSettingsFlag()
     {
-        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.Bash).WithBashSettingsPath(TestBashSettingsPath);
+        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.Bash).WithSettingsPath(TestBashSettingsPath);
 
         var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(builder);
 

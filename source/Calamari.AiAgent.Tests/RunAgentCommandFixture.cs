@@ -51,7 +51,7 @@ public class RunAgentCommandFixture
                 context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file that contains todays date.");
-                context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write");
+                context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Write"]}""");
             })
             .Execute(assertWasSuccess: false);
 
@@ -69,7 +69,7 @@ public class RunAgentCommandFixture
                                                               context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
                                                               context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
                                                               context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Write a file with the current time    . Bundle this website as an attachment for this action.");
-                                                              context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write");
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Write"]}""");
                                                           })
                                              .Execute(assertWasSuccess: false);
 
@@ -157,7 +157,7 @@ public class RunAgentCommandFixture
                 context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file named report.txt containing the word Octopus, then attach it as an Octopus artifact.");
-                context.Variables.Add(SpecialVariables.Action.Claude.AllowedTools, "Write,Read,Edit");
+                context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Write","Read","Edit"]}""");
             })
             .Execute(assertWasSuccess: true);
 
