@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
+using Calamari.AzureResourceGroup.Bicep;
 using Calamari.AzureScripting;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
@@ -23,7 +24,8 @@ namespace Calamari.AzureResourceGroup
             builder.RegisterType<TemplateService>().As<ITemplateService>();
             builder.RegisterType<ResourceGroupTemplateNormalizer>().As<IResourceGroupTemplateNormalizer>();
             builder.RegisterType<TemplateResolver>().As<ITemplateResolver>().SingleInstance();
-            builder.RegisterType<AzureResourceGroupOperator>().AsSelf().As<IAzureResourceGroupOperator>();
+            builder.RegisterType<AzureResourceGroupOperator>().As<IAzureResourceGroupOperator>();
+            builder.RegisterType<BicepBuilder>().As<IBicepTemplateBuilder>();
         }
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()

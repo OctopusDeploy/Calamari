@@ -17,5 +17,16 @@ namespace Calamari.AzureResourceGroup
                     string template,
                     string? parameters,
                     IVariables variables);
+
+        // As Deploy, but creates the resource group in the given location if it does not already exist (Bicep flow).
+        Task DeployCreatingResourceGroup(IAzureAccount account,
+                                         string subscriptionId,
+                                         string resourceGroupName,
+                                         string resourceGroupLocation,
+                                         string deploymentName,
+                                         ArmDeploymentMode deploymentMode,
+                                         string template,
+                                         string? parameters,
+                                         IVariables variables);
     }
 }
