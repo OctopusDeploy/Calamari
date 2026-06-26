@@ -7,6 +7,8 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
+using Calamari.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -16,9 +18,66 @@ using Polly.Timeout;
 
 namespace Calamari.AzureResourceGroup;
 
-class AzureResourceGroupOperator(ILog log)
+class AzureResourceGroupOperator(ILog log) : IAzureResourceGroupOperator
 {
-    public async Task<ArmOperation<ArmDeploymentResource>> CreateDeployment(ResourceGroupResource resourceGroupResource,
+    // Used by the ARM-template deploy behaviour: creates the ArmClient and runs the full submit/poll/finalise flow.
+    public async Task Deploy(IAzureAccount account,
+                             string subscriptionId,
+                             string resourceGroupName,
+                             string deploymentName,
+                             ArmDeploymentMode deploymentMode,
+                             string template,
+                             string? parameters,
+                             IVariables variables)
+    {
+        var armClient = account.CreateArmClient();
+        var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName));
+
+        log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
+
+        var deploymentOperation = await CreateDeployment(resourceGroupResource, deploymentName, deploymentMode, template, parameters);
+        await PollForCompletionWithTimeout(deploymentOperation, variables);
+        await FinalizeDeployment(deploymentOperation, variables);
+    }
+
+    // Used by the Bicep deploy behaviour: creates the resource group first if it does not already exist.
+    public async Task DeployCreatingResourceGroup(IAzureAccount account,
+                                                  string subscriptionId,
+                                                  string resourceGroupName,
+                                                  string resourceGroupLocation,
+                                                  string deploymentName,
+                                                  ArmDeploymentMode deploymentMode,
+                                                  string template,
+                                                  string? parameters,
+                                                  IVariables variables)
+    {
+        var armClient = account.CreateArmClient();
+        var resourceGroupResource = await GetOrCreateResourceGroup(armClient, subscriptionId, resourceGroupName, resourceGroupLocation);
+
+        var deploymentOperation = await CreateDeployment(resourceGroupResource, deploymentName, deploymentMode, template, parameters);
+        await PollForCompletion(deploymentOperation);
+        await FinalizeDeployment(deploymentOperation, variables);
+    }
+
+    async Task<ResourceGroupResource> GetOrCreateResourceGroup(ArmClient armClient, string subscriptionId, string resourceGroupName, string location)
+    {
+        var subscription = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
+
+        var resourceGroups = subscription.GetResourceGroups();
+        var existing = await resourceGroups.GetIfExistsAsync(resourceGroupName);
+
+        if (existing.HasValue && existing.Value != null)
+            return existing.Value;
+
+        log.Info($"The resource group with the name {resourceGroupName} does not exist");
+        log.Info($"Creating resource group {resourceGroupName} in location {location}");
+
+        var resourceGroupData = new ResourceGroupData(location);
+        var armOperation = await resourceGroups.CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName, resourceGroupData);
+        return armOperation.Value;
+    }
+
+    async Task<ArmOperation<ArmDeploymentResource>> CreateDeployment(ResourceGroupResource resourceGroupResource,
                                                                             string deploymentName,
                                                                             ArmDeploymentMode deploymentMode,
                                                                             string template,
@@ -48,14 +107,14 @@ class AzureResourceGroupOperator(ILog log)
         }
     }
 
-    public async Task PollForCompletionWithTimeout(ArmOperation<ArmDeploymentResource> deploymentOperation, IVariables variables)
+    async Task PollForCompletionWithTimeout(ArmOperation<ArmDeploymentResource> deploymentOperation, IVariables variables)
     {
         var pollingTimeout = GetPollingTimeout(variables);
         var asyncResourceGroupPollingTimeoutPolicy = Policy.TimeoutAsync(pollingTimeout, TimeoutStrategy.Optimistic);
         await asyncResourceGroupPollingTimeoutPolicy.ExecuteAsync(ct => Poll(deploymentOperation, ct), CancellationToken.None);
     }
 
-    public async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation)
+    async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation)
     {
         await Poll(deploymentOperation, CancellationToken.None);
     }
@@ -76,7 +135,7 @@ class AzureResourceGroupOperator(ILog log)
         }
     }
 
-    public async Task FinalizeDeployment(ArmOperation<ArmDeploymentResource> operation, IVariables variables)
+    async Task FinalizeDeployment(ArmOperation<ArmDeploymentResource> operation, IVariables variables)
     {
         await LogOperationResults(operation);
         CaptureOutputs(operation.Value.Data.Properties.Outputs?.ToString(), variables);
