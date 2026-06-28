@@ -23,9 +23,6 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
                 throw new CommandException($"Claude Code exited with code {exitCode}.");
             }
 
-            // Exit code 0 but no terminal result event: the CLI reported success at the process level, but we
-            // couldn't observe a result to inspect (output-format drift or an unparseable result line). We have
-            // no failure signal beyond the exit code, so we defer to it rather than fail on a parsing gap.
             if (result == null)
             {
                 return;
