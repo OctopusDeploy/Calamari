@@ -60,6 +60,8 @@ public class ClaudeCodeCliRunner(ILog log)
 
         if (File.Exists(verboseLogPath))
         {
+            ThrowIfTranscriptTooBig(verboseLogPath);
+
             log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Transcript.Name, new Dictionary<string, string>()
             {
                 {ClaudeCodeServiceMessages.Transcript.TranscriptAttribute, await File.ReadAllTextAsync(verboseLogPath, cancellationToken)},
@@ -69,6 +71,14 @@ public class ClaudeCodeCliRunner(ILog log)
         ClaudeAgentOutcomeEvaluator.EnsureSuccessful(process.ExitCode, streamProcessor.Result);
 
         return responseBuilder.ToString();
+    }
+
+    static void ThrowIfTranscriptTooBig(string verboseLogPath)
+    {
+        const long maxTranscriptSize = 1L * 1024 * 1024 * 1024;
+        var transcriptSize = new FileInfo(verboseLogPath).Length;
+        if (transcriptSize > maxTranscriptSize)
+            throw new InvalidOperationException($"Claude agent transcript log is too large ({transcriptSize:N0} bytes). The 1 GB limit was exceeded.");
     }
 
     async Task ProcessError(Process process)
