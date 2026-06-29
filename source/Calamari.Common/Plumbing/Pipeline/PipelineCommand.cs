@@ -81,7 +81,7 @@ namespace Calamari.Common.Plumbing.Pipeline
                 }
                 catch (Exception rollbackException)
                 {
-                    log.Error(rollbackException.Message);
+                    log.Error(rollbackException.PrettyPrint());
                 }
 
                 throw;
