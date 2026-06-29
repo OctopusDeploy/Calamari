@@ -1,8 +1,4 @@
-﻿using System;
 using System.Threading.Tasks;
-using Azure.ResourceManager;
-using Azure.ResourceManager.AppService;
-using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
@@ -17,10 +13,12 @@ namespace Calamari.AzureAppService.Behaviors
     class AzureAppServiceContainerDeployBehaviour : IDeployBehaviour
     {
         private ILog Log { get; }
+        private readonly IAzureAppServiceContainerConfigurer configurer;
 
-        public AzureAppServiceContainerDeployBehaviour(ILog log)
+        public AzureAppServiceContainerDeployBehaviour(ILog log, IAzureAppServiceContainerConfigurer configurer)
         {
             Log = log;
+            this.configurer = configurer;
         }
 
         public bool IsEnabled(RunningDeployment context) => true;
@@ -43,15 +41,13 @@ namespace Calamari.AzureAppService.Behaviors
             var regUsername = variables.Get(SpecialVariables.Action.Package.Feed.Username);
             var regPwd = variables.Get(SpecialVariables.Action.Package.Feed.Password);
 
-            var armClient = account.CreateArmClient();
-
             Log.Info($"Updating web app to use image {image} from registry {registryHost}");
 
             Log.Verbose("Retrieving app service to determine operating system");
-            var isLinuxWebApp = await IsLinuxWebApp(armClient, targetSite);
+            var isLinuxWebApp = await configurer.IsLinuxWebApp(account, targetSite);
 
             Log.Verbose("Retrieving config (this is required to update image)");
-            var config = await armClient.GetSiteConfigDataAsync(targetSite);
+            var config = await configurer.GetSiteConfig(account, targetSite);
 
             var newVersion = $"DOCKER|{image}";
             if (isLinuxWebApp)
@@ -66,39 +62,17 @@ namespace Calamari.AzureAppService.Behaviors
             }
 
             Log.Verbose("Retrieving app settings");
-            var appSettings = await armClient.GetAppSettingsAsync(targetSite);
+            var appSettings = await configurer.GetAppSettings(account, targetSite);
 
             appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"] = "https://" + registryHost;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_USERNAME"] = regUsername;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_PASSWORD"] = regPwd;
 
             Log.Info("Updating app settings with container registry");
-            await armClient.UpdateAppSettingsAsync(targetSite, appSettings);
+            await configurer.UpdateAppSettings(account, targetSite, appSettings);
 
             Log.Info("Updating configuration with container image");
-            await armClient.UpdateSiteConfigDataAsync(targetSite, config);
-        }
-
-        static async Task<bool> IsLinuxWebApp(ArmClient armClient, AzureTargetSite targetSite)
-        {
-            var webSiteData = targetSite.HasSlot switch
-                              {
-                                  true => (await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(
-                                                                                                                               targetSite.SubscriptionId,
-                                                                                                                               targetSite.ResourceGroupName,
-                                                                                                                               targetSite.Site,
-                                                                                                                               targetSite.Slot))
-                                                          .GetAsync()).Value.Data,
-                                  false => (await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(
-                                                                                                                        targetSite.SubscriptionId,
-                                                                                                                        targetSite.ResourceGroupName,
-                                                                                                                        targetSite.Site))
-                                                           .GetAsync()).Value.Data
-                              };
-
-            //If the app service is a linux, it will contain linux in the kind string
-            //possible values are found here: https://github.com/Azure/app-service-linux-docs/blob/master/Things_You_Should_Know/kind_property.md
-            return webSiteData.Kind.ToLowerInvariant().Contains("linux");
+            await configurer.UpdateSiteConfig(account, targetSite, config);
         }
     }
 }
