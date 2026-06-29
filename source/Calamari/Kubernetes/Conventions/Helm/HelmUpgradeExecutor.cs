@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -68,6 +69,33 @@ namespace Calamari.Kubernetes.Conventions.Helm
             }
 
             installCompletedCts.Cancel();
+        }
+
+        // Checks for a stuck pending release and recovers by uninstalling or rolling back.
+        // Returns the correct newRevisionNumber to use for the upgrade.
+        public int RecoverFromPendingRelease(string releaseName, int expectedRevisionNumber)
+        {
+            var status = helmCli.GetReleaseStatus(releaseName);
+
+            switch (status?.ToLowerInvariant())
+            {
+                case "pending-install":
+                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled first install. Uninstalling to recover...");
+                    var uninstallResult = helmCli.Uninstall(releaseName);
+                    if (uninstallResult.ExitCode != 0)
+                        log.Warn($"Uninstall returned non-zero exit code {uninstallResult.ExitCode}. Continuing with upgrade...");
+                    return 1;
+
+                case "pending-upgrade":
+                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment. Rolling back to recover...");
+                    var rollbackResult = helmCli.Rollback(releaseName);
+                    if (rollbackResult.ExitCode != 0)
+                        log.Warn($"Rollback returned non-zero exit code {rollbackResult.ExitCode}. Continuing with upgrade...");
+                    return expectedRevisionNumber;
+
+                default:
+                    return expectedRevisionNumber;
+            }
         }
 
         void SetAppliedResourcesOutputVariable(RunningDeployment deployment, string releaseName, int revisionNumber)

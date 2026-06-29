@@ -53,17 +53,17 @@ namespace Calamari.Kubernetes.Conventions
 
             kubectl.SetKubectl();
 
-            // GetCurrentRevision returns null when the release doesn't exist yet; in that case
-            // there's nothing to recover from, so we skip the status check entirely.
             var currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
-            if (currentRevisionNumber != null && CheckAndHandleStuckRelease(helmCli, releaseName))
-            {
-                // Re-read revision after recovery so newRevisionNumber reflects the post-rollback state.
-                // Skipped on the happy path (no recovery ran) since the revision cannot have changed.
-                currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
-            }
 
-            var newRevisionNumber = (currentRevisionNumber ?? 0) + 1;
+            var executor = new HelmUpgradeExecutor(log, fileSystem, valueSourcesParser, helmCli, namespaceResolver);
+
+            var expectedRevisionNumber = (currentRevisionNumber ?? 0) + 1;
+
+            // If a release exists and is stuck in a pending state from a previous cancelled deployment,
+            // recover before starting the upgrade so both tasks receive the correct revision number.
+            var newRevisionNumber = currentRevisionNumber != null
+                                        ? executor.RecoverFromPendingRelease(releaseName, expectedRevisionNumber)
+                                        : expectedRevisionNumber;
 
             //This is used to cancel KOS when the helm upgrade has completed
             //It does not cancel the get manifest
@@ -74,12 +74,6 @@ namespace Calamari.Kubernetes.Conventions
 
             var helmUpgradeTask = Task.Run(() =>
                                            {
-                                               var executor = new HelmUpgradeExecutor(log,
-                                                                                      fileSystem,
-                                                                                      valueSourcesParser,
-                                                                                      helmCli,
-                                                                                      namespaceResolver);
-
                                                executor.ExecuteHelmUpgrade(deployment, releaseName, newRevisionNumber, helmInstallCompletedCts, helmInstallErrorCts);
                                            });
 
@@ -90,13 +84,21 @@ namespace Calamari.Kubernetes.Conventions
                                                           await runner.StartBackgroundMonitoringAndReporting(deployment,
                                                                                releaseName,
                                                                                newRevisionNumber,
-                                                                               helmInstallCompletedCts.Token, 
+                                                                               helmInstallCompletedCts.Token,
                                                                                helmInstallErrorCts.Token);
                                                       },
                                                       helmInstallCompletedCts.Token);
 
             //we run both the helm upgrade and the manifest & status in parallel
-            Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
+            // TaskCanceledException from the manifest task is expected when the upgrade completes before
+            // monitoring starts (helmInstallCompletedCts is already cancelled); treat it as success.
+            try
+            {
+                Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException) when (helmInstallCompletedCts.IsCancellationRequested && !helmInstallErrorCts.IsCancellationRequested)
+            {
+            }
         }
 
         string GetReleaseName(IVariables variables)
@@ -114,61 +116,5 @@ namespace Calamari.Kubernetes.Conventions
             return releaseName;
         }
 
-        // Returns true if a recovery action was attempted (indicating the revision number may have changed).
-        bool CheckAndHandleStuckRelease(HelmCli helmCli, string releaseName)
-        {
-            var status = helmCli.GetReleaseStatus(releaseName);
-
-            if (status == null)
-                return false;
-
-            log.Info($"Release {releaseName} current status: {status}");
-
-            // Handle problematic states that could be left from cancelled deployments
-            switch (status.ToLowerInvariant())
-            {
-                case "pending-install":
-                    // No prior successful revision exists, so rollback is not possible. Uninstall the
-                    // stuck release so the next upgrade --install can start cleanly.
-                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled first install. Uninstalling to recover...");
-                    try
-                    {
-                        var uninstallResult = helmCli.Uninstall(releaseName);
-                        if (uninstallResult.ExitCode == 0)
-                            log.Info($"Successfully uninstalled stuck release {releaseName}");
-                        else
-                            log.Warn($"Uninstall had non-zero exit code but continuing: {uninstallResult.ExitCode}");
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Warn($"Failed to uninstall release {releaseName}: {ex.Message}. Continuing with deployment...");
-                    }
-                    return true;
-
-                case "pending-upgrade":
-                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment. Rolling back to recover...");
-                    try
-                    {
-                        var rollbackResult = helmCli.Rollback(releaseName);
-                        if (rollbackResult.ExitCode == 0)
-                            log.Info($"Successfully rolled back release {releaseName}");
-                        else
-                            log.Warn($"Rollback had non-zero exit code but continuing: {rollbackResult.ExitCode}");
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Warn($"Failed to rollback release {releaseName}: {ex.Message}. Continuing with deployment...");
-                    }
-                    return true;
-
-                case "failed":
-                    log.Info($"Release {releaseName} is in failed state. Helm upgrade --install should handle this automatically.");
-                    return false;
-
-                default:
-                    log.Verbose($"Release {releaseName} status: {status} - proceeding with deployment");
-                    return false;
-            }
-        }
     }
 }
