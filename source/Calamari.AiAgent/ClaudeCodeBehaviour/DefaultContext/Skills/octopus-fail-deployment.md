@@ -23,9 +23,9 @@ Smoke test returned HTTP 500 from /health after 3 retries.
 ## Rules
 
 - Emit the block **only** when the user expressed a failure condition AND you have determined it is met. If the condition was not met, say nothing special and let the step succeed.
-- Always write the **complete** block, including the closing `</octopus-task-failed>` tag. The closing tag is how Octopus confirms the message is whole — if you stop before writing it, the failure will not be detected, so finish the block before ending your turn.
+- Always write a **complete** block — either a paired block ending in `</octopus-task-failed>` or a self-closing `<octopus-task-failed/>`. A closed tag is how Octopus confirms the message is whole — if you open the block but stop before closing it, the failure will not be detected, so finish the block before ending your turn.
 - Put the tags on their **own lines**, as plain text. Do **not** wrap them in backticks, code fences, bold, or any other markdown.
 - Emit the block **once**. One block is enough to fail the step.
 - Keep the reason **concise and specific** — it is surfaced in the Octopus task log as the failure message, so write it for the operator who will read it. The reason may span multiple lines.
-- The reason is optional but strongly encouraged; an empty block will still fail the step with a generic message.
+- The reason is optional but strongly encouraged; an empty block — or a self-closing `<octopus-task-failed/>` — will still fail the step with a generic message.
 - If you cannot determine whether the condition was met, do not guess silently — explain what you found. Only emit the block if the user's intent was that an unverifiable outcome should fail the step.

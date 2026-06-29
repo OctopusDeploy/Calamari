@@ -10,8 +10,9 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
     {
         // The agent emits this tagged block (see the octopus-fail-deployment skill) when a user-specified
         // failure condition has been met. The CLI still exits 0, so this is the only way to detect an intentional
-        // failure from the outside. The inner text is the operator-facing reason; requiring the closing tag also
-        // confirms the agent finished writing the block rather than being truncated mid-message.
+        // failure from the outside. The inner text is the operator-facing reason. We accept either a self-closing
+        // <octopus-task-failed/> (a complete signal with no reason) or a paired block ending in </octopus-task-failed>;
+        // an opening tag without its closing tag is treated as a truncated message and ignored.
         static readonly Regex FailureSignal = new(
             @"<octopus-task-failed\s*(?:/>|>(?<reason>.*?)</octopus-task-failed>)",
             RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
