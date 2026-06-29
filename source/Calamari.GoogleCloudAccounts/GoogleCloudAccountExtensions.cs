@@ -244,6 +244,17 @@ namespace Calamari.GoogleCloudAccounts
                     return false;
                 }
 
+                const int defaultTokenLifetimeSeconds = 3600;
+                const int minTokenLifetimeSeconds = 600;
+                const int maxTokenLifetimeSeconds = 43200;
+                var tokenLifetimeSeconds = variables.GetInt32($"{accountVariable}.OpenIdConnect.TokenLifetimeSeconds") ?? defaultTokenLifetimeSeconds;
+                if (tokenLifetimeSeconds < minTokenLifetimeSeconds || tokenLifetimeSeconds > maxTokenLifetimeSeconds)
+                {
+                    var clamped = Math.Max(minTokenLifetimeSeconds, Math.Min(maxTokenLifetimeSeconds, tokenLifetimeSeconds));
+                    log.Warn($"Google Cloud OIDC token lifetime of {tokenLifetimeSeconds} seconds is outside the allowed range of {minTokenLifetimeSeconds}-{maxTokenLifetimeSeconds} seconds; using {clamped} seconds instead.");
+                    tokenLifetimeSeconds = clamped;
+                }
+
                 File.WriteAllText(jwtFilePath, jwtToken);
 
                 if (audience.Contains("iam.googleapis.com/"))
@@ -256,7 +267,7 @@ namespace Calamari.GoogleCloudAccounts
                                                         "create-cred-config",
                                                         audience,
                                                         $"--service-account={impersonationEmails}",
-                                                        "--service-account-token-lifetime-seconds=3600",
+                                                        $"--service-account-token-lifetime-seconds={tokenLifetimeSeconds}",
                                                         "--subject-token-type=urn:ietf:params:oauth:token-type:jwt",
                                                         "--credential-source-type=text",
                                                         $"--credential-source-file={jwtFilePath.EnsureDoubleQuoteIfContainsSpaces()}",
