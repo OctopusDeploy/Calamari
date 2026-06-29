@@ -124,6 +124,7 @@ class AzureResourceGroupOperator(ILog log)
                                                   string deploymentName,
                                                   RequestFailedException originalException)
     {
+        var baseMessage = $"Error polling for deployment completion: {originalException.Message}";
         try
         {
             log.Verbose($"Attempting to retrieve detailed operation information for failed deployment '{deploymentName}'...");
@@ -141,10 +142,9 @@ class AzureResourceGroupOperator(ILog log)
             }
 
             if (deploymentResource == null)
-                return $"Error polling for deployment completion: {originalException.Message}";
+                return baseMessage;
 
-            var operations = new List<string>();
-            var failureCount = 0;
+            var failedOperations = new List<string>();
             var totalOperations = 0;
 
             await foreach (var op in deploymentResource.GetDeploymentOperationsAsync())
@@ -154,7 +154,6 @@ class AzureResourceGroupOperator(ILog log)
 
                 if (properties?.ProvisioningState == "Failed")
                 {
-                    failureCount++;
                     var resourceName = properties.TargetResource?.ResourceName ?? "Unknown Resource";
                     var resourceType = properties.TargetResource?.ResourceType ?? "Unknown Type";
 
@@ -170,34 +169,34 @@ class AzureResourceGroupOperator(ILog log)
                     if (properties.Timestamp.HasValue)
                         failureDetail += $"\n     Failed at: {properties.Timestamp.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}";
 
-                    operations.Add(failureDetail);
+                    failedOperations.Add(failureDetail);
                 }
             }
 
-            log.Verbose($"Found {totalOperations} total operations, {failureCount} failed");
+            log.Verbose($"Found {totalOperations} total operations, {failedOperations.Count} failed");
 
-            if (operations.Any())
+            if (failedOperations.Any())
             {
-                return $"Error polling for deployment completion: {originalException.Message}\n\n" +
-                       $"FAILED AZURE RESOURCES ({failureCount} of {totalOperations} operations failed):" +
-                       string.Join("", operations) +
+                return $"{baseMessage}\n\n" +
+                       $"FAILED AZURE RESOURCES ({failedOperations.Count} of {totalOperations} operations failed):" +
+                       string.Join("", failedOperations) +
                        "\n\nFor full details check Azure Portal > Resource Groups > Deployments, " +
                        "or see https://aka.ms/arm-deployment-operations for troubleshooting guidance.";
             }
 
             if (totalOperations > 0)
             {
-                return $"Error polling for deployment completion: {originalException.Message}\n\n" +
+                return $"{baseMessage}\n\n" +
                        $"Found {totalOperations} deployment operations but none were marked as failed. " +
                        "Check the Azure Portal for detailed deployment status.";
             }
 
-            return $"Error polling for deployment completion: {originalException.Message}";
+            return baseMessage;
         }
         catch (Exception enhancementEx)
         {
             log.Verbose($"Failed to retrieve detailed deployment error information: {enhancementEx.Message}");
-            return $"Error polling for deployment completion: {originalException.Message}";
+            return baseMessage;
         }
     }
 
@@ -223,16 +222,7 @@ class AzureResourceGroupOperator(ILog log)
         if (!string.IsNullOrWhiteSpace(errorInfo))
             return errorInfo;
 
-        // Fall back to JSON for status messages without a typed error (e.g. success responses)
-        try
-        {
-            var json = JObject.FromObject(statusMessage);
-            return json.ToString();
-        }
-        catch
-        {
-            return statusMessage.ToString() ?? string.Empty;
-        }
+        return statusMessage.ToString() ?? string.Empty;
     }
 
     void CaptureOutputs(string? outputsJson, IVariables variables)
