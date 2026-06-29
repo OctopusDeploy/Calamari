@@ -13,7 +13,7 @@ namespace Calamari.AiAgent
             public static class Claude
             {
                 public const string Prompt = "Octopus.Action.Claude.Prompt";
-                public const string ApiToken = "Octopus.Action.Claude.ApiToken";
+                public const string ApiKey = "Octopus.Action.Claude.ApiKey";
                 public const string Model = "Octopus.Action.Claude.Model";
                 public const string Response = "Octopus.Action.Claude.Response";
                 public const string McpServers = "Octopus.Action.Claude.McpServers";

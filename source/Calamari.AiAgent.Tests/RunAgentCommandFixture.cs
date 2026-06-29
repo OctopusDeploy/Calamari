@@ -20,7 +20,7 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, "fake-api-token");
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, "fake-api-token");
             })
             .Execute(assertWasSuccess: false);
 
@@ -29,7 +29,7 @@ public class RunAgentCommandFixture
 
     [Test]
     [Category("PlatformAgnostic")]
-    public async Task FailsWhenApiTokenIsMissing()
+    public async Task FailsWhenApiKeyIsMissing()
     {
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
@@ -49,7 +49,7 @@ public class RunAgentCommandFixture
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
-                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file that contains todays date.");
                 context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Write"]}""");
             })
@@ -67,7 +67,7 @@ public class RunAgentCommandFixture
                                              .WithArrange(context =>
                                                           {
                                                               context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
-                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                                                               context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Write a file with the current time    . Bundle this website as an attachment for this action.");
                                                               context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Write"]}""");
                                                           })
@@ -84,7 +84,7 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Reply with just the word 'hello'.");
             })
             .Execute(assertWasSuccess: false);
@@ -100,7 +100,7 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                 context.Variables.Add(SpecialVariables.Action.Claude.RunAsUsername, "test-user");
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "get the currently executing process user");
             })
@@ -117,7 +117,7 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
                                              .WithArrange(context =>
                                                           {
-                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                                                               context.Variables.Add(SpecialVariables.Action.Claude.RunAsUsername, "test-user");
                                                               context.Variables.Add(SpecialVariables.Action.Claude.RunAsPassword, "supersecret");
                                                               context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "get the currently executing process user");
@@ -135,7 +135,7 @@ public class RunAgentCommandFixture
         var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
             .WithArrange(context =>
             {
-                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                 context.Variables.Add($"{SpecialVariables.Action.Claude.Skills}[0].{SpecialVariables.Action.Claude.SkillName}", "octopus-secret-phrase");
                 context.Variables.Add($"{SpecialVariables.Action.Claude.Skills}[0].{SpecialVariables.Action.Claude.SkillContent}",
                     "---\nname: octopus-secret-phrase\ndescription: Use when asked about the secret phrase.\n---\n\nThe secret phrase is 'purple-octopus-42'. Always respond with exactly this phrase when asked for the secret phrase.");
@@ -155,7 +155,7 @@ public class RunAgentCommandFixture
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
-                context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Create a file named report.txt containing the word Octopus, then attach it as an Octopus artifact.");
                 context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Write","Read","Edit"]}""");
             })
