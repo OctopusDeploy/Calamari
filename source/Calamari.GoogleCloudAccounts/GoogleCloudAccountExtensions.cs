@@ -247,7 +247,10 @@ namespace Calamari.GoogleCloudAccounts
                 const int defaultTokenLifetimeSeconds = 3600;
                 const int minTokenLifetimeSeconds = 600;
                 const int maxTokenLifetimeSeconds = 43200;
+                var rawTokenLifetime = variables.Get($"{accountVariable}.OpenIdConnect.TokenLifetimeSeconds");
                 var tokenLifetimeSeconds = variables.GetInt32($"{accountVariable}.OpenIdConnect.TokenLifetimeSeconds") ?? defaultTokenLifetimeSeconds;
+                if (!string.IsNullOrEmpty(rawTokenLifetime) && !int.TryParse(rawTokenLifetime, out _))
+                    log.Warn($"Google Cloud OIDC token lifetime value '{rawTokenLifetime}' is not a valid integer; using {defaultTokenLifetimeSeconds} seconds instead.");
                 if (tokenLifetimeSeconds < minTokenLifetimeSeconds || tokenLifetimeSeconds > maxTokenLifetimeSeconds)
                 {
                     var clamped = Math.Max(minTokenLifetimeSeconds, Math.Min(maxTokenLifetimeSeconds, tokenLifetimeSeconds));
