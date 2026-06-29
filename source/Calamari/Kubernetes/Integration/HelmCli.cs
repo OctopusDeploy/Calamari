@@ -107,6 +107,51 @@ namespace Calamari.Kubernetes.Integration
             return metadata.revision;
         }
 
+        public string? GetReleaseStatus(string releaseName)
+        {
+            var result = ExecuteCommandAndReturnOutput("status", releaseName, "-o json", NamespaceArg());
+
+            if (result.Result.ExitCode != 0)
+            {
+                // Log any error output so auth/RBAC/network failures are visible rather than silently returning null
+                var errorOutput = result.Output.MergeInfoLogs();
+                if (!string.IsNullOrWhiteSpace(errorOutput))
+                    log.Verbose($"helm status returned exit code {result.Result.ExitCode}: {errorOutput}");
+                return null;
+            }
+
+            var json = result.Output.MergeInfoLogs();
+            var status = JsonConvert.DeserializeAnonymousType(json,
+                                                              new
+                                                              {
+                                                                  info = new
+                                                                  {
+                                                                      status = ""
+                                                                  }
+                                                              });
+
+            return status?.info?.status;
+        }
+
+        public CommandResult Rollback(string releaseName, int? revision = null)
+        {
+            var args = new List<string> { "rollback", releaseName };
+
+            if (revision.HasValue)
+                args.Add(revision.Value.ToString());
+
+            args.Add(NamespaceArg());
+
+            var result = ExecuteCommandAndLogOutput(args);
+            return result;
+        }
+
+        public CommandResult Uninstall(string releaseName)
+        {
+            var args = new List<string> { "uninstall", releaseName, NamespaceArg() };
+            return ExecuteCommandAndLogOutput(args);
+        }
+
         public string GetManifest(string releaseName, int revisionNumber)
         {
             var result = ExecuteCommandAndReturnOutput("get", "manifest", releaseName, $"--revision {revisionNumber}", NamespaceArg());
@@ -125,8 +170,7 @@ namespace Calamari.Kubernetes.Integration
 
             buildArgs.AddRange(upgradeArgs);
             buildArgs.Add(NamespaceArg());
-            //properly quote the release name and package path (consistent with previous code)
-            buildArgs.Add($"\"{releaseName}\"");
+            buildArgs.Add(releaseName);
             buildArgs.Add($"\"{packagePath}\"");
 
             var result = ExecuteCommandAndLogOutput(buildArgs);
