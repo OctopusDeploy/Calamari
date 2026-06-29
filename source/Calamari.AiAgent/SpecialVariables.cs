@@ -25,8 +25,6 @@ namespace Calamari.AiAgent
                 public const string PermissionMode = "Octopus.Action.Claude.PermissionMode";
                 public const string Effort = "Octopus.Action.Claude.Effort";
                 public const string PassEnvironmentVariables = "Octopus.Action.Claude.PassEnvironmentVariables";
-                public const string RunAsUsername = "Octopus.Action.Claude.RunAsUsername";
-                public const string RunAsPassword = "Octopus.Action.Claude.RunAsPassword";
 
                 public const string SandboxMode = "Octopus.Action.Claude.SandboxMode";
                 public const string SandboxSettings = "Octopus.Action.Claude.SandboxSettings";
