@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -82,6 +81,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                     var uninstallResult = helmCli.Uninstall(releaseName);
                     if (uninstallResult.ExitCode != 0)
                         log.Warn($"Uninstall returned non-zero exit code {uninstallResult.ExitCode}. Continuing with upgrade...");
+                    // Uninstall resets the revision number
                     return 1;
 
                 case "pending-upgrade":
@@ -89,7 +89,8 @@ namespace Calamari.Kubernetes.Conventions.Helm
                     var rollbackResult = helmCli.Rollback(releaseName);
                     if (rollbackResult.ExitCode != 0)
                         log.Warn($"Rollback returned non-zero exit code {rollbackResult.ExitCode}. Continuing with upgrade...");
-                    return expectedRevisionNumber;
+                    // Rollback creates a new revision, so the subsequent upgrade will be one higher than expected.
+                    return expectedRevisionNumber + 1;
 
                 default:
                     return expectedRevisionNumber;
