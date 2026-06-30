@@ -289,8 +289,7 @@ public class CommitToGitCommand : Command
                                               var exitCode = d.Variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
                                               if (exitCode != 0)
                                               {
-                                                  log.Error($"Transformation script exited with code {exitCode}. Skipping commit to Git.");
-                                                  return;
+                                                  throw new CommandException($"Transformation script exited with code {exitCode}. Changes will not be committed.");
                                               }
 
                                               var commitParams = repositoryConfig!.CommitParameters;
