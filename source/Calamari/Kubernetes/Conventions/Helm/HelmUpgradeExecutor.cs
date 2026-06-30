@@ -73,10 +73,8 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
         // Checks for a stuck pending release and recovers by uninstalling or rolling back.
         // Returns the correct newRevisionNumber to use for the upgrade.
-        public int RecoverFromPendingRelease(string releaseName, int expectedRevisionNumber)
+        public int RecoverFromPendingRelease(string releaseName, string status, int expectedRevisionNumber)
         {
-            var status = helmCli.GetReleaseStatus(releaseName);
-
             switch (status?.ToLowerInvariant())
             {
                 case "pending-install":

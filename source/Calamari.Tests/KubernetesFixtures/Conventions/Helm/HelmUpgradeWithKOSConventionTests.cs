@@ -57,8 +57,7 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         [Test]
         public void WhenReleaseIsPendingUpgrade_RollsBackBeforeUpgrade()
         {
-            SetupHelmGetMetadataMock(revision: 2);
-            SetupHelmStatusMock("pending-upgrade");
+            SetupHelmGetMetadataMock(revision: 2, status: "pending-upgrade");
 
             RunInstall();
 
@@ -68,8 +67,7 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         [Test]
         public void WhenReleaseIsPendingInstall_UninstallsBeforeUpgrade()
         {
-            SetupHelmGetMetadataMock(revision: 1);
-            SetupHelmStatusMock("pending-install");
+            SetupHelmGetMetadataMock(revision: 1, status: "pending-install");
 
             RunInstall();
 
@@ -79,8 +77,7 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         [Test]
         public void WhenReleaseIsDeployed_DoesNotRollbackOrUninstall()
         {
-            SetupHelmGetMetadataMock(revision: 3);
-            SetupHelmStatusMock("deployed");
+            SetupHelmGetMetadataMock(revision: 3, status: "deployed");
 
             RunInstall();
 
@@ -91,8 +88,7 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         [Test]
         public void WhenReleaseIsFailed_DoesNotRollbackOrUninstall()
         {
-            SetupHelmGetMetadataMock(revision: 2);
-            SetupHelmStatusMock("failed");
+            SetupHelmGetMetadataMock(revision: 2, status: "failed");
 
             RunInstall();
 
@@ -107,16 +103,14 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
 
             RunInstall();
 
-            commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("status") && i.Arguments.Contains(ReleaseName)));
             commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("rollback")));
             commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("uninstall")));
         }
 
         [Test]
-        public void WhenUpgradeSucceeds_ChecksStatusButDoesNotRollbackOrUninstall()
+        public void WhenUpgradeSucceeds_DoesNotRollbackOrUninstall()
         {
-            SetupHelmGetMetadataMock(revision: 3);
-            SetupHelmStatusMock("deployed");
+            SetupHelmGetMetadataMock(revision: 3, status: "deployed");
 
             RunInstall();
 
@@ -127,8 +121,7 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         [Test]
         public void WhenRollbackFails_LogsWarningAndContinuesToUpgrade()
         {
-            SetupHelmGetMetadataMock(revision: 2);
-            SetupHelmStatusMock("pending-upgrade");
+            SetupHelmGetMetadataMock(revision: 2, status: "pending-upgrade");
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("rollback")))
                              .Returns(new CommandResult("helm rollback", 1));
 
@@ -142,8 +135,7 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         [Test]
         public void WhenUninstallFails_LogsWarningAndContinuesToUpgrade()
         {
-            SetupHelmGetMetadataMock(revision: 1);
-            SetupHelmStatusMock("pending-install");
+            SetupHelmGetMetadataMock(revision: 1, status: "pending-install");
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("uninstall")))
                              .Returns(new CommandResult("helm uninstall", 1));
 
@@ -180,22 +172,22 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
 
         void SetupHelmVersionMock()
         {
-            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("version") && i.Arguments.Contains("--client")))
+            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Executable == "helm" && i.Arguments.Contains("version") && i.Arguments.Contains("--client")))
                              .Returns(info =>
-                             {
-                                 var invocation = (CommandLineInvocation)info[0];
-                                 invocation.AdditionalInvocationOutputSink?.WriteInfo("v3.14.0");
-                                 return new CommandResult("helm version", 0);
-                             });
+                                      {
+                                          var invocation = (CommandLineInvocation)info[0];
+                                          invocation.AdditionalInvocationOutputSink?.WriteInfo("v3.14.0");
+                                          return new CommandResult("helm version", 0);
+                                      });
         }
 
-        void SetupHelmGetMetadataMock(int revision)
+        void SetupHelmGetMetadataMock(int revision, string status)
         {
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get") && i.Arguments.Contains("metadata")))
                              .Returns(info =>
                              {
                                  var invocation = (CommandLineInvocation)info[0];
-                                 invocation.AdditionalInvocationOutputSink?.WriteInfo($"{{\"revision\":{revision}}}");
+                                 invocation.AdditionalInvocationOutputSink?.WriteInfo($"{{\"revision\":{revision},\"status\":\"{status}\"}}");
                                  return new CommandResult("helm get metadata", 0);
                              });
         }
@@ -204,17 +196,6 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         {
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get") && i.Arguments.Contains("metadata")))
                              .Returns(new CommandResult("helm get metadata", 1));
-        }
-
-        void SetupHelmStatusMock(string status)
-        {
-            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("status") && i.Arguments.Contains(ReleaseName)))
-                             .Returns(info =>
-                             {
-                                 var invocation = (CommandLineInvocation)info[0];
-                                 invocation.AdditionalInvocationOutputSink?.WriteInfo($"{{\"info\":{{\"status\":\"{status}\"}}}}");
-                                 return new CommandResult("helm status", 0);
-                             });
         }
 
         void SetupHelmRollbackMock()

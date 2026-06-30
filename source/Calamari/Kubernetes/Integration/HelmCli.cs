@@ -85,52 +85,20 @@ namespace Calamari.Kubernetes.Integration
             return SemVerFactory.CreateVersion(vStripped);
         }
 
-        public int? GetCurrentRevision(string releaseName)
+        public (int Revision, string Status)? GetCurrentReleaseMetadata(string releaseName)
         {
             var result = ExecuteCommandAndReturnOutput("get", "metadata", releaseName, "-o json", NamespaceArg());
 
-
             //if we get _any_ error back, assume it probably hasn't been installed yet
             if (result.Result.ExitCode != 0)
-                return null; //
-            
+                return null;
+
             //parse the output
             var json = result.Output.MergeInfoLogs();
-            var metadata = JsonConvert.DeserializeAnonymousType(json,
-                                                                new
-                                                                {
-                                                                    //we only care about parsing the revision
-                                                                    revision = 0
-                                                                });
+            var metadata = JsonConvert.DeserializeAnonymousType(json, new { revision = 0, status = string.Empty });
 
-            //the next revision 
-            return metadata.revision;
-        }
-
-        public string? GetReleaseStatus(string releaseName)
-        {
-            var result = ExecuteCommandAndReturnOutput("status", releaseName, "-o json", NamespaceArg());
-
-            if (result.Result.ExitCode != 0)
-            {
-                // Log any error output so auth/RBAC/network failures are visible rather than silently returning null
-                var errorOutput = result.Output.MergeInfoLogs();
-                if (!string.IsNullOrWhiteSpace(errorOutput))
-                    log.Verbose($"helm status returned exit code {result.Result.ExitCode}: {errorOutput}");
-                return null;
-            }
-
-            var json = result.Output.MergeInfoLogs();
-            var status = JsonConvert.DeserializeAnonymousType(json,
-                                                              new
-                                                              {
-                                                                  info = new
-                                                                  {
-                                                                      status = ""
-                                                                  }
-                                                              });
-
-            return status?.info?.status;
+            // Only revision and status are required for now
+            return (metadata.revision, metadata.status);
         }
 
         public CommandResult Rollback(string releaseName, int? revision = null)
@@ -170,7 +138,8 @@ namespace Calamari.Kubernetes.Integration
 
             buildArgs.AddRange(upgradeArgs);
             buildArgs.Add(NamespaceArg());
-            buildArgs.Add(releaseName);
+            //properly quote the release name and package path (consistent with previous code)
+            buildArgs.Add($"\"{releaseName}\"");
             buildArgs.Add($"\"{packagePath}\"");
 
             var result = ExecuteCommandAndLogOutput(buildArgs);

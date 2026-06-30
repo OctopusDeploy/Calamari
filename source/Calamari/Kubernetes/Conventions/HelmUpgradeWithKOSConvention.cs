@@ -53,16 +53,16 @@ namespace Calamari.Kubernetes.Conventions
 
             kubectl.SetKubectl();
 
-            var currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
+            var currentMetadata = helmCli.GetCurrentReleaseMetadata(releaseName);
 
             var executor = new HelmUpgradeExecutor(log, fileSystem, valueSourcesParser, helmCli, namespaceResolver);
 
-            var expectedRevisionNumber = (currentRevisionNumber ?? 0) + 1;
+            var expectedRevisionNumber = (currentMetadata?.Revision ?? 0) + 1;
 
             // If a release exists and is stuck in a pending state from a previous cancelled deployment,
             // recover before starting the upgrade so both tasks receive the correct revision number.
-            var newRevisionNumber = currentRevisionNumber != null
-                                        ? executor.RecoverFromPendingRelease(releaseName, expectedRevisionNumber)
+            var newRevisionNumber = currentMetadata != null
+                                        ? executor.RecoverFromPendingRelease(releaseName, currentMetadata.Value.Status, expectedRevisionNumber)
                                         : expectedRevisionNumber;
 
             //This is used to cancel KOS when the helm upgrade has completed
@@ -90,15 +90,7 @@ namespace Calamari.Kubernetes.Conventions
                                                       helmInstallCompletedCts.Token);
 
             //we run both the helm upgrade and the manifest & status in parallel
-            // TaskCanceledException from the manifest task is expected when the upgrade completes before
-            // monitoring starts (helmInstallCompletedCts is already cancelled); treat it as success.
-            try
-            {
-                Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
-            }
-            catch (OperationCanceledException) when (helmInstallCompletedCts.IsCancellationRequested && !helmInstallErrorCts.IsCancellationRequested)
-            {
-            }
+            Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
         }
 
         string GetReleaseName(IVariables variables)
@@ -115,6 +107,5 @@ namespace Calamari.Kubernetes.Conventions
             log.Info($"Using Release Name {releaseName}");
             return releaseName;
         }
-
     }
 }
