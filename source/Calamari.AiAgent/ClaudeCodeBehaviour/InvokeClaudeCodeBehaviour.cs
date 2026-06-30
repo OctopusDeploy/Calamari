@@ -43,8 +43,6 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new CommandException($"Variable '{SpecialVariables.Action.Claude.ApiKey}' is required but was not provided.");
 
-        var runAs = BuildRunAs(variables);
-
         var argsBuilder = new ClaudeCommandArgsBuilder().WithPrompt(prompt);
 
         var model = variables.Get(SpecialVariables.Action.Claude.Model);
@@ -136,7 +134,6 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         var response = await new ClaudeCodeCliRunner(log).RunAsync(
             argsBuilder,
             environment,
-            runAs,
             workingDir,
             context.CurrentDirectory,
             cancellationToken.Token);
@@ -181,18 +178,5 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         }
 
         throw new CommandException($"Unknown value '{raw}' for '{SpecialVariables.Action.Claude.SandboxMode}'. Expected one of: None, Bash, SandboxRuntime.");
-    }
-
-    static ProcessCredentials? BuildRunAs(IVariables variables)
-    {
-        var username = variables.Get(SpecialVariables.Action.Claude.RunAsUsername);
-        if (string.IsNullOrWhiteSpace(username))
-            return null;
-
-        return new ProcessCredentials
-        {
-            Username = username,
-            Password = variables.Get(SpecialVariables.Action.Claude.RunAsPassword),
-        };
     }
 }
