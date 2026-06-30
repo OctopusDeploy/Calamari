@@ -101,7 +101,6 @@ public class RunAgentCommandFixture
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                context.Variables.Add(SpecialVariables.Action.Claude.RunAsUsername, "test-user");
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "get the currently executing process user");
             })
             .Execute(assertWasSuccess: false);
@@ -118,8 +117,6 @@ public class RunAgentCommandFixture
                                              .WithArrange(context =>
                                                           {
                                                               context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
-                                                              context.Variables.Add(SpecialVariables.Action.Claude.RunAsUsername, "test-user");
-                                                              context.Variables.Add(SpecialVariables.Action.Claude.RunAsPassword, "supersecret");
                                                               context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "get the currently executing process user");
                                                           })
                                              .Execute(assertWasSuccess: false);

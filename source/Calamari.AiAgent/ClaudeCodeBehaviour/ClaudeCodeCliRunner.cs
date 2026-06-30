@@ -17,7 +17,6 @@ public class ClaudeCodeCliRunner(ILog log)
 
     public async Task<string> RunAsync(ClaudeCommandArgsBuilder argsBuilder,
                                        Dictionary<string, string> customEnvVars,
-                                       ProcessCredentials? runAs,
                                        string workingDir,
                                        string calamariDir, //RunAs might not be able to access this dir.. but we need to preserve the logs.
                                        CancellationToken cancellationToken)
@@ -34,11 +33,9 @@ public class ClaudeCodeCliRunner(ILog log)
         log.Verbose($"Claude Code command: {logFileName} {logArgs}");
 
         var runner = new ClaudeCodeProcessStartInfo();
-        var process = await runner.StartClaudeProcess(workingDir,
-            runAs,
+        var process = runner.StartClaudeProcess(workingDir,
             argsBuilder.WithDebugLogPath(debugLogPath),
-            customEnvVars,
-            cancellationToken);
+            customEnvVars);
 
         var responseBuilder = new StringBuilder();
         var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder);
@@ -112,13 +109,6 @@ public class ClaudeCodeCliRunner(ILog log)
             streamProcessor.ProcessLine(line);
         }
     }
-}
-
-public record ProcessCredentials
-{
-    public required string Username { get; init; }
-    public string? Password { get; init; }
-    public string? Domain { get; init; }
 }
 
 public record UserSkill
