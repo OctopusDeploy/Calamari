@@ -275,7 +275,6 @@ public class CommitToGitCommand : Command
                                                   log.SetOutputVariable(SpecialVariables.Action.Script.ExitCode, "0", d.Variables);
                                                   return;
                                               }
-
                                               new ExecuteScriptConvention(scriptEngine, commandLineRunner, log).Install(d);
                                           })
         ];
