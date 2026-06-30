@@ -38,6 +38,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         if (string.IsNullOrWhiteSpace(prompt))
             throw new CommandException($"Variable '{SpecialVariables.Action.Claude.Prompt}' is required but was not provided.");
 
+		// `Octopus.Action.Claude.ApiToken` was previously used during development
         var apiKey = variables.Get(SpecialVariables.Action.Claude.ApiKey) ?? variables.Get("Octopus.Action.Claude.ApiToken");
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new CommandException($"Variable '{SpecialVariables.Action.Claude.ApiKey}' is required but was not provided.");
