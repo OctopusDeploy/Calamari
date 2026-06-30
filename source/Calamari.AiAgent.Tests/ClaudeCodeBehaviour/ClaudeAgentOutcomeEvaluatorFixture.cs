@@ -77,4 +77,117 @@ public class ClaudeAgentOutcomeEvaluatorFixture
         act.Should().Throw<CommandException>()
            .Which.Message.Should().Contain("denied permission").And.Contain("Bash").And.Contain("WebFetch");
     }
+
+    [Test]
+    public void FailureSignal_WithReason_Throws_IncludingReason()
+    {
+        var result = new ResultStreamEvent
+        {
+            Subtype = "success",
+            IsError = false,
+            Result = "<octopus-task-failed>Smoke test returned HTTP 500 from /health after 3 retries.</octopus-task-failed>",
+        };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>()
+           .Which.Message.Should().Contain("step should fail").And.Contain("Smoke test returned HTTP 500");
+    }
+
+    [Test]
+    public void FailureSignal_WithMultiLineReason_Throws_PreservingReason()
+    {
+        var result = new ResultStreamEvent
+        {
+            Subtype = "success",
+            IsError = false,
+            Result = "<octopus-task-failed>\nHealth check failed:\n- /health returned 500\n- /ready timed out\n</octopus-task-failed>",
+        };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>()
+           .Which.Message.Should().Contain("/health returned 500").And.Contain("/ready timed out");
+    }
+
+    [Test]
+    public void FailureSignal_EmptyBlock_Throws_WithGenericMessage()
+    {
+        var result = new ResultStreamEvent { Subtype = "success", IsError = false, Result = "<octopus-task-failed></octopus-task-failed>" };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>().WithMessage("*step should fail*");
+    }
+
+    [Test]
+    public void FailureSignal_SelfClosing_Throws_WithGenericMessage()
+    {
+        var result = new ResultStreamEvent { Subtype = "success", IsError = false, Result = "<octopus-task-failed/>" };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>().WithMessage("*step should fail*");
+    }
+
+    [Test]
+    public void FailureSignal_WithinLargerResult_Throws()
+    {
+        var result = new ResultStreamEvent
+        {
+            Subtype = "success",
+            IsError = false,
+            Result = "I checked the deployment health.\n<octopus-task-failed>Health check is red.</octopus-task-failed>\nDone.",
+        };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>().Which.Message.Should().Contain("Health check is red");
+    }
+
+    [Test]
+    public void FailureSignal_TakesPrecedenceOverNonSuccessSubtype()
+    {
+        var result = new ResultStreamEvent
+        {
+            Subtype = "error_max_turns",
+            IsError = true,
+            Result = "<octopus-task-failed>Validation failed.</octopus-task-failed>",
+        };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().Throw<CommandException>().Which.Message.Should().Contain("Validation failed");
+    }
+
+    [Test]
+    public void UnclosedFailureSignal_DoesNotThrow()
+    {
+        // A truncated message never wrote the closing tag, so we cannot treat it as a deliberate, complete failure.
+        var result = new ResultStreamEvent
+        {
+            Subtype = "success",
+            IsError = false,
+            Result = "<octopus-task-failed>Health check is red and then the message was cut off",
+        };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().NotThrow();
+    }
+
+    [Test]
+    public void ResultWithoutFailureSignal_DoesNotThrow()
+    {
+        var result = new ResultStreamEvent
+        {
+            Subtype = "success",
+            IsError = false,
+            Result = "The deployment looks healthy. No failure conditions were met.",
+        };
+
+        Action act = () => ClaudeAgentOutcomeEvaluator.EnsureSuccessful(0, result);
+
+        act.Should().NotThrow();
+    }
 }

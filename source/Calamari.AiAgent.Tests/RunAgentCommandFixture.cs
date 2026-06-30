@@ -163,4 +163,25 @@ public class RunAgentCommandFixture
         // (path/name are base64-encoded, so assert on the message verb, not the file name).
         result.FullLog.Should().Contain("createArtifact");
     }
+
+    [Test]
+    [Category("Integration")]
+    public async Task ClaudeCode_ResultsInFailure_IfExplicitlyAsked()
+    {
+        var prompt = "I want you to analyse the results of the following set of numbers [1,2,3]. Fail this deployment if any of the numbers are greater than 2.";
+        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+                                             .WithArrange(context =>
+                                                          {
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.Prompt, prompt);
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Bash", "Read"]}""");
+                                                          })
+                                             .Execute();
+
+        result.WasSuccessful.Should().BeFalse();
+        // NewOctopusArtifact emits an Info "##octopus[createArtifact ...]" service message
+        // (path/name are base64-encoded, so assert on the message verb, not the file name).
+        result.FullLog.Should().Contain("createArtifact");
+    }
 }
