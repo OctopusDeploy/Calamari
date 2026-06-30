@@ -38,9 +38,10 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         if (string.IsNullOrWhiteSpace(prompt))
             throw new CommandException($"Variable '{SpecialVariables.Action.Claude.Prompt}' is required but was not provided.");
 
-        var apiToken = variables.Get(SpecialVariables.Action.Claude.ApiToken);
-        if (string.IsNullOrWhiteSpace(apiToken))
-            throw new CommandException($"Variable '{SpecialVariables.Action.Claude.ApiToken}' is required but was not provided.");
+		// `Octopus.Action.Claude.ApiToken` was previously used during development
+        var apiKey = variables.Get(SpecialVariables.Action.Claude.ApiKey) ?? variables.Get("Octopus.Action.Claude.ApiToken");
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new CommandException($"Variable '{SpecialVariables.Action.Claude.ApiKey}' is required but was not provided.");
 
         var argsBuilder = new ClaudeCommandArgsBuilder().WithPrompt(prompt);
 
@@ -122,7 +123,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             PassThroughEnvironmentVariables(variables),
             new Dictionary<string, string>
             {
-                ["ANTHROPIC_API_KEY"] = apiToken,
+                ["ANTHROPIC_API_KEY"] = apiKey,
                 ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "0", // If set, this stops us using auto mode
                 ["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1", // Disables the auto-updater, telemetry, error reporting, and feedback surveys
                 ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1",
