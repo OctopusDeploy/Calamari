@@ -38,7 +38,7 @@ resource "azurerm_kubernetes_cluster" "local_access_disabled" {
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${var.static_resource_prefix}-k8s-no-local"
-  kubernetes_version  = "1.32"
+  kubernetes_version  = "1.34"
 
   tags = {
     octopus-project                = "aks-static-no-local"
