@@ -23,6 +23,7 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
+    [Category(TestCategory.ExternalCloudIntegration)]
     class AzureResourceGroupActionHandlerFixture
     {
         string clientId;
