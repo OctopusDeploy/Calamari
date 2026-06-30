@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -19,6 +20,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD.Git
 {
     [TestFixture]
+    [Category(TestCategory.RequiresOpenSsl1_1OrOpenSsl3)]
     public class RepositoryWrapperTest
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -51,27 +53,22 @@ namespace Calamari.Tests.ArgoCD.Git
                                                   Arg.Any<GitBranchName>(),
                                                   Arg.Any<CancellationToken>())
                                .Returns(new PullRequest("title", 1, "url"));
-            gitVendorAgnosticPullRequestClientFactory.TryResolve(Arg.Any<IRepositoryConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
+            gitVendorAgnosticPullRequestClientFactory.TryResolve(Arg.Any<HttpsGitConnection>(), Arg.Any<ILog>(), Arg.Any<CancellationToken>()).Returns(gitVendorPullRequestClient);
             
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
-            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
+            gitConnection = new HttpsGitConnection(null, null, OriginPath, branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
 
         [TearDown]
         public void Cleanup()
         {
-            RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
+            bareOrigin.Dispose();
+            repository.Dispose();
+            fileSystem.DeleteDirectory(tempDirectory);
         }
 
         string RepositoryRootPath => Path.Combine(tempDirectory, repositoryPath);
-
-        [Test]
-        public void StagingANonExistentFileThrowsException()
-        {
-            Action act = () => repository.AddFiles(new[] { "nonexistent.txt" });
-            act.Should().Throw<CommandException>().And.Message.Should().Contain("could not find ");
-        }
 
         [Test]
         public void EmptyCommitReturnsFalse()
@@ -81,26 +78,18 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void AttemptingToAddFileStartingWithDotSlashSucceeds()
-        {
-            //This is to highlight a behaviour of libGit2Sharp which we may run into
-            string filename = "newFile.txt";
-            File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
-            repository.AddFiles(new[] { $"./{filename}" });
-        }
-
-        [Test]
         public async Task StagingARealFileSucceedsAndCanBeCommittedAndPushed()
         {
             string filename = "newFile.txt";
             string fileContents = "Lorem ipsum dolor sit amet";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
-            repository.AddFiles(new[] { filename });
+            repository.StageAllChanges();
             repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "A file has changed",
                                          branchName,
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
 
             //ensure the remote contains the file
@@ -113,17 +102,19 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             string filename = "newFile.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
-            repository.AddFiles(new[] { filename });
+            repository.StageAllChanges();
             repository.CommitChanges("Summary Message", "There is no data to comm it").Should().BeTrue();
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "There is no data to comm it",
                                          GitBranchName.CreateFromFriendlyName("arbitraryBranch1"),
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "There is no data to comm it",
                                          GitBranchName.CreateFromFriendlyName("arbitraryBranch2"),
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
         }
 
@@ -132,7 +123,7 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             string filename = "newFile.txt";
             await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), "");
-            repository.AddFiles(new[] { filename });
+            repository.StageAllChanges();
             var commitSummary = "Summary Message";
             var commitDescription = "A commit description";
             repository.CommitChanges(commitSummary, commitDescription).Should().BeTrue();
@@ -141,6 +132,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                          commitSummary,
                                          commitDescription,
                                          prBranch,
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
             await gitVendorPullRequestClient.Received(1)
                                                  .CreatePullRequest(
@@ -154,17 +146,17 @@ namespace Calamari.Tests.ArgoCD.Git
         [Test]
         public async Task WhenDisposingOfARepository_TheCheckoutDirectoryIsRemoved()
         {
-            //Arrange 
+            //Arrange
             const string filename = "newFile.txt";
             const string fileContents = "Lorem ipsum dolor sit amet";
             await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
-            
-            repository.AddFiles(new[] { filename });
+
+            repository.StageAllChanges();
             repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
-            
+
             // Act
             repository.Dispose();
-            
+
             // Assert
             fileSystem.DirectoryExists(RepositoryRootPath)
                       .Should()
@@ -177,7 +169,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin.AddFilesToBranch(branchName, ("file.yaml", ""));
             bareOrigin.ApplyTag("1.0.0", bareOrigin.Head.Tip.Sha);
 
-            gitConnection = new GitConnection(null, null, new Uri(OriginPath), GitReference.CreateFromString("1.0.0"));
+            gitConnection = new HttpsGitConnection(null, null, OriginPath, GitReference.CreateFromString("1.0.0"));
             
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticPullRequestClientFactory, new SystemClock());
             var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
@@ -194,14 +186,14 @@ namespace Calamari.Tests.ArgoCD.Git
             const string filename = "ourFile.txt";
             const string fileContents = "our content";
             await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
-            repository.AddFiles([filename]);
+            repository.StageAllChanges();
             repository.CommitChanges("Our commit", "").Should().BeTrue();
 
             // Simulate a concurrent push to origin on a different file (causes non-fast-forward failure)
             bareOrigin.AddFilesToBranch(branchName, ("concurrentFile.txt", "concurrent content"));
 
             // Act: first push attempt will fail, retry should fetch+merge and succeed
-            await repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
+            await repository.PushChanges(false, "Our commit", "", branchName, GitCommitParameters.DefaultPushRetryAttempts, CancellationToken.None);
 
             // Assert: origin has our file
             bareOrigin.ReadFileFromBranch(branchName, filename).Should().Be(fileContents);
@@ -218,35 +210,57 @@ namespace Calamari.Tests.ArgoCD.Git
             // Arrange: commit a change to a file in our clone
             const string conflictFile = "conflict.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, conflictFile), "our content");
-            repository.AddFiles(new[] { conflictFile });
+            repository.StageAllChanges();
             repository.CommitChanges("Our commit", "").Should().BeTrue();
 
             // Simulate a concurrent conflicting change to the same file in origin
             bareOrigin.AddFilesToBranch(branchName, (conflictFile, "their content"));
 
             // Act & Assert: push fails, FetchAndMerge detects conflict and throws
-            Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
+            Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, GitCommitParameters.DefaultPushRetryAttempts, CancellationToken.None);
             await act.Should()
                      .ThrowAsync<CommandException>()
                      .WithMessage("*Rebase conflict*");
         }
 
         [Test]
-        public async Task CanPushWithPathSeparators()
+        public async Task WhenRetriesDisabled_PushFailsImmediatelyWithoutFetchAndRebase()
+        {
+            // Arrange: commit a file in our clone
+            const string filename = "ourFile.txt";
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), "our content");
+            repository.StageAllChanges();
+            repository.CommitChanges("Our commit", "").Should().BeTrue();
+
+            // Simulate a concurrent push to origin (causes non-fast-forward failure)
+            bareOrigin.AddFilesToBranch(branchName, ("concurrentFile.txt", "concurrent content"));
+
+            // Act & Assert: with retries disabled the first failure is final - no fetch/rebase is attempted
+            Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, maxRetryAttempts: 0, CancellationToken.None);
+            await act.Should().ThrowAsync<CommandException>();
+
+            log.MessagesVerboseFormatted
+               .Should()
+               .NotContain(m => m.Contains("fetching and rebasing before retrying"));
+        }
+
+        [Test]
+        public async Task CanPushWithSubdirectoryFiles()
         {
             var subDirName = "subDir";
             string filename = Path.Combine(subDirName, "newFile.txt");
             string fileContents = "Lorem ipsum dolor sit amet";
-            var subDirPath = Path.Combine(RepositoryRootPath, subDirName); 
+            var subDirPath = Path.Combine(RepositoryRootPath, subDirName);
             Directory.CreateDirectory(subDirPath);
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
-            
-            repository.AddFiles(new[] { filename });
+
+            repository.StageAllChanges();
             repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "A file has changed",
                                          branchName,
+                                         GitCommitParameters.DefaultPushRetryAttempts,
                                          CancellationToken.None);
 
             //ensure the remote contains the file

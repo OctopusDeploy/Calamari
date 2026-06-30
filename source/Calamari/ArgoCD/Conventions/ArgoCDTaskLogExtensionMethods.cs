@@ -1,8 +1,8 @@
 #nullable enable
 using System;
-using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions
 {

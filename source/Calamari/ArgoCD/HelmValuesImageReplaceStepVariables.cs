@@ -42,12 +42,12 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
             {
                 if (valueToUpdate == newImageTag.ContainerReference.Tag)
                 {
-                    alreadyUpToDate.Add(newImageTag.ContainerReference.Tag);
+                    alreadyUpToDate.Add(newImageTag.ContainerReference.FriendlyName());
                 }
                 else
                 {
                     updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newImageTag.ContainerReference.Tag);
-                    imagesUpdated.Add(newImageTag.ContainerReference.Tag);
+                    imagesUpdated.Add(newImageTag.ContainerReference.FriendlyName());
                 }
             }
             else
@@ -59,8 +59,8 @@ public class HelmValuesImageReplaceStepVariables : IContainerImageReplacer
                     if (!comparison.TagMatch)
                     {
                         var newValue = cir.WithTag(newImageTag.ContainerReference.Tag);
-                        updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newValue);
-                        imagesUpdated.Add(newValue);
+                        updatedYaml = HelmValuesEditor.UpdateNodeValue(updatedYaml, helmReference, newValue.FriendlyName());
+                        imagesUpdated.Add(newValue.FriendlyName());
                     }
                     else
                     {

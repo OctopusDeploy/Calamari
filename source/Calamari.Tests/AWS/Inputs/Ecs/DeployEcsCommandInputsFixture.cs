@@ -1,0 +1,705 @@
+using System;
+using System.Linq;
+using Calamari.Aws.Deployment;
+using Calamari.Aws.Inputs.Ecs;
+using Calamari.Aws.Integration.Ecs;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using FluentAssertions;
+using FluentAssertions.Execution;
+using NSubstitute;
+using NUnit.Framework;
+using Octopus.Calamari.Contracts.Aws.Ecs;
+
+namespace Calamari.Tests.AWS.Inputs.Ecs;
+
+[TestFixture]
+public class DeployEcsCommandInputsFixture
+{
+    
+    readonly ILog fakeLog = Substitute.For<ILog>();
+    readonly IEcsStackNameGenerator fakeStackNameGenerator = Substitute.For<IEcsStackNameGenerator>();
+    readonly IEcsImageNameResolver fakeImageNameResolver = Substitute.For<IEcsImageNameResolver>();
+    
+    [Test]
+    public void Validate_WithEmptyVariableList_ReturnsFalseWithAllRequiredVariables()
+    {
+        var variables = new CalamariVariables();
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.Validate().IsValid;
+        
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public void Validate_WithMissingRequiredVariables_ReturnsFalse()
+    {
+        var variables = new CalamariVariables();
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.Validate().IsValid;
+        
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public void Validate_WithAllExpectedVariables_ReturnsTrue()
+    {
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.Validate().IsValid;
+        
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ClusterName_ReturnsEvaluatedClusterName(bool useExpression)
+    {
+        const string expectedClusterName = "MyTestCluster";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.ClusterName, expectedClusterName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var clusterName = inputs.ClusterName;
+        
+        clusterName.Should().Be(expectedClusterName);
+    }
+
+    [Test]
+    public void CfStackName_WhenNotInVariables_ReturnsValue()
+    {
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var stackName = inputs.CfStackName;
+        
+        stackName.Should().NotBeNullOrEmpty();
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void CfStackName_WhenInVariables_ReturnsValue(bool useExpression)
+    {
+        const string expectedStackName = "MyTestStack";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.StackName, expectedStackName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var stackName = inputs.CfStackName;
+        
+        stackName.Should().Be(expectedStackName);
+    }
+
+    [Test]
+    public void CfStackName_WhenEmptyString_ReturnGeneratedValue()
+    {
+        const string expectedStackName = "MyGeneratedStack";
+        fakeStackNameGenerator.Generate(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(expectedStackName);
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.StackName, "", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var stackName = inputs.CfStackName;
+        
+        stackName.Should().Be(expectedStackName);
+    }
+
+    [Test]
+    public void Environment_ReturnsDeploymentEnvironmentId()
+    {
+        const string expectedEnvironmentId = "TestEnvironment-1";
+        var variables = SetupVariable(DeploymentEnvironment.Id, expectedEnvironmentId, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var stackName = inputs.Environment;
+        
+        stackName.Should().Be(expectedEnvironmentId);
+    }
+
+    [Test]
+    public void Tenant_WithNoTenantVariable_ReturnsEmptyString()
+    {
+        var variables = MinimumRequiredVariableSet();
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var stackName = inputs.Tenant;
+        
+        stackName.Should().BeEmpty();
+    }
+
+    [Test]
+    public void Tenant_WithTenantVariable_ReturnsTenantId()
+    {
+        const string expectedTenantId = "TestTenant-1";
+        var variables = SetupVariable(DeploymentVariables.Tenant.Id, expectedTenantId, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var stackName = inputs.Tenant;
+        
+        stackName.Should().Be(expectedTenantId);
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ServiceName_ReturnsServiceTaskNameValueWithPrefix(bool useExpression)
+    {
+        const string expectedServiceTaskName = "MyNewEcsService";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var serviceName = inputs.ServiceName;
+        
+        serviceName.Should().Be("ServicemyNewEcsService");
+    }
+    
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void TaskName_ReturnsServiceTaskNameValueWithPrefix(bool useExpression)
+    {
+        const string expectedServiceTaskName = "MyNewEcsServiceTask";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var taskName = inputs.TaskName;
+
+        taskName.Should().Be("TaskDefinitionmyNewEcsServiceTask");
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void LogGroupName_ReturnsServiceTaskNameValueWithPrefix(bool useExpression)
+    {
+        const string expectedServiceTaskName = "MyNewEcsServiceTask";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var logGroupName = inputs.LogGroupName;
+
+        logGroupName.Should().Be("AwsLogGroupmyNewEcsServiceTask");
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Cpu_IsReturnedAsAString(bool useExpression)
+    {
+        const string cpuInput = "0.5";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Cpu, cpuInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var cpu = inputs.Cpu;
+
+        cpu.Should().Be("0.5");
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Memory_IsReturnedAsAString(bool useExpression)
+    {
+        const string memoryInput = "0.5";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Memory, memoryInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var memory = inputs.Memory;
+
+        memory.Should().Be("0.5");
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void CpuArchitecture_IsReturnedAsString(bool useExpression)
+    {
+        const string cpuArchitecture = "ARM64";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, cpuArchitecture, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var architecture = inputs.CpuArchitecture;
+
+        architecture.Should().Be("ARM64");
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void DesiredCount_IsReturnedAsADouble(bool useExpression)
+    {
+        const string desiredCountInput = "7";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.DesiredCount, desiredCountInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var desiredCount = inputs.DesiredCount;
+
+        desiredCount.Should().Be(7);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void MinimumHealthyPercentage_IsReturnedAsADouble(bool useExpression)
+    {
+        const string minHealthInput = "50";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, minHealthInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.MinimumHealthyPercentage;
+
+        result.Should().Be(50);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void MaximumHealthyPercentage_IsReturnedAsADouble(bool useExpression)
+    {
+        const string maxHealthInput = "150";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, maxHealthInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.MaximumHealthyPercentage;
+
+        result.Should().Be(150);
+    }
+
+    [Test]
+    public void WaitOption_IsDeserialisedAndReturned()
+    {
+        const string waitOptionInput = """{ "type": "waitUntilCompleted" }""";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, waitOptionInput, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.WaitOption;
+        
+        result.Type.Should().Be(WaitType.WaitUntilCompleted);
+        result.TimeoutMinutes.Should().BeNull();
+    }
+
+    [Test]
+    public void ShouldWaitForDeploymentCompletion_WhenDontWait_ReturnsFalse()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, """{ "type": "dontWait" }""", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        inputs.ShouldWaitForDeploymentCompletion.Should().BeFalse();
+    }
+
+    [Test]
+    [TestCase("waitUntilCompleted")]
+    [TestCase("waitWithTimeout")]
+    public void ShouldWaitForDeploymentCompletion_WhenWaiting_ReturnsTrue(string waitType)
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.WaitOption, $$"""{ "type": "{{waitType}}", "timeoutMinutes": "30" }""", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        inputs.ShouldWaitForDeploymentCompletion.Should().BeTrue();
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void AutoAssignPublicIp_IsReturnedAsAString(bool useExpression)
+    {
+        const string enablePublicIpInput = "True";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp, enablePublicIpInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.AutoAssignPublicIp;
+
+        result.Should().Be("ENABLED");
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void EnableEcsManagedTags_IsReturnedAsABool(bool useExpression)
+    {
+        const string enableEcsManagedTagsInput = "True";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags, enableEcsManagedTagsInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var result = inputs.EnableEcsManagedTags;
+
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void NetworkSecurityGroupIds_IsReturnedAsAStringArray(bool useExpression)
+    {
+        const string securityGroupsInput = """"
+                                           ["sg-0123abcd456789fgh", "sg-abcd1234abcdef567"]
+                                           """";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds, securityGroupsInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var result = inputs.NetworkSecurityGroupIds;
+        
+        result.Length.Should().Be(2);
+        result.Should().Contain("sg-0123abcd456789fgh");
+        result.Should().Contain("sg-abcd1234abcdef567");
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void SubnetIds_IsReturnedAsAStringArray(bool useExpression)
+    {
+        const string subnetsInput = """"
+                                          ["subnet-0123abcd456789fgh", "subnet-abcd1234abcdef567", "subnet-xxxxxxxxxxxxxxxx"]
+                                          """";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.SubnetIds, subnetsInput, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var result = inputs.SubnetIDs;
+        
+        result.Length.Should().Be(3);
+        result.Should().Contain("subnet-0123abcd456789fgh");
+        result.Should().Contain("subnet-abcd1234abcdef567");
+        result.Should().Contain("subnet-xxxxxxxxxxxxxxxx");
+    }
+
+    [Test]
+    public void TaskRole_WithValueUnspecified_ReturnsEmptyString()
+    {
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var roleId = inputs.TaskRole;
+
+        roleId.Should().BeEmpty();
+    }
+    
+    [Test]
+    public void TaskExecutionRole_WithValueUnspecified_ReturnsEmptyString()
+    {
+        var inputs = new DeployEcsCommandInputs(MinimumRequiredVariableSet(), fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var roleId = inputs.TaskExecutionRole;
+
+        roleId.Should().BeEmpty();
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void TaskRole_ReturnsSuppliedValue(bool useExpression)
+    {
+        var taskRoleArn = "arn:aws:iam::123456780912:role/ecsTaskRole";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.TaskRole, taskRoleArn, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var roleId = inputs.TaskRole;
+
+        roleId.Should().Be(taskRoleArn);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void TaskExecutionRole_ReturnsSuppliedValue(bool useExpression)
+    {
+        // { AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, "arn:aws:iam::123456780912:role/ecsTaskRole"}
+        var taskExecRoleArn = "arn:aws:iam::123456780912:role/ecsExecTaskRole";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, taskExecRoleArn, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var roleId = inputs.TaskExecutionRole;
+
+        roleId.Should().Be(taskExecRoleArn);
+    }
+    
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void FallbackTaskExecutionRoleName_ReturnsServiceTaskNameValueWithPrefix(bool useExpression)
+    {
+        const string serviceTaskName = "MyNewEcsServiceTask";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, serviceTaskName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var taskExecutionRoleName = inputs.FallbackTaskExecutionRoleName;
+        
+        taskExecutionRoleName.Should().Be("TaskExecutionRolemyNewEcsServiceTask");
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ServiceTaskName_ReturnsRawNonPrefixedNameValue(bool useExpression)
+    {
+        const string expectedServiceTaskName = "ServiceTaskName";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, expectedServiceTaskName, useExpression);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var serviceTaskName = inputs.ServiceTaskName;
+        
+        serviceTaskName.Should().Be(expectedServiceTaskName);
+    }
+
+    [Test]
+    public void Containers_ReturnsListOfMappedContainers()
+    {
+
+        const string containerJson = """
+                                     [{"containerName":"sample-container","containerImageReference":{"referenceId":"547c5091-b891-4bb2-a582-78489bd9b18c","imageName":"#{Octopus.Action.Package[nginx].Image}","feedId":"Feeds-1001"},"repositoryAuthentication":{"type":"default"},"containerPortMappings":[{"containerPort":80,"protocol":"tcp"}],"essential":"True","environmentFiles":[],"environmentVariables":[],"networkSettings":{"disableNetworking":false,"dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"False","mountPoints":[],"volumeFrom":[]},"containerLogging":{"type":"manual","logDriver":"none","logOptions":[]},"firelensConfiguration":{"type":"disabled"},"dockerLabels":[],"healthCheck":{"command":[]},"dependencies":[],"ulimits":[]}]
+                                     """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Containers, containerJson, false);
+        variables["Octopus.Action.Package[nginx].Image"] = "docker.io/nginx:1.29.1";
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+        
+        var containers = inputs.Containers;
+        containers.Length.Should().Be(1);
+
+        using (new AssertionScope())
+        {
+            var container = containers[0];
+            container.ContainerName.Should().Be("sample-container");
+            container.ContainerImageReference.ImageName.Should().Be("docker.io/nginx:1.29.1");
+            container.ContainerPortMappings[0].ContainerPort.Should().Be("80");
+            container.ContainerPortMappings[0].Protocol.Should().Be(PortProtocol.Tcp);
+            container.Essential.Should().Be(true.ToString());
+
+        }
+
+    }
+
+    [Test]
+    public void Tags_WithSingleTag_ReturnsDeserialisedList()
+    {
+        const string tagsJson = """[{"key":"Environment","value":"Test"}]""";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, tagsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var tags = inputs.Tags;
+
+        tags.Should().HaveCount(1);
+        tags[0].Key.Should().Be("Environment");
+        tags[0].Value.Should().Be("Test");
+    }
+
+    [Test]
+    public void Tags_WithMultipleTags_PreservesAllEntries()
+    {
+        const string tagsJson = """
+                                [
+                                    {"key":"Environment","value":"Production"},
+                                    {"key":"Owner","value":"team-a"},
+                                    {"key":"CostCenter","value":"1234"}
+                                ]
+                                """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, tagsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var tags = inputs.Tags;
+
+        tags.Should().HaveCount(3);
+        tags.Select(t => t.Key).Should().BeEquivalentTo("Environment", "Owner", "CostCenter");
+        tags.Single(t => t.Key == "Environment").Value.Should().Be("Production");
+        tags.Single(t => t.Key == "Owner").Value.Should().Be("team-a");
+        tags.Single(t => t.Key == "CostCenter").Value.Should().Be("1234");
+    }
+
+    [Test]
+    public void Tags_WithEmptyArray_ReturnsEmptyList()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Tags, "[]", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var tags = inputs.Tags;
+
+        tags.Should().NotBeNull();
+        tags.Should().BeEmpty();
+    }
+
+    [Test]
+    public void LoadBalancerMappings_WithSingleMapping_ReturnsDeserialisedArray()
+    {
+        const string mappingsJson = """
+                                    [
+                                        {
+                                            "containerName":"web",
+                                            "containerPort":"80",
+                                            "targetGroupArn":"arn:aws:elasticloadbalancing:us-east-1:123:targetgroup/web/abc"
+                                        }
+                                    ]
+                                    """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, mappingsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var mappings = inputs.LoadBalancerMappings;
+
+        mappings.Should().HaveCount(1);
+        mappings[0].ContainerName.Should().Be("web");
+        mappings[0].ContainerPort.Should().Be("80");
+        mappings[0].TargetGroupArn.Should().Be("arn:aws:elasticloadbalancing:us-east-1:123:targetgroup/web/abc");
+    }
+
+    [Test]
+    public void LoadBalancerMappings_WithMultipleMappings_PreservesAllEntries()
+    {
+        const string mappingsJson = """
+                                    [
+                                        {"containerName":"web","containerPort":"80","targetGroupArn":"arn:web"},
+                                        {"containerName":"api","containerPort":"8080","targetGroupArn":"arn:api"}
+                                    ]
+                                    """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, mappingsJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var mappings = inputs.LoadBalancerMappings;
+
+        mappings.Should().HaveCount(2);
+        mappings.Select(m => m.ContainerName).Should().BeEquivalentTo("web", "api");
+        mappings.Single(m => m.ContainerName == "web").ContainerPort.Should().Be("80");
+        mappings.Single(m => m.ContainerName == "api").TargetGroupArn.Should().Be("arn:api");
+    }
+
+    [Test]
+    public void LoadBalancerMappings_WithEmptyArray_ReturnsEmpty()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, "[]", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var mappings = inputs.LoadBalancerMappings;
+
+        mappings.Should().NotBeNull();
+        mappings.Should().BeEmpty();
+    }
+
+    [Test]
+    public void Volumes_WithSingleEfsVolume_ReturnsDeserialisedArray()
+    {
+        const string volumesJson = """
+                                   [
+                                       {
+                                           "type":"efs",
+                                           "name":"shared-data",
+                                           "fileSystemId":"fs-0123abcd",
+                                           "accessPointId":"fsap-0123abcd",
+                                           "rootDirectory":"/data",
+                                           "encryptionInTransit":"true",
+                                           "efsIamAuthorization":"enabled"
+                                       }
+                                   ]
+                                   """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().HaveCount(1);
+        volumes[0].Type.Should().Be(VolumeType.Efs);
+        volumes[0].Name.Should().Be("shared-data");
+        volumes[0].FileSystemId.Should().Be("fs-0123abcd");
+        volumes[0].AccessPointId.Should().Be("fsap-0123abcd");
+        volumes[0].RootDirectory.Should().Be("/data");
+        volumes[0].EncryptionInTransit.Should().Be("true");
+        volumes[0].EfsIamAuthorization.Should().Be("enabled");
+    }
+
+    [Test]
+    public void Volumes_WithBindVolume_DeserialisesType()
+    {
+        const string volumesJson = """[{"type":"bind","name":"scratch"}]""";
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().HaveCount(1);
+        volumes[0].Type.Should().Be(VolumeType.Bind);
+        volumes[0].Name.Should().Be("scratch");
+        volumes[0].FileSystemId.Should().BeNull();
+        volumes[0].AccessPointId.Should().BeNull();
+        volumes[0].RootDirectory.Should().BeNull();
+    }
+
+    [Test]
+    public void Volumes_WithMultipleVolumes_PreservesAllEntries()
+    {
+        const string volumesJson = """
+                                   [
+                                       {"type":"bind","name":"v1"},
+                                       {"type":"efs","name":"v2","fileSystemId":"fs-2"},
+                                       {"type":"bind","name":"v3"}
+                                   ]
+                                   """;
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, volumesJson, false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().HaveCount(3);
+        volumes.Select(v => v.Name).Should().BeEquivalentTo("v1", "v2", "v3");
+        volumes.Single(v => v.Name == "v2").FileSystemId.Should().Be("fs-2");
+    }
+
+    [Test]
+    public void Volumes_WithEmptyArray_ReturnsEmpty()
+    {
+        var variables = SetupVariable(AwsSpecialVariables.Ecs.Deploy.Volumes, "[]", false);
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeImageNameResolver, fakeLog);
+
+        var volumes = inputs.Volumes;
+
+        volumes.Should().NotBeNull();
+        volumes.Should().BeEmpty();
+    }
+
+    // Test Helpers
+    static CalamariVariables MinimumRequiredVariableSet()
+    {
+        return new CalamariVariables
+        {
+            { AwsSpecialVariables.Ecs.ClusterName, "MyCluster" },
+            { DeploymentEnvironment.Id, "Environment-1"},
+            { AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, "TestEcsTask"},
+            { AwsSpecialVariables.Ecs.Deploy.Cpu, "2"},
+            { AwsSpecialVariables.Ecs.Deploy.Memory, "1"},
+            { AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, "X86_64"},
+            { AwsSpecialVariables.Ecs.Deploy.DesiredCount, "1"},
+            { AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, "100"},
+            { AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, "200"},
+            { AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp, "False"},
+            { AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags, "False"},
+            { AwsSpecialVariables.Ecs.WaitOption, """{ "type": "waitWithTimeout", "timeout": 30 }"""},
+            { AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds, """"
+                                                               ["sg-0d5e06a4bde84dabc"],
+                                                               """"},
+            { AwsSpecialVariables.Ecs.Deploy.SubnetIds, """
+                                                        ["subnet-0650cd8a2119e8abc"]
+                                                        """},
+            
+            {AwsSpecialVariables.Ecs.Deploy.Containers, """[{"containerName":"sample-container","containerImageReference":{"referenceId":"547c5091-b891-4bb2-a582-78489bd9b18c","imageName":"#{Octopus.Action.Package[nginx].Image}","feedId":"Feeds-1001"},"repositoryAuthentication":{"type":"default"},"containerPortMappings":[{"containerPort":80,"protocol":"tcp"}],"essential":"True","environmentFiles":[],"environmentVariables":[],"networkSettings":{"disableNetworking":false,"dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"False","mountPoints":[],"volumeFrom":[]},"containerLogging":{"type":"manual","logDriver":"none","logOptions":[]},"firelensConfiguration":{"type":"disabled"},"dockerLabels":[],"healthCheck":{"command":[]},"dependencies":[],"ulimits":[]}]"""}
+
+
+            
+        };
+    }
+    
+    static CalamariVariables SetupVariable(string key, string value, bool useExpression)
+    {
+        var minimumVariables = MinimumRequiredVariableSet();
+        
+        if (useExpression)
+        {
+            const string boundPropertyKey = "BoundPropertyKey";
+            const string boundPropertyExpression = $"#{{{boundPropertyKey}}}";
+
+            minimumVariables[key] = boundPropertyExpression;
+            minimumVariables[boundPropertyKey] = value;
+            
+        }
+        else
+        {
+            minimumVariables[key] = value;
+        }
+
+        return minimumVariables;
+    }
+}

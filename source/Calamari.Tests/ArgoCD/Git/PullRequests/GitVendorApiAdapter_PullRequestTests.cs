@@ -9,6 +9,7 @@ using Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket;
 using Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub;
 using Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using LibGit2Sharp;
 using LibGit2Sharp.Handlers;
@@ -22,6 +23,7 @@ using Repository = LibGit2Sharp.Repository;
 namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
 {
     [TestFixture]
+    [Category(TestCategory.RequiresOpenSsl1_1OrOpenSsl3)]
     public class GitHubPullRequestClientTests
     {
         [Test]
@@ -97,12 +99,12 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   });
         }
 
-        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<IRepositoryConnection, IGitVendorPullRequestClient> createVendorApiAdapter)
+        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<HttpsGitConnection, IGitVendorPullRequestClient> createVendorApiAdapter)
         {
-            
             using var temporaryFolder = TemporaryDirectory.Create();
-            
+
             CredentialsHandler credentialsHandler = (url, usernameFromUrl, types) => new UsernamePasswordCredentials { Username = cloneUsername, Password = clonePassword};
+            LibGit2SharpTransportRegistration.EnsureRegistered();
             var repositoryPath =  Repository.Clone(repositoryUrl, temporaryFolder.DirectoryPath, new CloneOptions()
             {
                 FetchOptions =
@@ -118,8 +120,8 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
             repository.Branches.Update(newBranch, branch => branch.Remote = remote.Name, branch => branch.UpstreamBranch = newBranch.CanonicalName);
             repository.Network.Push(newBranch, new PushOptions() { CredentialsProvider = credentialsHandler });
 
-            var conn = Substitute.For<IRepositoryConnection>();
-            conn.Url.Returns(new Uri(repositoryUrl));
+            var conn = Substitute.For<HttpsGitConnection>();
+            conn.Url.Returns(repositoryUrl);
             conn.Username.Returns(cloneUsername);
             conn.Password.Returns(clonePassword);
             try
@@ -131,7 +133,8 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                                                      new GitBranchName(defaultBranch),
                                                                      CancellationToken.None);
                 pullRequest.Number.Should().BeGreaterThan(0);
-            }finally
+            }
+            finally
             {
                 // Attempt to Delete Branch on Remote
                 var pushRefSpec = $":{newBranch.CanonicalName}";
@@ -139,8 +142,6 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                 {
                     CredentialsProvider = credentialsHandler,
                 });
-                
-                RepositoryHelpers.DeleteRepositoryDirectory(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), temporaryFolder.DirectoryPath);
             }
         }
     }

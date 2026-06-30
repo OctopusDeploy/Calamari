@@ -68,7 +68,7 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.AwsElasticContainerRegistry:
                 case FeedType.AzureContainerRegistry:
                 case FeedType.GoogleContainerRegistry:
-                    downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log, new FeedLoginDetailsProviderFactory());
+                    downloader = new DockerImagePackageDownloader(engine, fileSystem, variables, log, new FeedLoginDetailsProviderFactory());
                     break;
                 case FeedType.S3:
                     downloader = new S3PackageDownloader(variables, log, fileSystem);
@@ -81,6 +81,9 @@ namespace Calamari.Integration.Packages.Download
                     break;
                 case FeedType.Npm:
                     downloader = new NpmPackageDownloader(log, fileSystem);
+                    break;
+                case FeedType.PyPi:
+                    downloader = new PyPiPackageDownloader(log, fileSystem);
                     break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");

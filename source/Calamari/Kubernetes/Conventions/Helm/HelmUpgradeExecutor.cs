@@ -9,6 +9,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Helm;
 using Calamari.Kubernetes.Integration;
 using Calamari.Util;
@@ -22,20 +23,27 @@ namespace Calamari.Kubernetes.Conventions.Helm
         readonly ICalamariFileSystem fileSystem;
         readonly HelmTemplateValueSourcesParser templateValueSourcesParser;
         readonly HelmCli helmCli;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
+        readonly IManifestReporter manifestReporter;
 
         public HelmUpgradeExecutor(ILog log,
                                    ICalamariFileSystem fileSystem,
                                    HelmTemplateValueSourcesParser templateValueSourcesParser,
-                                   HelmCli helmCli)
+                                   HelmCli helmCli,
+                                   IKubernetesManifestNamespaceResolver namespaceResolver,
+                                   IManifestReporter manifestReporter = null)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.templateValueSourcesParser = templateValueSourcesParser;
             this.helmCli = helmCli;
+            this.namespaceResolver = namespaceResolver;
+            this.manifestReporter = manifestReporter;
         }
 
         public void ExecuteHelmUpgrade(RunningDeployment deployment,
                                        string releaseName,
+                                       int newRevisionNumber,
                                        CancellationTokenSource installCompletedCts,
                                        CancellationTokenSource installErrorCts)
         {
@@ -57,7 +65,39 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
             }
 
+            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
+            {
+                ReportManifestAndSetAppliedResources(deployment, releaseName, newRevisionNumber);
+            }
+
             installCompletedCts.Cancel();
+        }
+
+        void ReportManifestAndSetAppliedResources(RunningDeployment deployment, string releaseName, int revisionNumber)
+        {
+            string manifest;
+            try
+            {
+                manifest = helmCli.GetManifest(releaseName, revisionNumber);
+            }
+            catch (Exception ex)
+            {
+                log.Warn($"Failed to get manifest for {releaseName} revision {revisionNumber}: {ex.Message}");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(manifest))
+            {
+                log.Verbose($"Helm manifest for {releaseName} revision {revisionNumber} is empty, skipping applied resources output variable.");
+                return;
+            }
+
+            //Manifest reporting normally happens inside HelmManifestAndStatusReporter, which is
+            //skipped on this path; emit it inline so the UI still gets the applied manifest.
+            manifestReporter?.ReportManifestApplied(manifest);
+
+            var resources = ManifestParser.GetResourcesFromManifest(manifest, namespaceResolver, deployment.Variables, log);
+            AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
         }
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment)
@@ -71,8 +111,10 @@ namespace Calamari.Kubernetes.Conventions.Helm
             SetValuesParameters(deployment, args);
             var hasAdditionalArgs = SetAdditionalArguments(deployment, args);
 
-            //Adjust args based on KOS
-            if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+            //Adjust args based on KOS. When ArgoRollouts support is enabled, status checking moves
+            //to a separate verification action, so we don't force --wait on the deploy step.
+            if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck)
+                && !OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
             {
                 AddKOSArgs(deployment.Variables, hasAdditionalArgs, args);
             }

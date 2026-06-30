@@ -67,7 +67,7 @@ namespace Calamari.Tests.ArgoCD
 
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
         }
 
@@ -100,7 +100,7 @@ namespace Calamari.Tests.ArgoCD
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
             result.UpdatedContents.Should().Contain("nginx:1.25");
             result.UpdatedContents.Should().Contain("my-registry.com/busybox:stable");
         }
@@ -166,7 +166,7 @@ namespace Calamari.Tests.ArgoCD
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -197,7 +197,7 @@ namespace Calamari.Tests.ArgoCD
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
+            result.UpdatedImageReferences.Should().Contain("my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -279,6 +279,34 @@ namespace Calamari.Tests.ArgoCD
 
             result.UpdatedContents.Should().Be(inputJson);
             result.UpdatedImageReferences.Should().BeEmpty();
+        }
+
+        [Theory]
+        [TestCase("docker.io/nginx:1.27.1", "docker.io/nginx:1.28.0")]
+        [TestCase("nginx:1.27.1", "nginx:1.28.0")]
+        [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1",
+                  "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2")]
+        public void ReturnsSameImageBaseAsInYaml(string originalImage, string expectedImage)
+        {
+            var inputJson = $@"[
+  {{
+    ""op"": ""replace"",
+    ""path"": ""/spec/template/spec/containers/0/image"",
+    ""value"": ""{originalImage}""
+  }}
+]";
+
+            var imageReplacer = new JsonPatchImageReplacer(inputJson, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var update = new List<ContainerImageReferenceAndHelmReference>
+            {
+                new(ContainerImageReference.FromReferenceString(expectedImage, ArgoCDConstants.DefaultContainerRegistry))
+            };
+
+            var result = imageReplacer.UpdateImages(update);
+
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be(expectedImage);
+            result.UpdatedContents.Should().Contain(expectedImage);
         }
 
         [Test]

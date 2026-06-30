@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Commands;
 using Calamari.Commands.Support;
@@ -94,13 +95,13 @@ namespace Calamari.ArgoCD.Commands
                                                                       PackageDirectoryName,
                                                                       log,
                                                                       configFactory,
-                                                                      new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
+                                                                      new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword, new IGitCredentialDtoJsonConverter()),
                                                                       new ArgoCdApplicationManifestParser(),
                                                                       argoCDManifestsFileMatcher,
                                                                       gitVendorPullRequestClientResolver,
                                                                       clock,
                                                                       new ArgoCDFilesUpdatedReporter(log),
-                                                                      new ArgoCDOutputVariablesWriter(log, variables)),
+                                                                      new ArgoCDOutputVariablesWriter(log)),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

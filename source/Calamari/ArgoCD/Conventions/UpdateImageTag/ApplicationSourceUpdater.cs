@@ -1,11 +1,10 @@
 using System;
-using System.Collections.Generic;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
@@ -59,13 +58,10 @@ public class ApplicationSourceUpdater
 
         var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
 
-        if (sourceUpdateResult.PushResult is not null)
-        {
-            outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                                                        applicationFromYaml.Metadata.Name,
-                                                        sourceWithMetadata.Index,
-                                                        sourceUpdateResult.PushResult);
-        }
+        outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
+            NamespacedApplicationName.Create(applicationFromYaml.Metadata.Name, applicationFromYaml.Metadata.Namespace),
+                                                            sourceWithMetadata.Index,
+                                                            sourceUpdateResult);
 
         return sourceUpdateResult;
     }

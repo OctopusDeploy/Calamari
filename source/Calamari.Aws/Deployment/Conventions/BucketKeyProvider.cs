@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
 using Calamari.Aws.Integration.S3;
 using Calamari.Common.Features.Packages;
 using Octopus.CoreUtilities.Extensions;
@@ -46,20 +45,18 @@ namespace Calamari.Aws.Deployment.Conventions
         string CalculateContentHash(string packageFilePath)
         {
             var packageContent = File.ReadAllBytes(packageFilePath);
-            using (SHA256 sha256Hash = SHA256.Create())
+            using var sha256Hash = SHA256.Create();
+            var computedHashByte = sha256Hash.ComputeHash(packageContent);
+            var computedHash = new StringBuilder();
+            foreach (var c in computedHashByte)
             {
-                var computedHashByte = sha256Hash.ComputeHash(packageContent);
-                var computedHash = new StringBuilder();
-                foreach (var c in computedHashByte)
-                {
-                    computedHash.Append(c.ToString("X2"));
-                }
-
-                return computedHash.ToString();
+                computedHash.Append(c.ToString("X2"));
             }
+
+            return computedHash.ToString();
         }
 
-        string SubstitutePackageHashVariable(string input, string contentHash)
+        static string SubstitutePackageHashVariable(string input, string contentHash)
         {
             return input.Replace($"#{{Octopus.Action.Package.PackageContentHash}}", contentHash);
         }

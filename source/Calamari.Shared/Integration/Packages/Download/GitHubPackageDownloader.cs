@@ -127,7 +127,7 @@ namespace Calamari.Integration.Packages.Download
             JArray? req = null;
             while (req == null || req.Count != 0 && req.Count < 1000)
             {
-                var uri = feedUri.AbsoluteUri + $"repos/{Uri.EscapeUriString(owner)}/{Uri.EscapeUriString(repository)}/tags?page={++page}&per_page=1000";
+                var uri = feedUri.AbsoluteUri + $"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repository)}/tags?page={++page}&per_page=1000";
                 req = PerformRequest(authorizationToken, uri) as JArray;
                 if (req == null)
                     break;

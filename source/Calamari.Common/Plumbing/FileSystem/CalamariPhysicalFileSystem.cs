@@ -129,7 +129,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public void DeleteDirectory(string path)
         {
-            Directory.Delete(path, true);
+            DeleteDirectory(path, FailureOptions.ThrowOnFailure);
         }
 
         public void DeleteDirectory(string path, FailureOptions options)
@@ -144,9 +144,18 @@ namespace Calamari.Common.Plumbing.FileSystem
                     if (Directory.Exists(path))
                     {
                         var dir = new DirectoryInfo(path);
+                        
                         //we remove any readonly attributes
                         dir.Attributes &= ~FileAttributes.ReadOnly;
+                        
+                        //Some files might be ReadOnly, clean up properly by removing the ReadOnly attribute
+                        foreach (var file in EnumerateFilesRecursively(path))
+                        {
+                            RemoveReadOnlyAttributeFromFile(file);
+                        }
+                        
                         dir.Delete(true);
+                        
                         EnsureDirectoryDeleted(path, options);
                     }
 
@@ -291,7 +300,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         {
             var fileInfo = new FileInfo(filePath);
             
-            //I'm not sure of any side affects or IO of doing this when not needed, so just doing if required
+            //I'm not sure of any side effects or IO of doing this when not needed, so just doing if required
             if (fileInfo.IsReadOnly)
             {
                 fileInfo.IsReadOnly = false;
@@ -529,7 +538,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 LogFileAccess(temporaryReplacement);
                 LogFileAccess(backup);
 
-                throw unauthorizedAccessException;
+                throw;
             }
 
             File.Delete(temporaryReplacement);

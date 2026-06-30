@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Microsoft.Win32.SafeHandles;
@@ -24,14 +23,12 @@ namespace Calamari.Integration.Certificates.WindowsNative
     public SafeCspHandle Duplicate()
     {
       bool success = false;
-      RuntimeHelpers.PrepareConstrainedRegions();
       try
       {
         this.DangerousAddRef(ref success);
         IntPtr handle = this.DangerousGetHandle();
         int hr = 0;
         SafeCspHandle safeCspHandle = new SafeCspHandle();
-        RuntimeHelpers.PrepareConstrainedRegions();
         try
         {
         }

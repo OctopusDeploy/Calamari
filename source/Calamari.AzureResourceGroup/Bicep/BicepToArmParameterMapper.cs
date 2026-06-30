@@ -26,12 +26,7 @@ public static class BicepToArmParameterMapper
             return string.Empty;
         }
 
-        var parameterKeyValuePairs = JArray.Parse(bicepParametersString)
-                                           .Select(item => new KeyValuePair<string, string>(
-                                                                                            item["Key"]!.Value<string>()!,
-                                                                                            item["Value"]!.Value<string>()!
-                                                                                           ))
-                                           .ToList();
+        var parameterKeyValuePairs = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(bicepParametersString) ?? [];
         
         var result = new JObject();
 

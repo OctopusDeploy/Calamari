@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -57,10 +58,20 @@ namespace Calamari.Kubernetes.Conventions
 
             var newRevisionNumber = (currentRevisionNumber ?? 0) + 1;
 
+            //When ArgoRollouts support is enabled, the parallel manifest + KOS reporter is replaced
+            //by a separate verification action that runs after the deploy step. Manifest reporting
+            //and AppliedResources emission are performed inline by HelmUpgradeExecutor instead.
+            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
+            {
+                var executor = new HelmUpgradeExecutor(log, fileSystem, valueSourcesParser, helmCli, namespaceResolver, manifestReporter);
+                executor.ExecuteHelmUpgrade(deployment, releaseName, newRevisionNumber, new CancellationTokenSource(), new CancellationTokenSource());
+                return;
+            }
+
             //This is used to cancel KOS when the helm upgrade has completed
             //It does not cancel the get manifest
             var helmInstallCompletedCts = new CancellationTokenSource();
-            
+
             //This is used to cancel the get manifest when the helm install fails (and we are still trying to retrieve the manifest)
             var helmInstallErrorCts = new CancellationTokenSource();
 
@@ -69,9 +80,10 @@ namespace Calamari.Kubernetes.Conventions
                                                var executor = new HelmUpgradeExecutor(log,
                                                                                       fileSystem,
                                                                                       valueSourcesParser,
-                                                                                      helmCli);
-                                               
-                                               executor.ExecuteHelmUpgrade(deployment, releaseName, helmInstallCompletedCts, helmInstallErrorCts);
+                                                                                      helmCli,
+                                                                                      namespaceResolver);
+
+                                               executor.ExecuteHelmUpgrade(deployment, releaseName, newRevisionNumber, helmInstallCompletedCts, helmInstallErrorCts);
                                            });
 
             var manifestAndStatusCheckTask = Task.Run(async () =>
@@ -81,7 +93,7 @@ namespace Calamari.Kubernetes.Conventions
                                                           await runner.StartBackgroundMonitoringAndReporting(deployment,
                                                                                releaseName,
                                                                                newRevisionNumber,
-                                                                               helmInstallCompletedCts.Token, 
+                                                                               helmInstallCompletedCts.Token,
                                                                                helmInstallErrorCts.Token);
                                                       },
                                                       helmInstallCompletedCts.Token);

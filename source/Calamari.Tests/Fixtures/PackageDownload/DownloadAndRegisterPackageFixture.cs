@@ -1,0 +1,724 @@
+using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Testing;
+using Newtonsoft.Json.Linq;
+using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
+using Calamari.Tests.Fixtures.Deployment.Packages;
+using Calamari.Tests.Helpers;
+using NUnit.Framework;
+using Octopus.Versioning;
+using Octopus.Versioning.Semver;
+
+namespace Calamari.Tests.Fixtures.PackageDownload
+{
+    [TestFixture]
+    public class DownloadAndRegisterPackageFixture : CalamariFixture
+    {
+        static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "DownloadAndRegisterPackage");
+        static readonly string DownloadPath = TestEnvironment.GetTestPath(TentacleHome, "Files");
+
+        const string PublicFeedUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
+        const string NuGetFeedUri = "https://www.nuget.org/api/v2/";
+
+        const string ExpectedPackageHash = "1e0856338eb5ada3b30903b980cef9892ebf7201";
+        const long ExpectedPackageSize = 3749;
+        static readonly SampleFeedPackage FeedzPackage = new()
+        {
+            Id = "feeds-feedz",
+            Version = new SemanticVersion("1.0.0"),
+            PackageId = "OctoConsole"
+        };
+        static readonly SampleFeedPackage FileShare = new() { Id = "feeds-local", Version = new SemanticVersion(1, 0, 0), PackageId = "Acme.Web" };
+        static readonly SampleFeedPackage NuGetFeed = new() { Id = "feeds-nuget", Version = new SemanticVersion(2, 1, 0), PackageId = "Abp.Castle.Log4Net" };
+
+        const string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
+        const string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
+        const long ExpectedMavenPackageSize = 2575022;
+        static readonly SampleFeedPackage MavenPublicFeed = new("#")
+        {
+            Id = "feeds-maven",
+            Version = VersionFactory.CreateMavenVersion("22.0"),
+            PackageId = "com.google.guava:guava"
+        };
+
+        static string AuthFeedUri;
+        static string AuthFeedUsername;
+        static string AuthFeedPassword;
+
+        static readonly CancellationTokenSource CancellationTokenSource = new();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+
+        [OneTimeSetUp]
+        public async Task OneTimeSetup()
+        {
+            AuthFeedUri = await ExternalVariables.Get(ExternalVariable.MyGetFeedUrl, cancellationToken);
+            AuthFeedUsername = await ExternalVariables.Get(ExternalVariable.MyGetFeedUsername, cancellationToken);
+            AuthFeedPassword = await ExternalVariables.Get(ExternalVariable.MyGetFeedPassword, cancellationToken);
+        }
+
+        [SetUp]
+        public void SetUp()
+        {
+            if (Directory.Exists(TentacleHome))
+                Directory.Delete(TentacleHome, true);
+
+            Directory.CreateDirectory(TentacleHome);
+            Directory.SetCurrentDirectory(TentacleHome);
+            Environment.SetEnvironmentVariable("TentacleHome", TentacleHome);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            // Change to a safe directory before deleting TentacleHome
+            Directory.SetCurrentDirectory(Path.GetTempPath());
+
+            if (Directory.Exists(TentacleHome))
+                Directory.Delete(TentacleHome, true);
+            Environment.SetEnvironmentVariable("TentacleHome", null);
+        }
+
+        [Test]
+        public void ShouldDownloadAndRegisterPackage()
+        {
+            var result = DownloadAndRegisterPackage(
+                FeedzPackage.PackageId,
+                FeedzPackage.Version.ToString(),
+                FeedzPackage.Id,
+                PublicFeedUri);
+
+            result.AssertSuccess();
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'",
+                FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
+
+            AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
+            AssertStagePackageOutputVariableSet(result, FeedzPackage);
+
+            // Verify package was registered with the journal
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        public void ShouldDownloadAndRegisterMavenPackage()
+        {
+            var result = DownloadAndRegisterPackage(
+                MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version.ToString(),
+                MavenPublicFeed.Id,
+                MavenPublicFeedUri,
+                feedType: FeedType.Maven,
+                versionFormat: VersionFormat.Maven);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'",
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'",
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            result.AssertOutput("Found package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(result, MavenPublicFeed);
+
+            // Verify package was registered with the journal
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+        }
+
+        [Test]
+        public void ShouldSetOutputVariables()
+        {
+            var result = DownloadAndRegisterPackage(
+                FeedzPackage.PackageId,
+                FeedzPackage.Version.ToString(),
+                FeedzPackage.Id,
+                PublicFeedUri);
+
+            result.AssertSuccess();
+
+            // Verify all expected output variables are set
+            result.AssertOutputVariable("StagedPackage.Hash", Is.EqualTo(ExpectedPackageHash));
+            result.AssertOutputVariable("StagedPackage.Size",
+                Is.EqualTo(ExpectedPackageSize.ToString(CultureInfo.InvariantCulture)));
+            result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine",
+                Does.Match(PackageName.ToRegexPattern(FeedzPackage.PackageId, FeedzPackage.Version, FeedzPackage.DownloadFolder) + ".*"));
+
+            // Verify package was registered with the journal
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+        }
+
+        [Test]
+        public void ShouldUsePackageFromCacheAndStillRegister()
+        {
+            // First download
+            var firstResult = DownloadAndRegisterPackage(
+                FeedzPackage.PackageId,
+                FeedzPackage.Version.ToString(),
+                FeedzPackage.Id,
+                PublicFeedUri);
+
+            firstResult.AssertSuccess();
+            firstResult.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+
+            // Second download should use cache but still register
+            var secondResult = DownloadAndRegisterPackage(
+                FeedzPackage.PackageId,
+                FeedzPackage.Version.ToString(),
+                FeedzPackage.Id,
+                PublicFeedUri);
+
+            secondResult.AssertSuccess();
+
+            secondResult.AssertOutput("Checking package cache for package {0} v{1}",
+                FeedzPackage.PackageId, FeedzPackage.Version);
+            secondResult.AssertOutputMatches(string.Format(
+                "Package was found in cache\\. No need to download. Using file: '{0}'",
+                PackageName.ToRegexPattern(FeedzPackage.PackageId, FeedzPackage.Version, FeedzPackage.DownloadFolder)));
+
+            AssertPackageHashMatchesExpected(secondResult, ExpectedPackageHash);
+            AssertPackageSizeMatchesExpected(secondResult, ExpectedPackageSize);
+            AssertStagePackageOutputVariableSet(secondResult, FeedzPackage);
+
+            // Verify package was registered with the journal (even when using cache)
+            secondResult.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+        }
+
+        [Test]
+        public void ShouldFailWhenTaskIdNotProvided()
+        {
+            var calamari = Calamari()
+                .Action("download-and-register-package")
+                .Argument("packageId", FeedzPackage.PackageId)
+                .Argument("packageVersion", FeedzPackage.Version.ToString())
+                .Argument("packageVersionFormat", VersionFormat.Semver)
+                .Argument("feedId", FeedzPackage.Id)
+                .Argument("feedUri", PublicFeedUri)
+                .Argument("feedType", FeedType.NuGet);
+                // Don't provide taskId argument
+
+            var result = Invoke(calamari);
+
+            result.AssertFailure();
+            result.AssertErrorOutput("No task ID was specified. Please pass --taskId YourTaskId");
+        }
+
+        [Test]
+        public void ShouldDownloadAndRegisterPackageWithRepositoryMetadata()
+        {
+            var result = DownloadAndRegisterPackage(NuGetFeed.PackageId, NuGetFeed.Version.ToString(), NuGetFeed.Id, NuGetFeedUri);
+
+            result.AssertSuccess();
+
+            result.AssertOutput(
+                $"Downloading NuGet package {NuGetFeed.PackageId} v{NuGetFeed.Version} from feed: '{NuGetFeedUri}'");
+            result.AssertOutput($"Downloaded package will be stored in: '{NuGetFeed.DownloadFolder}");
+
+            AssertStagePackageOutputVariableSet(result, NuGetFeed);
+            result.AssertOutput($"Package {NuGetFeed.PackageId} v{NuGetFeed.Version} successfully downloaded from feed: '{NuGetFeedUri}'");
+
+            // Verify package was registered with the journal
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", NuGetFeed.PackageId, NuGetFeed.Version);
+            AssertJournalContainsEntryFor(NuGetFeed.PackageId, NuGetFeed.Version);
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        public void ShouldUseMavenPackageFromCacheAndStillRegister()
+        {
+            DownloadAndRegisterPackage(MavenPublicFeed.PackageId,
+                    MavenPublicFeed.Version.ToString(),
+                    MavenPublicFeed.Id,
+                    MavenPublicFeedUri,
+                    feedType: FeedType.Maven,
+                    versionFormat: VersionFormat.Maven)
+                .AssertSuccess();
+
+            var result = DownloadAndRegisterPackage(MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version.ToString(),
+                MavenPublicFeed.Id,
+                MavenPublicFeedUri,
+                feedType: FeedType.Maven,
+                versionFormat: VersionFormat.Maven);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Checking package cache for package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            result.AssertOutputMatches(string.Format("Package was found in cache\\. No need to download. Using file: '{0}'", PackageName.ToRegexPattern(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.DownloadFolder)));
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(result, MavenPublicFeed);
+
+            // Verify package was registered with the journal (even when using cache)
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        public void ShouldUseMavenSnapshotPackageFromCacheAndStillRegister()
+        {
+            DownloadAndRegisterPackage(MavenPublicFeed.PackageId,
+                    MavenPublicFeed.Version.ToString(),
+                    MavenPublicFeed.Id,
+                    MavenPublicFeedUri,
+                    feedType: FeedType.Maven,
+                    versionFormat: VersionFormat.Maven)
+                .AssertSuccess();
+
+            var result = DownloadAndRegisterPackage(MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version.ToString(),
+                MavenPublicFeed.Id, MavenPublicFeedUri,
+                feedType: FeedType.Maven,
+                versionFormat: VersionFormat.Maven);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Checking package cache for package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            result.AssertOutputMatches($"Package was found in cache\\. No need to download. Using file: '{PackageName.ToRegexPattern(MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeed.DownloadFolder)}'");
+            AssertPackageHashMatchesExpected(result, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(result, MavenPublicFeed);
+
+            // Verify package was registered with the journal (even when using cache)
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+        }
+
+        [Test]
+        public void ShouldByPassCacheAndDownloadAndRegisterPackage()
+        {
+            DownloadAndRegisterPackage(FeedzPackage.PackageId,
+                FeedzPackage.Version.ToString(),
+                FeedzPackage.Id, PublicFeedUri).AssertSuccess();
+
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId,
+                FeedzPackage.Version.ToString(),
+                FeedzPackage.Id, PublicFeedUri,
+                forcePackageDownload: true);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
+            AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
+            AssertStagePackageOutputVariableSet(result, FeedzPackage);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
+
+            // Verify package was registered with the journal
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        public void ShouldByPassCacheAndDownloadAndRegisterMavenPackage()
+        {
+            var firstDownload = DownloadAndRegisterPackage(
+                MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version.ToString(),
+                MavenPublicFeed.Id,
+                MavenPublicFeedUri,
+                versionFormat: VersionFormat.Maven,
+                feedType: FeedType.Maven);
+
+            firstDownload.AssertSuccess();
+
+            var secondDownload = DownloadAndRegisterPackage(
+                MavenPublicFeed.PackageId,
+                MavenPublicFeed.Version.ToString(),
+                MavenPublicFeed.Id,
+                MavenPublicFeedUri,
+                feedType: FeedType.Maven,
+                versionFormat: VersionFormat.Maven,
+                forcePackageDownload: true);
+
+            secondDownload.AssertSuccess();
+
+            secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
+            secondDownload.AssertOutput("Found package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertPackageHashMatchesExpected(secondDownload, ExpectedMavenPackageHash);
+            AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenPackageSize);
+            AssertStagePackageOutputVariableSet(secondDownload, MavenPublicFeed);
+            secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+
+            // Verify package was registered with the journal
+            secondDownload.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+            AssertJournalContainsEntryFor(MavenPublicFeed.PackageId, MavenPublicFeed.Version);
+        }
+
+        [Test]
+        [Ignore("Auth Feed Failing On Mono")]
+        public void PrivateNuGetFeedShouldDownloadAndRegisterPackage()
+        {
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword);
+
+            result.AssertSuccess();
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, AuthFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
+
+            AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
+            AssertStagePackageOutputVariableSet(result, FeedzPackage);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, AuthFeedUri);
+
+            // Verify package was registered with the journal
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+        }
+
+        [Test]
+        [Ignore("Auth Feed Failing On Mono")]
+        public void PrivateNuGetFeedShouldUsePackageFromCacheAndStillRegister()
+        {
+            DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword)
+                .AssertSuccess();
+
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Checking package cache for package {0} v{1}", FeedzPackage.PackageId, FeedzPackage.Version);
+            result.AssertOutputMatches($"Package was found in cache\\. No need to download. Using file: '{PackageName.ToRegexPattern(FeedzPackage.PackageId, FeedzPackage.Version, FeedzPackage.DownloadFolder)}'");
+            AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
+            AssertStagePackageOutputVariableSet(result, FeedzPackage);
+
+            // Verify package was registered with the journal (even when using cache)
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+        }
+
+        [Test]
+        [Ignore("Auth Feed Failing On Mono")]
+        public void PrivateNuGetFeedShouldByPassCacheAndDownloadAndRegisterPackage()
+        {
+            DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword).AssertSuccess();
+
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword, forcePackageDownload: true);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, AuthFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
+
+            AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
+            AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
+            AssertStagePackageOutputVariableSet(result, FeedzPackage);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, AuthFeedUri);
+
+            // Verify package was registered with the journal
+            result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FeedzPackage.PackageId, FeedzPackage.Version);
+            AssertJournalContainsEntryFor(FeedzPackage.PackageId, FeedzPackage.Version);
+        }
+
+        [Test]
+        [Ignore("Auth Feed Failing On Mono")]
+        public void PrivateNuGetFeedShouldFailDownloadAndRegisterPackageWhenInvalidCredentials()
+        {
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, "fake-feed-username", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+            result.AssertFailure();
+
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, AuthFeedUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
+            result.AssertErrorOutput("Unable to download package: The remote server returned an error: (401) Unauthorized.");
+        }
+
+        [Test]
+        public void FileShareFeedShouldDownloadAndRegisterPackage()
+        {
+            using (var acmeWeb = CreateSamplePackage())
+            {
+                var result = DownloadAndRegisterPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, acmeWeb.DirectoryPath);
+
+                result.AssertSuccess();
+
+                result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
+                result.AssertOutput("Downloaded package will be stored in: '{0}'", FileShare.DownloadFolder);
+                result.AssertOutput("Found package {0} v{1}", FileShare.PackageId, FileShare.Version);
+                AssertPackageHashMatchesExpected(result, acmeWeb.Hash);
+                AssertPackageSizeMatchesExpected(result, acmeWeb.Size);
+                AssertStagePackageOutputVariableSet(result, FileShare);
+                result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FileShare.PackageId, FileShare.Version, acmeWeb.DirectoryPath);
+
+                // Verify package was registered with the journal
+                result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FileShare.PackageId, FileShare.Version);
+                AssertJournalContainsEntryFor(FileShare.PackageId, FileShare.Version);
+            }
+        }
+
+        [Test]
+        public void FileShareFeedShouldUsePackageFromCacheAndStillRegister()
+        {
+            using (var acmeWeb = CreateSamplePackage())
+            {
+                DownloadAndRegisterPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, acmeWeb.DirectoryPath).AssertSuccess();
+
+                var result = DownloadAndRegisterPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, acmeWeb.DirectoryPath);
+                result.AssertSuccess();
+
+                result.AssertOutput("Checking package cache for package {0} v{1}", FileShare.PackageId, FileShare.Version);
+                result.AssertOutputMatches($"Package was found in cache\\. No need to download. Using file: '{PackageName.ToRegexPattern(FileShare.PackageId, FileShare.Version, FileShare.DownloadFolder)}'");
+                AssertPackageHashMatchesExpected(result, acmeWeb.Hash);
+                AssertPackageSizeMatchesExpected(result, acmeWeb.Size);
+                AssertStagePackageOutputVariableSet(result, FileShare);
+
+                // Verify package was registered with the journal (even when using cache)
+                result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FileShare.PackageId, FileShare.Version);
+                AssertJournalContainsEntryFor(FileShare.PackageId, FileShare.Version);
+            }
+        }
+
+        [Test]
+        public void FileShareFeedShouldByPassCacheAndDownloadAndRegisterPackage()
+        {
+            using (var acmeWeb = CreateSamplePackage())
+            {
+                DownloadAndRegisterPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, acmeWeb.DirectoryPath)
+                    .AssertSuccess();
+
+                var result = DownloadAndRegisterPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, acmeWeb.DirectoryPath,
+                    forcePackageDownload: true);
+
+                result.AssertSuccess();
+
+                result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, new Uri(acmeWeb.DirectoryPath));
+                result.AssertOutput("Downloaded package will be stored in: '{0}'", FileShare.DownloadFolder);
+                result.AssertOutput("Found package {0} v{1}", FileShare.PackageId, FileShare.Version);
+                AssertPackageHashMatchesExpected(result, acmeWeb.Hash);
+                AssertPackageSizeMatchesExpected(result, acmeWeb.Size);
+                AssertStagePackageOutputVariableSet(result, FileShare);
+                result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FileShare.PackageId, FileShare.Version, acmeWeb.DirectoryPath);
+
+                // Verify package was registered with the journal
+                result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", FileShare.PackageId, FileShare.Version);
+                AssertJournalContainsEntryFor(FileShare.PackageId, FileShare.Version);
+            }
+        }
+
+        [Test]
+        public void FileShareFeedShouldFailDownloadAndRegisterPackageWhenInvalidFileShare()
+        {
+            using (var acmeWeb = CreateSamplePackage())
+            {
+                var invalidFileShareUri = new Uri(Path.Combine(acmeWeb.DirectoryPath, "InvalidPath"));
+
+                var result = DownloadAndRegisterPackage(FileShare.PackageId, FileShare.Version.ToString(), FileShare.Id, invalidFileShareUri.ToString());
+                result.AssertFailure();
+
+                result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
+                result.AssertErrorOutput("Failed to download and register package Acme.Web v1.0.0 from feed: '{0}'", invalidFileShareUri);
+                result.AssertErrorOutput("Failed to download and register package {0} v{1} from feed: '{2}'", FileShare.PackageId, FileShare.Version, invalidFileShareUri);
+            }
+        }
+
+        [Test]
+        public void ShouldFailWhenNoPackageId()
+        {
+            var result = DownloadAndRegisterPackage("", FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
+            result.AssertFailure();
+
+            result.AssertErrorOutput("No package ID was specified");
+        }
+
+        [Test]
+        public void ShouldFailWhenInvalidPackageId()
+        {
+            var invalidPackageId = string.Format("X{0}X", FeedzPackage.PackageId);
+            var result = DownloadAndRegisterPackage(invalidPackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
+            result.AssertFailure();
+
+            result.AssertErrorOutput("Failed to download and register package {0} v{1} from feed: '{2}'", invalidPackageId, FeedzPackage.Version, PublicFeedUri);
+        }
+
+        [Test]
+        public void ShouldFailWhenNoFeedVersion()
+        {
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, "", FeedzPackage.Id, PublicFeedUri);
+            result.AssertFailure();
+
+            result.AssertErrorOutput("No package version was specified");
+        }
+
+        [Test]
+        public void ShouldFailWhenInvalidFeedVersion()
+        {
+            const string invalidFeedVersion = "1.0.x";
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, invalidFeedVersion, FeedzPackage.Id, PublicFeedUri);
+            result.AssertFailure();
+
+            result.AssertErrorOutput("Package version '{0}' specified is not a valid Semver version string", invalidFeedVersion);
+        }
+
+        [Test]
+        public void ShouldFailWhenNoFeedId()
+        {
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), "", PublicFeedUri);
+            result.AssertFailure();
+
+            result.AssertErrorOutput("No feed ID was specified");
+        }
+
+        [Test]
+        public void ShouldFailWhenNoFeedUri()
+        {
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, "");
+            result.AssertFailure();
+
+            result.AssertErrorOutput("No feed URI was specified");
+        }
+
+        [Test]
+        public void ShouldFailWhenInvalidFeedUri()
+        {
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, "www.myget.org/F/octopusdeploy-tests");
+            result.AssertFailure();
+
+            result.AssertErrorOutput("URI specified 'www.myget.org/F/octopusdeploy-tests' is not a valid URI");
+        }
+
+        [Test]
+        [Ignore("for now, runs fine locally...not sure why it's not failing in TC, will investigate")]
+        public void ShouldFailWhenUsernameIsSpecifiedButNoPassword()
+        {
+            var result = DownloadAndRegisterPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri, AuthFeedUsername);
+            result.AssertFailure();
+
+            result.AssertErrorOutput("A username was specified but no password was provided");
+        }
+
+        [Test]
+        [RequiresDockerInstalled]
+        public void ShouldNotRegisterDockerImageBecauseFullFilePathIsEmpty()
+        {
+            // DockerImagePackageDownloader produces PackagePhysicalFileMetadata with string.Empty
+            // as FullFilePath. The registration guard should skip journal.RegisterPackageUse in this case.
+            var result = DownloadAndRegisterPackage(
+                "alpine",
+                "3.6.5",
+                "feeds-docker-hub",
+                "https://index.docker.io",
+                feedType: FeedType.Docker);
+
+            result.AssertSuccess();
+            result.AssertNoOutput("Registered package use/lock for alpine");
+        }
+
+        CalamariResult DownloadAndRegisterPackage(
+            string packageId,
+            string packageVersion,
+            string feedId,
+            string feedUri,
+            string feedUsername = "",
+            string feedPassword = "",
+            FeedType feedType = FeedType.NuGet,
+            VersionFormat versionFormat = VersionFormat.Semver,
+            bool forcePackageDownload = false,
+            int attempts = 5,
+            int attemptBackoffSeconds = 0)
+        {
+            var calamari = Calamari()
+                .Action("download-and-register-package")
+                .Argument("packageId", packageId)
+                .Argument("packageVersion", packageVersion)
+                .Argument("taskId", "ServerTasks-12345")
+                .Argument("packageVersionFormat", versionFormat)
+                .Argument("feedId", feedId)
+                .Argument("feedUri", feedUri)
+                .Argument("feedType", feedType)
+                .Argument("attempts", attempts.ToString())
+                .Argument("attemptBackoffSeconds", attemptBackoffSeconds.ToString());
+
+            if (!String.IsNullOrWhiteSpace(feedUsername))
+                calamari.Argument("feedUsername", feedUsername);
+
+            if (!String.IsNullOrWhiteSpace(feedPassword))
+                calamari.Argument("feedPassword", feedPassword);
+
+            if (forcePackageDownload)
+                calamari.Flag("forcePackageDownload");
+
+            return Invoke(calamari);
+        }
+
+        static void AssertPackageHashMatchesExpected(CalamariResult result, string expectedHash)
+        {
+            result.AssertOutputVariable("StagedPackage.Hash", Is.EqualTo(expectedHash));
+        }
+
+        static void AssertPackageSizeMatchesExpected(CalamariResult result, long expectedSize)
+        {
+            result.AssertOutputVariable("StagedPackage.Size",
+                Is.EqualTo(expectedSize.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        static void AssertStagePackageOutputVariableSet(CalamariResult result, SampleFeedPackage testFeed)
+        {
+            var newPackageRegex = PackageName.ToRegexPattern(testFeed.PackageId, testFeed.Version, testFeed.DownloadFolder);
+            result.AssertOutputVariable("StagedPackage.FullPathOnRemoteMachine", Does.Match(newPackageRegex + ".*"));
+        }
+
+        static void AssertJournalContainsEntryFor(string packageId, IVersion version)
+        {
+            var journalPath = Path.Combine(TentacleHome, "PackageRetentionJournal.json");
+
+            Assert.That(File.Exists(journalPath), Is.True,
+                $"Journal file not found at: {journalPath}");
+
+            var json = File.ReadAllText(journalPath);
+            var root = JObject.Parse(json);
+            var entries = root["JournalEntries"] as JArray ?? new JArray();
+
+            var match = entries.FirstOrDefault(e =>
+                string.Equals((string)e["Package"]?["PackageId"]?["Value"], packageId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals((string)e["Package"]?["Version"]?["Version"], version.ToString(), StringComparison.OrdinalIgnoreCase));
+
+            Assert.That(match, Is.Not.Null,
+                $"Expected a journal entry for {packageId} v{version} but the journal contains: {json}");
+        }
+
+        TemporaryFile CreateSamplePackage()
+        {
+            return new TemporaryFile(PackageBuilder.BuildSamplePackage(FileShare.PackageId, FileShare.Version.ToString()));
+        }
+
+        class SampleFeedPackage
+        {
+            public SampleFeedPackage()
+            {
+                Delimiter = ".";
+            }
+
+            public SampleFeedPackage(string delimiter)
+            {
+                Delimiter = delimiter;
+            }
+
+            private string Delimiter { get; set; }
+
+            public string Id { get; set; }
+
+            public string PackageId { get; set; }
+
+            public IVersion Version { get; set; }
+
+            public string DownloadFolder => Path.Combine(DownloadPath, Id);
+        }
+    }
+}

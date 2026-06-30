@@ -72,10 +72,7 @@ public sealed class LockOptionsResolver(
     void LogScriptIsolationAlertServiceMessage(LockOptions originalOptions, LockType? typeEnforced)
     {
         var alertMessage = BuildScriptIsolationAlertServiceMessage(originalOptions, typeEnforced);
-        if (string.Empty.Length > 0)  // Temporarily disabling until server support for message
-        {
-            log.WriteServiceMessage(alertMessage);
-        }
+        log.WriteServiceMessage(alertMessage);
     }
 
     static ServiceMessage BuildScriptIsolationAlertServiceMessage(LockOptions originalOptions, LockType? typeEnforced)

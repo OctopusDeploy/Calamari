@@ -1,10 +1,10 @@
 using System.Linq;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.Calamari.Contracts.ArgoCD;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
@@ -52,7 +52,7 @@ public class ApplicationUpdater
             
             LogHelmAnnotationWarning(applicationFromYaml);
 
-            var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, commitMessageGenerator);
+            var repositoryAdapter = new RepositoryAdapter(repositoryFactory, new RepositoryUpdater(deploymentConfig.CommitParameters, log, commitMessageGenerator));
             var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryAdapter, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, outputVariablesWriter, fileSystem);
             
             var appliedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
@@ -78,7 +78,7 @@ public class ApplicationUpdater
 
             return new ProcessApplicationResult(
                                                 application.GatewayId,
-                                                applicationName.ToApplicationName(),
+                                                NamespacedApplicationName.Create(applicationName, applicationFromYaml.Metadata.Namespace),
                                                 applicationFromYaml.Spec.Sources.Count,
                                                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
                                                 appliedSourcesResults.Select(r => new TrackedSourceDetail(r.UpdateResult.PushResult?.CommitSha, r.UpdateResult.PushResult?.CommitTimestamp, r.applicationSource.Index, [], r.UpdateResult.PatchedFiles)).ToList(),

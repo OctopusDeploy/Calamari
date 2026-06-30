@@ -20,7 +20,7 @@ namespace Calamari.Common.Features.Substitutions
                 //We always want to throw when substitution fails
                 base.PerformSubstitutionAndUpdateFile(sourceFile, targetFile, true, true);
             }
-            catch (InvalidOperationException e)
+            catch (CommandException e)
             {
                 throw new CommandException($"{e.Message}. This may be due to missing or sensitive variables.");
             }

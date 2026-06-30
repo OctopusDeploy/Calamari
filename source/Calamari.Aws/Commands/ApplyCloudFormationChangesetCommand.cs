@@ -4,7 +4,6 @@ using System.IO;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Deployment.Conventions;
-using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
@@ -14,7 +13,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 
 namespace Calamari.Aws.Commands
 {
@@ -23,8 +21,8 @@ namespace Calamari.Aws.Commands
     {
         readonly ILog log;
         readonly IVariables variables;
-        private string packageFile;
-        private bool waitForComplete;
+        string packageFile;
+        bool waitForComplete;
         
         public ApplyCloudFormationChangesetCommand(ILog log, IVariables variables)
         {

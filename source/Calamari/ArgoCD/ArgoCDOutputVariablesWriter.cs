@@ -2,37 +2,47 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.Json;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes;
+using Octopus.Calamari.Contracts.ArgoCD;
+using Octopus.Calamari.Contracts.Git;
+using PullRequestCreatedServiceMessage = Octopus.Calamari.Contracts.Git.ServiceMessages.PullRequestCreated;
 
 namespace Calamari.ArgoCD
 {
     public class ArgoCDOutputVariablesWriter
     {
         readonly ILog log;
-        readonly IVariables variables;
 
-        public ArgoCDOutputVariablesWriter(ILog log, IVariables variables)
+        public ArgoCDOutputVariablesWriter(ILog log)
         {
             this.log = log;
-            this.variables = variables;
         }
 
-        public void WritePushResultOutput(
+        public void WriteSourceUpdateResultOutputWhenPushResultExists(
             string gatewayName,
-            string applicationName,
+            NamespacedApplicationName applicationName,
             int sourceIndex,
-            PushResult pushResult)
+            SourceUpdateResult sourceUpdateResult)
         {
+            var pushResult = sourceUpdateResult.PushResult;
+            if (pushResult is null)
+            {
+                return;
+            }
+
             var appSourceVariables = SpecialVariables.ArgoCD.Output
                                                      .Actions()
                                                      .ArgoCDGateways(gatewayName)
-                                                     .Applications(applicationName)
+                                                     .Applications(applicationName.Value)
                                                      .Sources(sourceIndex);
-            
+
             log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitSha, pushResult.CommitSha);
             log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.ShortSha, pushResult.ShortSha);
             log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitTimestamp, pushResult.CommitTimestamp.ToString("O"));
@@ -43,27 +53,61 @@ namespace Calamari.ArgoCD
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestTitle, prResult.PullRequestTitle);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestUrl, prResult.PullRequestUri);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestNumber, prResult.PullRequestNumber.ToString(CultureInfo.InvariantCulture));
+
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestReplacedFiles,
+                                                            JsonSerializer.Serialize(sourceUpdateResult.ReplacedFiles.Select(rf => rf with
+                                                                                                       {
+                                                                                                           FilePath = rf.FilePath.EnsurePosixDirectorySeparator()
+                                                                                                       })
+                                                                                                       .ToList()));
+
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestPatchedFiles,
+                                                            JsonSerializer.Serialize(sourceUpdateResult.PatchedFiles.Select(rf => rf with
+                                                                                                       {
+                                                                                                           FilePath = rf.FilePath.EnsurePosixDirectorySeparator()
+                                                                                                       })
+                                                                                                       .ToList()));
+                
+                var message = CreatePullRequestCreatedServiceMessage(prResult);
+
+                log.WriteServiceMessage(message);
             }
+        }
+
+        static ServiceMessage CreatePullRequestCreatedServiceMessage(PullRequestPushResult prResult)
+        {
+            var parameters = new Dictionary<string, string>
+            {
+                { PullRequestCreatedServiceMessage.Attributes.PullRequestUri, prResult.PullRequestUri },
+                { PullRequestCreatedServiceMessage.Attributes.RepositoryUri, prResult.RepositoryUri },
+                { PullRequestCreatedServiceMessage.Attributes.VendorName, prResult.VendorName },
+                { PullRequestCreatedServiceMessage.Attributes.SourceType, PullRequestCreatedServiceMessage.SourceTypes.ArgoCD },
+            };
+
+            var message = new ServiceMessage(
+                                             PullRequestCreatedServiceMessage.Name,
+                                             parameters);
+            return message;
         }
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,
                                            IEnumerable<string> gitRepos,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts,
+                                           IReadOnlyCollection<(NamespacedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
+                                           IReadOnlyCollection<(NamespacedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts,
                                            int imagesUpdatedCount)
         {
             WriteGatewayIds(gateways);
             WriteGitUris(gitRepos);
             WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCounts);
             WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
-            
+
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedImages, imagesUpdatedCount.ToString());
         }
 
         public void WriteManifestUpdateOutput(IEnumerable<string> gateways,
                                               IEnumerable<string> gitRepos,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts)
+                                              IReadOnlyCollection<(NamespacedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
+                                              IReadOnlyCollection<(NamespacedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts)
         {
             WriteGatewayIds(gateways);
             WriteGitUris(gitRepos);
@@ -71,19 +115,19 @@ namespace Calamari.ArgoCD
             WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
         }
 
-        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> matchingApplicationsWithSourceCounts)
+        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(NamespacedApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> matchingApplicationsWithSourceCounts)
         {
             var totalApps = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.ApplicationName));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
 
             var totalSourceCounts = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.TotalSourceCount));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationTotalSourceCounts, totalSourceCounts);
-            
+
             var matchingSourceCounts = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.MatchingSourceCount));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationMatchingSourceCounts, matchingSourceCounts);
         }
 
-        void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
+        void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(NamespacedApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
         {
             var updatedApps = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.ApplicationName));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);

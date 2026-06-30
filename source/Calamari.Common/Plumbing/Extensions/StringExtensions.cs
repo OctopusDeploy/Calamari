@@ -102,5 +102,7 @@ namespace Calamari.Common.Plumbing.Extensions
         public static string EnsureDoubleQuoteIfContainsSpaces(this string text) => EnsureDoubleQuote(text, t => t.Contains(" "));
         public static string EnsureDoubleQuote(this string text) => EnsureDoubleQuote(text, t => !t.EndsWith("\"") && !t.StartsWith("\""));
         public static string EnsureDoubleQuote(this string text, Predicate<string> shouldQuote) => shouldQuote(text) ? $"\"{text}\"" : text;
+
+        public static string EnsurePosixDirectorySeparator(this string source) => source.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
     }
 }

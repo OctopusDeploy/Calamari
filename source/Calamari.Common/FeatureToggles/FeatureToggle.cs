@@ -7,9 +7,7 @@
     /// </summary>
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
-        OidcAccountsFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
-        ForceUtf8ZipFileDecodingFeatureToggle,
         BashParametersArrayFeatureToggle
     }
 }

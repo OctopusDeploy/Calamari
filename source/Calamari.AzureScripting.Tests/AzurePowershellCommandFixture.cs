@@ -76,6 +76,26 @@ az group list";
 
         [Test]
         [RequiresPowerShell5OrAbove]
+        public async Task ExecuteAnInlinePowerShellCoreScriptWithStrictMode()
+        {
+            var psScript = @"
+Set-StrictMode -Version Latest
+az group list";
+
+            await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(PowerShellVariables.Edition, ScriptVariables.ScriptSourceOptions.Core);
+                                                     context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
+                                                     context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+                                                     context.Variables.Add(ScriptVariables.ScriptBody, psScript);
+                                                 })
+                                    .Execute();
+        }
+
+        [Test]
+        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlinePowerShellCoreScriptAgainstAnInvalidAzureEnvironment()
         {
             var psScript = @"

@@ -16,12 +16,12 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.4.0" />
-        <PackageReference Include="NuGet.CommandLine" Version="7.0.1">
+        <PackageReference Include="NuGet.CommandLine" Version="7.0.3">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0"/>
-        <PackageReference Include="System.Text.Json" Version="8.0.6"/>
+        <PackageReference Include="System.Text.Json" Version="9.0.16" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41"/>
         <PackageReference Include="WireMock.Net" Version="1.6.9"/>
         <PackageReference Include="XPath2" Version="1.1.5"/>
@@ -37,6 +37,7 @@
         <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0"/>
         <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj"/>
         <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
+        <ProjectReference Include="..\Calamari.DockerCredentialHelper\Calamari.DockerCredentialHelper.csproj"/>
         <PackageReference Include="Markdown" Version="2.1.0"/>
         <PackageReference Include="NGitLab" Version="10.4.1"/>
         <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0"/>
@@ -161,6 +162,9 @@
         <None Update="Fixtures\DotnetScript\Scripts\ThrowsException.csx">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="AWS\Ecs\SpfOutputs\*.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
     <ItemGroup>
         <None Remove="TestResults\**"/>
@@ -241,42 +245,6 @@
         <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.ps1"/>
         <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.sh"/>
     </ItemGroup>
-    <!--
-      In netcore 2.1.3, the framework stopped calculating package definitions automatically "for perf"
-      (see https://github.com/dotnet/sdk/issues/2342)
-      So, we need to add a dependency onto `GetToolFiles` to calculate them first.
-      Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we
-      define a new empty target if it's not already defined to keep it happy.
-    -->
-    <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''"/>
 
-    <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
-        <ItemGroup>
-            <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
-        </ItemGroup>
-    </Target>
-
-    <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-        <ItemGroup>
-            <DotnetScriptFilesExe Include="$(OutputPath)/dotnet-script/*.sh;$(OutputPath)/dotnet-script/*.exe"/>
-        </ItemGroup>
-        <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutputPath)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
-        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"/>
-        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
-
-        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" SkipUnchangedFiles="true"/>
-        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
-    </Target>
-
-    <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-        <ItemGroup>
-            <DotnetScriptFilesExe Include="$(PublishDir)/dotnet-script/*.sh;$(PublishDir)/dotnet-script/*.exe"/>
-        </ItemGroup>
-        <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(PublishDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
-        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true"/>
-        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
-
-        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" SkipUnchangedFiles="true"/>
-        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
-    </Target>
+    <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>
