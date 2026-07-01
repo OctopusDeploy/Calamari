@@ -570,6 +570,24 @@ public class CommitToGitCommandTest
             .Should().NotBe(0, "the command must reject runs whose --customPropertiesFile path does not exist");
     }
 
+    [Test]
+    public void CommitToGit_SkipsCommitting_WhenTransformationScript_ReturnsNonZeroExitCode()
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
+        AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
+        variables.AddRange([
+            new CalamariExecutionVariable(ScriptVariables.ScriptBody, "exit 1", false),
+            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
+        ]);
+
+        RunCommitToGit().Should().NotBe(0);
+        GetCommittedFileContent($"{destinationPath}/configs/settings.json")
+            .Should().BeNull("the package files should not have been committed into the repository under the destination path, when the transformation script returns non-zero exit code");
+    }
+
     // --- Helpers ---
 
     int RunCommitToGit(params string[] extraArgs)
