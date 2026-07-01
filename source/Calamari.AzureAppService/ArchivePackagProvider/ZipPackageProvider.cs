@@ -6,23 +6,11 @@ using SharpCompress.Common;
 
 namespace Calamari.AzureAppService
 {
-    public class ZipPackageProvider : IPackageProvider
+    public class ZipPackageProvider : BaseZipPackageProvider
     {
-        public string UploadUrlPath => @"/api/zipdeploy";
-        public bool SupportsAsynchronousDeployment => true;
-
-        public async Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory)
-        {
-            await Task.Run(() =>
-            {
-                using var archive = ZipArchive.Create();
-                archive.AddAllFromDirectory(
-                    $"{sourceDirectory}");
-                archive.SaveTo($"{targetDirectory}/app.zip", CompressionType.Deflate);
-            });
-            return new FileInfo($"{targetDirectory}/app.zip");
-        }
-
-        public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile) => await Task.Run(() => sourceFile);
+        public override bool SupportsAsynchronousDeployment => true;
+        public override string UploadUrlPath => @"/api/zipdeploy";
+        public override string ContentType => "application/octet-stream";
+        public override string AdditionalParameters => "?isAsync=true";
     }
 }

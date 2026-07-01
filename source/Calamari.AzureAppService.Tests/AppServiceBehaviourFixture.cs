@@ -16,7 +16,6 @@ using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Calamari.AzureAppService.Azure;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
@@ -496,7 +495,7 @@ namespace Calamari.AzureAppService.Tests
                                     },
                                     secondsBetweenRetries: 10);
             }
-
+            
             [Test]
             public async Task CanDeployZip_ToLinuxFunctionApp_WithRunFromPackageFlag()
             {
@@ -633,5 +632,167 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables[SpecialVariables.Action.Azure.AppSettings] = settings.json;
             }
         }
+
+        [TestFixture]
+        public class WhenUsingAFlexConsumptionLinuxAppService : AppServiceIntegrationTest
+        {
+            static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+            readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+            AppServicePlanResource appServicePlanResource;
+            
+            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+            {
+                //just generate a completely unique name
+                var storageAccountName = AzureTestResourceHelpers.RandomName(length: 24);
+
+                var storageAccountResponse = await ResourceGroupResource
+                                                   .GetStorageAccounts()
+                                                   .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                        storageAccountName,
+                                                                        new StorageAccountCreateOrUpdateContent(
+                                                                                                                new StorageSku(StorageSkuName.StandardLrs),
+                                                                                                                StorageKind.StorageV2,
+                                                                                                                ResourceGroupResource.Data.Location)
+                                                                       );
+                
+                var blobService = storageAccountResponse.Value.GetBlobService();
+                var containerName = $"app-package-{resourceGroup.Data.Name}-linux";
+                await blobService.GetBlobContainers()
+                                 .CreateOrUpdateAsync(WaitUntil.Completed, containerName, new BlobContainerData());
+
+                var keys = await storageAccountResponse
+                                 .Value
+                                 .GetKeysAsync()
+                                 .ToListAsync();
+
+                var linuxAppServicePlan = await resourceGroup.GetAppServicePlans()
+                                                             .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                                  $"{resourceGroup.Data.Name}-linux-asp",
+                                                                                  new AppServicePlanData(resourceGroup.Data.Location)
+                                                                                  {
+                                                                                      Sku = new AppServiceSkuDescription
+                                                                                      {
+                                                                                          Name = "FC1",
+                                                                                          Tier = "FlexConsumption"
+                                                                                      },
+                                                                                      Kind = "linux",
+                                                                                      IsReserved = true
+                                                                                  });
+
+                await linuxAppServicePlan.WaitForCompletionAsync(cancellationToken);
+                
+                appServicePlanResource = linuxAppServicePlan.Value;
+
+                var storageAccountConnectionString = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net";
+                var linuxWebSiteResponse = await resourceGroup.GetWebSites()
+                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                  $"{resourceGroup.Data.Name}-linux",
+                                                                  new WebSiteData(resourceGroup.Data.Location)
+                                                                  {
+                                                                      AppServicePlanId = linuxAppServicePlan.Value.Id,
+                                                                      Kind = "functionapp,linux",
+                                                                      FunctionAppConfig = new FunctionAppConfig
+                                                                      {
+                                                                          DeploymentStorage = new FunctionAppStorage
+                                                                          {
+                                                                              StorageType = FunctionAppStorageType.BlobContainer,
+                                                                              Authentication = new FunctionAppStorageAuthentication
+                                                                              {
+                                                                                  AuthenticationType = FunctionAppStorageAccountAuthenticationType.StorageAccountConnectionString,
+                                                                                  StorageAccountConnectionStringName = "AzureWebJobsStorage"
+                                                                              },
+                                                                              Value = new Uri($"https://{storageAccountName}.blob.core.windows.net/app-package-{resourceGroup.Data.Name}-linux")
+                                                                          },
+                                                                          Runtime = new FunctionAppRuntime()
+                                                                          {
+                                                                              Name = "dotnet-isolated",
+                                                                              Version = "10.0"
+                                                                          },
+                                                                          ScaleAndConcurrency = new FunctionAppScaleAndConcurrency
+                                                                          {
+                                                                              InstanceMemoryMB = 512,
+                                                                              MaximumInstanceCount = 1,
+                                                                          }
+                                                                      },
+                                                                      IsReserved = true,
+                                                                      SiteConfig = new SiteConfigProperties
+                                                                      {
+                                                                          Use32BitWorkerProcess = false,
+                                                                          AppSettings = new List<AppServiceNameValuePair>
+                                                                          {
+                                                                              new() { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
+                                                                              new() { Name = "AzureWebJobsStorage", Value = storageAccountConnectionString },
+                                                                              new() { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" },
+                                                                              new() { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
+                                                                          }
+                                                                      }
+                                                                  });
+
+                await linuxWebSiteResponse.WaitForCompletionAsync(cancellationToken);
+
+                WebSiteResource = linuxWebSiteResponse.Value;
+            }
+            
+            [Test]
+            public async Task CanDeployZip_ToLinuxFunctionApp()
+            {
+                // Arrange
+                var packageInfo = PrepareZipPackage();
+
+                // Act
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                         AddVariables(context);
+                                                     })
+                                        .Execute();
+
+                // Assert
+                await DoWithRetries(2,
+                    async () =>
+                    {
+                        await AssertContent(WebSiteResource.Data.DefaultHostName,
+                            rootPath: $"api/HttpExample?name={greeting}",
+                            actualText: $"Hello, {greeting}");
+                    },
+                    secondsBetweenRetries: 10);
+            }
+            
+            private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
+            {
+                // Looks like there's some file locking issues if multiple tests try to copy from the same file when running in parallel.
+                // For each test that needs one, create a temporary copy.
+                (string packagePath, string packageName, string packageVersion) packageInfo;
+
+                var tempPath = TemporaryDirectory.Create();
+                new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
+
+                var testAssemblyLocation = new FileInfo(Assembly.GetExecutingAssembly().Location);
+                var sourceZip = Path.Combine(testAssemblyLocation.Directory.FullName, "functionapp.8.0.0.zip");
+                var temporaryZipLocationForTest = $"{tempPath.DirectoryPath}/functionapp.8.0.0.zip";
+                File.Copy(sourceZip, temporaryZipLocationForTest);
+
+                packageInfo.packagePath = temporaryZipLocationForTest;
+                packageInfo.packageVersion = "8.0.0";
+                packageInfo.packageName = "functionapp";
+
+                return packageInfo;
+            }
+            
+            private void AddVariables(CommandTestBuilderContext context)
+            {
+                AddAzureVariables(context);
+                context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+
+                var settings = BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                    ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
+                });
+
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] = settings.json;
+            }
+        } 
     }
 }

@@ -12,22 +12,20 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Timeout;
-using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -92,12 +90,20 @@ namespace Calamari.AzureAppService.Behaviors
 
             var webSiteResource = armClient.GetWebSiteResource(targetSite.CreateWebSiteResourceIdentifier());
             Log.Verbose($"App Service '{targetSite.Site}' found, with Azure Resource Manager Id '{webSiteResource.Id.ToString()}'.");
+            var siteInfo = webSiteResource.Get();
+            WebSiteResource? webSiteInforResource = null;
+            if (siteInfo != null && siteInfo.HasValue && siteInfo.Value.HasData)
+            {
+                
+                Log.Verbose($"App Service Plan running on '{siteInfo.Value.Data.Sku}' tier");
+                webSiteInforResource = siteInfo.Value;
+            } 
 
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
-
+            
             IPackageProvider packageProvider = packageFileInfo.Extension switch
                                                {
-                                                   ".zip" => new ZipPackageProvider(),
+                                                   ".zip" => GetZipPackageProvider(webSiteInforResource),
                                                    ".nupkg" => new NugetPackageProvider(),
                                                    ".war" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/wardeploy"),
                                                    ".jar" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/publish?type=jar"),
@@ -149,8 +155,8 @@ namespace Calamari.AzureAppService.Behaviors
 
                 Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
                 using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
-                var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
-
+                var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream, packageProvider.PublishingProfileMethod);
+                
                 Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
                 Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
@@ -174,6 +180,16 @@ namespace Calamari.AzureAppService.Behaviors
                     CleanupUploadFile(uploadPath);
                 }
             }
+        }
+
+        static IPackageProvider GetZipPackageProvider(WebSiteResource? webSiteResource)
+        {
+            if (webSiteResource != null && webSiteResource.Data.Sku.Equals("FlexConsumption", StringComparison.OrdinalIgnoreCase))
+            {
+                return new OneDeployZipPackageProvider();
+            }
+
+            return new ZipPackageProvider();
         }
 
         private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, AzureTargetSite site)
@@ -233,7 +249,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                       {
                                                                                           await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                           using var streamContent = new StreamContent(fileStream);
-                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
                                                                                           
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
@@ -287,7 +303,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!new FileInfo(uploadZipPath).Exists)
                 throw new FileNotFoundException(uploadZipPath);
 
-            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}?isAsync=true";
+            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}{packageProvider.AdditionalParameters}";
             Log.Verbose($"Publishing {uploadZipPath} to {zipUploadUrl} and checking for deployment");
 
             using var httpClient = new HttpClient(new HttpClientHandler
@@ -311,7 +327,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                 //we have to create a new request message each time
                                                                                                 await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                                 using var streamContent = new StreamContent(fileStream);
-                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
 
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                                 {
@@ -332,6 +348,11 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Verbose("Zip upload succeeded. Monitoring for deployment completion");
             var location = uploadResponse.Headers.Location;
+
+            if (packageProvider is OneDeployZipPackageProvider oneDeployZipPackageProvider)
+            {
+                 var deployOptions = new CsmPublishingProfile() { Format = PublishingProfileFormat.}
+            }
 
             //wrap the entire thing in a Polly Timeout policy which uses the cancellation token to raise the timout
             var result = await asyncZipDeployTimeoutPolicy.ExecuteAndCaptureAsync(async timeoutCancellationToken =>
