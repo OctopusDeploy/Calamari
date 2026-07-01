@@ -8,7 +8,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${var.static_resource_prefix}-k8s"
-  kubernetes_version  = "1.34"
+  kubernetes_version  = "1.35"
 
   tags = {
     octopus-project                = "aks-static"
