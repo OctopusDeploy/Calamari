@@ -173,7 +173,7 @@ public class RunAgentCommandFixture
                                              .WithArrange(context =>
                                                           {
                                                               context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
-                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiToken, Environment.GetEnvironmentVariable("ANTHROPIC_TOKEN"));
+                                                              context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
                                                               context.Variables.Add(SpecialVariables.Action.Claude.Prompt, prompt);
                                                               context.Variables.Add(SpecialVariables.Action.Claude.Permissions, """{"allow":["Bash", "Read"]}""");
                                                           })
