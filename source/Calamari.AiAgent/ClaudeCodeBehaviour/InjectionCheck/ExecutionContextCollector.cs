@@ -11,7 +11,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour.InjectionCheck;
 // McpWriter/SkillsWriter/SystemPromptWriter and the deployment-variables dump.
 public class ExecutionContextCollector(int maxInputCharacters, ILog log)
 {
-    readonly string truncationText = Environment.NewLine + "[truncated]";
+    static readonly string TruncationText = Environment.NewLine + "[truncated]";
+    readonly int realMaxInputCharacters = maxInputCharacters - TruncationText.Length;
 
     public string Collect(string workingDir, string prompt)
     {
@@ -25,12 +26,12 @@ public class ExecutionContextCollector(int maxInputCharacters, ILog log)
         AppendSkills(sb, workingDir);
 
         var text = sb.ToString();
-        if (text.Length <= (maxInputCharacters - truncationText.Length))
+        if (text.Length <= maxInputCharacters)
             return text;
         
         log.Warn($"Prompt is too long ({text.Length} characters, max {maxInputCharacters}). Truncating.");
 
-        text = text[..maxInputCharacters] + truncationText;
+        text = text[..realMaxInputCharacters] + TruncationText;
 
         return text;
     }
