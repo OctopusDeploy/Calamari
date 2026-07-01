@@ -22,6 +22,7 @@
     <ItemGroup>
         <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\Skills\**\*.md" />
         <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\system-prompt.md" />
+        <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\injection-check-system-prompt.md" />
     </ItemGroup>
 
     <ItemGroup>
