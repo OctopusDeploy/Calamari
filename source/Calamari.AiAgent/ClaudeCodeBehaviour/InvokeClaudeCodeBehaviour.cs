@@ -118,7 +118,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         argsBuilder.WithMcpConfigPath(mcpConfig);
 
         await new PromptInjectionGuard(log, InjectionCheckOptions.Resolve(variables))
-            .CheckAsync(workingDir, prompt, apiToken, cancellationToken.Token);
+            .CheckAsync(workingDir, prompt, apiKey, cancellationToken.Token);
 
         var claudeConfigDir = Path.Combine(workingDir, ".claude");
 

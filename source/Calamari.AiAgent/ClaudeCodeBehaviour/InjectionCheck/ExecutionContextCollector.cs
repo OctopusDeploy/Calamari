@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Calamari.Common.Plumbing.Logging;
 
@@ -40,11 +41,12 @@ public class ExecutionContextCollector(int maxInputCharacters, ILog log)
         if (!Directory.Exists(skillsDir))
             return;
 
-        //todo: validate SKILLS.md compared to everything - for example, if a skill has extra context that it requests to be injected
-        foreach (var skillFile in Directory.EnumerateFiles(skillsDir, "SKILL.md", SearchOption.AllDirectories))
+        // Enumerate all the files a skill refers to, as a skill can call on the files it's bundled with 
+        foreach (var skillFile in Directory.EnumerateFiles(skillsDir, "*", SearchOption.AllDirectories)
+                     .OrderBy(path => path, StringComparer.Ordinal))
         {
-            var name = Path.GetFileName(Path.GetDirectoryName(skillFile));
-            AppendFileSection(sb, $"SKILL: {name}", skillFile);
+            var relativePath = Path.GetRelativePath(skillsDir, skillFile);
+            AppendFileSection(sb, $"SKILL: {relativePath}", skillFile);
         }
     }
 

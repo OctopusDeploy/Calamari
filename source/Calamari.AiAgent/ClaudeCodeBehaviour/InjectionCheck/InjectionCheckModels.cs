@@ -6,9 +6,10 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour.InjectionCheck;
 
 public record InjectionCheckResult
 {
-    //todo: can we return cost here or only tokens?
     public required InjectionVerdict Verdict { get; init; }
     public required string Model { get; init; }
+
+    // the Messages API usage block reports token counts only, not cost :(
     public int? InputTokens { get; init; }
     public int? OutputTokens { get; init; }
 }
