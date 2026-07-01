@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.AiAgent.ClaudeCodeBehaviour.InjectionCheck;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
@@ -115,6 +116,9 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
 
         argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
         argsBuilder.WithMcpConfigPath(mcpConfig);
+
+        await new PromptInjectionGuard(log, InjectionCheckOptions.Resolve(variables))
+            .CheckAsync(workingDir, prompt, apiKey, cancellationToken.Token);
 
         var claudeConfigDir = Path.Combine(workingDir, ".claude");
 

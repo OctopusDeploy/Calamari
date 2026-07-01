@@ -32,6 +32,13 @@ namespace Calamari.AiAgent
                 public const string Skills = "Octopus.Action.Claude.Skills";
                 public const string SkillName = "Name";
                 public const string SkillContent = "Content";
+
+                public const string InjectionCheckEnabled = "Octopus.Action.Claude.InjectionCheckEnabled";
+                public const string InjectionCheckModel = "Octopus.Action.Claude.InjectionCheckModel";
+                public const string InjectionCheckMaxTokens = "Octopus.Action.Claude.InjectionCheckMaxTokens";
+                public const string InjectionCheckMaxInputCharacters = "Octopus.Action.Claude.InjectionCheckMaxInputCharacters";
+                public const string InjectionCheckOnDetection = "Octopus.Action.Claude.InjectionCheckOnDetection";
+                public const string InjectionCheckFailOpenOnError = "Octopus.Action.Claude.InjectionCheckFailOpenOnError";
             }
         }
     }
