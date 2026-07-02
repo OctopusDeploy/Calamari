@@ -120,8 +120,6 @@ public class McpWriterFixture
         var vars = VariablesWithServers("""
             { "type": "stdio", "name": "github", "command": "npx" }
             """);
-        vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-TESTKEY");
-        vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
         new McpWriter(vars).GetAllowedTools().Should().BeEmpty();
     }
@@ -141,6 +139,10 @@ public class McpWriterFixture
         var env = octopus.GetProperty("env");
         env.GetProperty("OCTOPUS_SERVER_URL").GetString().Should().Be("https://octopus.example.com");
         env.GetProperty("OCTOPUS_API_KEY").GetString().Should().Be("API-TESTKEY");
+        
+        var tools = new McpWriter(vars).GetAllowedTools();
+
+        tools.Should().BeEquivalentTo("mcp__octopus__*");
     }
 
     [Test]

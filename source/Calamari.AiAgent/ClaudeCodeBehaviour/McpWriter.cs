@@ -98,6 +98,7 @@ public class McpWriter(IVariables variables)
                 ["OCTOPUS_SERVER_URL"] = octopusServerUrl,
                 ["OCTOPUS_API_KEY"] = octopusToken,
             },
+            AllowedTools = ["*"],
         };
     }
 
