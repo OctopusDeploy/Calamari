@@ -1,6 +1,5 @@
 using System;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -8,36 +7,29 @@ using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
-public class ApplicationSourceUpdater
+// Determines whether a source is in scope for this deployment and builds the appropriate file updater for it.
+// The actual clone/commit/push is handled centrally by the GroupedRepositoryProcessor.
+public class ApplicationSourceFactory
 {
     readonly Application applicationFromYaml;
-    readonly ArgoCDGatewayDto gateway;
-    readonly RepositoryAdapter repositoryAdapter;
     readonly DeploymentScope deploymentScope;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly ILog log;
     readonly string defaultRegistry;
-    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
     readonly ICalamariFileSystem fileSystem;
 
-    public ApplicationSourceUpdater(Application applicationFromYaml,
-                                    RepositoryAdapter repositoryAdapter,
+    public ApplicationSourceFactory(Application applicationFromYaml,
                                     DeploymentScope deploymentScope,
                                     UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                     ILog log,
-                                    ArgoCDGatewayDto gateway,
                                     string defaultRegistry,
-                                    ArgoCDOutputVariablesWriter outputVariablesWriter,
                                     ICalamariFileSystem fileSystem)
     {
         this.applicationFromYaml = applicationFromYaml;
-        this.repositoryAdapter = repositoryAdapter;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
         this.log = log;
-        this.gateway = gateway;
         this.defaultRegistry = defaultRegistry;
-        this.outputVariablesWriter = outputVariablesWriter;
         this.fileSystem = fileSystem;
     }
 
@@ -52,21 +44,7 @@ public class ApplicationSourceUpdater
         return deploymentScope.Matches(annotatedScope);
     }
 
-    public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
-    {
-        var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
-
-        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
-
-        outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
-            NamespacedApplicationName.Create(applicationFromYaml.Metadata.Name, applicationFromYaml.Metadata.Namespace),
-                                                            sourceWithMetadata.Index,
-                                                            sourceUpdateResult);
-
-        return sourceUpdateResult;
-    }
-
-    ISourceUpdater CreateSpecificUpdater(ApplicationSourceWithMetadata sourceWithMetadata)
+    public ISourceUpdater CreateSourceUpdater(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         ISourceUpdater sourceUpdater;
         if (sourceWithMetadata.SourceType == SourceType.Directory)

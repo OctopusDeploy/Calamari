@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
@@ -58,16 +57,11 @@ namespace Calamari.ArgoCD.Git
 
         RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
         {
-            //if the branch name is head, then we just clone the default
-            //if it's not head, then clone the branch immediately
-            var options = gitConnection.GitReference is GitHead
-                ? new CloneOptions()
-                : new CloneOptions
-                {
-                    //note: when cloning, libgit2sharp prepends "refs/remotes/origin/" to this value (so _must_ be a branch to succeed).
-                    BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
-                };
-
+            // Always clone with default options so the remote's default branch is checked out first. This lets
+            // the RepositoryWrapper capture the true default branch (for resolving 'HEAD' references) before we
+            // check out the requested reference, and leaves every remote branch available so the clone can be
+            // reused to check out additional branches without re-cloning.
+            var options = new CloneOptions();
             options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
             options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler(log);
 
@@ -91,28 +85,6 @@ namespace Calamari.ArgoCD.Git
 
             var repo = new Repository(repoPath);
 
-            try
-            {
-            //this is required to handle the issue around "HEAD"
-            var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
-            var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
-
-            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
-
-            //A local branch is required such that libgit2sharp can create "tracking" data
-            // libgit2sharp does not support pushing from a detached head
-            if (repo.Branches[branchToCheckout.Value] == null)
-            {
-                repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
-            }
-
-            LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
-            }
-            catch (LibGit2SharpException e)
-            {
-                throw new CommandException($"Failed to checkout branch '{gitConnection.GitReference}' in repository at {gitConnection.Url}. Error: {e.Message}", e);
-            }
-
             //TODO(tmm): Make this function (and all callers async).
             var gitVendorApiAdapter = gitConnection is HttpsGitConnection httpsGitConnection
                 ? gitVendorPullRequestClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
@@ -123,13 +95,26 @@ namespace Calamari.ArgoCD.Git
                 log.Verbose("Git is using SSH authentication, Git vendor functionality such as PR creation will not be available");
             }
 
-            return new RepositoryWrapper(repo,
-                                         fileSystem,
-                                         checkoutPath,
-                                         log,
-                                         gitConnection,
-                                         gitVendorApiAdapter,
-                                         clock);
+            var repository = new RepositoryWrapper(repo,
+                                                   fileSystem,
+                                                   checkoutPath,
+                                                   log,
+                                                   gitConnection,
+                                                   gitVendorApiAdapter,
+                                                   clock);
+
+            try
+            {
+                repository.CheckoutBranch(gitConnection.GitReference);
+            }
+            catch (Exception e)
+            {
+                repository.Dispose();
+                // Preserve the original behaviour where requesting a reference that is not a branch surfaces as a clone failure.
+                throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?", e);
+            }
+
+            return repository;
         }
     }
 }

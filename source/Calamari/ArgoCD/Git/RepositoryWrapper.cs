@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -36,7 +37,69 @@ namespace Calamari.ArgoCD.Git
 
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
+        // Captured at construction (immediately after clone, before any checkout) so that 'HEAD'
+        // references can be resolved to the remote's default branch even after we have checked out
+        // a different branch on this (reused) clone.
+        readonly string defaultBranchCanonicalName = repository.Head.CanonicalName;
+
         public string WorkingDirectory => repository.Info.WorkingDirectory;
+
+        // Checks out the requested reference, creating a local tracking branch if required, and hard-resets
+        // it to the remote tip. Safe to call repeatedly on a single clone to switch between branches (or to
+        // reset the current branch back to the remote tip between sources when raising pull requests).
+        public void CheckoutBranch(GitReference reference)
+        {
+            var branchToCheckout = reference is GitHead
+                ? new GitBranchName(defaultBranchCanonicalName)
+                : repository.GetBranchName(reference);
+
+            var remoteBranch = repository.Branches.FirstOrDefault(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
+            if (remoteBranch == null)
+            {
+                throw new CommandException($"Failed to checkout branch '{reference}' in repository at {connection.Url}. The reference could not be found as a branch on the remote.");
+            }
+
+            try
+            {
+                log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
+
+                //A local branch is required such that libgit2sharp can create "tracking" data
+                // libgit2sharp does not support pushing from a detached head
+                if (repository.Branches[branchToCheckout.Value] == null)
+                {
+                    repository.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
+                }
+
+                LibGit2Sharp.Commands.Checkout(repository, branchToCheckout.ToFriendlyName());
+                // Ensure the local branch matches the remote tip. This matters when the clone is reused:
+                // a previous source may have left a local commit on this branch that must not leak into this one.
+                repository.Reset(ResetMode.Hard, remoteBranch.Tip);
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to checkout branch '{reference}' in repository at {connection.Url}. Error: {e.Message}", e);
+            }
+        }
+
+        // Returns the current HEAD commit as a PushResult. Used to capture a per-application commit before
+        // a single push of all the application commits made on a branch.
+        public PushResult GetHeadCommitResult()
+        {
+            var commit = repository.Head.Tip;
+            return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
+        }
+
+        // The set of files that currently differ from HEAD (modified, added, deleted, untracked). Used to
+        // detect whether a particular source actually changed anything: a source updater may produce a result
+        // (e.g. a computed image patch) that is identical to what is already committed, in which case it must
+        // not be attributed a commit. Mirrors git's "nothing to commit" behaviour at a per-source granularity.
+        public IReadOnlyCollection<string> GetChangedFilePaths()
+        {
+            var status = repository.RetrieveStatus(new StatusOptions { IncludeUntracked = true, RecurseUntrackedDirs = true, IncludeIgnored = false });
+            return status.Where(e => e.State != FileStatus.Unaltered && e.State != FileStatus.Ignored)
+                         .Select(e => e.FilePath)
+                         .ToList();
+        }
 
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)

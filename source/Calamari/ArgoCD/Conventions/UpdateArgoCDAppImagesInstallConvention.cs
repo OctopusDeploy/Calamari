@@ -69,20 +69,30 @@ namespace Calamari.ArgoCD.Conventions
 
             var appUpdater = new ApplicationUpdater(deploymentScope,
                                                     deploymentConfig,
-                                                    authenticatingRepositoryFactory,
                                                     log,
                                                     fileSystem,
                                                     argoCdApplicationManifestParser,
-                                                    new ImageTagUpdateCommitMessageGenerator(deploymentConfig.CommitParameters.Description),
                                                     outputVariablesWriter);
 
-            var applicationResults = argoProperties.Applications
-                                                   .Select(application =>
-                                                           {
-                                                               var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
-                                                               return appUpdater.ProcessApplication(application, gateway);
-                                                           })
-                                                   .ToList();
+            // Phase 1: plan every application's in-scope sources.
+            var plans = argoProperties.Applications
+                                      .Select(application =>
+                                              {
+                                                  var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
+                                                  return appUpdater.Plan(application, gateway);
+                                              })
+                                      .ToList();
+
+            // Phase 2: process all sources, grouped so each repository is cloned once and each branch checked out once.
+            var commitMessageGenerator = new ImageTagUpdateCommitMessageGenerator(deploymentConfig.CommitParameters.Description);
+            var processor = new GroupedRepositoryProcessor(authenticatingRepositoryFactory, deploymentConfig.CommitParameters, commitMessageGenerator);
+
+            var updates = plans.SelectMany(p => p.MatchingSources.Select(s => s.Update)).ToList();
+            var results = processor.Process(updates);
+            var resultsByUpdate = updates.Zip(results, (update, result) => (update, result)).ToDictionary(x => x.update, x => x.result);
+
+            // Phase 3: assemble per-application results (also writes per-source output variables).
+            var applicationResults = plans.Select(p => appUpdater.AssembleResult(p, resultsByUpdate)).ToList();
 
             //if we are creating a pull request, we don't want to report files updated (as this will be passed down as output variables _with_ the PR info)
 

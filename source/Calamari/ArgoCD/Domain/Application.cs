@@ -1,6 +1,6 @@
-using System;
 using System.Text.Json.Serialization;
 using Calamari.ArgoCD.Domain.Converters;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD.Domain
 {
@@ -16,6 +16,7 @@ namespace Calamari.ArgoCD.Domain
         [JsonPropertyName("status")]
         [JsonConverter(typeof(ApplicationStatusConverter))]
         public ApplicationStatus Status { get; set; } = new ApplicationStatus();
-        
+
+        public NamespacedApplicationName NamespacedName => NamespacedApplicationName.Create(Metadata.Name, Metadata.Namespace);
     }
 }

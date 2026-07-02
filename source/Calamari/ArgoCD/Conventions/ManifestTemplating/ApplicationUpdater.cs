@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
@@ -11,25 +12,22 @@ namespace Calamari.ArgoCD.Conventions.ManifestTemplating;
 
 public class ApplicationUpdater
 {
-    readonly AuthenticatingRepositoryFactory repositoryFactory;
     readonly DeploymentScope deploymentScope;
     readonly ArgoCommitToGitConfig deploymentConfig;
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
     readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
-    readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
     readonly IPackageRelativeFile[] packageFiles;
-    
 
-    public ApplicationUpdater(AuthenticatingRepositoryFactory repositoryFactory, DeploymentScope deploymentScope, ArgoCommitToGitConfig deploymentConfig, ILog log,
+    public ApplicationUpdater(DeploymentScope deploymentScope,
+                              ArgoCommitToGitConfig deploymentConfig,
+                              ILog log,
                               ICalamariFileSystem fileSystem,
                               IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
                               ArgoCDOutputVariablesWriter outputVariablesWriter,
-                              IPackageRelativeFile[] packageFiles,
-                              ICommitMessageGenerator commitMessageGenerator)
+                              IPackageRelativeFile[] packageFiles)
     {
-        this.repositoryFactory = repositoryFactory;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
         this.log = log;
@@ -37,67 +35,68 @@ public class ApplicationUpdater
         this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
         this.outputVariablesWriter = outputVariablesWriter;
         this.packageFiles = packageFiles;
-        this.commitMessageGenerator = commitMessageGenerator;
     }
-    
-    public ProcessApplicationResult ProcessApplication(
-        ArgoCDApplicationDto application,
-        ArgoCDGatewayDto gateway)
+
+    // Phase 1: parse, validate, scope and build the set of source updates for an application.
+    public PlannedApplication Plan(ArgoCDApplicationDto application, ArgoCDGatewayDto gateway)
     {
         log.InfoFormat("Processing application {0}", application.Name);
         var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
         var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-        var applicationName = applicationFromYaml.Metadata.Name;
 
         LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                             applicationFromYaml.Metadata.Annotations,
                                             containsMultipleSources);
-        
+
         ValidateApplication(applicationFromYaml);
 
-        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, new RepositoryUpdater(deploymentConfig.CommitParameters, log, commitMessageGenerator));
-        var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml,
-                                                         gateway,
-                                                         deploymentScope,
-                                                         deploymentConfig,
-                                                         packageFiles,
-                                                         log,
-                                                         fileSystem,
-                                                         outputVariablesWriter,
-                                                         repositoryAdapter);
-        
-        var trackedSourceUpdateResults = applicationFromYaml
-                                    .GetSourcesWithMetadata()
-                                    .Where(sourceUpdater.IsAppInScope)
-                                    .Select(applicationSource => new
-                                    {
-                                        UpdateResult = sourceUpdater.ProcessSource(applicationSource),
-                                        applicationSource
-                                    })
-                                    .ToList();
+        var sourceUpdater = new ApplicationSourceFactory(applicationFromYaml, deploymentScope, deploymentConfig, packageFiles, log, fileSystem);
+
+        var plannedSources = applicationFromYaml.GetSourcesWithMetadata()
+                                                .Where(sourceUpdater.IsAppInScope)
+                                                .Select(source => new PlannedSource(source, new RepositorySourceUpdate(applicationFromYaml.NamespacedName, source, sourceUpdater.CreateSourceUpdater(source))))
+                                                .ToList();
+
+        return new PlannedApplication(application, gateway, plannedSources, applicationFromYaml.Spec.Sources.Count);
+    }
+
+    // Phase 3: turn the processed results back into a per-application result, writing per-source output variables.
+    public ProcessApplicationResult AssembleResult(PlannedApplication plan, IReadOnlyDictionary<RepositorySourceUpdate, SourceUpdateResult> resultsByUpdate)
+    {
+        foreach (var plannedSource in plan.MatchingSources)
+        {
+            outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(plan.Gateway.Name,
+                                                                                    plan.NamespacedName,
+                                                                                    plannedSource.Source.Index,
+                                                                                    resultsByUpdate[plannedSource.Update]);
+        }
+
+        var trackedSourceDetails = plan.MatchingSources.Select(plannedSource =>
+                                                        {
+                                                            var result = resultsByUpdate[plannedSource.Update];
+                                                            return new TrackedSourceDetail(result.PushResult?.CommitSha, result.PushResult?.CommitTimestamp, plannedSource.Source.Index, result.ReplacedFiles, []);
+                                                        })
+                                               .ToList();
 
         //if we have links, use that to generate a link, otherwise just put the name there
-        var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
+        var instanceLinks = plan.Application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(plan.Application.InstanceWebUiUrl) : null;
         var linkifiedAppName = instanceLinks != null
-            ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, applicationFromYaml.Metadata.Namespace), applicationName)
-            : applicationName;
+            ? log.FormatLink(instanceLinks.ApplicationDetails(plan.ApplicationName, plan.ApplicationNamespace), plan.ApplicationName)
+            : plan.ApplicationName;
 
-        var message = trackedSourceUpdateResults.Any(u => u.UpdateResult.Updated)
-            ? "Updated Application {0}"
-            : "Nothing to update for Application {0}";
-
-        log.InfoFormat(message, linkifiedAppName);
+        var anyUpdated = plan.MatchingSources.Any(plannedSource => resultsByUpdate[plannedSource.Update].Updated);
+        log.InfoFormat(anyUpdated ? "Updated Application {0}" : "Nothing to update for Application {0}", linkifiedAppName);
 
         return new ProcessApplicationResult(
-                                            application.GatewayId,
-                                            NamespacedApplicationName.Create(applicationName, applicationFromYaml.Metadata.Namespace),
-                                            applicationFromYaml.Spec.Sources.Count,
-                                            applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                            trackedSourceUpdateResults.Select(r => new TrackedSourceDetail(r.UpdateResult.CommitSha, r.UpdateResult.CommitTimestamp, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
+                                            plan.Application.GatewayId,
+                                            plan.NamespacedName,
+                                            plan.TotalSourceCount,
+                                            plan.MatchingSourceCount,
+                                            trackedSourceDetails,
                                             [],
-                                            trackedSourceUpdateResults.Where(r => r.UpdateResult.Updated).Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+                                            plan.MatchingSources.Where(plannedSource => resultsByUpdate[plannedSource.Update].Updated).Select(plannedSource => plannedSource.Source.Source.OriginalRepoUrl).ToHashSet());
     }
-    
+
     void LogWarningIfUpdatingMultipleSources(
         List<ApplicationSource> sourcesToInspect,
         Dictionary<string, string> applicationAnnotations,
