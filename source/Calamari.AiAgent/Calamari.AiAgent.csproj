@@ -16,6 +16,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="System.Text.Json" Version="9.0.16" />
+    </ItemGroup>
+
+    <ItemGroup>
         <InternalsVisibleTo Include="Calamari.AiAgent.Tests" />
     </ItemGroup>
 
