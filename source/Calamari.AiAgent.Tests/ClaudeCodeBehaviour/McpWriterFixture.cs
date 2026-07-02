@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
@@ -29,66 +28,102 @@ public class McpWriterFixture
     }
 
     [Test]
-    public void SetupMcpConfig_WritesValidJson_WithServers()
+    public void SetupMcpConfig_WritesStdioAndHttpServers()
+    {
+        var vars = VariablesWithServers("""
+            {
+              "type": "stdio",
+              "name": "github",
+              "command": "npx",
+              "args": ["-y", "@modelcontextprotocol/server-github"],
+              "env": { "TOKEN": "abc123" },
+              "allowedTools": ["get_issue"]
+            },
+            {
+              "type": "http",
+              "name": "linear",
+              "url": "https://mcp.linear.app/mcp",
+              "headers": { "Authorization": "Bearer xyz" },
+              "allowedTools": []
+            }
+            """);
+
+        var config = WriteConfig(vars);
+
+        var github = config.GetProperty("mcpServers").GetProperty("github");
+        github.GetProperty("type").GetString().Should().Be("stdio");
+        github.GetProperty("command").GetString().Should().Be("npx");
+        github.GetProperty("args")[1].GetString().Should().Be("@modelcontextprotocol/server-github");
+        github.GetProperty("env").GetProperty("TOKEN").GetString().Should().Be("abc123");
+
+        var linear = config.GetProperty("mcpServers").GetProperty("linear");
+        linear.GetProperty("type").GetString().Should().Be("http");
+        linear.GetProperty("url").GetString().Should().Be("https://mcp.linear.app/mcp");
+        linear.GetProperty("headers").GetProperty("Authorization").GetString().Should().Be("Bearer xyz");
+        linear.TryGetProperty("command", out _).Should().BeFalse();
+        linear.TryGetProperty("env", out _).Should().BeFalse();
+    }
+
+    [Test]
+    public void SetupMcpConfig_ParsesPascalCasePayload()
     {
         var vars = new CalamariVariables();
-        var mcpJson = JsonSerializer.Serialize(new[]
-        {
-            new
-            {
-                name = "github",
-                command = "npx",
-                args = new[] { "-y", "@modelcontextprotocol/server-github" },
-                env = new Dictionary<string, string> { ["TOKEN"] = "abc123" },
-            },
-        });
-        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
+        // `type` should always be lowercase, as it is used as the discriminator and doesn't get to be case-insensitive
+        vars.Set(SpecialVariables.Action.Claude.McpServers, """
+            [
+              { "Name": "github", "Command": "npx", "type": "stdio" }
+            ]
+            """);
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var config = WriteConfig(vars);
 
-        File.Exists(configPath).Should().BeTrue();
-
-        var json = File.ReadAllText(configPath);
-        var doc = JsonDocument.Parse(json);
-        doc.RootElement.TryGetProperty("mcpServers", out var mcpServers).Should().BeTrue();
-        mcpServers.TryGetProperty("github", out var github).Should().BeTrue();
-        github.GetProperty("command").GetString().Should().Be("npx");
+        config.GetProperty("mcpServers").GetProperty("github").GetProperty("command").GetString().Should().Be("npx");
     }
 
     [Test]
     public void SetupMcpConfig_WritesEmptyServers_WhenNoneProvided()
     {
-        var configPath = new McpWriter(new CalamariVariables()).SetupMcpConfig(workingDir);
+        var config = WriteConfig(new CalamariVariables());
 
-        var json = File.ReadAllText(configPath);
-        var doc = JsonDocument.Parse(json);
-        doc.RootElement.TryGetProperty("mcpServers", out var mcpServers).Should().BeTrue();
-        mcpServers.EnumerateObject().Should().BeEmpty();
+        config.GetProperty("mcpServers").EnumerateObject().Should().BeEmpty();
     }
 
     [Test]
-    public void GetAllowedTools_ReturnsMcpWildcardPerServer()
+    public void GetAllowedTools_PrefixesEachToolWithServerName()
     {
-        var vars = new CalamariVariables();
-        var mcpJson = JsonSerializer.Serialize(new[]
-        {
-            new { name = "github", command = "npx" },
-            new { name = "slack", command = "npx" },
-        });
-        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
+        var vars = VariablesWithServers("""
+            {
+              "type": "stdio",
+              "name": "github",
+              "command": "npx",
+              "allowedTools": ["get_issue", "create_pull_request"]
+            },
+            {
+              "type": "http",
+              "name": "linear",
+              "url": "https://mcp.linear.app/mcp",
+              "allowedTools": ["*"]
+            }
+            """);
 
         var tools = new McpWriter(vars).GetAllowedTools();
 
-        tools.Should().Contain("mcp__github__*");
-        tools.Should().Contain("mcp__slack__*");
+        tools.Should().BeEquivalentTo(
+            "mcp__github__get_issue",
+            "mcp__github__create_pull_request",
+            "mcp__linear__*");
     }
 
     [Test]
-    public void GetAllowedTools_ReturnsEmpty_WhenNoServersConfigured()
+    public void GetAllowedTools_ReturnsEmpty_WhenNoToolsSent()
     {
-        var tools = new McpWriter(new CalamariVariables()).GetAllowedTools();
+        var vars = VariablesWithServers("""
+            { "type": "stdio", "name": "github", "command": "npx" }
+            """);
+        vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-TESTKEY");
+        vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
-        tools.Should().BeEmpty();
+        new McpWriter(vars).GetAllowedTools().Should().BeEmpty();
     }
 
     [Test]
@@ -98,12 +133,9 @@ public class McpWriterFixture
         vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-TESTKEY");
         vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var config = WriteConfig(vars);
 
-        var json = File.ReadAllText(configPath);
-        var doc = JsonDocument.Parse(json);
-        var mcpServers = doc.RootElement.GetProperty("mcpServers");
-        mcpServers.TryGetProperty("octopus", out var octopus).Should().BeTrue();
+        var octopus = config.GetProperty("mcpServers").GetProperty("octopus");
         octopus.GetProperty("command").GetString().Should().Be("npx");
 
         var env = octopus.GetProperty("env");
@@ -117,11 +149,9 @@ public class McpWriterFixture
         var vars = new CalamariVariables();
         vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var config = WriteConfig(vars);
 
-        var json = File.ReadAllText(configPath);
-        var doc = JsonDocument.Parse(json);
-        doc.RootElement.GetProperty("mcpServers").TryGetProperty("octopus", out _).Should().BeFalse();
+        config.GetProperty("mcpServers").TryGetProperty("octopus", out _).Should().BeFalse();
     }
 
     [Test]
@@ -136,11 +166,47 @@ public class McpWriterFixture
     }
 
     [Test]
-    public void SetupMcpConfig_ThrowsWhenServerMissingName()
+    public void SetupMcpConfig_ThrowsOnUnrecognisedServerType()
     {
-        var vars = new CalamariVariables();
-        var mcpJson = JsonSerializer.Serialize(new[] { new { command = "npx" } });
-        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
+        var vars = VariablesWithServers("""
+            { "type": "websocket", "name": "github" }
+            """);
+
+        var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
+
+        act.Should().Throw<CommandException>().WithMessage("*Failed to parse*");
+    }
+
+    [Test]
+    public void SetupMcpConfig_ThrowsWhenTypeDiscriminatorMissing()
+    {
+        var vars = VariablesWithServers("""
+            { "name": "github", "command": "npx" }
+            """);
+
+        var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
+
+        act.Should().Throw<CommandException>().WithMessage("*Failed to parse*");
+    }
+
+    [Test]
+    public void SetupMcpConfig_ThrowsWhenServerMissingRequiredProperties()
+    {
+        var vars = VariablesWithServers("""
+            { "type": "stdio", "name": "my-server" }
+            """);
+
+        var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
+
+        act.Should().Throw<CommandException>().WithMessage("*Failed to parse*Command*");
+    }
+
+    [Test]
+    public void SetupMcpConfig_ThrowsWhenServerNameBlank()
+    {
+        var vars = VariablesWithServers("""
+            { "type": "stdio", "name": "", "command": "npx" }
+            """);
 
         var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
 
@@ -148,61 +214,72 @@ public class McpWriterFixture
     }
 
     [Test]
-    public void SetupMcpConfig_ThrowsWhenServerMissingCommand()
+    public void SetupMcpConfig_ThrowsWhenHttpServerUrlBlank()
     {
-        var vars = new CalamariVariables();
-        var mcpJson = JsonSerializer.Serialize(new[] { new { name = "my-server" } });
-        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
+        var vars = VariablesWithServers("""
+            { "type": "http", "name": "my-server", "url": "" }
+            """);
 
         var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
 
-        act.Should().Throw<CommandException>().WithMessage("*must have a command*");
+        act.Should().Throw<CommandException>().WithMessage("*'my-server' must have a URL*");
     }
 
     [Test]
-    public void SetupMcpConfig_InjectsPathEnvVar_WhenNotProvidedByUser()
+    public void SetupMcpConfig_ThrowsOnDuplicateServerNames()
     {
-        var vars = new CalamariVariables();
-        var mcpJson = JsonSerializer.Serialize(new[]
-        {
-            new { name = "test-server", command = "node" },
-        });
-        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
+        var vars = VariablesWithServers("""
+            { "type": "stdio", "name": "github", "command": "npx" },
+            { "type": "http", "name": "github", "url": "https://example.com/mcp" }
+            """);
 
-        var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
+        var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
 
-        var json = File.ReadAllText(configPath);
-        var doc = JsonDocument.Parse(json);
-        var env = doc.RootElement
-            .GetProperty("mcpServers")
-            .GetProperty("test-server")
-            .GetProperty("env");
+        act.Should().Throw<CommandException>().WithMessage("*Duplicate MCP server names: github*");
+    }
+
+    [Test]
+    public void SetupMcpConfig_InjectsPathEnvVar_WhenNotProvided()
+    {
+        var vars = VariablesWithServers("""
+            { "type": "stdio", "name": "test-server", "command": "node" }
+            """);
+
+        var config = WriteConfig(vars);
+
+        var env = config.GetProperty("mcpServers").GetProperty("test-server").GetProperty("env");
         env.TryGetProperty("PATH", out _).Should().BeTrue();
     }
 
     [Test]
-    public void SetupMcpConfig_PreservesUserProvidedPathEnvVar()
+    public void SetupMcpConfig_PreservesProvidedPathEnvVar()
+    {
+        var vars = VariablesWithServers("""
+            {
+              "type": "stdio",
+              "name": "test-server",
+              "command": "node",
+              "env": { "PATH": "/custom/path" }
+            }
+            """);
+
+        var config = WriteConfig(vars);
+
+        var env = config.GetProperty("mcpServers").GetProperty("test-server").GetProperty("env");
+        env.GetProperty("PATH").GetString().Should().Be("/custom/path");
+    }
+
+    static CalamariVariables VariablesWithServers(string serversJson)
     {
         var vars = new CalamariVariables();
-        var mcpJson = JsonSerializer.Serialize(new[]
-        {
-            new
-            {
-                name = "test-server",
-                command = "node",
-                env = new Dictionary<string, string> { ["PATH"] = "/custom/path" },
-            },
-        });
-        vars.Set(SpecialVariables.Action.Claude.McpServers, mcpJson);
+        vars.Set(SpecialVariables.Action.Claude.McpServers, $"[{serversJson}]");
+        return vars;
+    }
 
+    JsonElement WriteConfig(CalamariVariables vars)
+    {
         var configPath = new McpWriter(vars).SetupMcpConfig(workingDir);
-
-        var json = File.ReadAllText(configPath);
-        var doc = JsonDocument.Parse(json);
-        var env = doc.RootElement
-            .GetProperty("mcpServers")
-            .GetProperty("test-server")
-            .GetProperty("env");
-        env.GetProperty("PATH").GetString().Should().Be("/custom/path");
+        File.Exists(configPath).Should().BeTrue();
+        return JsonDocument.Parse(File.ReadAllText(configPath)).RootElement.Clone();
     }
 }
