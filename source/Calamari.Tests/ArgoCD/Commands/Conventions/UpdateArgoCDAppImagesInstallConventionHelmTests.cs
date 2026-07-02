@@ -1359,6 +1359,173 @@ service:
         }
 
         [Test]
+        public void RefSourceTypedAsHelm_StillResolvesRefAndUpdatesReferencedFile()
+        {
+            // FD-530: when a ref source's `path` contains a Chart.yaml, ArgoCD reports its
+            // SourceType as Helm rather than Directory. The $ref-referenced values file must
+            // still be updated - it must not be skipped just because the ref source is Helm-typed.
+            var updater = CreateConvention();
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var existingYamlFile = Path.Combine("otherRepoPath", "values.yaml");
+            var filesInRepo = new (string, string)[]
+            {
+                (
+                    existingYamlFile,
+                    @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.0""
+containerPort: 8080
+service:
+  type: LoadBalancer
+"
+                )
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
+                                          .WithName("App1").WithNamespace("argocd")
+                                          .WithAnnotations(new Dictionary<string, string>()
+                                          {
+                                              [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("ref-source"))] = ProjectSlug,
+                                              [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("ref-source"))] = EnvironmentSlug,
+                                              [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                                          })
+                                          .WithSource(new ApplicationSource
+                                              {
+                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig
+                                                  {
+                                                      ValueFiles = new List<string>()
+                                                      {
+                                                          "$values/otherRepoPath/values.yaml"
+                                                      }
+                                                  },
+                                                  Name = "helm-source",
+                                              },
+                                              SourceTypeConstants.Helm)
+                                          .WithSource(new ApplicationSource
+                                              {
+                                                  Name = "ref-source",
+                                                  Ref = "values",
+                                                  Path = "chart",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  OriginalRepoUrl = OriginUrl,
+                                              },
+                                              SourceTypeConstants.Helm)
+                                          .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCDAppWithHelmSource);
+
+            IReadOnlyList<ProcessApplicationResult> capturedResults = null;
+            deploymentReporter.ReportFilesUpdated(Arg.Any<GitCommitParameters>(), Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert - the $values-referenced file is updated even though the ref source is Helm-typed
+            const string updatedYamlContent =
+                @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.27.1""
+containerPort: 8080
+service:
+  type: LoadBalancer
+";
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+
+            AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
+
+            using (new AssertionScope())
+            {
+                capturedResults.Should().NotBeNull();
+                var sourceDetails = capturedResults.Single().TrackedSourceDetails.First();
+                var expectedPatch = new JsonPatchDocument([
+                    JsonPatchOperation.Replace(new JsonPointer("/0/image/tag"), "1.27.1"),
+                ]);
+                sourceDetails.PatchedFiles.Should()
+                             .BeEquivalentTo([
+                                 new FileJsonPatch("./otherRepoPath/values.yaml", JsonSerializer.Serialize(expectedPatch)),
+                             ]);
+            }
+
+            AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
+        }
+
+        [Test]
+        public void RefSourceReferencedByNoValueFile_WarnsNothingWasReferenced()
+        {
+            // FD-530 follow-up: if an in-scope ref source is processed but no value file in the
+            // application references it, warn instead of silently reporting "Nothing to update".
+            var updater = CreateConvention();
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            originRepo.AddFilesToBranch(argoCDBranchName, ("otherRepoPath/values.yaml", @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.0""
+"));
+
+            var argoCDApp = new ArgoCDApplicationBuilder()
+                            .WithName("App1").WithNamespace("argocd")
+                            .WithAnnotations(new Dictionary<string, string>()
+                            {
+                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("ref-source"))] = ProjectSlug,
+                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("ref-source"))] = EnvironmentSlug,
+                                [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                            })
+                            .WithSource(new ApplicationSource
+                                {
+                                    OriginalRepoUrl = "https://github.com/org/repo",
+                                    Path = "",
+                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                    Helm = new HelmConfig { ValueFiles = new List<string>() },
+                                    Name = "helm-source",
+                                },
+                                SourceTypeConstants.Helm)
+                            .WithSource(new ApplicationSource
+                                {
+                                    Name = "ref-source",
+                                    Ref = "values",
+                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                    OriginalRepoUrl = OriginUrl,
+                                },
+                                SourceTypeConstants.Directory)
+                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>()).Returns(argoCDApp);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            log.MessagesWarnFormatted.Should().Contain(w => w.Contains("ref-source") && w.Contains("no value files") && w.Contains("referenced it"));
+        }
+
+        [Test]
         public void DirectorySource_ImageMatches_ReportsDeploymentWithNonEmptyCommitSha()
         {
             var valuesFilename = Path.Combine("files", "values.yml");
