@@ -69,23 +69,21 @@ public class ApplicationSourceUpdater
     ISourceUpdater CreateSpecificUpdater(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         ISourceUpdater sourceUpdater;
-        if (sourceWithMetadata.SourceType == SourceType.Directory)
+        // A ref source resolves $ref-prefixed value files regardless of the SourceType ArgoCD reports (it reports Helm when the ref's path contains a Chart.yaml).
+        if (sourceWithMetadata.Source.Ref != null)
         {
-            if (sourceWithMetadata.Source.Ref == null)
-            {
-                sourceUpdater = new DirectoryUpdater(deploymentConfig.ImageReferences,
-                                                     defaultRegistry,
-                                                     log,
-                                                     fileSystem);
-            }
-            else
-            {
-                sourceUpdater = new RefUpdater(applicationFromYaml,
-                                               deploymentConfig,
-                                               defaultRegistry,
-                                               log,
-                                               fileSystem);
-            }
+            sourceUpdater = new RefUpdater(applicationFromYaml,
+                                           deploymentConfig,
+                                           defaultRegistry,
+                                           log,
+                                           fileSystem);
+        }
+        else if (sourceWithMetadata.SourceType == SourceType.Directory)
+        {
+            sourceUpdater = new DirectoryUpdater(deploymentConfig.ImageReferences,
+                                                 defaultRegistry,
+                                                 log,
+                                                 fileSystem);
         }
         else if (sourceWithMetadata.SourceType == SourceType.Helm)
         {
