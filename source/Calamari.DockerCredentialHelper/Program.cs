@@ -10,7 +10,7 @@ namespace Calamari.DockerCredentialHelper
         {
             if (args.Length == 0)
             {
-                Console.Error.WriteLine("A credential operation is required (store, get, erase)");
+                Console.Out.WriteLine("A credential operation is required (store, get, erase)");
                 return 1;
             }
 
@@ -24,13 +24,13 @@ namespace Calamari.DockerCredentialHelper
 
             if (string.IsNullOrEmpty(encryptionPassword))
             {
-                Console.Error.WriteLine("OCTOPUS_CREDENTIAL_PASSWORD environment variable not set");
+                Console.Out.WriteLine("OCTOPUS_CREDENTIAL_PASSWORD environment variable not set");
                 return 1;
             }
 
             if (string.IsNullOrEmpty(dockerConfigPath))
             {
-                Console.Error.WriteLine("DOCKER_CONFIG environment variable not set");
+                Console.Out.WriteLine("DOCKER_CONFIG environment variable not set");
                 return 1;
             }
 
@@ -44,11 +44,11 @@ namespace Calamari.DockerCredentialHelper
                 using var output = new StreamWriter(Console.OpenStandardOutput(), utf8) { AutoFlush = true };
 
                 var protocol = new DockerCredentialProtocol(new DockerCredentialStore());
-                return protocol.Run(operation, input, output, Console.Error, encryptionPassword, dockerConfigPath);
+                return protocol.Run(operation, input, output, encryptionPassword, dockerConfigPath);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Docker credential operation failed: {ex.Message}");
+                Console.Out.WriteLine($"Docker credential operation failed: {ex.Message}");
                 return 1;
             }
         }
