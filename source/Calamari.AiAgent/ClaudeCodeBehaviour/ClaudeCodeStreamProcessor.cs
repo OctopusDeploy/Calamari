@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour.JsonResponseModels;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour
@@ -19,11 +18,13 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
         readonly ILog log;
         readonly StringBuilder responseBuilder;
+        readonly ClaudeCodeUsageReporter usageReporter;
 
-        public ClaudeCodeStreamProcessor(ILog log, StringBuilder responseBuilder)
+        public ClaudeCodeStreamProcessor(ILog log, StringBuilder responseBuilder, ClaudeCodeUsageReporter usageReporter)
         {
             this.log = log;
             this.responseBuilder = responseBuilder;
+            this.usageReporter = usageReporter;
         }
 
         public ResultStreamEvent? Result { get; private set; }
@@ -282,10 +283,10 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
                 }
 
-                properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList, JsonOptions);
+                usageReporter.AddModelUsage(usageList);
             }
 
-            log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Usage.Name, properties));
+            usageReporter.SetRunSummary(properties);
         }
     }
 }
