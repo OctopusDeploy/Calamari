@@ -72,6 +72,7 @@ namespace Calamari.Deployment
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
+            public static readonly string DisableDockerCredentialHelper = "Octopus.Action.Package.DisableDockerCredentialHelper";
         }
 
         public static class GitResources

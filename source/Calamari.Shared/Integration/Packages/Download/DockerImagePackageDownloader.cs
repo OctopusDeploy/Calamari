@@ -1,18 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.FeatureToggles;
-using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
@@ -60,7 +59,7 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
             this.log = log;
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
-            this.useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables);
+            this.useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables) && !variables.GetFlag(SpecialVariables.Package.DisableDockerCredentialHelper, false);
             this.dockerCredentialHelper = new DockerCredentialHelper(log);
         }
 
