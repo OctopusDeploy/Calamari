@@ -57,7 +57,9 @@ public class ClaudeCodeProcessStartInfoFixture
         fileName.Should().Be("srt");
         // The claude invocation is passed as a single escaped argument to srt's -c flag.
         arguments.Should().StartWith($"--settings {TestSandboxRuntimeSettingsPath} -c \"claude --model");
-        arguments.Should().Contain("-p \\\"look! a \\\\\\\"quote\\\\\\\"\\\"");
+        arguments.Should().Contain("""
+                                   -p \"look! a \\\"quote\\\"\"
+                                   """);
         arguments.Should().EndWith("\"");
     }
 
