@@ -13,20 +13,21 @@ namespace Calamari.DockerCredentialHelper
             this.store = store;
         }
 
-        public int Run(string operation, TextReader input, TextWriter output, TextWriter error, string encryptionPassword, string dockerConfigPath)
+        //important: all helper->docker comms need to be over stdout, not stderr 
+        public int Run(string operation, TextReader input, TextWriter output, string encryptionPassword, string dockerConfigPath)
         {
             switch (operation.ToLowerInvariant())
             {
                 case "store":
-                    return Store(input, error, encryptionPassword, dockerConfigPath);
+                    return Store(input, output, encryptionPassword, dockerConfigPath);
                 case "get":
-                    return Get(input, output, error, encryptionPassword, dockerConfigPath);
+                    return Get(input, output, encryptionPassword, dockerConfigPath);
                 case "erase":
                     return Erase(input, dockerConfigPath);
                 case "list":
                     return List(output);
                 default:
-                    error.WriteLine($"Invalid operation: {operation}. Valid operations are: store, get, erase, list");
+                    output.WriteLine($"Invalid operation: {operation}. Valid operations are: store, get, erase, list");
                     return 1;
             }
         }
@@ -40,7 +41,7 @@ namespace Calamari.DockerCredentialHelper
         }
 
         // Docker sends a JSON object on stdin for 'store'.
-        int Store(TextReader input, TextWriter error, string encryptionPassword, string dockerConfigPath)
+        int Store(TextReader input, TextWriter output, string encryptionPassword, string dockerConfigPath)
         {
             StoreRequest? request;
             try
@@ -49,13 +50,13 @@ namespace Calamari.DockerCredentialHelper
             }
             catch (Exception)
             {
-                error.WriteLine("Invalid store request");
+                output.WriteLine("Invalid store request");
                 return 1;
             }
 
             if (request == null || string.IsNullOrEmpty(request.ServerURL))
             {
-                error.WriteLine("Invalid store request");
+                output.WriteLine("Invalid store request");
                 return 1;
             }
 
@@ -64,12 +65,12 @@ namespace Calamari.DockerCredentialHelper
         }
 
         // Docker sends a bare server URL line on stdin for 'get' and 'erase'.
-        int Get(TextReader input, TextWriter output, TextWriter error, string encryptionPassword, string dockerConfigPath)
+        int Get(TextReader input, TextWriter output, string encryptionPassword, string dockerConfigPath)
         {
             var serverUrl = input.ReadLine()?.Trim();
             if (string.IsNullOrEmpty(serverUrl))
             {
-                error.WriteLine("No server URL provided");
+                output.WriteLine("No server URL provided");
                 return 1;
             }
 
