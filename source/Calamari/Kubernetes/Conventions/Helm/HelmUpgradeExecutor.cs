@@ -100,6 +100,33 @@ namespace Calamari.Kubernetes.Conventions.Helm
             AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
         }
 
+        // Checks for a stuck pending release and recovers by uninstalling or rolling back.
+        // Returns the correct newRevisionNumber to use for the upgrade.
+        public int RecoverFromPendingRelease(string releaseName, string status, int expectedRevisionNumber)
+        {
+            switch (status?.ToLowerInvariant())
+            {
+                case "pending-install":
+                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled first install. Uninstalling to recover...");
+                    var uninstallResult = helmCli.Uninstall(releaseName);
+                    if (uninstallResult.ExitCode != 0)
+                        log.Warn($"Uninstall returned non-zero exit code {uninstallResult.ExitCode}. Continuing with upgrade...");
+                    // Uninstall resets the revision number
+                    return 1;
+
+                case "pending-upgrade":
+                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment. Rolling back to recover...");
+                    var rollbackResult = helmCli.Rollback(releaseName);
+                    if (rollbackResult.ExitCode != 0)
+                        log.Warn($"Rollback returned non-zero exit code {rollbackResult.ExitCode}. Continuing with upgrade...");
+                    // Rollback creates a new revision, so the subsequent upgrade will be one higher than expected.
+                    return expectedRevisionNumber + 1;
+
+                default:
+                    return expectedRevisionNumber;
+            }
+        }
+
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment)
         {
             var args = new List<string>();

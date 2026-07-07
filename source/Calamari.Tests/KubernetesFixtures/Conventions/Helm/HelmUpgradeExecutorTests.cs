@@ -163,6 +163,110 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             log.MessagesVerboseFormatted.Should().Contain(msg => msg.Contains("empty, skipping applied resources"));
         }
 
+        [Test]
+        public void WhenReleaseIsPendingUpgrade_RollsBackBeforeUpgrade()
+        {
+            SetupHelmRollbackMock();
+
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            executor.RecoverFromPendingRelease(ReleaseName, "pending-upgrade", RevisionNumber);
+
+            commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("rollback") && i.Arguments.Contains(ReleaseName)));
+        }
+
+        [Test]
+        public void WhenReleaseIsPendingInstall_UninstallsBeforeUpgrade()
+        {
+            SetupHelmUninstallMock();
+
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            executor.RecoverFromPendingRelease(ReleaseName, "pending-install", RevisionNumber);
+
+            commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("uninstall") && i.Arguments.Contains(ReleaseName)));
+        }
+
+        [Test]
+        public void WhenReleaseIsDeployed_DoesNotRollbackOrUninstall()
+        {
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            executor.RecoverFromPendingRelease(ReleaseName, "deployed", RevisionNumber);
+
+            commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("rollback")));
+            commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("uninstall")));
+        }
+
+        [Test]
+        public void WhenReleaseIsFailed_DoesNotRollbackOrUninstall()
+        {
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            executor.RecoverFromPendingRelease(ReleaseName, "failed", RevisionNumber);
+
+            commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("rollback")));
+            commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("uninstall")));
+        }
+
+        [Test]
+        public void WhenRollbackFails_LogsWarningAndContinues()
+        {
+            SetupHelmRollbackMock(exitCode: 1);
+
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            executor.RecoverFromPendingRelease(ReleaseName, "pending-upgrade", RevisionNumber);
+
+            log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains(ReleaseName) && msg.Contains("pending-upgrade"));
+            log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains("non-zero exit code"));
+        }
+
+        [Test]
+        public void WhenUninstallFails_LogsWarningAndContinues()
+        {
+            SetupHelmUninstallMock(exitCode: 1);
+
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            executor.RecoverFromPendingRelease(ReleaseName, "pending-install", RevisionNumber);
+
+            log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains(ReleaseName) && msg.Contains("pending-install"));
+            log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains("non-zero exit code"));
+        }
+
+        [Test]
+        public void WhenReleaseIsPendingUpgrade_ReturnsIncrementedRevision()
+        {
+            SetupHelmRollbackMock();
+
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            var result = executor.RecoverFromPendingRelease(ReleaseName, "pending-upgrade", RevisionNumber);
+
+            result.Should().Be(RevisionNumber + 1);
+        }
+
+        [Test]
+        public void WhenReleaseIsPendingInstall_ReturnsRevisionOne()
+        {
+            SetupHelmUninstallMock();
+
+            var deployment = CreateRunningDeployment(CreateVariables());
+            var executor = CreateExecutor(deployment);
+
+            var result = executor.RecoverFromPendingRelease(ReleaseName, "pending-install", RevisionNumber);
+
+            result.Should().Be(1);
+        }
+
         void SetupChartDirectory()
         {
             Directory.CreateDirectory(ChartDirectory);
@@ -178,6 +282,29 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
                                  invocation.AdditionalInvocationOutputSink?.WriteInfo("v3.14.0");
                                  return new CommandResult("helm version", 0);
                              });
+        }
+
+        void SetupHelmGetMetadataMock(int revision, string status)
+        {
+            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get") && i.Arguments.Contains("metadata")))
+                             .Returns(info =>
+                             {
+                                 var invocation = (CommandLineInvocation)info[0];
+                                 invocation.AdditionalInvocationOutputSink?.WriteInfo($"{{\"revision\":{revision},\"status\":\"{status}\"}}");
+                                 return new CommandResult("helm get metadata", 0);
+                             });
+        }
+
+        void SetupHelmRollbackMock(int exitCode = 0)
+        {
+            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("rollback")))
+                             .Returns(new CommandResult("helm rollback", exitCode));
+        }
+
+        void SetupHelmUninstallMock(int exitCode = 0)
+        {
+            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("uninstall")))
+                             .Returns(new CommandResult("helm uninstall", exitCode));
         }
 
         void SetupHelmUpgradeMock()
