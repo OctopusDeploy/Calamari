@@ -153,7 +153,7 @@ public class ClaudeCommandArgsBuilder
         return args.ToString();
     }
 
-    static string EscapeArg(string arg)
+    public static string EscapeArg(string arg)
     {
         if (arg.IndexOfAny(new[] { ' ', '"', '\\' }) < 0)
             return arg;

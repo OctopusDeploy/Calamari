@@ -24,7 +24,7 @@ public class ClaudeCodeProcessStartInfo
             SandboxMode.SandboxRuntime when string.IsNullOrWhiteSpace(argsBuilder.SandboxRuntimeSettingsPath)
                 => throw new InvalidOperationException("Sandbox runtime mode requires a settings file path."),
             SandboxMode.SandboxRuntime
-                => (SrtPath, $"--settings {argsBuilder.SandboxRuntimeSettingsPath} {ClaudeCodePath}{claudeArgs}"),
+                => (SrtPath, $"--settings {argsBuilder.SandboxRuntimeSettingsPath} -c {ClaudeCommandArgsBuilder.EscapeArg(ClaudeCodePath + claudeArgs)}"),
             _ => (ClaudeCodePath, claudeArgs),
         };
     }
