@@ -48,22 +48,32 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            var isArgoRolloutsSupportToggleEnabled = OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables);
+            
             var releaseName = GetReleaseName(deployment.Variables);
 
             var helmCli = new HelmCli(log, commandLineRunner, deployment, fileSystem);
 
             kubectl.SetKubectl();
 
-            var currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
+            var currentMetadata = helmCli.GetCurrentReleaseMetadata(releaseName);
 
-            var newRevisionNumber = (currentRevisionNumber ?? 0) + 1;
+            var expectedRevisionNumber = (currentMetadata?.Revision ?? 0) + 1;
+            var executor = isArgoRolloutsSupportToggleEnabled 
+                ? new HelmUpgradeExecutor(log, fileSystem, valueSourcesParser, helmCli, namespaceResolver, manifestReporter) 
+                : new HelmUpgradeExecutor(log, fileSystem, valueSourcesParser, helmCli, namespaceResolver);
+            
+            // If a release exists and is stuck in a pending state from a previous cancelled deployment,
+            // recover before starting the upgrade so both tasks receive the correct revision number.
+            var newRevisionNumber = currentMetadata != null
+                ? executor.RecoverFromPendingRelease(releaseName, currentMetadata.Value.Status, expectedRevisionNumber)
+                : expectedRevisionNumber;
 
             //When ArgoRollouts support is enabled, the parallel manifest + KOS reporter is replaced
             //by a separate verification action that runs after the deploy step. Manifest reporting
             //and AppliedResources emission are performed inline by HelmUpgradeExecutor instead.
-            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
+            if (isArgoRolloutsSupportToggleEnabled)
             {
-                var executor = new HelmUpgradeExecutor(log, fileSystem, valueSourcesParser, helmCli, namespaceResolver, manifestReporter);
                 executor.ExecuteHelmUpgrade(deployment, releaseName, newRevisionNumber, new CancellationTokenSource(), new CancellationTokenSource());
                 return;
             }
@@ -77,12 +87,6 @@ namespace Calamari.Kubernetes.Conventions
 
             var helmUpgradeTask = Task.Run(() =>
                                            {
-                                               var executor = new HelmUpgradeExecutor(log,
-                                                                                      fileSystem,
-                                                                                      valueSourcesParser,
-                                                                                      helmCli,
-                                                                                      namespaceResolver);
-
                                                executor.ExecuteHelmUpgrade(deployment, releaseName, newRevisionNumber, helmInstallCompletedCts, helmInstallErrorCts);
                                            });
 
@@ -91,12 +95,12 @@ namespace Calamari.Kubernetes.Conventions
                                                           var runner = new HelmManifestAndStatusReporter(log, statusReporter, manifestReporter, namespaceResolver, helmCli);
 
                                                           await runner.StartBackgroundMonitoringAndReporting(deployment,
-                                                                               releaseName,
-                                                                               newRevisionNumber,
-                                                                               helmInstallCompletedCts.Token,
-                                                                               helmInstallErrorCts.Token);
+                                                              releaseName,
+                                                              newRevisionNumber,
+                                                              helmInstallCompletedCts.Token,
+                                                              helmInstallErrorCts.Token);
                                                       },
-                                                      helmInstallCompletedCts.Token);
+                helmInstallCompletedCts.Token);
 
             //we run both the helm upgrade and the manifest & status in parallel
             Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
