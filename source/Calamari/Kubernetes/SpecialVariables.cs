@@ -176,6 +176,11 @@ namespace Calamari.Kubernetes
                 public const string ManifestAttribute = "manifest";
                 public const string NamespaceAttribute = "ns";
             }
+
+            public static class DryRun
+            {
+                public const string Name = "k8s-dry-run";
+            }
         }
     }
 }

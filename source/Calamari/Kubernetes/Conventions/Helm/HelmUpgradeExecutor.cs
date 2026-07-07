@@ -65,13 +65,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
             }
 
-            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
+            //A --dry-run never persists a release or applies resources, so there is nothing to report.
+            //HelmManifestAndStatusReporter already skips reporting under --dry-run; mirror that here so
+            //the ArgoRollouts (inline) path doesn't report phantom manifests either.
+            if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables) && !IsHelmDryRun(deployment))
             {
                 ReportManifestAndSetAppliedResources(deployment, releaseName, newRevisionNumber);
             }
 
             installCompletedCts.Cancel();
         }
+
+        public static bool IsHelmDryRun(RunningDeployment deployment)
+            => deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments)?.Contains("--dry-run") ?? false;
 
         void ReportManifestAndSetAppliedResources(RunningDeployment deployment, string releaseName, int revisionNumber)
         {

@@ -7,6 +7,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Conventions.Helm;
@@ -51,6 +52,13 @@ namespace Calamari.Kubernetes.Conventions
             var isArgoRolloutsSupportToggleEnabled = OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables);
             
             var releaseName = GetReleaseName(deployment.Variables);
+
+            //Signal to the server that this is a dry-run BEFORE running helm, so that even if the task
+            //subsequently fails or is cancelled the server knows not to mark Live Status Unavailable
+            //(a dry-run never changes the cluster). A service message is persisted immediately by the
+            //server (unlike an output variable, which is only flushed at task completion). See FD-565.
+            if (HelmUpgradeExecutor.IsHelmDryRun(deployment))
+                log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessages.DryRun.Name));
 
             var helmCli = new HelmCli(log, commandLineRunner, deployment, fileSystem);
 
