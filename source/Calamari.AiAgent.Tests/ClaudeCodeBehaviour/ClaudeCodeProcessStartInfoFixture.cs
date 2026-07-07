@@ -50,12 +50,15 @@ public class ClaudeCodeProcessStartInfoFixture
     [Test]
     public void ResolveInvocation_SandboxRuntimeMode_WrapsClaudeWithSrt()
     {
-        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.SandboxRuntime).WithSandboxRuntimeSettingsPath(TestSandboxRuntimeSettingsPath);
+        var builder = MinimalBuilder().WithSandboxMode(SandboxMode.SandboxRuntime).WithSandboxRuntimeSettingsPath(TestSandboxRuntimeSettingsPath).WithPrompt("look! a \"quote\"");
 
         var (fileName, arguments) = ClaudeCodeProcessStartInfo.ResolveInvocation(builder);
 
         fileName.Should().Be("srt");
-        arguments.Should().StartWith($"--settings {TestSandboxRuntimeSettingsPath} claude --model");
+        // The claude invocation is passed as a single escaped argument to srt's -c flag.
+        arguments.Should().StartWith($"--settings {TestSandboxRuntimeSettingsPath} -c \"claude --model");
+        arguments.Should().Contain("-p \\\"look! a \\\\\\\"quote\\\\\\\"\\\"");
+        arguments.Should().EndWith("\"");
     }
 
     [Test]
