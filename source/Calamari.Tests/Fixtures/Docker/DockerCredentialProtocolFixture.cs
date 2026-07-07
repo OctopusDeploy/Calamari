@@ -42,13 +42,15 @@ namespace Calamari.Tests.Fixtures.Docker
         }
 
         [Test]
-        public void Get_WhenMissing_ReturnsExitOneAndNotFoundMessage()
+        public void Get_WhenMissing_WritesNotFoundSentinelToStdout()
         {
+            var output = new StringWriter();
             var error = new StringWriter();
-            var exit = protocol.Run("get", new StringReader("https://example.com"), new StringWriter(), error, Password, configPath);
+            var exit = protocol.Run("get", new StringReader("https://example.com"), output, error, Password, configPath);
 
             Assert.That(exit, Is.EqualTo(1));
-            Assert.That(error.ToString(), Does.Contain("credentials not found"));
+            // We need to emit this exact sentence stdout - clients such as podman check for it explicitly
+            Assert.That(output.ToString(), Does.Contain("credentials not found in native keychain"));
         }
 
         [Test]

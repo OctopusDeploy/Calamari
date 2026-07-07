@@ -76,7 +76,7 @@ namespace Calamari.DockerCredentialHelper
             var credential = store.Get(serverUrl, encryptionPassword, dockerConfigPath);
             if (credential == null)
             {
-                error.WriteLine("credentials not found in native keychain");
+                output.WriteLine("credentials not found in native keychain");
                 return 1;
             }
 

@@ -1,3 +1,5 @@
+[![calamari Latest Production Release](https://deploy.octopus.app/api/Spaces-1795/projects/calamari/badge/production/latest_release?label=release)](https://deploy.octopus.app/app#/Spaces-1795/projects/calamari)
+
 Calamari is the command-line tool invoked by Tentacle during a deployment. It knows how to extract and install NuGet packages, run the Deploy.ps1 etc. conventions, modify configuration files, and all the other things that happen during a deployment.
 
 ## Building
@@ -90,6 +92,7 @@ Option 1 is recommended if you can use the default worker.
 
 ### Bonus Project Variables!
 - Set `Octopus.Calamari.WaitForDebugger` to `True` in Octopus, to get a debug version of Calamari to wait for a Debugger to be attached before continuing. The log message from Calamari will show it’s waiting for the debugger and it will give the PID to use when you’re looking to attach.
+  - Set it to `Rider` instead of `True` to have Calamari automatically signal a locally-running JetBrains Rider to attach to the process (via `rider attach-to-process`), then wait as usual. This only works when Calamari runs on the same machine as your Rider (i.e. the local-debug loop using the `Octopus.Calamari.Executable` override above).
 - Set `OctopusPrintEvaluatedVariables` to `True` to get all variables that are sent to Calamari, printed to the verbose long when executing a step.
 
 > Note: These can be scoped to an individual step if required.
@@ -97,7 +100,7 @@ Option 1 is recommended if you can use the default worker.
 > Tip: Creating a variable set with your configuration makes it easy to toggle this behaviour per project
 
 ### Bonus Environment Varable
-- Set the environment variable `_CALAMARI_WAIT_FOR_DEBUGGER` to `true` in Server to enable the WaitForDebugger behaviour above outside the scope of a Project. E.g. HealthChecks etc. 
+- Set the environment variable `_CALAMARI_WAIT_FOR_DEBUGGER` to `true` in Server to enable the WaitForDebugger behaviour above outside the scope of a Project. E.g. HealthChecks etc. Set it to `Rider` to enable the auto-attach behaviour described above.
 
 ## Testing:
 

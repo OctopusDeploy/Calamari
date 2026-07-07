@@ -52,6 +52,7 @@ public class RefUpdater : AbstractHelmUpdater
             .GetHelmTargetsForRefSource(sourceWithMetadata);
 
         HelmHelpers.LogHelmSourceConfigurationProblems(log, helmTargetsForRefSource.Problems);
+        WarnIfNothingReferencedRefSource(sourceWithMetadata, helmTargetsForRefSource.Targets.Count, helmTargetsForRefSource.Problems.Count);
 
         return ProcessHelmUpdateTargets(workingDirectory,
                                         helmTargetsForRefSource.Targets);
@@ -62,10 +63,18 @@ public class RefUpdater : AbstractHelmUpdater
     {
         var extractor = new HelmValuesFileExtractor(applicationFromYaml);
         var valuesFiles = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata)
-                                   .Select(file => Path.Combine(workingDirectory, file));
+                                   .Select(file => Path.Combine(workingDirectory, file))
+                                   .ToHashSet();
+        WarnIfNothingReferencedRefSource(sourceWithMetadata, valuesFiles.Count, 0);
 
-        return ProcessHelmValuesFiles(valuesFiles.ToHashSet(),
+        return ProcessHelmValuesFiles(valuesFiles,
                                       workingDirectory,
                                       sourceWithMetadata);
+    }
+
+    void WarnIfNothingReferencedRefSource(ApplicationSourceWithMetadata sourceWithMetadata, int targetCount, int problemCount)
+    {
+        if (targetCount == 0 && problemCount == 0)
+            log.WarnFormat("Ref source '{0}' was processed but no value files in the application referenced it (via ${1}/...), so nothing was updated.", sourceWithMetadata.SourceIdentity, sourceWithMetadata.Source.Ref);
     }
 }

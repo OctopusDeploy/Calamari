@@ -34,6 +34,6 @@ public class HealthCheckCommand(ILog log, IVariables variables) : Command
         
         return 0;
         
-        IAmazonECS ClientFactory() => EcsClientFactory.Create(environment);
+        IAmazonECS ClientFactory() => EcsClientFactoryHelper.Create(environment);
     }
 }

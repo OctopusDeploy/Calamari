@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Assent;
-using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.Aws.Discovery;
 using Calamari.CloudAccounts;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;

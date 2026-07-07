@@ -33,7 +33,8 @@ namespace Calamari.CommitToGit
             var requiresPullRequest = variables.GetFlag(SpecialVariables.Action.Git.PullRequest.Create);
             var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Action.Git.CommitMessageSummary));
             var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Action.Git.CommitMessageDescription) ?? string.Empty);
-            var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest);
+            var pushRetryAttempts = GitCommitParameters.ClampPushRetryAttempts(variables.GetInt32(SpecialVariables.Action.Git.PushRetryAttempts));
+            var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest, pushRetryAttempts);
 
             var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
 

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <AssemblyName>Calamari.AiAgent</AssemblyName>
+        <RootNamespace>Calamari.AiAgent</RootNamespace>
+        <OutputType>Exe</OutputType>
+        <Nullable>enable</Nullable>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <IsPackable>false</IsPackable>
+        <TargetFramework>net8.0</TargetFramework>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Text.Json" Version="9.0.16" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Calamari.AiAgent.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\Skills\**\*.md" />
+        <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\system-prompt.md" />
+        <EmbeddedResource Include="ClaudeCodeBehaviour\DefaultContext\injection-check-system-prompt.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="ClaudeCodeBehaviour\JsonResponseModels\" />
+    </ItemGroup>
+
+</Project>

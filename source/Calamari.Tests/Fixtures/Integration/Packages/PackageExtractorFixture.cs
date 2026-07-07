@@ -56,7 +56,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var fileName = GetFixtureResource("Samples", string.Format(filename));
 
-            var extractor = new ZipPackageExtractor(ConsoleLog.Instance, true);
+            var extractor = new ZipPackageExtractor(ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractor.GetType(), fileName);
 
             var filesExtracted = extractor.Extract(fileName, targetDir);
