@@ -32,13 +32,27 @@ public class ClaudeCodeUsageReporter
     }
 
     /// <summary>
-    /// Records the run-level summary attributes (cost, duration, turns, aggregate tokens)
-    /// captured from the main agent's result event. The last write wins.
+    /// Records the run-level summary (cost, duration, turns, aggregate tokens) captured from the
+    /// main agent's result event, formatting each populated field into its service message attribute.
+    /// The last write wins.
     /// </summary>
-    public void SetRunSummary(IReadOnlyDictionary<string, string> properties)
+    public void SetRunSummary(ClaudeCodeRunSummary summary)
     {
-        foreach (var kvp in properties)
-            summaryProperties[kvp.Key] = kvp.Value;
+        SetProperty(ClaudeCodeServiceMessages.Usage.CostUsdAttribute, summary.CostUsd?.ToString("F6"));
+        SetProperty(ClaudeCodeServiceMessages.Usage.TotalCostUsdAttribute, summary.TotalCostUsd?.ToString("F6"));
+        SetProperty(ClaudeCodeServiceMessages.Usage.DurationMsAttribute, summary.DurationMs?.ToString("F0"));
+        SetProperty(ClaudeCodeServiceMessages.Usage.DurationApiMsAttribute, summary.DurationApiMs?.ToString("F0"));
+        SetProperty(ClaudeCodeServiceMessages.Usage.NumTurnsAttribute, summary.NumTurns?.ToString());
+        SetProperty(ClaudeCodeServiceMessages.Usage.InputTokensAttribute, summary.InputTokens?.ToString());
+        SetProperty(ClaudeCodeServiceMessages.Usage.OutputTokensAttribute, summary.OutputTokens?.ToString());
+        SetProperty(ClaudeCodeServiceMessages.Usage.CacheReadInputTokensAttribute, summary.CacheReadInputTokens?.ToString());
+        SetProperty(ClaudeCodeServiceMessages.Usage.CacheCreationInputTokensAttribute, summary.CacheCreationInputTokens?.ToString());
+    }
+
+    void SetProperty(string key, string? value)
+    {
+        if (value != null)
+            summaryProperties[key] = value;
     }
 
     /// <summary>

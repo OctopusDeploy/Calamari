@@ -91,10 +91,10 @@ public class ClaudeCodeUsageReporterFixture
     [Test]
     public void RunSummaryAttributes_ArePreservedOnTheMessage()
     {
-        reporter.SetRunSummary(new System.Collections.Generic.Dictionary<string, string>
+        reporter.SetRunSummary(new ClaudeCodeRunSummary
         {
-            [ClaudeCodeServiceMessages.Usage.CostUsdAttribute] = "0.003000",
-            [ClaudeCodeServiceMessages.Usage.NumTurnsAttribute] = "1",
+            CostUsd = 0.003,
+            NumTurns = 1,
         });
         reporter.AddModelUsage(new[] { new ClaudeCodeModelUsage { Model = "claude-haiku", InputTokens = 10 } });
 
