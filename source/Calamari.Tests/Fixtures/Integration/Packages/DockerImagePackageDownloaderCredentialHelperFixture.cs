@@ -11,6 +11,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
@@ -100,6 +101,32 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
             
             // Verify credential helper was NOT used
+            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
+            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Cleaned up Docker credential files"));
+        }
+
+        [Test]
+        [RequiresDockerInstalled]
+        public void CredentialHelper_DisabledByPackageVariable_UsesFallbackLogin()
+        {
+            // Arrange - feature toggle ON, but the per-action variable opts this acquisition out.
+            var log = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
+            variables.Set(SpecialVariables.Package.DisableDockerCredentialHelper, bool.TrueString);
+            var downloader = GetDownloader(log, variables);
+
+            // Act
+            var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
+                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
+                TimeSpan.FromSeconds(10));
+
+            // Assert
+            pkg.Should().NotBeNull();
+            pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
+
+            // The package variable must override the feature toggle: helper NOT used, plain login instead.
             log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
             log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Cleaned up Docker credential files"));
         }

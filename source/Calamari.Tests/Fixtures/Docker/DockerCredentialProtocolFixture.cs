@@ -30,11 +30,11 @@ namespace Calamari.Tests.Fixtures.Docker
         public void Store_ThenGet_WritesCredentialJsonToStdout()
         {
             var storeInput = new StringReader("{\"ServerURL\":\"https://example.com\",\"Username\":\"alice\",\"Secret\":\"s3cret\"}");
-            var storeExit = protocol.Run("store", storeInput, new StringWriter(), new StringWriter(), Password, configPath);
+            var storeExit = protocol.Run("store", storeInput, new StringWriter(), Password, configPath);
             Assert.That(storeExit, Is.EqualTo(0));
 
             var getOutput = new StringWriter();
-            var getExit = protocol.Run("get", new StringReader("https://example.com"), getOutput, new StringWriter(), Password, configPath);
+            var getExit = protocol.Run("get", new StringReader("https://example.com"), getOutput, Password, configPath);
 
             Assert.That(getExit, Is.EqualTo(0));
             Assert.That(getOutput.ToString(), Does.Contain("alice"));
@@ -45,8 +45,7 @@ namespace Calamari.Tests.Fixtures.Docker
         public void Get_WhenMissing_WritesNotFoundSentinelToStdout()
         {
             var output = new StringWriter();
-            var error = new StringWriter();
-            var exit = protocol.Run("get", new StringReader("https://example.com"), output, error, Password, configPath);
+            var exit = protocol.Run("get", new StringReader("https://example.com"), output, Password, configPath);
 
             Assert.That(exit, Is.EqualTo(1));
             // We need to emit this exact sentence stdout - clients such as podman check for it explicitly
@@ -58,39 +57,39 @@ namespace Calamari.Tests.Fixtures.Docker
         {
             protocol.Run("store",
                          new StringReader("{\"ServerURL\":\"https://example.com\",\"Username\":\"alice\",\"Secret\":\"s3cret\"}"),
-                         new StringWriter(), new StringWriter(), Password, configPath);
+                         new StringWriter(), Password, configPath);
 
-            var eraseExit = protocol.Run("erase", new StringReader("https://example.com"), new StringWriter(), new StringWriter(), Password, configPath);
+            var eraseExit = protocol.Run("erase", new StringReader("https://example.com"), new StringWriter(), Password, configPath);
             Assert.That(eraseExit, Is.EqualTo(0));
 
-            var getExit = protocol.Run("get", new StringReader("https://example.com"), new StringWriter(), new StringWriter(), Password, configPath);
+            var getExit = protocol.Run("get", new StringReader("https://example.com"), new StringWriter(), Password, configPath);
             Assert.That(getExit, Is.EqualTo(1));
         }
 
         [Test]
         public void Run_WithUnknownOperation_ReturnsExitOne()
         {
-            var error = new StringWriter();
-            var exit = protocol.Run("bogus", new StringReader(""), new StringWriter(), error, Password, configPath);
+            var output = new StringWriter();
+            var exit = protocol.Run("bogus", new StringReader(""), output, Password, configPath);
 
             Assert.That(exit, Is.EqualTo(1));
-            Assert.That(error.ToString(), Does.Contain("Invalid operation"));
+            Assert.That(output.ToString(), Does.Contain("Invalid operation"));
         }
 
         [Test]
         public void Store_WithMalformedJson_ReturnsExitOneAndError()
         {
-            var error = new StringWriter();
-            var exit = protocol.Run("store", new StringReader("not json"), new StringWriter(), error, Password, configPath);
+            var output = new StringWriter();
+            var exit = protocol.Run("store", new StringReader("not json"), output, Password, configPath);
 
             Assert.That(exit, Is.EqualTo(1));
-            Assert.That(error.ToString(), Does.Contain("Invalid store request"));
+            Assert.That(output.ToString(), Does.Contain("Invalid store request"));
         }
 
         [Test]
         public void Store_WithEmptyInput_ReturnsExitOne()
         {
-            var exit = protocol.Run("store", new StringReader(""), new StringWriter(), new StringWriter(), Password, configPath);
+            var exit = protocol.Run("store", new StringReader(""), new StringWriter(), Password, configPath);
             Assert.That(exit, Is.EqualTo(1));
         }
 
@@ -98,7 +97,7 @@ namespace Calamari.Tests.Fixtures.Docker
         public void List_ReturnsEmptyJsonObjectAndExitZero()
         {
             var output = new StringWriter();
-            var exit = protocol.Run("list", new StringReader(""), output, new StringWriter(), Password, configPath);
+            var exit = protocol.Run("list", new StringReader(""), output, Password, configPath);
 
             Assert.That(exit, Is.EqualTo(0));
             Assert.That(output.ToString().Trim(), Is.EqualTo("{}"));
