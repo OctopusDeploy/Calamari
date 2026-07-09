@@ -14,6 +14,7 @@ public class ClaudeCodeStreamProcessorFixture
 {
     InMemoryLog log = null!;
     StringBuilder responseBuilder = null!;
+    ClaudeCodeUsageReporter usageReporter = null!;
     ClaudeCodeStreamProcessor processor = null!;
 
     [SetUp]
@@ -21,7 +22,8 @@ public class ClaudeCodeStreamProcessorFixture
     {
         log = new InMemoryLog();
         responseBuilder = new StringBuilder();
-        processor = new ClaudeCodeStreamProcessor(log, responseBuilder);
+        usageReporter = new ClaudeCodeUsageReporter();
+        processor = new ClaudeCodeStreamProcessor(log, responseBuilder, usageReporter);
     }
 
     [Test]
@@ -108,6 +110,7 @@ public class ClaudeCodeStreamProcessorFixture
             """;
 
         processor.ProcessLine(json);
+        usageReporter.WriteServiceMessage(log);
 
         log.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
 
@@ -130,6 +133,7 @@ public class ClaudeCodeStreamProcessorFixture
             """;
 
         processor.ProcessLine(json);
+        usageReporter.WriteServiceMessage(log);
 
         log.ServiceMessages.Should().Contain(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
 

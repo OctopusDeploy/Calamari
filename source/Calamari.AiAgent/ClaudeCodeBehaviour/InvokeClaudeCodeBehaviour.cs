@@ -117,36 +117,46 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
         argsBuilder.WithMcpConfigPath(mcpConfig);
 
-        await new PromptInjectionGuard(log, InjectionCheckOptions.Resolve(variables))
-            .CheckAsync(workingDir, prompt, apiKey, cancellationToken.Token);
+        // Both the prompt-injection check and the main agent run contribute usage. Collect it all
+        // and emit a single claude-code-usage service message (one entry per model) at the end.
+        var usageReporter = new ClaudeCodeUsageReporter();
+        try
+        {
+            await new PromptInjectionGuard(log, InjectionCheckOptions.Resolve(variables), usageReporter)
+                .CheckAsync(workingDir, prompt, apiKey, cancellationToken.Token);
 
-        var claudeConfigDir = Path.Combine(workingDir, ".claude");
+            var claudeConfigDir = Path.Combine(workingDir, ".claude");
 
-        var environment = ClaudeCodeEnvironment.Build(
-            ClaudeCodeEnvironment.GetCurrentEnvironmentVariables(),
-            PassThroughEnvironmentVariables(variables),
-            new Dictionary<string, string>
-            {
-                ["ANTHROPIC_API_KEY"] = apiKey,
-                ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "0", // If set, this stops us using auto mode
-                ["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1", // Disables the auto-updater, telemetry, error reporting, and feedback surveys
-                ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1",
-                ["CLAUDE_CODE_DISABLE_CRON"] = "1",
-                ["CLAUDE_CONFIG_DIR"] = claudeConfigDir,
-            });
+            var environment = ClaudeCodeEnvironment.Build(
+                ClaudeCodeEnvironment.GetCurrentEnvironmentVariables(),
+                PassThroughEnvironmentVariables(variables),
+                new Dictionary<string, string>
+                {
+                    ["ANTHROPIC_API_KEY"] = apiKey,
+                    ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "0", // If set, this stops us using auto mode
+                    ["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1", // Disables the auto-updater, telemetry, error reporting, and feedback surveys
+                    ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1",
+                    ["CLAUDE_CODE_DISABLE_CRON"] = "1",
+                    ["CLAUDE_CONFIG_DIR"] = claudeConfigDir,
+                });
 
-        var response = await new ClaudeCodeCliRunner(log).RunAsync(
-            argsBuilder,
-            environment,
-            workingDir,
-            context.CurrentDirectory,
-            cancellationToken.Token);
+            var response = await new ClaudeCodeCliRunner(log, usageReporter).RunAsync(
+                argsBuilder,
+                environment,
+                workingDir,
+                context.CurrentDirectory,
+                cancellationToken.Token);
 
-        foreach (var artifact in new ArtifactManifestCollector(variables).Collect(workingDir, context.CurrentDirectory))
-            log.NewOctopusArtifact(artifact.Path, artifact.Name, artifact.Length);
+            foreach (var artifact in new ArtifactManifestCollector(variables).Collect(workingDir, context.CurrentDirectory))
+                log.NewOctopusArtifact(artifact.Path, artifact.Name, artifact.Length);
 
-        Log.SetOutputVariable(SpecialVariables.Action.Claude.Response, response, variables);
-        log.Info("Claude Code invocation complete.");
+            Log.SetOutputVariable(SpecialVariables.Action.Claude.Response, response, variables);
+            log.Info("Claude Code invocation complete.");
+        }
+        finally
+        {
+            usageReporter.WriteServiceMessage(log);
+        }
     }
 
     internal static ClaudePermissionMode ResolvePermissionMode(IVariables variables)

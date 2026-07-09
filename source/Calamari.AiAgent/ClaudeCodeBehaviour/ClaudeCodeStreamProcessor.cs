@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour.JsonResponseModels;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour
@@ -19,11 +18,13 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
         readonly ILog log;
         readonly StringBuilder responseBuilder;
+        readonly ClaudeCodeUsageReporter usageReporter;
 
-        public ClaudeCodeStreamProcessor(ILog log, StringBuilder responseBuilder)
+        public ClaudeCodeStreamProcessor(ILog log, StringBuilder responseBuilder, ClaudeCodeUsageReporter usageReporter)
         {
             this.log = log;
             this.responseBuilder = responseBuilder;
+            this.usageReporter = usageReporter;
         }
 
         public ResultStreamEvent? Result { get; private set; }
@@ -237,32 +238,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
             log.Info($"Claude Code usage — Cost: ${evt.CostUsd} USD (total: ${evt.TotalCostUsd}), Duration: {evt.DurationMs}ms, Turns: {evt.NumTurns}");
 
-            var properties = new Dictionary<string, string>();
-
-            if (evt.CostUsd.HasValue)
-                properties[ClaudeCodeServiceMessages.Usage.CostUsdAttribute] = evt.CostUsd.Value.ToString("F6");
-            if (evt.TotalCostUsd.HasValue)
-                properties[ClaudeCodeServiceMessages.Usage.TotalCostUsdAttribute] = evt.TotalCostUsd.Value.ToString("F6");
-            if (evt.DurationMs.HasValue)
-                properties[ClaudeCodeServiceMessages.Usage.DurationMsAttribute] = evt.DurationMs.Value.ToString("F0");
-            if (evt.DurationApiMs.HasValue)
-                properties[ClaudeCodeServiceMessages.Usage.DurationApiMsAttribute] = evt.DurationApiMs.Value.ToString("F0");
-            if (evt.NumTurns.HasValue)
-                properties[ClaudeCodeServiceMessages.Usage.NumTurnsAttribute] = evt.NumTurns.Value.ToString();
-
             if (evt.Usage is { } usage)
-            {
-                if (usage.InputTokens.HasValue)
-                    properties[ClaudeCodeServiceMessages.Usage.InputTokensAttribute] = usage.InputTokens.Value.ToString();
-                if (usage.OutputTokens.HasValue)
-                    properties[ClaudeCodeServiceMessages.Usage.OutputTokensAttribute] = usage.OutputTokens.Value.ToString();
-                if (usage.CacheReadInputTokens.HasValue)
-                    properties[ClaudeCodeServiceMessages.Usage.CacheReadInputTokensAttribute] = usage.CacheReadInputTokens.Value.ToString();
-                if (usage.CacheCreationInputTokens.HasValue)
-                    properties[ClaudeCodeServiceMessages.Usage.CacheCreationInputTokensAttribute] = usage.CacheCreationInputTokens.Value.ToString();
-
                 log.Info($"Claude Code tokens — Input: {usage.InputTokens}, Output: {usage.OutputTokens}, Cache read: {usage.CacheReadInputTokens}, Cache creation: {usage.CacheCreationInputTokens}");
-            }
 
             if (evt.ModelUsage is { Count: > 0 } modelUsages)
             {
@@ -282,10 +259,21 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour
 
                 }
 
-                properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList, JsonOptions);
+                usageReporter.AddModelUsage(usageList);
             }
 
-            log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Usage.Name, properties));
+            usageReporter.SetRunSummary(new ClaudeCodeRunSummary
+            {
+                CostUsd = evt.CostUsd,
+                TotalCostUsd = evt.TotalCostUsd,
+                DurationMs = evt.DurationMs,
+                DurationApiMs = evt.DurationApiMs,
+                NumTurns = evt.NumTurns,
+                InputTokens = evt.Usage?.InputTokens,
+                OutputTokens = evt.Usage?.OutputTokens,
+                CacheReadInputTokens = evt.Usage?.CacheReadInputTokens,
+                CacheCreationInputTokens = evt.Usage?.CacheCreationInputTokens,
+            });
         }
     }
 }
