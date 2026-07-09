@@ -128,14 +128,14 @@ namespace Calamari.AzureAppService.Tests
 
                     return;
                 }
-                catch (Exception ex) when (IsCapacityConflict(ex) && string.IsNullOrEmpty(explicitRegion) && triedRegions.Count < MaxRegionAttempts)
-                {
-                    TestContext.Progress.WriteLine($"App Service reported a capacity conflict (409) in region '{ResourceGroupLocation}'. Retrying in a different region. Details: {ex.Message}");
-                    await TryCleanupResourceGroup(ResourceGroupName);
-                }
                 catch (Exception ex)
                 {
-                    throw new Exception($"Setup failed in region: {ResourceGroupLocation}", ex);
+                    var canRetryInAnotherRegion = IsCapacityConflict(ex) && string.IsNullOrEmpty(explicitRegion) && triedRegions.Count < MaxRegionAttempts;
+                    if (!canRetryInAnotherRegion)
+                        throw new Exception($"Setup failed in region: {ResourceGroupLocation}", ex);
+
+                    TestContext.Progress.WriteLine($"App Service reported a capacity conflict (409) in region '{ResourceGroupLocation}'. Retrying in a different region. Details: {ex.Message}");
+                    await TryCleanupResourceGroup(ResourceGroupName);
                 }
             }
         }
