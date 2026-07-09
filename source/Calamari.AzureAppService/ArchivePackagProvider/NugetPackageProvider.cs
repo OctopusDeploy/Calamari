@@ -29,5 +29,9 @@ namespace Calamari.AzureAppService
             await Task.Run(() => File.Copy(sourceFile.FullName, newFilePath));
             return new FileInfo(newFilePath);
         }
+
+        public string ContentType => "application/octet-stream";
+        public string AdditionalParameters => string.Empty;
+        public string PublishingProfileMethod => "MSDeploy";
     }
 }

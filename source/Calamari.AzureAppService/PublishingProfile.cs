@@ -16,18 +16,19 @@ namespace Calamari.AzureAppService
         public string Username { get; set; }
 
         public string PublishUrl { get; set; }
-        
-        public string GetBasicAuthCredentials()
+        public string PublishMethod { get; set; }
+
+    public string GetBasicAuthCredentials()
             => Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
         
-        public static async Task<PublishingProfile> ParseXml(Stream publishingProfileXmlStream)
+        public static async Task<PublishingProfile> ParseXml(Stream publishingProfileXmlStream, string publishMethod = "MSDeploy")
         {
             using var streamReader = new StreamReader(publishingProfileXmlStream);
             var document = XDocument.Parse(await streamReader.ReadToEndAsync());
 
             var profile = (from el in document.Descendants("publishProfile")
                            where string.Compare(el.Attribute("publishMethod")?.Value,
-                                                "MSDeploy",
+                                                publishMethod,
                                                 StringComparison.OrdinalIgnoreCase)
                                  == 0
                            select new PublishingProfile
@@ -35,7 +36,8 @@ namespace Calamari.AzureAppService
                                PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
                                Username = el.Attribute("userName")?.Value,
                                Password = el.Attribute("userPWD")?.Value,
-                               Site = el.Attribute("msdeploySite")?.Value
+                               Site = el.Attribute("msdeploySite")?.Value,
+                               PublishMethod = el.Attribute("publishMethod")?.Value,
                            }).FirstOrDefault();
 
             if (profile == null) throw new Exception("Failed to retrieve publishing profile.");
