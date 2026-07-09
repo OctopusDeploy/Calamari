@@ -11,7 +11,7 @@ using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
-public class ClaudeCodeCliRunner(ILog log, ClaudeCodeUsageReporter usageReporter)
+public class ClaudeCodeCliRunner(ILog log)
 {
 
     public async Task<string> RunAsync(ClaudeCommandArgsBuilder argsBuilder,
@@ -37,7 +37,7 @@ public class ClaudeCodeCliRunner(ILog log, ClaudeCodeUsageReporter usageReporter
             customEnvVars);
 
         var responseBuilder = new StringBuilder();
-        var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder, usageReporter);
+        var streamProcessor = new ClaudeCodeStreamProcessor(log, responseBuilder);
 
         var stdoutTask = Task.Run(() => ProcessLine(process, streamProcessor, verboseLogPath, cancellationToken), cancellationToken);
         var stderrTask = Task.Run(() => ProcessError(process), cancellationToken);

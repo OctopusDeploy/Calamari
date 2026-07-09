@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour.InjectionCheck;
@@ -16,13 +20,11 @@ public class PromptInjectionGuard
 
     readonly ILog log;
     readonly InjectionCheckOptions options;
-    readonly ClaudeCodeUsageReporter usageReporter;
 
-    public PromptInjectionGuard(ILog log, InjectionCheckOptions options, ClaudeCodeUsageReporter usageReporter)
+    public PromptInjectionGuard(ILog log, InjectionCheckOptions options)
     {
         this.log = log;
         this.options = options;
-        this.usageReporter = usageReporter;
     }
 
     public async Task CheckAsync(string workingDir, string prompt, string apiToken, CancellationToken cancellationToken)
@@ -74,7 +76,7 @@ public class PromptInjectionGuard
 
     void ReportUsage(InjectionCheckResult result)
     {
-        usageReporter.AddModelUsage(new[]
+        var usage = new[]
         {
             new ClaudeCodeModelUsage
             {
@@ -82,7 +84,14 @@ public class PromptInjectionGuard
                 InputTokens = result.InputTokens,
                 OutputTokens = result.OutputTokens,
             },
-        });
+        };
+
+        var properties = new Dictionary<string, string>
+        {
+            [ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usage),
+        };
+
+        log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Usage.Name, properties));
     }
 
     static string FormatFindings(InjectionVerdict verdict)
