@@ -44,7 +44,15 @@ namespace Calamari.AzureAppService.Tests
 
         private readonly HttpClient client = new HttpClient();
 
-        protected virtual string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions();
+        /// <summary>
+        /// Regions this fixture must never run in (e.g. because they lack a required SKU or feature).
+        /// Excluded from both the initial region choice and any capacity-driven retries.
+        /// </summary>
+        protected virtual string[] ExcludedRegions => Array.Empty<string>();
+
+        // App Service occasionally returns 409 (Conflict) when a region is out of capacity; retry in a
+        // different region up to this many times before giving up.
+        const int MaxRegionAttempts = 3;
 
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
@@ -57,58 +65,102 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            ResourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
-
             ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
             ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
             TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
             SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
-            ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
-            
-            TestContext.Progress.WriteLine($"Resource group location: {ResourceGroupLocation}");
 
+            var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
+                                                                           ClientId,
+                                                                           TenantId,
+                                                                           ClientSecret,
+                                                                           "AzureGlobalCloud",
+                                                                           resourceManagementEndpointBaseUri,
+                                                                           activeDirectoryEndpointBaseUri);
+
+            ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
+                                                                {
+                                                                    retryOptions.MaxRetries = 5;
+                                                                    retryOptions.Mode = RetryMode.Exponential;
+                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                    // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
+                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
+                                                                });
+
+            SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
+
+            // An explicitly requested region is honoured verbatim: don't rotate away from it on a capacity conflict.
+            var explicitRegion = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION");
+
+            var triedRegions = new List<string>();
+
+            while (true)
+            {
+                // A fresh resource group name per attempt: a resource group's location is immutable, so a
+                // region switch needs a new group rather than reusing the one that hit the capacity conflict.
+                ResourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
+                ResourceGroupLocation = !string.IsNullOrEmpty(explicitRegion)
+                    ? explicitRegion
+                    : RandomAzureRegion.GetRandomRegionWithExclusions(ExcludedRegions.Concat(triedRegions).ToArray());
+                triedRegions.Add(ResourceGroupLocation);
+
+                TestContext.Progress.WriteLine($"Resource group location: {ResourceGroupLocation}");
+
+                try
+                {
+                    //create the resource group
+                    var response = await SubscriptionResource
+                                         .GetResourceGroups()
+                                         .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                              ResourceGroupName,
+                                                              new ResourceGroupData(new AzureLocation(ResourceGroupLocation))
+                                                              {
+                                                                  Tags =
+                                                                  {
+                                                                      [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
+                                                                      [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
+                                                                  }
+                                                              });
+
+                    ResourceGroupResource = response.Value;
+
+                    await ConfigureTestResources(ResourceGroupResource);
+
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    var canRetryInAnotherRegion = IsCapacityConflict(ex) && string.IsNullOrEmpty(explicitRegion) && triedRegions.Count < MaxRegionAttempts;
+                    if (!canRetryInAnotherRegion)
+                        throw new Exception($"Setup failed in region: {ResourceGroupLocation}", ex);
+
+                    TestContext.Progress.WriteLine($"App Service reported a capacity conflict (409) in region '{ResourceGroupLocation}'. Retrying in a different region. Details: {ex.Message}");
+                    await TryCleanupResourceGroup(ResourceGroupName);
+                }
+            }
+        }
+
+        // App Service surfaces an out-of-capacity condition as a 409 (Conflict); walk any wrapping/aggregate
+        // exceptions so we recognise it wherever it originates.
+        static bool IsCapacityConflict(Exception ex) =>
+            ex switch
+            {
+                RequestFailedException { Status: 409 } => true,
+                AggregateException aggregate => aggregate.InnerExceptions.Any(IsCapacityConflict),
+                _ => ex.InnerException != null && IsCapacityConflict(ex.InnerException)
+            };
+
+        async Task TryCleanupResourceGroup(string resourceGroupName)
+        {
             try
             {
-                var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
-                                                                               ClientId,
-                                                                               TenantId,
-                                                                               ClientSecret,
-                                                                               "AzureGlobalCloud",
-                                                                               resourceManagementEndpointBaseUri,
-                                                                               activeDirectoryEndpointBaseUri);
-
-                ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
-                                                                    {
-                                                                        retryOptions.MaxRetries = 5;
-                                                                        retryOptions.Mode = RetryMode.Exponential;
-                                                                        retryOptions.Delay = TimeSpan.FromSeconds(2);
-                                                                        // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
-                                                                        retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
-                                                                    });
-
-                //create the resource group
-                SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
-
-                var response = await SubscriptionResource
-                                     .GetResourceGroups()
-                                     .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                          ResourceGroupName,
-                                                          new ResourceGroupData(new AzureLocation(ResourceGroupLocation))
-                                                          {
-                                                              Tags =
-                                                              {
-                                                                  [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
-                                                                  [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
-                                                              }
-                                                          });
-
-                ResourceGroupResource = response.Value;
-
-                await ConfigureTestResources(ResourceGroupResource);
+                await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, resourceGroupName))
+                               .DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw new Exception($"Setup failed in region: {ResourceGroupLocation}", ex);
+                // Best effort: a leftover group is reaped by the LifetimeInDays tag, so don't fail setup over cleanup.
+                await TestContext.Progress.WriteLineAsync($"Failed to clean up resource group '{resourceGroupName}' after a capacity conflict: {ex.Message}");
             }
         }
 
@@ -118,7 +170,7 @@ namespace Calamari.AzureAppService.Tests
         public virtual async Task Cleanup()
         {
             await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
-                           .DeleteAsync(WaitUntil.Started);
+                           .DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)

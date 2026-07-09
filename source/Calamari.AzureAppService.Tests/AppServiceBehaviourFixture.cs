@@ -398,7 +398,7 @@ namespace Calamari.AzureAppService.Tests
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
         {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
-            protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");
+            protected override string[] ExcludedRegions => new[] { "eastus" };
 
             static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
             readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
