@@ -6,21 +6,11 @@ using Octopus.Calamari.Contracts.ClaudeCode;
 
 namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
-/// <summary>
-/// Accumulates Claude Code model usage from every source in a single run
-/// (the prompt-injection check and the main agent invocation) and emits a
-/// single <c>claude-code-usage</c> service message. Usage for the same model
-/// is summed into one entry so the receiver sees exactly one
-/// <see cref="ClaudeCodeModelUsage"/> per model.
-/// </summary>
 public class ClaudeCodeUsageReporter
 {
     readonly Dictionary<string, ClaudeCodeModelUsage> modelUsage = new();
     readonly Dictionary<string, string> summaryProperties = new();
 
-    /// <summary>
-    /// Adds per-model usage, summing token/cost values into any existing entry for the same model.
-    /// </summary>
     public void AddModelUsage(IEnumerable<ClaudeCodeModelUsage> usages)
     {
         foreach (var usage in usages)
@@ -31,11 +21,6 @@ public class ClaudeCodeUsageReporter
         }
     }
 
-    /// <summary>
-    /// Records the run-level summary (cost, duration, turns, aggregate tokens) captured from the
-    /// main agent's result event, formatting each populated field into its service message attribute.
-    /// The last write wins.
-    /// </summary>
     public void SetRunSummary(ClaudeCodeRunSummary summary)
     {
         SetProperty(ClaudeCodeServiceMessages.Usage.CostUsdAttribute, summary.CostUsd?.ToString("F6"));
@@ -55,10 +40,6 @@ public class ClaudeCodeUsageReporter
             summaryProperties[key] = value;
     }
 
-    /// <summary>
-    /// Emits the aggregated <c>claude-code-usage</c> service message. Does nothing when no usage
-    /// has been recorded, so failure paths that never produced usage don't emit an empty message.
-    /// </summary>
     public void WriteServiceMessage(ILog log)
     {
         if (modelUsage.Count == 0 && summaryProperties.Count == 0)
