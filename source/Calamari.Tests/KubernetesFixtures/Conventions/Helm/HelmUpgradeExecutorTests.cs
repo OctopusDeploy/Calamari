@@ -275,11 +275,13 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
 
         void SetupHelmVersionMock()
         {
-            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("version") && i.Arguments.Contains("--client")))
+            //helm 4 removed the --client flag from `helm version`, so the mocked invocation
+            //(and its output) reflects a Helm 4 client to prove the executor still works with it.
+            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("version")))
                              .Returns(info =>
                              {
                                  var invocation = (CommandLineInvocation)info[0];
-                                 invocation.AdditionalInvocationOutputSink?.WriteInfo("v3.14.0");
+                                 invocation.AdditionalInvocationOutputSink?.WriteInfo("v4.2.0");
                                  return new CommandResult("helm version", 0);
                              });
         }
