@@ -65,7 +65,9 @@ namespace Calamari.Kubernetes.Integration
         
         public (int ExitCode, string InfoOutput) GetExecutableVersion()
         {
-            var result = ExecuteCommandAndReturnOutput("version", "--client", "--short");
+            //note: the `--client` flag was a no-op in Helm 3, but was removed entirely in Helm 4
+            //(passing it causes the command to fail). `version --short` alone works on both.
+            var result = ExecuteCommandAndReturnOutput("version", "--short");
             return (result.Result.ExitCode, result.Output.MergeInfoLogs());
         }
 
@@ -78,8 +80,8 @@ namespace Calamari.Kubernetes.Integration
                 log.Warn("Unable to retrieve the Helm tool version");
                 return null;
             }
-            
-            //helm v3 output looks like: v3.14.2+gc309b6f
+
+            //helm v3/v4 output looks like: v3.14.2+gc309b6f or v4.2.0+g0646808
             var vStripped = infoOutput.TrimStart('v');
 
             return SemVerFactory.CreateVersion(vStripped);

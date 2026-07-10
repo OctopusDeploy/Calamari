@@ -131,7 +131,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
         {
             var args = new List<string>();
 
-            AssertHelmV3();
+            AssertSupportedHelmVersion();
 
             SetResetValuesParameter(deployment, args);
             SetTimeoutParameter(deployment, args);
@@ -383,7 +383,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
             return files;
         }
 
-        void AssertHelmV3()
+        void AssertSupportedHelmVersion()
         {
             var (exitCode, infoOutput) = helmCli.GetExecutableVersion();
             if (exitCode != 0)
@@ -392,14 +392,14 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 return;
             }
 
-            var toolVersion = HelmVersionParser.ParseVersion(infoOutput);
-            if (!toolVersion.HasValue)
+            var majorVersion = HelmVersionParser.ParseMajorVersion(infoOutput);
+            if (!majorVersion.HasValue)
             {
                 log.Warn("Unable to parse the Helm tool version text: " + infoOutput);
             }
-            else if (toolVersion.Value != HelmVersion.V3)
+            else if (majorVersion.Value < 3)
             {
-                throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
+                throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3 or later.");
             }
         }
     }
