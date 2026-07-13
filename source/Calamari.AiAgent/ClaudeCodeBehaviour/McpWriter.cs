@@ -105,11 +105,12 @@ public class McpWriter(IVariables variables)
         };
     }
 
+    // When no tools are configured, we deny all tools rather than allowing everything
     IReadOnlyCollection<string> GetOctopusMcpTools()
     {
         var json = variables.Get(SpecialVariables.Action.Claude.OctopusMcpTools);
         if (string.IsNullOrWhiteSpace(json))
-            return ["*"];
+            return [];
 
         string[]? tools;
         try
@@ -121,7 +122,7 @@ public class McpWriter(IVariables variables)
             throw new CommandException($"Failed to parse Octopus MCP tools configuration: {ex.Message}");
         }
 
-        return tools is { Length: > 0 } ? tools : ["*"];
+        return tools ?? [];
     }
 
     static void Validate(McpServer server)

@@ -142,7 +142,7 @@ public class McpWriterFixture
 
         var tools = new McpWriter(vars).GetAllowedTools();
 
-        tools.Should().BeEquivalentTo("mcp__octopus__*");
+        tools.Should().BeEmpty();
     }
 
     [Test]
@@ -186,7 +186,7 @@ public class McpWriterFixture
     }
 
     [Test]
-    public void GetAllowedTools_DefaultsToWildcard_WhenOctopusMcpToolsEmptyArray()
+    public void GetAllowedTools_DeniesAllTools_WhenOctopusMcpToolsEmptyArray()
     {
         var vars = new CalamariVariables();
         vars.Set(SpecialVariables.Action.Claude.OctopusMcpApiKey, "API-TESTKEY");
@@ -195,7 +195,7 @@ public class McpWriterFixture
 
         var tools = new McpWriter(vars).GetAllowedTools();
 
-        tools.Should().BeEquivalentTo("mcp__octopus__*");
+        tools.Should().BeEmpty();
     }
 
     [Test]
