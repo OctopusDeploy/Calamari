@@ -125,10 +125,10 @@ public class McpWriterFixture
     }
 
     [Test]
-    public void SetupMcpConfig_AddsOctopusMcpServer_WhenTokenAndUrlProvided()
+    public void SetupMcpConfig_AddsOctopusMcpServer_WhenApiKeyAndUrlProvided()
     {
         var vars = new CalamariVariables();
-        vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-TESTKEY");
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpApiKey, "API-TESTKEY");
         vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
 
         var config = WriteConfig(vars);
@@ -139,14 +139,80 @@ public class McpWriterFixture
         var env = octopus.GetProperty("env");
         env.GetProperty("OCTOPUS_SERVER_URL").GetString().Should().Be("https://octopus.example.com");
         env.GetProperty("OCTOPUS_API_KEY").GetString().Should().Be("API-TESTKEY");
-        
+
         var tools = new McpWriter(vars).GetAllowedTools();
 
-        tools.Should().BeEquivalentTo("mcp__octopus__*");
+        tools.Should().BeEmpty();
     }
 
     [Test]
-    public void SetupMcpConfig_SkipsOctopusMcpServer_WhenTokenMissing()
+    public void SetupMcpConfig_AddsOctopusMcpServer_WhenOnlyOctopusTokenProvided()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-LEGACYKEY");
+        vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
+
+        var config = WriteConfig(vars);
+
+        var env = config.GetProperty("mcpServers").GetProperty("octopus").GetProperty("env");
+        env.GetProperty("OCTOPUS_API_KEY").GetString().Should().Be("API-LEGACYKEY");
+    }
+
+    [Test]
+    public void SetupMcpConfig_PrefersOctopusMcpApiKey_OverOctopusToken()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpApiKey, "API-NEWKEY");
+        vars.Set(SpecialVariables.Action.Claude.OctopusToken, "API-LEGACYKEY");
+        vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
+
+        var config = WriteConfig(vars);
+
+        var env = config.GetProperty("mcpServers").GetProperty("octopus").GetProperty("env");
+        env.GetProperty("OCTOPUS_API_KEY").GetString().Should().Be("API-NEWKEY");
+    }
+
+    [Test]
+    public void GetAllowedTools_UsesOctopusMcpTools_WhenConfigured()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpApiKey, "API-TESTKEY");
+        vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpTools, """["list_projects", "get_deployments"]""");
+
+        var tools = new McpWriter(vars).GetAllowedTools();
+
+        tools.Should().BeEquivalentTo("mcp__octopus__list_projects", "mcp__octopus__get_deployments");
+    }
+
+    [Test]
+    public void GetAllowedTools_DeniesAllTools_WhenOctopusMcpToolsEmptyArray()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpApiKey, "API-TESTKEY");
+        vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpTools, "[]");
+
+        var tools = new McpWriter(vars).GetAllowedTools();
+
+        tools.Should().BeEmpty();
+    }
+
+    [Test]
+    public void SetupMcpConfig_ThrowsOnInvalidOctopusMcpToolsJson()
+    {
+        var vars = new CalamariVariables();
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpApiKey, "API-TESTKEY");
+        vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");
+        vars.Set(SpecialVariables.Action.Claude.OctopusMcpTools, "not valid json {{{");
+
+        var act = () => new McpWriter(vars).SetupMcpConfig(workingDir);
+
+        act.Should().Throw<CommandException>().WithMessage("*Failed to parse Octopus MCP tools*");
+    }
+
+    [Test]
+    public void SetupMcpConfig_SkipsOctopusMcpServer_WhenApiKeyMissing()
     {
         var vars = new CalamariVariables();
         vars.Set(SpecialVariables.Web.ServerUri, "https://octopus.example.com");

@@ -21,6 +21,8 @@ namespace Calamari.AiAgent
                 public const string MaxBudgetUsd = "Octopus.Action.Claude.MaxBudgetUsd";
                 public const string MaxArtifactSizeInMegaBytes = "Octopus.Action.Claude.MaxArtifactSizeInMegaBytes";
                 public const string OctopusToken = "Octopus.Action.Claude.OctopusToken";
+                public const string OctopusMcpApiKey = "Octopus.Action.Claude.OctopusMcpApiKey";
+                public const string OctopusMcpTools = "Octopus.Action.Claude.OctopusMcpTools";
                 public const string Permissions = "Octopus.Action.Claude.Permissions";
                 public const string PermissionMode = "Octopus.Action.Claude.PermissionMode";
                 public const string Effort = "Octopus.Action.Claude.Effort";

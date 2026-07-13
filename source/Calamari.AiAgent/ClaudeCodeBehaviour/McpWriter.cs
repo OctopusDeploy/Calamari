@@ -73,11 +73,14 @@ public class McpWriter(IVariables variables)
         }
     }
 
-    // The Octopus MCP server is always added when a token is available
+    // The Octopus MCP server is always added when an API key is available
     StdioMcpServer? BuildOctopusServer()
     {
-        var octopusToken = variables.Get(SpecialVariables.Action.Claude.OctopusToken);
-        if (string.IsNullOrWhiteSpace(octopusToken))
+        var apiKey = variables.Get(SpecialVariables.Action.Claude.OctopusMcpApiKey);
+        // fall back to the legacy OctopusToken
+        if (string.IsNullOrWhiteSpace(apiKey))
+            apiKey = variables.Get(SpecialVariables.Action.Claude.OctopusToken);
+        if (string.IsNullOrWhiteSpace(apiKey))
             return null;
 
         var octopusServerUrl = variables.Get(SpecialVariables.Web.ServerUri);
@@ -96,10 +99,30 @@ public class McpWriter(IVariables variables)
             Env = new Dictionary<string, string>
             {
                 ["OCTOPUS_SERVER_URL"] = octopusServerUrl,
-                ["OCTOPUS_API_KEY"] = octopusToken,
+                ["OCTOPUS_API_KEY"] = apiKey,
             },
-            AllowedTools = ["*"],
+            AllowedTools = GetOctopusMcpTools(),
         };
+    }
+
+    // When no tools are configured, we deny all tools rather than allowing everything
+    IReadOnlyCollection<string> GetOctopusMcpTools()
+    {
+        var json = variables.Get(SpecialVariables.Action.Claude.OctopusMcpTools);
+        if (string.IsNullOrWhiteSpace(json))
+            return [];
+
+        string[]? tools;
+        try
+        {
+            tools = JsonSerializer.Deserialize<string[]>(json, VariableJsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            throw new CommandException($"Failed to parse Octopus MCP tools configuration: {ex.Message}");
+        }
+
+        return tools ?? [];
     }
 
     static void Validate(McpServer server)
