@@ -1,45 +1,30 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
-using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
-using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
-using Calamari.CloudAccounts;
-using Calamari.Testing;
 using Calamari.Testing.Azure;
 using FluentAssertions;
-using JetBrains.TeamCity.ServiceMessages.Write.Special.Impl.Writer;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
-using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService.Tests
+namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
-    public abstract class AppServiceIntegrationTest
+    // Creates and deploys to a freshly provisioned resource group, deleting it on teardown.
+    public abstract class AzureAppServiceWithProvisionedResourcesTestBase : AzureAppServiceTestBase
     {
-        protected string ClientId { get; private set; }
-        protected string ClientSecret { get; private set; }
-        protected string TenantId { get; private set; }
-        protected string SubscriptionId { get; private set; }
         protected string ResourceGroupName { get; private set; }
         protected string ResourceGroupLocation { get; private set; }
 
         protected string greeting = "Calamari";
-        protected ArmClient ArmClient { get; private set; }
-
-        protected SubscriptionResource SubscriptionResource { get; private set; }
-        protected ResourceGroupResource ResourceGroupResource { get; private set; }
         protected WebSiteResource WebSiteResource { get; private protected set; }
 
         private readonly HttpClient client = new HttpClient();
@@ -54,41 +39,10 @@ namespace Calamari.AzureAppService.Tests
         // different region up to this many times before giving up.
         const int MaxRegionAttempts = 3;
 
-        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
-        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-
+        // Runs after the base AuthenticateWithAzure OneTimeSetUp, so ArmClient/SubscriptionResource are ready.
         [OneTimeSetUp]
-        public async Task Setup()
+        public async Task CreateResourceGroupAndResources()
         {
-            var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
-            var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
-
-            ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
-            ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
-            TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
-            SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
-
-            var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
-                                                                           ClientId,
-                                                                           TenantId,
-                                                                           ClientSecret,
-                                                                           "AzureGlobalCloud",
-                                                                           resourceManagementEndpointBaseUri,
-                                                                           activeDirectoryEndpointBaseUri);
-
-            ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
-                                                                {
-                                                                    retryOptions.MaxRetries = 5;
-                                                                    retryOptions.Mode = RetryMode.Exponential;
-                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
-                                                                    // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
-                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
-                                                                });
-
-            SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
-
             // An explicitly requested region is honoured verbatim: don't rotate away from it on a capacity conflict.
             var explicitRegion = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION");
 
@@ -155,7 +109,7 @@ namespace Calamari.AzureAppService.Tests
             try
             {
                 await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, resourceGroupName))
-                               .DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
+                               .DeleteAsync(WaitUntil.Started, cancellationToken: CancellationToken);
             }
             catch (Exception ex)
             {
@@ -170,7 +124,7 @@ namespace Calamari.AzureAppService.Tests
         public virtual async Task Cleanup()
         {
             await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
-                           .DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
+                           .DeleteAsync(WaitUntil.Started, cancellationToken: CancellationToken);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
@@ -212,17 +166,9 @@ namespace Calamari.AzureAppService.Tests
             }
         }
 
-        protected void AddAzureVariables(CommandTestBuilderContext context)
+        protected override void AddAzureVariables(VariableDictionary variables)
         {
-            AddAzureVariables(context.Variables);
-        }
-
-        protected void AddAzureVariables(VariableDictionary variables)
-        {
-            variables.Add(AccountVariables.ClientId, ClientId);
-            variables.Add(AccountVariables.Password, ClientSecret);
-            variables.Add(AccountVariables.TenantId, TenantId);
-            variables.Add(AccountVariables.SubscriptionId, SubscriptionId);
+            base.AddAzureVariables(variables);
             variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, ResourceGroupName);
             variables.Add(SpecialVariables.Action.Azure.WebAppName, WebSiteResource.Data.Name);
         }
