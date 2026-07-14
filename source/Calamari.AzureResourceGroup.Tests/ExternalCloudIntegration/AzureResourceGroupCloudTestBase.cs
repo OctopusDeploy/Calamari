@@ -85,6 +85,9 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
         [OneTimeTearDown]
         public async Task DeleteResourceGroup()
         {
+            if (ArmClient is null)
+                return;
+
             await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
                            .DeleteAsync(WaitUntil.Started);
         }

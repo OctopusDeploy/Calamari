@@ -64,6 +64,8 @@ namespace Calamari.AzureResourceGroup.Tests
 
             bicepCompiler.Received(1).BuildArmTemplate(Arg.Any<string>(), "my-template.bicep");
             templateService.Received(1).GetSubstitutedTemplateContent(CompiledArmTemplatePath, true, Arg.Any<IVariables>());
+            await resourceGroupOperator.Received(1).DeployCreatingResourceGroup(Arg.Any<IAzureAccount>(), SubscriptionId, ResourceGroupName,
+                                                                                ResourceGroupLocation, Arg.Any<string>(), ArmDeploymentMode.Complete, "{}", Arg.Any<string>(), Arg.Any<IVariables>());
         }
 
         [Test]
