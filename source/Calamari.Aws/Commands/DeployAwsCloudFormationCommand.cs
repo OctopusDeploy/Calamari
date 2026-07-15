@@ -94,6 +94,7 @@ namespace Calamari.Aws.Commands
                                                 ClientFactory)
                 : CloudFormationS3Template.Create(templateS3Url,
                                                   templateParameterS3Url,
+                                                  parameterOverrides,
                                                   fileSystem,
                                                   variables,
                                                   log,

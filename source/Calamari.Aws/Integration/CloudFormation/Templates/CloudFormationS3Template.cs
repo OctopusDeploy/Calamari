@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -26,7 +26,7 @@ public class CloudFormationS3Template : BaseTemplate
     const string ParametersFile = "parameters.json";
     readonly string templateS3Url;
 
-    CloudFormationS3Template(ITemplateInputs<Parameter> parameters,
+    CloudFormationS3Template(IEnumerable<Parameter> inputs,
                              string templateS3Url,
                              string stackName,
                              List<string> iamCapabilities,
@@ -35,7 +35,7 @@ public class CloudFormationS3Template : BaseTemplate
                              IEnumerable<KeyValuePair<string, string>> tags,
                              StackArn stack,
                              Func<IAmazonCloudFormation> clientFactory,
-                             IVariables variables) : base(parameters.Inputs,
+                             IVariables variables) : base(inputs,
                                                           stackName,
                                                           iamCapabilities,
                                                           disableRollback,
@@ -50,6 +50,7 @@ public class CloudFormationS3Template : BaseTemplate
 
     public static ICloudFormationRequestBuilder Create(string templateS3Url,
                                                        string templateParameterS3Url,
+                                                       IEnumerable<Parameter> parameterOverrides,
                                                        ICalamariFileSystem fileSystem,
                                                        IVariables variables,
                                                        ILog log,
@@ -77,8 +78,9 @@ public class CloudFormationS3Template : BaseTemplate
         }
 
         var parameters = CloudFormationParametersFile.Create(templatePath, fileSystem, variables);
+        var mergedInputs = CloudFormationParameterMerge.Merge(parameters.Inputs, parameterOverrides);
 
-        return new CloudFormationS3Template(parameters,
+        return new CloudFormationS3Template(mergedInputs,
                                             templateS3Url,
                                             stackName,
                                             capabilities,
