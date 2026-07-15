@@ -12,9 +12,11 @@ There's no way to just type `Key=Value` parameter pairs directly when the templa
 
 ## Goal
 
-Let users additionally provide parameters as plain key/value pairs, for Package, Git repository, and S3 template sources, **on top of** whatever the existing file/URL mechanism already supplies. Where both are provided, the key/value pairs override matching parameter keys from the file; anything not overridden is unioned in unchanged.
+Let users additionally provide parameters as plain key/value pairs, for **all** template sources (Inline, Package, Git repository, and S3), **on top of** whatever the existing mechanism for that source already supplies (typed form for Inline, file for Package/GitRepository, S3 download for S3). Where both are provided, the key/value pairs override matching parameter keys; anything not overridden is unioned in unchanged.
 
-Not in scope: Inline template source (it already offers full per-parameter control via the schema-driven form), sensitive/masked value input (follow existing codebase convention — bind to a Sensitive Variable via `#{...}` instead), and schema-aware overrides (no attempt to read the package/git template's declared `Parameters` to drive a typed form — this is a freeform list, like Tags).
+Including Inline isn't strictly necessary — it already has full per-parameter control via the schema-driven form — but it costs nothing extra (Inline already flows through the same Calamari merge point as Package/GitRepository) and keeps the feature consistent and predictable across all four sources. It's also useful when someone pastes in a template authored/parameterized elsewhere and wants to quickly set values without waiting on/trusting the declared-parameter metadata parse.
+
+Not in scope: sensitive/masked value input (follow existing codebase convention — bind to a Sensitive Variable via `#{...}` instead), and schema-aware overrides (no attempt to read the package/git template's declared `Parameters` to drive a typed form — this is a freeform list, like Tags).
 
 ## How parameters currently flow (as-is)
 
@@ -123,7 +125,7 @@ export const AwsCloudFormationParameterOverridesSection: React.FC<ActionEditProp
 };
 ```
 
-Wired into `awsDeployCloudFormationAction.tsx`'s `render()`, rendered only when `TemplateSource !== "Inline"` — Inline already gives full per-parameter control via the existing schema-driven `DynamicForm` (`refreshParametersFromMetadata`/`updateParameters`), so an "overrides" concept there would be redundant. Placement: alongside `externalTemplateFieldsSection()` for Package/GitRepository, and alongside the S3 parameters URL field for S3.
+Wired into `awsDeployCloudFormationAction.tsx`'s `render()`, always rendered regardless of `TemplateSource`. Placement: alongside `externalTemplateFieldsSection()` for Package/GitRepository, alongside the S3 parameters URL field for S3, and below the existing schema-driven `DynamicForm` (`refreshParametersFromMetadata`/`updateParameters`) for Inline — with help text there noting it overrides the values set above.
 
 Inherited for free from `KeyValueEditList`: duplicate-`ParameterKey` validation, and `#{...}` variable binding on both key and value.
 
@@ -132,7 +134,7 @@ Known gap, addressed by convention rather than new UI: no component in this fami
 ## Testing
 
 - Calamari: unit tests for the merge helper (override replaces matching key, union of non-overlapping keys, empty overrides is a no-op) and for `DeployCloudFormationCommand`/`CloudFormationS3Template` wiring the overrides variable through. Existing CFN parameter-file tests (e.g. around `CloudFormationParametersFile`) are a good reference for fixture shape.
-- Front end: component test for `AwsCloudFormationParameterOverridesSection` (summary text, JSON round-trip through `KeyValueEditList`), and confirm it's hidden for `TemplateSource === "Inline"`.
+- Front end: component test for `AwsCloudFormationParameterOverridesSection` (summary text, JSON round-trip through `KeyValueEditList`), and confirm it renders for every `TemplateSource` value, including Inline (where it should override values set by the typed `DynamicForm`).
 
 ## Open questions / future considerations (not blocking this design)
 
