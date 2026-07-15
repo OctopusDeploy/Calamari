@@ -77,7 +77,7 @@ public partial class Build
                                                                                                          .SetTag(tag)
                                                                                                          .SetFile(dockerFile)
                                                                                                          .SetPath(KnownPaths.RootDirectory)
-                                                                                                         .SetOutput($"type=tar,dest={outputFile}");
+                                                                                                         .SetOutput($"type=docker,tar=true,dest={outputFile}");
                                                                                                          // This is required so we can save below.
                                                                                                          // Otherwise, the image just remains in the build cache
                                                                                                          //.EnableLoad();
