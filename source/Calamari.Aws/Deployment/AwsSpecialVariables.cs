@@ -68,6 +68,7 @@
             public const string Template = "Octopus.Action.Aws.CloudFormationTemplate";
             public const string TemplateParameters = "Octopus.Action.Aws.CloudFormationTemplateParameters";
             public const string TemplateParametersRaw = "Octopus.Action.Aws.CloudFormationTemplateParametersRaw";
+            public const string TemplateParameterOverrides = "Octopus.Action.Aws.CloudFormationTemplateParameterOverrides";
             public const string RoleArn = "Octopus.Action.Aws.CloudFormation.RoleArn";
             // TODO: Tags aren't CFN specific so migrate to use ResourceTags = "Octopus.Action.Aws.Tags" above
             public const string Tags = "Octopus.Action.Aws.CloudFormation.Tags";

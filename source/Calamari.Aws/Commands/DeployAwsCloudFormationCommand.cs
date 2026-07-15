@@ -6,6 +6,7 @@ using Calamari.Deployment.Conventions;
 using System.Collections.Generic;
 using System.IO;
 using Amazon.CloudFormation;
+using Amazon.CloudFormation.Model;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
@@ -73,12 +74,14 @@ namespace Calamari.Aws.Commands
 
             var iamCapabilities = JsonConvert.DeserializeObject<List<string>>(variables.Get(AwsSpecialVariables.IamCapabilities, "[]"));
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags, "[]"));
+            var parameterOverrides = JsonConvert.DeserializeObject<List<Parameter>>(variables.Get(AwsSpecialVariables.CloudFormation.TemplateParameterOverrides, "[]"));
             var deployment = new RunningDeployment(pathToPackage, variables);
 
             ICloudFormationRequestBuilder TemplateFactory() => string.IsNullOrWhiteSpace(templateS3Url)
                 ? CloudFormationTemplate.Create(templateResolver,
                                                 templateFile,
                                                 templateParameterFile,
+                                                parameterOverrides,
                                                 filesInPackage,
                                                 fileSystem,
                                                 variables,
