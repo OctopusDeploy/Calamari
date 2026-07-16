@@ -78,19 +78,9 @@ public partial class Build
                                                                                                          .SetFile(dockerFile)
                                                                                                          .SetPath(KnownPaths.RootDirectory)
                                                                                                          .SetOutput($"type=oci,tar=true,dest={outputFile}");
-                                                                                                         // This is required so we can save below.
-                                                                                                         // Otherwise, the image just remains in the build cache
-                                                                                                         //.EnableLoad();
 
                                                                                               return settings;
                                                                                           });
-
-
-
-                                                            //save the docker image to a tar file
-                                                            // DockerTasks.DockerImageSave(_ => _
-                                                            //                                  .SetImages(tag)
-                                                            //                                  .SetOutput(outputFile));
 
                                                             //compress with gzip
                                                             PowerShellTasks.PowerShell(_ => _
