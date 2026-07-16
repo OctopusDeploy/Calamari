@@ -21,7 +21,8 @@ public class CloudFormationS3TemplateFixture
         var fileSystem = Substitute.For<ICalamariFileSystem>();
         var variables = new CalamariVariables();
         var log = Substitute.For<ILog>();
-        var overrides = new List<Parameter> { new Parameter { ParameterKey = "Foo", ParameterValue = "Overridden" } };
+        var overrides = new List<Parameter> { new()
+            { ParameterKey = "Foo", ParameterValue = "Overridden" } };
 
         var builder = CloudFormationS3Template.Create("https://example.s3.amazonaws.com/template.yaml",
                                                        null,
