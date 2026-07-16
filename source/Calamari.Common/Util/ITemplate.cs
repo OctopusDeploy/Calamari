@@ -12,10 +12,4 @@ namespace Calamari.Common.Util
     {
         IEnumerable<TInput> Inputs { get; }
     }
-
-    public interface ITemplateOutputs<TOutput>
-    {
-        bool HasOutputs { get; }
-        IEnumerable<TOutput> Outputs { get; }
-    }
 }
