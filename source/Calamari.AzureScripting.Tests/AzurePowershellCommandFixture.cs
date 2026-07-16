@@ -33,13 +33,11 @@ namespace Calamari.AzureScripting.Tests
 
         [Test]
         [WindowsTest]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlineWindowsPowerShellScript()
         {
             var psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
-Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
@@ -54,13 +52,11 @@ az group list";
         }
 
         [Test]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlinePowerShellCoreScript()
         {
             var psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
-Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
@@ -76,7 +72,6 @@ az group list";
         }
 
         [Test]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlinePowerShellCoreScriptWithStrictMode()
         {
             var psScript = @"
@@ -96,13 +91,11 @@ az group list";
         }
 
         [Test]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlinePowerShellCoreScriptAgainstAnInvalidAzureEnvironment()
         {
             var psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
-Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
