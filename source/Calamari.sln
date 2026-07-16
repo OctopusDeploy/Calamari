@@ -87,9 +87,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Contracts", "Calamari.Contracts\Calamari.Contracts.csproj", "{13583496-C3D2-4ADE-9087-65583326C469}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.DockerCredentialHelper", "Calamari.DockerCredentialHelper\Calamari.DockerCredentialHelper.csproj", "{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}"
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AiAgent", "Calamari.AiAgent\Calamari.AiAgent.csproj", "{767EB703-FF66-4955-9AE2-322A93FB69EE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AiAgent.Tests", "Calamari.AiAgent.Tests\Calamari.AiAgent.Tests.csproj", "{8D3FCBF5-369E-44B3-BD72-4C11E8058027}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -235,14 +232,6 @@ Global
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B34DBEEC-7AC2-4BFE-ACDD-1788828925BD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{767EB703-FF66-4955-9AE2-322A93FB69EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{767EB703-FF66-4955-9AE2-322A93FB69EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{767EB703-FF66-4955-9AE2-322A93FB69EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{767EB703-FF66-4955-9AE2-322A93FB69EE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D3FCBF5-369E-44B3-BD72-4C11E8058027}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D3FCBF5-369E-44B3-BD72-4C11E8058027}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D3FCBF5-369E-44B3-BD72-4C11E8058027}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D3FCBF5-369E-44B3-BD72-4C11E8058027}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
