@@ -401,6 +401,7 @@ namespace Calamari.AzureWebApp.Tests
         }
 
         [Test]
+        [RequiresPowerShell5OrAbove]
         public async Task Deploy_WebApp_Ensure_Tools_Are_Configured()
         {
             using var tempPath = TemporaryDirectory.Create();
