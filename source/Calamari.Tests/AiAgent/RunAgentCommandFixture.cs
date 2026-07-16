@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
+using Calamari.Common.Util;
 using Calamari.Testing;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
@@ -17,7 +18,7 @@ public class RunAgentCommandFixture
     [Ignore("Most of these use real claude. we should reduce that.")]
     public async Task FailsWhenPromptIsMissing()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, "fake-api-token");
@@ -31,7 +32,7 @@ public class RunAgentCommandFixture
     [Category("PlatformAgnostic")]
     public async Task FailsWhenApiKeyIsMissing()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.Prompt, "Hello");
@@ -45,7 +46,7 @@ public class RunAgentCommandFixture
     [Category("Integration")]
     public async Task ClaudeCode_SucceedsWithSimplePrompt()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
@@ -63,7 +64,7 @@ public class RunAgentCommandFixture
     [Category("Integration")]
     public async Task ClaudeCode_ReturnsFileAsArtifact()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
                                              .WithArrange(context =>
                                                           {
                                                               context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
@@ -81,7 +82,7 @@ public class RunAgentCommandFixture
     [Category("Integration")]
     public async Task ClaudeCode_EmitsUsageServiceMessage()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
@@ -97,7 +98,7 @@ public class RunAgentCommandFixture
     [Category("Integration")]
     public async Task ClaudeCode_SucceedsWithWebFetch()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
@@ -113,7 +114,7 @@ public class RunAgentCommandFixture
     [Category("Integration")]
     public async Task ClaudeCode_RunsOn_RunsUnderAnotherAccount()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
                                              .WithArrange(context =>
                                                           {
                                                               context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
@@ -129,7 +130,7 @@ public class RunAgentCommandFixture
     [Category("Integration")]
     public async Task ClaudeCode_LoadsCustomSkills()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, Environment.GetEnvironmentVariable("ANTHROPIC_KEY"));
@@ -148,7 +149,7 @@ public class RunAgentCommandFixture
     [Category("Integration")]
     public async Task ClaudeCode_AttachesArtifact_WhenExplicitlyAsked()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));
@@ -169,7 +170,7 @@ public class RunAgentCommandFixture
     public async Task ClaudeCode_ResultsInFailure_IfExplicitlyAsked()
     {
         var prompt = "I want you to analyse the results of the following set of numbers [1,2,3]. Fail this deployment if any of the numbers are greater than 2.";
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
                                              .WithArrange(context =>
                                                           {
                                                               context.Variables.Add(SpecialVariables.Action.Claude.SandboxMode, nameof(SandboxMode.None));

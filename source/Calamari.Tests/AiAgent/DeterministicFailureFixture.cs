@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Calamari.Common.Util;
 using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
@@ -24,7 +25,7 @@ public class DeterministicFailureFixture
     [Test]
     public async Task InvalidApiKey_FailsStep()
     {
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, "sk-ant-invalid-test-000");
@@ -41,7 +42,7 @@ public class DeterministicFailureFixture
     {
         RequireAnthropicKey();
 
-        var result = await CommandTestBuilder.CreateAsync<RunAgentCommand, Program>()
+        var result = await CommandTestBuilder.Create<SyncCalamariProgram>(typeof(RunAgentCommand).GetCommandNameFromAttribute())
             .WithArrange(context =>
             {
                 context.Variables.Add(SpecialVariables.Action.Claude.ApiKey, AnthropicKey);
