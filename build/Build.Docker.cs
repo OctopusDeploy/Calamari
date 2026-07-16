@@ -60,6 +60,13 @@ public partial class Build
                                                             }
 
                                                             var tag = $"octopusdeploy/{flavour}:{NugetVersion.Value}".ToLowerInvariant();
+                                                            
+                                                            var sanitizedTag = tag.Replace("/", "-").Replace(":", ".");
+                                                            var outputFile = KnownPaths.PublishDirectory / $"{sanitizedTag}.tar";
+
+                                                            //create the publish directory
+                                                            Directory.CreateDirectory(KnownPaths.PublishDirectory);
+                                                            
 
                                                             //build the docker image for this flavour
                                                             DockerTasks.DockerBuildxBuild(settings =>
@@ -70,23 +77,10 @@ public partial class Build
                                                                                                          .SetTag(tag)
                                                                                                          .SetFile(dockerFile)
                                                                                                          .SetPath(KnownPaths.RootDirectory)
-                                                                                                         // This is required so we can save below.
-                                                                                                         // Otherwise, the image just remains in the build cache
-                                                                                                         .EnableLoad();
+                                                                                                         .SetOutput($"type=oci,tar=true,dest={outputFile}");
 
                                                                                               return settings;
                                                                                           });
-
-                                                            var sanitizedTag = tag.Replace("/", "-").Replace(":", ".");
-                                                            var outputFile = KnownPaths.PublishDirectory / $"{sanitizedTag}.tar";
-
-                                                            //create the publish directory
-                                                            Directory.CreateDirectory(KnownPaths.PublishDirectory);
-
-                                                            //save the docker image to a tar file
-                                                            DockerTasks.DockerImageSave(_ => _
-                                                                                             .SetImages(tag)
-                                                                                             .SetOutput(outputFile));
 
                                                             //compress with gzip
                                                             PowerShellTasks.PowerShell(_ => _
