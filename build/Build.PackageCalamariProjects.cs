@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Threading;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Nuke.Common.ProjectModel;
 
 namespace Calamari.Build;
@@ -9,7 +8,7 @@ public partial class Build
 {
     List<CalamariPackageMetadata> PackagesToPublish = new();
     List<Project> CalamariProjects = new();
-    
+
     Target GetCalamariFlavourProjectsToPublish =>
         d =>
             d.DependsOn(RestoreSolution)
@@ -56,40 +55,17 @@ public partial class Build
         d =>
             d.DependsOn(GetCalamariFlavourProjectsToPublish)
              .DependsOn(PublishAzureWebAppNetCoreShim)
-             .Executes(async () =>
+             .Executes(() =>
                        {
-                           var globalSemaphore = new SemaphoreSlim(1);
-                           var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
-
-                           var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
-                                                                     {
-                                                                         var projectName = calamariPackageMetadata.Project.Name;
-                                                                         var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
-                                                                         var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture, _ => new SemaphoreSlim(1, 1));
-
-                                                                         await globalSemaphore.WaitAsync();
-                                                                         await projectSemaphore.WaitAsync();
-                                                                         await architectureSemaphore.WaitAsync();
-                                                                         try
-                                                                         {
-                                                                             Log.Information($"Building {calamariPackageMetadata.Project.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
-
-                                                                             await Task.Run(() => DotNetBuild(s =>
-                                                                                                                  s.SetProjectFile(calamariPackageMetadata.Project)
-                                                                                                                   .SetConfiguration(Configuration)
-                                                                                                                   .SetFramework(calamariPackageMetadata.Framework)
-                                                                                                                   .SetRuntime(calamariPackageMetadata.Architecture)
-                                                                                                                   .EnableSelfContained()));
-                                                                         }
-                                                                         finally
-                                                                         {
-                                                                             projectSemaphore.Release();
-                                                                             architectureSemaphore.Release();
-                                                                             globalSemaphore.Release();
-                                                                         }
-                                                                     });
-
-                           await Task.WhenAll(buildTasks);
+                           // Build the solution once without a RID. Per-RID self-contained
+                           // compilation happens in the publish step.
+                           DotNetBuild(s =>
+                                           s.SetProjectFile(Solution)
+                                            .SetConfiguration(Configuration)
+                                            .SetVersion(NugetVersion.Value)
+                                            .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                            .SetVerbosity(BuildVerbosity)
+                                            .EnableNoRestore());
                        });
 
     Target PublishCalamariProjects =>
@@ -97,25 +73,57 @@ public partial class Build
             d.DependsOn(BuildCalamariProjects)
              .Executes(async () =>
                        {
-                           var semaphore = new SemaphoreSlim(4);
                            var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
+                           // Parallel across RIDs, sequential within each RID.
+                           // --no-restore prevents project.assets.json contention.
+                           // Sequential within RID avoids Unzip post-build target contention.
                            Log.Information("Publishing projects...");
-                           var publishTasks = PackagesToPublish.Select(async package =>
-                                                                       {
-                                                                           await semaphore.WaitAsync();
-                                                                           try
-                                                                           {
-                                                                               var outputPath = await PublishPackageAsync(package);
-                                                                               outputPaths.Add(outputPath);
-                                                                           }
-                                                                           finally
-                                                                           {
-                                                                               semaphore.Release();
-                                                                           }
-                                                                       });
+                           var ridTasks = PackagesToPublish
+                                          .GroupBy(p => p.Architecture)
+                                          .Select(async ridGroup =>
+                                                  {
+                                                      foreach (var package in ridGroup)
+                                                      {
+                                                          var outputPath = await PublishPackageAsync(package);
+                                                          outputPaths.Add(outputPath);
+                                                      }
+                                                  });
 
-                           await Task.WhenAll(publishTasks);
+                           await Task.WhenAll(ridTasks);
+
+                           // Publish the standalone docker-credential-octopus (a single self-contained,
+                           // trimmed binary) and drop it straight into Calamari's folder. Its name is unique,
+                           // so it doesn't collide with any Calamari file; the downloader adds the Calamari
+                           // folder to PATH so Docker can invoke it, and it gets signed with Calamari's binaries.
+                           var calamariProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari")
+                                                 ?? throw new InvalidOperationException("Could not find the 'Calamari' project.");
+                           var helperProject = Solution.AllProjects.FirstOrDefault(p => p.Name == "Calamari.DockerCredentialHelper")
+                                               ?? throw new InvalidOperationException("Could not find the 'Calamari.DockerCredentialHelper' project.");
+                           foreach (var rid in GetRuntimeIdentifiers(calamariProject))
+                           {
+                               var stagingDirectory = KnownPaths.PublishDirectory / "Calamari.DockerCredentialHelper" / rid;
+                               Log.Information("Publishing docker-credential-octopus for {Rid}", rid);
+                               // Trimming / single-file / invariant-globalization are applied here (not in the
+                               // csproj) so they don't leak into how Calamari.Tests consumes the project reference.
+                               DotNetPublish(s => s
+                                                  .SetConfiguration(Configuration)
+                                                  .SetProject(helperProject)
+                                                  .SetFramework(Frameworks.Net80)
+                                                  .SetRuntime(rid)
+                                                  .SetVersion(NugetVersion.Value)
+                                                  .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                                  .EnableSelfContained()
+                                                  .EnablePublishSingleFile()
+                                                  .EnablePublishTrimmed()
+                                                  .SetOutput(stagingDirectory));
+
+                               var calamariRidDirectory = (KnownPaths.PublishDirectory / "Calamari" / rid).ToString();
+                               foreach (var helperFile in Directory.GetFiles(stagingDirectory.ToString(), "docker-credential-octopus*"))
+                                   File.Copy(helperFile, Path.Combine(calamariRidDirectory, Path.GetFileName(helperFile)), overwrite: true);
+
+                               stagingDirectory.DeleteDirectory();
+                           }
 
                            // Sign and compress tasks
                            Log.Information("Signing published binaries...");
@@ -144,7 +152,9 @@ public partial class Build
                                               .SetProject(project)
                                               .SetFramework(calamariPackageMetadata.Framework)
                                               .SetRuntime(calamariPackageMetadata.Architecture)
-                                              .EnableNoBuild()
+                                              .SetVersion(NugetVersion.Value)
+                                              .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                              .SetVerbosity(BuildVerbosity)
                                               .EnableNoRestore()
                                               .EnableSelfContained()
                                               .SetOutput(outputDirectory)));

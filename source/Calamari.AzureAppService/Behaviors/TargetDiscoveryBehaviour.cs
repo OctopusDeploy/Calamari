@@ -15,33 +15,27 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.TargetDiscovery;
 
 #nullable enable
 namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
-        // These values are well-known resource types in Azure's API.
-        // The format is {resource-provider}/{resource-type}
-        // WebAppType refers to Azure Web Apps, Azure Functions Apps and Azure App Services
-        // while WebAppSlotsType refers to Slots of any of the above resources.
-        // More info about Azure Resource Providers and Types here:
-        // https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types
-        private const string WebAppSlotsType = "microsoft.web/sites/slots";
-        private const string WebAppType = "microsoft.web/sites";
-
         private ILog Log { get; }
+        private readonly IAzureWebAppDiscoverer discoverer;
 
-        public TargetDiscoveryBehaviour(ILog log)
+        public TargetDiscoveryBehaviour(ILog log, IAzureWebAppDiscoverer discoverer)
         {
             Log = log;
+            this.discoverer = discoverer;
         }
 
         public bool IsEnabled(RunningDeployment context) => true;
 
         public async Task Execute(RunningDeployment runningDeployment)
         {
-            const string contextVariableName = "Octopus.TargetDiscovery.Context";
+            const string contextVariableName = TargetDiscoverySpecialVariables.TargetDiscoveryContext;
             var json = runningDeployment.Variables.Get(contextVariableName);
             if (string.IsNullOrEmpty(json))
             {
@@ -53,7 +47,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!TryGetAuthenticationMethod(json!, contextVariableName, out string? authenticationMethod))
                 return;
 
-            TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? targetDiscoveryContext = authenticationMethod == "AzureOidc"
+            var targetDiscoveryContext = authenticationMethod == "AzureOidc"
                 ? GetTargetDiscoveryContext<AzureOidcAccount>(json!)
                 : GetTargetDiscoveryContext<AzureServicePrincipalAccount>(json!);
             
@@ -69,14 +63,9 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
             Log.Verbose($"  Client ID: {account.ClientId}");
-            var armClient = account.CreateArmClient(retryOptions =>
-            {
-                retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
-                retryOptions.MaxRetries = 5;
-            });
             try
             {
-                var resources = await armClient.GetResourcesByType(WebAppType, WebAppSlotsType);
+                var resources = await discoverer.DiscoverWebAppsAndSlots(account);
                 var discoveredTargetCount = 0;
                 Log.Verbose($"Found {resources.Length} candidate web app resources.");
                 foreach (var resource in resources)
@@ -163,10 +152,10 @@ namespace Calamari.AzureAppService.Behaviors
                     matchResult.TenantedDeploymentMode));
         }
 
-        private TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? GetTargetDiscoveryContext<T>(
+        TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? GetTargetDiscoveryContext<T>(
             string json) where T : IAzureAccount
         {
-            const string contextVariableName = "Octopus.TargetDiscovery.Context";
+            const string contextVariableName = TargetDiscoverySpecialVariables.TargetDiscoveryContext;
             try
             {
                 var context = JsonConvert

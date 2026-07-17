@@ -51,7 +51,7 @@ namespace Calamari.GoogleCloudScripting.Tests
             private GoogleStorageObject RetrieveFileFromGoogleCloudStorage(StorageClient client)
             {
                 var results = client.ListObjects("cloud-sdk-release", "google-cloud-sdk-");
-                var listOfFilesSortedByCreatedDate = new SortedList<DateTime, GoogleStorageObject>(Comparer<DateTime>.Create((a, b) => b.CompareTo(a)));
+                var listOfFilesSortedByCreatedDate = new SortedList<DateTimeOffset, GoogleStorageObject>(Comparer<DateTimeOffset>.Create((a, b) => b.CompareTo(a)));
 
                 // Checking date time less than to fetch gcloud versions earlier than 448.
                 // 448 requires python 3.8 and up, currently 3.5 is available on Teamcity agents
@@ -61,9 +61,9 @@ namespace Calamari.GoogleCloudScripting.Tests
 
                 foreach (var result in results)
                 {
-                    if (result.TimeCreated.HasValue && result.TimeCreated.Value.CompareTo(dateBeforeGcloud448) == -1)
+                    if (result.TimeCreatedDateTimeOffset.HasValue && result.TimeCreatedDateTimeOffset.Value.CompareTo(dateBeforeGcloud448) == -1)
                     {
-                        listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
+                        listOfFilesSortedByCreatedDate.Add(result.TimeCreatedDateTimeOffset.Value, result);
                     }
                 }
 

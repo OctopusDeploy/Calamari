@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using FluentAssertions;
 using NUnit.Framework;
@@ -11,15 +12,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
   public class ContainerImageReplacerTests
   {
     readonly string DefaultContainerRegistry = "docker.io";
-    readonly List<ContainerImageReference> imagesToUpdate;
+    readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate;
 
     public ContainerImageReplacerTests()
     {
-      imagesToUpdate = new List<ContainerImageReference>
+      imagesToUpdate = new List<ContainerImageReferenceAndHelmReference>
       {
         // We know this won't be null after parse
-        ContainerImageReference.FromReferenceString("nginx:1.25"),
-        ContainerImageReference.FromReferenceString("busybox:stable")
+        new(ContainerImageReference.FromReferenceString("nginx:1.25")),
+        new(ContainerImageReference.FromReferenceString("busybox:stable"))
       };
     }
 
@@ -37,7 +38,7 @@ spec:
 
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference>());
 
       result.UpdatedContents.Should().Be(inputYaml);
       result.UpdatedImageReferences.Should().BeEmpty();
@@ -48,7 +49,7 @@ spec:
     {
       var imageReplacer = new ContainerImageReplacer(string.Empty, DefaultContainerRegistry);
 
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference>());
 
       result.UpdatedContents.Should().BeEmpty();
       result.UpdatedImageReferences.Should().BeEmpty();
@@ -63,7 +64,7 @@ spec:
                                          - random: stuff
                                        ";
       var imageReplacer = new ContainerImageReplacer(invalidYaml, DefaultContainerRegistry);
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference>());
 
       result.UpdatedContents.Should().NotBeNull();
       result.UpdatedContents.Should().Be(invalidYaml);
@@ -84,7 +85,7 @@ spec:
 
       var imageReplacer = new ContainerImageReplacer(yamlWithoutImages, DefaultContainerRegistry);
 
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference> { new(ContainerImageReference.FromReferenceString("nginx:1.25")) });
 
       result.UpdatedContents.Should().Be(yamlWithoutImages);
       result.UpdatedImageReferences.Should().BeEmpty();
@@ -121,7 +122,7 @@ spec:
 
       var imageReplacer = new ContainerImageReplacer(argoApp, DefaultContainerRegistry);
 
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference> { new(ContainerImageReference.FromReferenceString("nginx:1.25")) });
 
       result.UpdatedContents.Should().Be(argoApp);
       result.UpdatedImageReferences.Should().BeEmpty();
@@ -141,7 +142,7 @@ spec:
                                             ";
       var imageReplacer = new ContainerImageReplacer(yamlWithComments, DefaultContainerRegistry);
 
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference> { new(ContainerImageReference.FromReferenceString("nginx:1.25")) });
 
       result.UpdatedContents.Should().Be(yamlWithComments);
     }
@@ -163,9 +164,9 @@ spec:
       image: ""nginx:1.25""";
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-      var updatedImage = new List<ContainerImageReference>
+      var updatedImage = new List<ContainerImageReferenceAndHelmReference>
       {
-        ContainerImageReference.FromReferenceString("nginx:1.25")
+        new(ContainerImageReference.FromReferenceString("nginx:1.25"))
       };
 
       var result = imageReplacer.UpdateImages(updatedImage);
@@ -174,6 +175,74 @@ spec:
       result.UpdatedContents.Should().Be(expectedYaml);
       result.UpdatedImageReferences.Count.Should().Be(1);
       result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+    }
+
+    [Test]
+    public void UpdateImages_WithImageOnNonDefaultRegistry_UpdatesTagAndReportsImage()
+    {
+      // Images on a non-default registry (e.g. GAR/GCR/ECR) must be matched and updated. The
+      // first path segment (us-docker.pkg.dev) is recognised as a registry, and the rest is the
+      // image name; only the tag should change.
+      const string inputYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: helloworld
+      image: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1";
+      const string expectedYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: helloworld
+      image: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var updatedImage = new List<ContainerImageReferenceAndHelmReference>
+      {
+        new(ContainerImageReference.FromReferenceString(
+                "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2",
+                DefaultContainerRegistry))
+      };
+
+      var result = imageReplacer.UpdateImages(updatedImage);
+
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Should().ContainSingle()
+            .Which.Should().Be("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2");
+    }
+
+    [Theory]
+    [TestCase("docker.io/nginx:1.27.1", "docker.io/nginx:1.28.0")]
+    [TestCase("nginx:1.27.1", "nginx:1.28.0")]
+    [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v1",
+              "us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2")]
+    public void ReturnsSameImageBaseAsInYaml(string originalImage, string expectedImage)
+    {
+      var inputYaml = $@"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      image: {originalImage}";
+      var expectedYaml = $@"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      image: {expectedImage}";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var update = new List<ContainerImageReferenceAndHelmReference>
+      {
+        new(ContainerImageReference.FromReferenceString(expectedImage, DefaultContainerRegistry))
+      };
+
+      var result = imageReplacer.UpdateImages(update);
+
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be(expectedImage);
     }
 
     [Test]
@@ -201,9 +270,9 @@ spec:
       image: nginx:1.25";
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-      var updatedImage = new List<ContainerImageReference>
+      var updatedImage = new List<ContainerImageReferenceAndHelmReference>
       {
-        ContainerImageReference.FromReferenceString("nginx:1.25")
+        new(ContainerImageReference.FromReferenceString("nginx:1.25"))
       };
 
       var result = imageReplacer.UpdateImages(updatedImage);
@@ -331,9 +400,9 @@ spec:
 ";
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-      var updatedImage = new List<ContainerImageReference>
+      var updatedImage = new List<ContainerImageReferenceAndHelmReference>
       {
-        ContainerImageReference.FromReferenceString("nginx:1.25"),
+        new(ContainerImageReference.FromReferenceString("nginx:1.25")),
       };
 
       var result = imageReplacer.UpdateImages(updatedImage);
@@ -663,7 +732,7 @@ spec:
                                       ";
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.19") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference> { new(ContainerImageReference.FromReferenceString("nginx:1.19")) });
 
       result.UpdatedContents.Should().NotBeNull();
       result.UpdatedContents.Should().Be(inputYaml);
@@ -707,11 +776,11 @@ spec:
       command: [""echo"", ""Init container added""]
 ";
 
-      List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
+      var customRegistryImagesToUpdate = new List<ContainerImageReferenceAndHelmReference>
       {
         // We know this won't be null after parse
-        ContainerImageReference.FromReferenceString("my-custom.io/nginx:1.25"),
-        ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable")
+        new(ContainerImageReference.FromReferenceString("my-custom.io/nginx:1.25")),
+        new(ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable"))
       };
 
       var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
@@ -761,11 +830,11 @@ spec:
       command: [""echo"", ""Init container added""]
 ";
 
-      List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
+      var customRegistryImagesToUpdate = new List<ContainerImageReferenceAndHelmReference>
       {
         // We know this won't be null after parse
-        ContainerImageReference.FromReferenceString("docker.io/nginx:1.25"), //This container should be ignored because it has a fully qualified registry that doesn't match the custom
-        ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable")
+        new(ContainerImageReference.FromReferenceString("docker.io/nginx:1.25")), //This container should be ignored because it has a fully qualified registry that doesn't match the custom
+        new(ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable"))
       };
 
       var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
@@ -828,7 +897,7 @@ spec:
 
       var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
 
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("quay.io/argoprojlabs/argocd-e2e-container:0.3") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference> { new(ContainerImageReference.FromReferenceString("quay.io/argoprojlabs/argocd-e2e-container:0.3")) });
       result.UpdatedContents.Should().Be(expectedOutput);
     }
     
@@ -845,8 +914,8 @@ spec:
        - image: nginx:currentversion";
 
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
-      var upperCaseContainer = ContainerImageReference.FromReferenceString("nginx:CurrentVersion");
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>{upperCaseContainer});
+      var upperCaseContainer = new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString("nginx:CurrentVersion"));
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference>{upperCaseContainer});
 
       const string expectedOutput = @"
 apiVersion: apps/v1
@@ -862,6 +931,192 @@ spec:
     }
     
     [Test]
+    public void UpdateImages_WithArgoRollout_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-rollout
+  template:
+    metadata:
+      labels:
+        app: sample-rollout
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19 #Update
+        - name: alpine
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:unstable #Update Init
+          command: [""echo"", ""Init container added""]
+  strategy:
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: {}
+";
+      const string expectedYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-rollout
+  template:
+    metadata:
+      labels:
+        app: sample-rollout
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25 #Update
+        - name: alpine
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:stable #Update Init
+          command: [""echo"", ""Init container added""]
+  strategy:
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: {}
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
+
+    [Test]
+    public void UpdateImages_WithArgoRollout_NoMatchingImages_LeavesYamlUnchanged()
+    {
+      const string inputYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  template:
+    spec:
+      containers:
+        - name: alpine
+          image: alpine:3.21
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UpdatedImageReferences.Should().BeEmpty();
+    }
+
+    [Test]
+    public void UpdateImages_WithArgoRollout_ContainersOnly_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+  strategy:
+    blueGreen:
+      activeService: active-svc
+      previewService: preview-svc
+";
+      const string expectedYaml = @"
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-rollout
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25
+  strategy:
+    blueGreen:
+      activeService: active-svc
+      previewService: preview-svc
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+    }
+
+    [Test]
+    public void UpdateImages_WithUnknownCrd_ReportsUnrecognisedKind()
+    {
+      // An arbitrary CRD not in the type map — the replacer cannot handle it
+      const string inputYaml = @"
+apiVersion: my-company.io/v1
+kind: MyCustomApp
+metadata:
+  name: sample
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UpdatedImageReferences.Should().BeEmpty();
+      result.UnrecognisedKinds.Should().ContainSingle(k => k == "my-company.io/v1/MyCustomApp");
+    }
+
+    [Test]
+    public void UpdateImages_WithKnownK8sTypeNotHandled_DoesNotReportUnrecognisedKind()
+    {
+      // V1Service is a known SDK type — it just doesn't have containers, so it should pass silently
+      const string inputYaml = @"
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  ports:
+    - port: 80
+";
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UnrecognisedKinds.Should().BeEmpty();
+    }
+
+    [Test]
     public void ReplacerWillMatchImageNameInsensitivelyAndReplaceWithLowerCase()
     {
       const string inputYaml = @"
@@ -874,8 +1129,8 @@ spec:
        - image: NGiNX:currentversion";
 
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
-      var upperCaseContainer = ContainerImageReference.FromReferenceString("nginx:CurrentVersion");
-      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>{upperCaseContainer});
+      var upperCaseContainer = new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString("nginx:CurrentVersion"));
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReferenceAndHelmReference>{upperCaseContainer});
 
       const string expectedOutput = @"
 apiVersion: apps/v1

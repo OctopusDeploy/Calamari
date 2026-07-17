@@ -123,7 +123,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image = ContainerImageReference.FromReferenceString("nginx:latest");
             var result = image.WithTag("1.27");
 
-            result.Should().Be("nginx:1.27");
+            result.FriendlyName().Should().Be("nginx:1.27");
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace Calamari.Tests.ArgoCD.Models
 
             var result = image.WithTag("1.27");
 
-            result.Should().Be("docker.io/nginx:1.27");
+            result.FriendlyName().Should().Be("docker.io/nginx:1.27");
         }
 
         [Test]
@@ -143,7 +143,7 @@ namespace Calamari.Tests.ArgoCD.Models
 
             var result = image.WithTag("1.27");
 
-            result.Should().Be("nginx:1.27");
+            result.FriendlyName().Should().Be("nginx:1.27");
         }
 
         [Theory]
@@ -151,11 +151,11 @@ namespace Calamari.Tests.ArgoCD.Models
         [TestCase("docker.io/nginx", "docker.io/nginx")]
         [TestCase("index.docker.io/nginx:latest", "index.docker.io/nginx:latest")]
         [TestCase("nginx:latest", "nginx:latest")]
-        public void ToString_ReturnsCorrectlyFormattedImageNameBasedOnComponents(string reference, string expected)
+        public void FriendlyName_ReturnsCorrectlyFormattedImageNameBasedOnComponents(string reference, string expected)
         {
             var image = ContainerImageReference.FromReferenceString(reference);
 
-            var result = image.ToString();
+            var result = image.FriendlyName();
 
             result.Should().Be(expected);
         }

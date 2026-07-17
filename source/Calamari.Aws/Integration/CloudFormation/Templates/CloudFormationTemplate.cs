@@ -12,113 +12,107 @@ using Calamari.Common.Util;
 using Octopus.CoreUtilities;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
-namespace Calamari.Aws.Integration.CloudFormation.Templates
+namespace Calamari.Aws.Integration.CloudFormation.Templates;
+
+public class CloudFormationTemplate(
+    Func<string> content,
+    ITemplateInputs<Parameter> parameters,
+    string stackName,
+    List<string> iamCapabilities,
+    bool disableRollback,
+    string roleArn,
+    IEnumerable<KeyValuePair<string, string>> tags,
+    StackArn stack,
+    Func<IAmazonCloudFormation> clientFactory,
+    IVariables variables)
+    : BaseTemplate(parameters.Inputs,
+                   stackName,
+                   iamCapabilities,
+                   disableRollback,
+                   roleArn,
+                   tags,
+                   stack,
+                   clientFactory,
+                   variables), ITemplate
 {
-    public class CloudFormationTemplate : BaseTemplate, ITemplate
+    public static ICloudFormationRequestBuilder Create(ITemplateResolver templateResolver,
+                                                       string templateFile,
+                                                       string templateParameterFile,
+                                                       bool filesInPackage,
+                                                       ICalamariFileSystem fileSystem,
+                                                       IVariables variables,
+                                                       string stackName,
+                                                       List<string> capabilities,
+                                                       bool disableRollback,
+                                                       string roleArn,
+                                                       IEnumerable<KeyValuePair<string, string>> tags,
+                                                       StackArn stack,
+                                                       Func<IAmazonCloudFormation> clientFactory)
     {
-        readonly Func<string> content;
+        var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
+        var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
 
-        public CloudFormationTemplate(Func<string> content,
-                                      ITemplateInputs<Parameter> parameters,
-                                      string stackName,
-                                      List<string> iamCapabilities,
-                                      bool disableRollback,
-                                      string roleArn,
-                                      IEnumerable<KeyValuePair<string, string>> tags,
-                                      StackArn stack,
-                                      Func<IAmazonCloudFormation> clientFactory,
-                                      IVariables variables) : base(parameters.Inputs,
-                                                                   stackName,
-                                                                   iamCapabilities,
-                                                                   disableRollback,
-                                                                   roleArn,
-                                                                   tags,
-                                                                   stack,
-                                                                   clientFactory,
-                                                                   variables)
+        if (!string.IsNullOrWhiteSpace(templateParameterFile) && !resolvedParameters.Some())
+            throw new CommandException("Could not find template parameters file: " + templateParameterFile);
+
+        return new CloudFormationTemplate(() => variables.Evaluate(fileSystem.ReadFile(resolvedTemplate.Value)),
+                                          CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables),
+                                          stackName,
+                                          capabilities,
+                                          disableRollback,
+                                          roleArn,
+                                          tags,
+                                          stack,
+                                          clientFactory,
+                                          variables);
+    }
+
+    public string Content => content();
+
+    public override CreateStackRequest BuildCreateStackRequest()
+    {
+        return new CreateStackRequest
         {
-            this.content = content;
-        }
+            StackName = stackName,
+            TemplateBody = Content,
+            Parameters = Inputs.ToList(),
+            Capabilities = capabilities,
+            DisableRollback = disableRollback,
+            RoleARN = roleArn,
+            Tags = tags
+        };
+    }
 
-        public static ICloudFormationRequestBuilder Create(ITemplateResolver templateResolver,
-                                                           string templateFile,
-                                                           string templateParameterFile,
-                                                           bool filesInPackage,
-                                                           ICalamariFileSystem fileSystem,
-                                                           IVariables variables,
-                                                           string stackName,
-                                                           List<string> capabilities,
-                                                           bool disableRollback,
-                                                           string roleArn,
-                                                           IEnumerable<KeyValuePair<string, string>> tags,
-                                                           StackArn stack,
-                                                           Func<IAmazonCloudFormation> clientFactory)
+    public override UpdateStackRequest BuildUpdateStackRequest()
+    {
+        return new UpdateStackRequest
         {
-            var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
-            var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
+            StackName = stackName,
+            TemplateBody = Content,
+            Parameters = Inputs.ToList(),
+            Capabilities = capabilities,
+            RoleARN = roleArn,
+            Tags = tags
+        };
+    }
 
-            if (!string.IsNullOrWhiteSpace(templateParameterFile) && !resolvedParameters.Some())
-                throw new CommandException("Could not find template parameters file: " + templateParameterFile);
-
-            return new CloudFormationTemplate(() => variables.Evaluate(fileSystem.ReadFile(resolvedTemplate.Value)),
-                                              CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables),
-                                              stackName,
-                                              capabilities,
-                                              disableRollback,
-                                              roleArn,
-                                              tags,
-                                              stack,
-                                              clientFactory,
-                                              variables);
-        }
-
-        public string Content => content();
-
-        public override CreateStackRequest BuildCreateStackRequest()
+    public override async Task<CreateChangeSetRequest> BuildChangesetRequest()
+    {
+        return new CreateChangeSetRequest
         {
-            return new CreateStackRequest
-            {
-                StackName = stackName,
-                TemplateBody = Content,
-                Parameters = Inputs.ToList(),
-                Capabilities = capabilities,
-                DisableRollback = disableRollback,
-                RoleARN = roleArn,
-                Tags = tags
-            };
-        }
-
-        public override UpdateStackRequest BuildUpdateStackRequest()
-        {
-            return new UpdateStackRequest
-            {
-                StackName = stackName,
-                TemplateBody = Content,
-                Parameters = Inputs.ToList(),
-                Capabilities = capabilities,
-                RoleARN = roleArn,
-                Tags = tags
-            };
-        }
-
-        public override async Task<CreateChangeSetRequest> BuildChangesetRequest()
-        {
-            return new CreateChangeSetRequest
-            {
-                StackName = stack.Value,
-                TemplateBody = Content,
-                Parameters = Inputs.ToList(),
-                /*
-                 * The change set name might be passed down directly, or this variable may be
-                 * set as part of the deployment. Reading the value from the variables here
-                 * allows us to catch any deferred construction of the change stack name.
-                 */
-                ChangeSetName = variables[AwsSpecialVariables.CloudFormation.Changesets.Name],
-                ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
-                Capabilities = capabilities,
-                RoleARN = roleArn,
-                Tags = tags
-            };
-        }
+            StackName = stack.Value,
+            TemplateBody = Content,
+            Parameters = Inputs.ToList(),
+            /*
+             * The change set name might be passed down directly, or this variable may be
+             * set as part of the deployment. Reading the value from the variables here
+             * allows us to catch any deferred construction of the change stack name.
+             */
+            ChangeSetName = variables[AwsSpecialVariables.CloudFormation.Changesets.Name],
+            ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
+            Capabilities = capabilities,
+            RoleARN = roleArn,
+            Tags = tags
+        };
     }
 }

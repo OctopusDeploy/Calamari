@@ -28,6 +28,7 @@ using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 namespace Calamari.AzureWebApp.Tests
 {
     [TestFixture]
+    [Category(TestCategory.ExternalCloudIntegration)]
     public class DeployAzureWebCommandFixture
     {
         int webAppCount = 0;

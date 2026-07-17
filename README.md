@@ -1,8 +1,10 @@
+[![calamari Latest Production Release](https://deploy.octopus.app/api/Spaces-1795/projects/calamari/badge/production/latest_release?label=release)](https://deploy.octopus.app/app#/Spaces-1795/projects/calamari)
+
 Calamari is the command-line tool invoked by Tentacle during a deployment. It knows how to extract and install NuGet packages, run the Deploy.ps1 etc. conventions, modify configuration files, and all the other things that happen during a deployment.
 
 ## Building
 
-You will need the .NET SDK `6.0`, downloadable from https://dotnet.microsoft.com/download
+You will need the .NET SDK `8.0`, downloadable from https://dotnet.microsoft.com/download
 
 Run `build-local.ps1` or `build-local.sh` to build the solution locally.
 
@@ -39,7 +41,7 @@ Option 1 is recommended if you can use the default worker.
 ### Option 1: Reference local binary
 1. Build Calamari in your IDE
 2. Get the path to the executable (The one directly in the bin folder for the Calamari project for the flavour you want to debug e.g. `Calamari` or `Calamari.AzureAppService` with no extension for macOS and Linux, `Calamari.exe` or `Calamari.AzureAppService.exe` for Windows)
-3. In Octopus, set an unscoped variable `Octopus.Calamari.Executable` to the full path to the executable. This is set per project.
+3. In Octopus, set a project variable `Octopus.Calamari.Executable` to the full path to the executable. This can be set at the project level or scoped to an individual step if required.
 4. Now when you run a deployment it will use your debug build.
 
 #### Benefits:
@@ -47,9 +49,30 @@ Option 1 is recommended if you can use the default worker.
 - It does not exercise the full deployment functionality of checking calamari versions etc (most of the time, this does not matter).
 
 #### Drawbacks:
-- You must run the step on your machine (default worker) - basically the executable has to be at the path on whatever machine is executing the step. This is a problem when working with Kubernetes Tentacle for example.
+- You must run the step on your machine (default worker) - the executable has to be at the path on whatever machine is executing the step. This is a problem when working with Kubernetes Tentacle for example.
 
-### Option 2: Package Calamari into your server build
+### Option 2: Dev package provider
+
+1. In terminal, run `./build-local.sh` (build-local.ps1 is available for Windows)
+
+2. Add the following to your OctopusDeploy `.env` file:
+   ```
+   OCTOPUS__Dev__CalamariPackagePath=<path-to-Calamari>/artifacts/consolidated
+   ```
+3. Restart the server so it picks up the new environment variable.
+4. Run a deployment and the server will use the latest build
+5. Use a trimmed runtime specific to the target you will be testing to improve build time
+   - e.g `./build-local.sh -y --runtime "linux-x64"`
+   - Consolidation tests will not run when targeting a specific runtime
+
+#### Benefits:
+- Works with remote workers.
+- No server restart needed.
+
+#### Drawbacks:
+- Slower than option 1, only use this if you need to support remote targets
+
+### Option 3: Package Calamari into your server build
 1. In terminal, run `./build-local.sh` (build-local.ps1 is available for Windows)
 2. Nuke will build and package up Calamari then it will update the `Calamari.Consolidated` version in your `Octopus.Server.csproj`
 3. Restart Server to force a rebuild with the new version of Calamari.
@@ -60,18 +83,24 @@ Option 1 is recommended if you can use the default worker.
 
 #### Benefits:
 - It uses the “proper” mechanism to deploy Calamari.
-- You can use it when you’re using a remote worker.
+- Works with remote workers.
 
 #### Drawbacks:
 - It takes ~10 minutes to build and pack Calamari, however you can reduce this significantly by targeting a specific runtime/framework if you don't need the rest
     - eg `./build-local.sh -y --framework "net8.0" --runtime "linux-x64"` (note that consolidation tests will not run when targeting a specific runtime)
 - You need to restart Server for Calamari changes to take effect
 
-### Bonus Variables!
-- Set `Octopus.Calamari.WaitForDebugger` to `True` to get a debug version of Calamari to wait for a Debugger to be attached before continuing. The log message from Calamari will show it’s waiting for the debugger and it will give the PID to use when you’re looking to attach.
+### Bonus Project Variables!
+- Set `Octopus.Calamari.WaitForDebugger` to `True` in Octopus, to get a debug version of Calamari to wait for a Debugger to be attached before continuing. The log message from Calamari will show it’s waiting for the debugger and it will give the PID to use when you’re looking to attach.
+  - Set it to `Rider` instead of `True` to have Calamari automatically signal a locally-running JetBrains Rider to attach to the process (via `rider attach-to-process`), then wait as usual. This only works when Calamari runs on the same machine as your Rider (i.e. the local-debug loop using the `Octopus.Calamari.Executable` override above).
 - Set `OctopusPrintEvaluatedVariables` to `True` to get all variables that are sent to Calamari, printed to the verbose long when executing a step.
 
+> Note: These can be scoped to an individual step if required.
+
 > Tip: Creating a variable set with your configuration makes it easy to toggle this behaviour per project
+
+### Bonus Environment Varable
+- Set the environment variable `_CALAMARI_WAIT_FOR_DEBUGGER` to `true` in Server to enable the WaitForDebugger behaviour above outside the scope of a Project. E.g. HealthChecks etc. Set it to `Rider` to enable the auto-attach behaviour described above.
 
 ## Testing:
 

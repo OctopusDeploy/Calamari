@@ -23,15 +23,13 @@ namespace Calamari.Kubernetes.Integration
     {
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
-        readonly IVariables variables;
         bool isCustomExecutable;
 
         public HelmCli(ILog log, ICommandLineRunner commandLineRunner, RunningDeployment runningDeployment, ICalamariFileSystem fileSystem)
-            : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables)
+            : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables, runningDeployment.Variables)
         {
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
-            variables = runningDeployment.Variables;
             ExecutableLocation = SetExecutable();
         }
 
@@ -87,26 +85,39 @@ namespace Calamari.Kubernetes.Integration
             return SemVerFactory.CreateVersion(vStripped);
         }
 
-        public int? GetCurrentRevision(string releaseName)
+        public (int Revision, string Status)? GetCurrentReleaseMetadata(string releaseName)
         {
             var result = ExecuteCommandAndReturnOutput("get", "metadata", releaseName, "-o json", NamespaceArg());
 
-
             //if we get _any_ error back, assume it probably hasn't been installed yet
             if (result.Result.ExitCode != 0)
-                return null; //
-            
+                return null;
+
             //parse the output
             var json = result.Output.MergeInfoLogs();
-            var metadata = JsonConvert.DeserializeAnonymousType(json,
-                                                                new
-                                                                {
-                                                                    //we only care about parsing the revision
-                                                                    revision = 0
-                                                                });
+            var metadata = JsonConvert.DeserializeAnonymousType(json, new { revision = 0, status = string.Empty });
 
-            //the next revision 
-            return metadata.revision;
+            // Only revision and status are required for now
+            return (metadata.revision, metadata.status);
+        }
+
+        public CommandResult Rollback(string releaseName, int? revision = null)
+        {
+            var args = new List<string> { "rollback", releaseName };
+
+            if (revision.HasValue)
+                args.Add(revision.Value.ToString());
+
+            args.Add(NamespaceArg());
+
+            var result = ExecuteCommandAndLogOutput(args);
+            return result;
+        }
+
+        public CommandResult Uninstall(string releaseName)
+        {
+            var args = new List<string> { "uninstall", releaseName, NamespaceArg() };
+            return ExecuteCommandAndLogOutput(args);
         }
 
         public string GetManifest(string releaseName, int revisionNumber)
@@ -116,7 +127,7 @@ namespace Calamari.Kubernetes.Integration
 
             return result.Output.MergeInfoLogs();
         }
-        
+
         public CommandResult Upgrade(string releaseName, string packagePath, IEnumerable<string> upgradeArgs)
         {
             var buildArgs = new List<string>

@@ -1,35 +1,34 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
-    // Note about moving this class: GetScript method uses the namespace of this class as part of the
+    // Note about moving this class: the ScriptExtractor.GetScript method uses the namespace of this class as part of the
     // get Embedded Resource to find the DockerLogin and DockerPull scripts. If you move this file, be sure look at that method
     // and make sure it can still find the scripts
     public class DockerImagePackageDownloader : IPackageDownloader
     {
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
-        readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
         readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
+        readonly bool useCredentialHelper;
+        readonly DockerCredentialHelper dockerCredentialHelper;
         const string DockerHubRegistry = "index.docker.io";
 
         static readonly HashSet<FeedType> SupportedLoginDetailsFeedTypes = new HashSet<FeedType>
@@ -39,27 +38,29 @@ namespace Calamari.Integration.Packages.Download
             FeedType.GoogleContainerRegistry
         };
 
+        const string DockerConfigFolder = "./octo-docker-configs";
+
         // Ensures that any credential details are only available for the duration of the acquisition
         readonly Dictionary<string, string> environmentVariables = new Dictionary<string, string>()
         {
             {
-                "DOCKER_CONFIG", "./octo-docker-configs"
+                "DOCKER_CONFIG", DockerConfigFolder
             }
         };
 
         public DockerImagePackageDownloader(IScriptEngine scriptEngine,
                                             ICalamariFileSystem fileSystem,
-                                            ICommandLineRunner commandLineRunner,
                                             IVariables variables,
                                             ILog log,
                                             IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
-            this.commandLineRunner = commandLineRunner;
             this.variables = variables;
             this.log = log;
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
+            this.useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables) && !variables.GetFlag(SpecialVariables.Package.DisableDockerCredentialHelper, false);
+            this.dockerCredentialHelper = new DockerCredentialHelper(log);
         }
 
         (string Username, string Password, Uri FeedUri) GetContainerRegistryLoginDetails(string feedTypeStr, string username, string password, Uri feedUri)
@@ -98,21 +99,55 @@ namespace Calamari.Integration.Packages.Download
             var feedHost = GetFeedHost(feedUri);
 
             var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
-            strategy.Execute(() => PerformLogin(username, password, feedHost));
 
-            const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
-            var imageNotCachedMessage =
-                "The docker image '{0}' may not be cached." + " Please note images that have not been cached may take longer to be acquired than expected." + " Your deployment will begin as soon as all images have been pulled." + $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
-
-            if (!IsImageCached(fullImageName))
+            try
             {
-                log.InfoFormat(imageNotCachedMessage, fullImageName);
+                var credentialHelperConfigured = useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password);
+                if (credentialHelperConfigured)
+                {
+                    strategy.Execute(() => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, feedUri, DockerHubRegistry));
+                }
+
+                try
+                {
+                    strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+                }
+                catch (CommandException) when (credentialHelperConfigured)
+                {
+                    // The credential-helper login failed (after retries); tear the helper down and retry
+                    // login once without it. (Docker emits its own "stored unencrypted" warning in this case.)
+                    log.Verbose("Docker login failed while the credential helper was enabled; retrying without the credential helper.");
+                    dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
+                    strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+                }
+
+                const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
+                var imageNotCachedMessage =
+                    "The docker image '{0}' may not be cached." + " Please note images that have not been cached may take longer to be acquired than expected." + " Your deployment will begin as soon as all images have been pulled." + $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
+
+                if (!IsImageCached(fullImageName))
+                {
+                    log.InfoFormat(imageNotCachedMessage, fullImageName);
+                }
+
+                strategy.Execute(() => PerformPull(fullImageName, environmentVariables));
+
+                var (hash, size) = GetImageDetails(fullImageName);
+
+                return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
             }
+            finally
+            {
+                // Always remove the temporary Docker config and any credential-helper artifacts,
+                // even if login/pull/inspect throws, so credentials are never left on disk.
+                if (useCredentialHelper)
+                {
+                    dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
+                }
 
-            strategy.Execute(() => PerformPull(fullImageName));
-
-            var (hash, size) = GetImageDetails(fullImageName);
-            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
+                if (fileSystem.DirectoryExists(DockerConfigFolder))
+                    fileSystem.DeleteDirectory(DockerConfigFolder);
+            }
         }
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
@@ -137,19 +172,24 @@ namespace Calamari.Integration.Packages.Download
             return $"{feedUri.Host}:{feedUri.Port}";
         }
 
-        void PerformLogin(string? username, string? password, string feed)
+        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> environmentVariables)
         {
-            var result = ExecuteScript("DockerLogin",
-                                       new Dictionary<string, string?>
-                                       {
-                                           ["DockerUsername"] = username,
-                                           ["DockerPassword"] = password,
-                                           ["FeedUri"] = feed
-                                       });
+            var dockerLoginEnvironmentVariables = new Dictionary<string, string>(environmentVariables);
+            dockerLoginEnvironmentVariables["DockerUsername"] = username;
+            dockerLoginEnvironmentVariables["DockerPassword"] = password;
+            dockerLoginEnvironmentVariables["FeedUri"] = feed;
+
+            var (result, output) = ExecuteScript("DockerLogin", dockerLoginEnvironmentVariables);
             if (result == null)
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
+            {
+                // Diagnostic only: surface the most common credential-helper failure when we see it.
+                if (useCredentialHelper && output.Contains("Error saving credentials"))
+                    log.Verbose("Docker login failed due to a credential helper error.");
+
                 throw new CommandException("Unable to log in Docker registry");
+            }
         }
 
         bool IsImageCached(string fullImageName)
@@ -166,22 +206,21 @@ namespace Calamari.Integration.Packages.Download
             return cachedDigests.Intersect(selectedDigests).Any();
         }
 
-        void PerformPull(string fullImageName)
+        void PerformPull(string fullImageName, Dictionary<string, string> dictionary)
         {
-            var result = ExecuteScript("DockerPull",
-                                       new Dictionary<string, string?>
-                                       {
-                                           ["Image"] = fullImageName
-                                       });
+            var envVars = new Dictionary<string, string>(dictionary);
+            envVars["Image"] = fullImageName;
+            
+            var (result, _) = ExecuteScript("DockerPull", envVars);
             if (result == null)
                 throw new CommandException("Null result attempting to pull Docker image");
             if (result.ExitCode != 0)
                 throw new CommandException("Unable to pull Docker image");
         }
 
-        CommandResult ExecuteScript(string scriptName, Dictionary<string, string?> envVars)
+        (CommandResult CommandResult, string StdOut) ExecuteScript(string scriptName, Dictionary<string, string?> envVars)
         {
-            var file = GetScript(scriptName);
+            var file = ScriptExtractor.GetScript(fileSystem, scriptName, "Octopus.");
             using (new TemporaryFile(file))
             {
                 var clone = variables.Clone();
@@ -190,7 +229,10 @@ namespace Calamari.Integration.Packages.Download
                     clone[keyValuePair.Key] = keyValuePair.Value;
                 }
 
-                return scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
+                var inMemorySink = new InMemoryCommandOutputSink();
+                var commandLineRunner = new CommandLineRunner(log, clone, inMemorySink);
+                var commandResult = scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
+                return (commandResult, inMemorySink.StdOut + inMemorySink.StdErr);
             }
         }
 
@@ -289,29 +331,6 @@ namespace Calamari.Integration.Packages.Download
             {
                 return null;
             }
-        }
-
-        string GetScript(string scriptName)
-        {
-            var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
-
-            string contextFile;
-            switch (syntax)
-            {
-                case ScriptSyntax.Bash:
-                    contextFile = $"{scriptName}.sh";
-                    break;
-                case ScriptSyntax.PowerShell:
-                    contextFile = $"{scriptName}.ps1";
-                    break;
-                default:
-                    throw new InvalidOperationException("No kubernetes context wrapper exists for " + syntax);
-            }
-
-            var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
-            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof(DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
-            fileSystem.OverwriteFile(scriptFile, contextScript);
-            return scriptFile;
         }
     }
 }

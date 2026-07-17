@@ -11,6 +11,7 @@
     <PackageReference Include="nunit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="NSubstitute" Version="4.2.2" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
   </ItemGroup>
   <ItemGroup>
@@ -25,9 +26,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Packages\AzureResourceGroup\Default.aspx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Packages\Bicep\parameters.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Packages\Bicep\azure_website_template.bicep">

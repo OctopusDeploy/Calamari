@@ -1,16 +1,7 @@
-﻿using Calamari.Aws.Deployment.Conventions;
+﻿namespace Calamari.Aws.Integration.CloudFormation;
 
-namespace Calamari.Aws.Integration.CloudFormation
+public class RunningChangeSet(StackArn stack, ChangeSetArn changeSet)
 {
-    public class RunningChangeSet
-    {
-        public StackArn Stack { get; }
-        public ChangeSetArn ChangeSet { get; }
-
-        public RunningChangeSet(StackArn stack, ChangeSetArn changeSet)
-        {
-            Stack = stack;
-            ChangeSet = changeSet;
-        }
-    }
+    public StackArn Stack { get; } = stack;
+    public ChangeSetArn ChangeSet { get; } = changeSet;
 }

@@ -16,4 +16,6 @@
         <ProjectReference Include="..\Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj" />
         <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
     </ItemGroup>
+
+    <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>

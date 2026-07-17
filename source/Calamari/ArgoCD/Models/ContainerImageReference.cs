@@ -95,9 +95,9 @@ namespace Calamari.ArgoCD.Models
             return string.IsNullOrEmpty(Registry) ? ImageName : $"{Registry}/{ImageName}";
         }
 
-        public string WithTag(string tag)
+        public ContainerImageReference WithTag(string tag)
         {
-            return $"{ToOriginalFormatName()}:{tag}";
+            return new ContainerImageReference(Registry, ImageName, tag, DefaultRegistry);
         }
 
         static bool RegistriesMatch(ContainerImageReference reference1, ContainerImageReference reference2)
@@ -120,7 +120,7 @@ namespace Calamari.ArgoCD.Models
             }
         }
 
-        public override string ToString()
+        public string FriendlyName()
         {
             return string.IsNullOrEmpty(Tag) ? ToOriginalFormatName() : $"{ToOriginalFormatName()}:{Tag}";
         }

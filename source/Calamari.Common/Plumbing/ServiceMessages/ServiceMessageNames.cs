@@ -52,5 +52,14 @@ namespace Calamari.Common.Plumbing.ServiceMessages
             public const string MetricAttribute = "metric";
             public const string ValueAttribute = "value";
         }
+
+        public static class CalamariScriptIsolationAlert
+        {
+            public const string Name = "calamari-script-isolation-alert";
+            public const string RequestedTypeAttribute = "requestedType";
+            public const string EnforcedTypeAttribute = "enforcedType";
+            public const string FallbackUsedAttribute = "fallbackUsed";
+            public const string CapabilityInfoAttribute = "capabilityInfo";
+        }
     }
 }

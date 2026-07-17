@@ -35,7 +35,9 @@ namespace Calamari.Build
                                                                         "Calamari*.exe",
                                                                         "Calamari*.dll",
                                                                         "Octo*.exe",
-                                                                        "Octo*.dll")
+                                                                        "Octo*.dll",
+                                                                        "docker-credential-octopus*.exe",
+                                                                        "docker-credential-octopus*.dll")
                                                   .Where(f => !HasAuthenticodeSignature(f))
                                                   .ToArray();
 

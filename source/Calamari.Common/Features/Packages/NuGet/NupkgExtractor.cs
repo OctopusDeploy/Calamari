@@ -52,6 +52,8 @@ namespace Calamari.Common.Features.Packages.NuGet
                     if (IsExcludedPath(unescapedKey))
                         continue;
 
+                    PackageExtractorUtils.ThrowIfPathTraversalAttempted(unescapedKey, directory);
+
                     var targetDirectory = Path.Combine(directory, Path.GetDirectoryName(unescapedKey) ?? string.Empty);
 
                     if (!Directory.Exists(targetDirectory))

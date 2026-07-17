@@ -1,47 +1,42 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using LibGit2Sharp;
-using Octopus.CoreUtilities.Extensions;
+using Polly;
+using Polly.Retry;
 
 namespace Calamari.ArgoCD.Git
 {
-    public class RepositoryWrapper : IDisposable
+    public class RepositoryWrapper(
+        Repository repository,
+        ICalamariFileSystem calamariFileSystem,
+        string repoCheckoutDirectoryPath,
+        ILog log,
+        IGitConnection connection,
+        IGitVendorPullRequestClient? vendorApiAdapter,
+        IClock clock)
+        : IDisposable
     {
-        readonly IRepository repository;
-        readonly ICalamariFileSystem calamariFileSystem;
-        readonly string repoCheckoutDirectoryPath;
-        readonly ILog log;
-        readonly IGitConnection connection;
-        readonly IGitVendorApiAdapter? vendorApiAdapter;
-        readonly IClock clock;
+        // ReSharper disable ReplaceWithPrimaryConstructorParameter - This makes parameters readonly
+        readonly Repository repository = repository;
+        readonly ICalamariFileSystem calamariFileSystem = calamariFileSystem;
+        readonly string repoCheckoutDirectoryPath = repoCheckoutDirectoryPath;
+        readonly ILog log = log;
+        readonly IGitConnection connection = connection;
+        readonly IGitVendorPullRequestClient? vendorApiAdapter = vendorApiAdapter;
+        readonly IClock clock = clock;
+        // ReSharper restore ReplaceWithPrimaryConstructorParameter
+
+        readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
-
-        public RepositoryWrapper(IRepository repository,
-                                 ICalamariFileSystem calamariFileSystem,
-                                 string repoCheckoutDirectoryPath,
-                                 ILog log,
-                                 IGitConnection connection,
-                                 IGitVendorApiAdapter? vendorApiAdapter,
-                                 IClock clock)
-        {
-            this.repository = repository;
-            this.calamariFileSystem = calamariFileSystem;
-            this.repoCheckoutDirectoryPath = repoCheckoutDirectoryPath;
-            this.log = log;
-            this.connection = connection;
-            this.vendorApiAdapter = vendorApiAdapter;
-            this.clock = clock;
-        }
 
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
@@ -51,8 +46,8 @@ namespace Calamari.ArgoCD.Git
                 var commitTime = clock.GetUtcTime();
                 var commitMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(commitMessage,
-                                               new Signature("Octopus", "octopus@octopus.com", commitTime),
-                                               new Signature("Octopus", "octopus@octopus.com", commitTime));
+                                               new Signature(repositoryIdentity, commitTime),
+                                               new Signature(repositoryIdentity, commitTime));
                 log.Verbose($"Committed changes to {commit.ShortSha()}");
                 return true;
             }
@@ -61,56 +56,65 @@ namespace Calamari.ArgoCD.Git
                 log.Verbose("No changes required committing.");
                 return false;
             }
-        }
-
-        public string GetCommitSha()
-        {
-            return repository.Head.Tip.Sha;
-        }
-
-        public void RecursivelyStageFilesForRemoval(string subPath)
-        {
-            var cleansedSubPath = NormalizePath(subPath);
-            if (!cleansedSubPath.EndsWith(Path.DirectorySeparatorChar) && !cleansedSubPath.IsNullOrEmpty())
+            catch (LibGit2SharpException e)
             {
-                cleansedSubPath += Path.DirectorySeparatorChar;
-            }
-
-            log.Info("Removing files recursively");
-            List<IndexEntry> filesToRemove = repository.Index
-                                                       .Where(i => NormalizePath(i.Path).StartsWith(cleansedSubPath))
-                                                       .ToList();
-            filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
-        }
-
-        public void StageFiles(string[] filesToStage)
-        {
-            foreach (var file in filesToStage)
-            {
-                repository.Index.Add(NormalizePath(file));
+                throw new CommandException($"Failed to commit changes to git repository. Error: {e.Message}", e);
             }
         }
 
-        static string NormalizePath(string path)
+        public void StageAllChanges()
         {
-            var separatorToReplace = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
-            var normalized = path.Replace(separatorToReplace, Path.DirectorySeparatorChar);
-            return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
+            try
+            {
+                LibGit2Sharp.Commands.Stage(repository, "*");
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to stage files in git repository. Error: {e.Message}", e);
+            }
         }
 
         public async Task<PushResult> PushChanges(bool requiresPullRequest,
                                                   string summary,
                                                   string description,
                                                   GitReference branchName,
+                                                  int maxRetryAttempts,
                                                   CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
-            var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
-
             var pushToBranchName = requiresPullRequest ? CalculateBranchName() : currentBranchName;
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
-            PushChanges(pushToBranchName);
+
+            // Polly rejects a retry strategy with MaxRetryAttempts < 1
+            var retryPipeline = maxRetryAttempts <= 0
+                ? ResiliencePipeline.Empty
+                : new ResiliencePipelineBuilder()
+                  .AddRetry(new RetryStrategyOptions
+                  {
+                      ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
+                      MaxRetryAttempts = maxRetryAttempts,
+                      UseJitter =  true,
+                      Delay = TimeSpan.FromSeconds(2),
+                      OnRetry = args =>
+                      {
+                          log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
+                          FetchAndRebase(currentBranchName);
+                          return default;
+                      }
+                  })
+                  .Build();
+
+            try
+            {
+                retryPipeline.Execute(() => PushChanges(pushToBranchName));
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to push to branch '{pushToBranchName.ToFriendlyName()}'. Error: {e.Message}", e);
+            }
+
+            var commit = repository.Head.Tip;
 
             if (vendorApiAdapter != null)
             {
@@ -124,10 +128,10 @@ namespace Calamari.ArgoCD.Git
 
             if (!requiresPullRequest)
             {
-                return new PushResult(commit.Sha, commit.ShortSha());
+                return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
             }
 
-            var (title, number, uri) = await CreatePullRequest(
+            var ((title, number, uri), vendorName) = await CreatePullRequest(
                 summary,
                 description,
                 pushToBranchName,
@@ -137,12 +141,15 @@ namespace Calamari.ArgoCD.Git
             return new PullRequestPushResult(
                 commit.Sha,
                 commit.ShortSha(),
+                commit.Author.When,
+                connection.Url,
                 title,
                 uri,
-                number);
+                number,
+                vendorName);
         }
 
-        async Task<PullRequest> CreatePullRequest(
+        async Task<(PullRequest PullRequest, string VendorName)> CreatePullRequest(
             string summary,
             string description,
             GitBranchName pushToBranchName,
@@ -163,17 +170,13 @@ namespace Calamari.ArgoCD.Git
                     currentBranchName,
                     cancellationToken);
 
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Title", pullRequest.Title);
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Number", pullRequest.Number.ToString());
-                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Url", pullRequest.Url);
-
                 log.Info($"Pull Request [{pullRequest.Title} (#{pullRequest.Number})]({pullRequest.Url}) Created");
 
-                return pullRequest;
+                return (pullRequest, vendorApiAdapter.Name);
             }
-            catch (Exception e)
+            catch (LibGit2SharpException e)
             {
-                throw new CommandException("Pull Request Creation Failed", e);
+                throw new CommandException($"Pull Request Creation Failed. Error: {e.Message}", e);
             }
         }
 
@@ -192,15 +195,64 @@ namespace Calamari.ArgoCD.Git
             PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) =>
-                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
-                OnPushStatusError = errors => errorsDetected = errors
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
+                OnPushStatusError = errors => errorsDetected = errors,
+                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
             };
 
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
-                throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
+                throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()}. Error: {errorsDetected.Message}");
+            }
+        }
+
+        void FetchAndRebase(GitBranchName branchName)
+        {
+            var remote = repository.Network.Remotes.Single();
+            var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
+            var fetchOptions = new FetchOptions
+            {
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
+                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
+            };
+
+            try
+            {
+                log.Verbose($"Fetching from remote '{remote.Name}'");
+                LibGit2Sharp.Commands.Fetch(repository, remote.Name, refSpecs, fetchOptions, null);
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to fetch from remote '{remote.Name}'. Error: {e.Message}", e);
+            }
+
+            var trackingBranchName = $"{remote.Name}/{branchName.ToFriendlyName()}";
+            var trackingBranch = repository.Branches[trackingBranchName];
+            if (trackingBranch == null)
+            {
+                log.Verbose($"No tracking branch found for '{branchName.ToFriendlyName()}', skipping rebase");
+                return;
+            }
+
+            log.Verbose($"Rebasing onto '{trackingBranch.FriendlyName}'");
+            try
+            {
+                var rebaseResult = repository.Rebase.Start(null,
+                                                           trackingBranch,
+                                                           null,
+                                                           repositoryIdentity,
+                                                           new RebaseOptions());
+                if (rebaseResult.Status == RebaseStatus.Conflicts)
+                {
+                    throw new CommandException($"Rebase conflict detected when rebasing onto '{trackingBranch.FriendlyName}'. Error: Cannot automatically resolve conflicts");
+                }
+
+                log.Verbose($"Rebase result: {rebaseResult.Status}");
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to rebase onto '{trackingBranch.FriendlyName}'. Error: {e.Message}", e);
             }
         }
 
@@ -220,13 +272,6 @@ namespace Calamari.ArgoCD.Git
             log.Verbose("Deleting local repository");
             try
             {
-                //some files in the .git folder can/are ReadOnly which makes them impossible to delete
-                //so just remove the ReadOnly attribute from all files (if they are ReadOnly)
-                foreach (var gitFile in calamariFileSystem.EnumerateFilesRecursively(Path.Combine(repoCheckoutDirectoryPath, ".git")))
-                {
-                    calamariFileSystem.RemoveReadOnlyAttributeFromFile(gitFile);
-                }
-
                 calamariFileSystem.DeleteDirectory(repoCheckoutDirectoryPath);
                 log.Verbose("Deleted local repository");
             }
@@ -237,12 +282,15 @@ namespace Calamari.ArgoCD.Git
         }
     }
 
-    public record PushResult(string CommitSha, string ShortSha);
+    public record PushResult(string CommitSha, string ShortSha, DateTimeOffset CommitTimestamp);
 
     public record PullRequestPushResult(
         string CommitSha,
         string ShortSha,
+        DateTimeOffset CommitTimestamp,
+        string RepositoryUri,
         string PullRequestTitle,
         string PullRequestUri,
-        long PullRequestNumber) : PushResult(CommitSha, ShortSha);
+        long PullRequestNumber,
+        string VendorName) : PushResult(CommitSha, ShortSha, CommitTimestamp);
 }

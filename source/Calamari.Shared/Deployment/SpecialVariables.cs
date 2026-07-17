@@ -72,6 +72,7 @@ namespace Calamari.Deployment
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
+            public static readonly string DisableDockerCredentialHelper = "Octopus.Action.Package.DisableDockerCredentialHelper";
         }
 
         public static class GitResources
@@ -351,6 +352,27 @@ namespace Calamari.Deployment
                     public static readonly string Bindings = "Octopus.Action.Nginx.Server.Bindings";
                     public static readonly string Locations = "Octopus.Action.Nginx.Server.Locations";
                     public static readonly string ConfigName = "Octopus.Action.Nginx.Server.ConfigName";
+                }
+            }
+            
+            public static class Git
+            {
+                public const string Url = "Octopus.Action.Git.TargetRepositoryUrl";
+                public const string Username = "Octopus.Action.Git.TargetRepositoryUsername";
+                public const string Password = "Octopus.Action.Git.TargetRepositoryPassword";
+                public const string Reference = "Octopus.Action.Git.TargetRepositoryBranch";
+                public const string DestinationPath = "Octopus.Action.Git.TargetRepositoryDestinationPath";
+
+                public const string InputFileSources = "Octopus.Action.Git.InputFileSources";
+
+                public const string CommitMessageSummary = "Octopus.Action.Git.CommitMessageSummary";
+                public const string CommitMessageDescription = "Octopus.Action.Git.CommitMessageDescription";
+
+                public const string PushRetryAttempts = "Octopus.Action.Git.PushRetryAttempts";
+
+                public static class PullRequest
+                {
+                    public const string Create = "Octopus.Action.Git.PullRequest.Create";
                 }
             }
         }
