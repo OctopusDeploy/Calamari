@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 // Needed for dotnetcore
 
@@ -41,7 +42,9 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             yield return SafelyGet(() => $"OperatingSystem: {Environment.OSVersion}");
             yield return SafelyGet(() => $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
+            yield return SafelyGet(() => $"OsArchitecture: {RuntimeInformation.OSArchitecture}");
             yield return SafelyGet(() => $"Is64BitProcess: {Environment.Is64BitProcess}");
+            yield return SafelyGet(() => $"ProcessArchitecture: {RuntimeInformation.ProcessArchitecture}");
             yield return SafelyGet(() => $"CurrentUser: {(OperatingSystem.IsWindows() ? WindowsIdentity.GetCurrent().Name : Environment.UserName)}");
             yield return SafelyGet(() => $"MachineName: {Environment.MachineName}");
             yield return SafelyGet(() => $"ProcessorCount: {Environment.ProcessorCount}");
