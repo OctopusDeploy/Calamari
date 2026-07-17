@@ -19,7 +19,7 @@ namespace Calamari.Common.Features.Scripting.Bash
                                                                          Dictionary<string, string>? environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-            var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
+            var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables, script);
             var (bootstrapFile, otherTemporaryFiles) = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory, variables);
 
             var invocation = new CommandLineInvocation(
