@@ -78,6 +78,19 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
+        public void GetHeadCommitDetailsReturnsTheCurrentHeadCommit()
+        {
+            File.WriteAllText(Path.Combine(RepositoryRootPath, "newFile.txt"), "Lorem ipsum dolor sit amet");
+            repository.StageAllChanges();
+            repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
+
+            using var localRepository = new Repository(RepositoryRootPath);
+            var headTip = localRepository.Head.Tip;
+
+            repository.GetHeadCommitDetails().Should().Be(new Calamari.ArgoCD.Git.PushResult(headTip.Sha, headTip.ShortSha(), headTip.Author.When));
+        }
+
+        [Test]
         public async Task StagingARealFileSucceedsAndCanBeCommittedAndPushed()
         {
             string filename = "newFile.txt";

@@ -62,6 +62,12 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
+        public PushResult GetHeadCommitDetails()
+        {
+            var commit = repository.Head.Tip;
+            return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
+        }
+
         public void StageAllChanges()
         {
             try

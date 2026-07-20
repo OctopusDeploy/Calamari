@@ -296,6 +296,12 @@ public class CommitToGitCommand : Command
                                               var updater = new RepositoryUpdater(commitParams, log, new UserDefinedCommitMessageGenerator(commitParams.Description));
                                               
                                               var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.GitConnection.GitReference, FileUpdateResult.EmptyFileUpdateResult);
+                                              if (pushResult is null)
+                                              {
+                                                  log.Info("No changes were committed");
+                                                  pushResult = clonedRepository.GetHeadCommitDetails();
+                                              }
+
                                               new CommitToGitOutputVariablesWriter(log).WritePushResultOutput(pushResult);
                                           })
         };

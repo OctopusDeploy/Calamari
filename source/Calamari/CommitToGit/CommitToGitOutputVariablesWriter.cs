@@ -21,11 +21,8 @@ namespace Calamari.CommitToGit
             this.log = log;
         }
 
-        public void WritePushResultOutput(PushResult? pushResult)
+        public void WritePushResultOutput(PushResult pushResult)
         {
-            if (pushResult is null)
-                return;
-
             log.SetOutputVariableButDoNotAddToVariables(CommitSha, pushResult.CommitSha);
             log.SetOutputVariableButDoNotAddToVariables(ShortSha, pushResult.ShortSha);
             log.SetOutputVariableButDoNotAddToVariables(CommitTimestamp, pushResult.CommitTimestamp.ToString("O"));
