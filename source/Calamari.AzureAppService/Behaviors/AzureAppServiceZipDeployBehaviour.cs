@@ -93,9 +93,13 @@ namespace Calamari.AzureAppService.Behaviors
             var webSiteResource = armClient.GetWebSiteResource(targetSite.CreateWebSiteResourceIdentifier());
             Log.Verbose($"App Service '{targetSite.Site}' found, with Azure Resource Manager Id '{webSiteResource.Id.ToString()}'.");
 
+            var isFlexConsumption = await IsFlexConsumptionPlan(armClient, webSiteResource);
+            if (isFlexConsumption)
+                Log.Verbose("Flex Consumption plan detected; using the OneDeploy (/api/publish) endpoint instead of ZipDeploy (/api/zipdeploy).");
+
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
-            var packageProvider = PackageProviderFactory.GetProvider(packageFileInfo.Extension, Log, fileSystem, variables, context);
+            var packageProvider = PackageProviderFactory.GetProvider(packageFileInfo.Extension, isFlexConsumption, Log, fileSystem, variables, context);
 
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
@@ -169,6 +173,21 @@ namespace Calamari.AzureAppService.Behaviors
             }
         }
 
+        // Flex Consumption plans don't expose Kudu's /api/zipdeploy endpoint. The tier lives on the
+        // App Service Plan (ServerFarm), not the site, so we resolve the plan to read its SKU tier.
+        async Task<bool> IsFlexConsumptionPlan(ArmClient armClient, WebSiteResource webSiteResource)
+        {
+            var siteData = (await webSiteResource.GetAsync()).Value.Data;
+            var appServicePlanId = siteData.AppServicePlanId;
+            if (appServicePlanId is null)
+                return false;
+
+            var appServicePlan = await armClient.GetAppServicePlanResource(appServicePlanId).GetAsync();
+            var planSku = appServicePlan.Value.Data.Sku;
+            Log.Verbose($"App Service Plan '{appServicePlanId.Name}' is on the '{planSku?.Tier}' tier (SKU '{planSku?.Name}').");
+            return string.Equals(planSku?.Tier, "FlexConsumption", StringComparison.OrdinalIgnoreCase);
+        }
+
         private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, AzureTargetSite site)
         {
             Log.Verbose($"Checking if deployment slot '{site.Slot}' exists.");
@@ -226,8 +245,8 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                       {
                                                                                           await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                           using var streamContent = new StreamContent(fileStream);
-                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                                                                                          
+                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
+
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                           {
@@ -304,7 +323,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                 //we have to create a new request message each time
                                                                                                 await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                                 using var streamContent = new StreamContent(fileStream);
-                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
 
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                                 {
