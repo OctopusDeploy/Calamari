@@ -24,6 +24,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Timeout;
@@ -161,7 +162,7 @@ namespace Calamari.AzureAppService.Behaviors
                 }
                 else
                 {
-                    await UploadZipAsync(account, publishingProfile, scmPublishEnabled, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                    await UploadZipAsync(account, publishingProfile, scmPublishEnabled, uploadPath, targetSite.ScmSiteAndSlot, packageProvider, pollingTimeout);
                 }
             }
             finally
@@ -228,7 +229,8 @@ namespace Calamari.AzureAppService.Behaviors
                                           bool scmPublishEnabled,
                                           string uploadZipPath,
                                           string targetSite,
-                                          IPackageProvider packageProvider)
+                                          IPackageProvider packageProvider,
+                                          TimeSpan pollingTimeout)
         {
             Log.Verbose($"Path to upload: {uploadZipPath}");
             Log.Verbose($"Target Site: {targetSite}");
@@ -279,7 +281,48 @@ namespace Calamari.AzureAppService.Behaviors
             if (!response.IsSuccessStatusCode)
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status {(int)response.StatusCode} '{response.ReasonPhrase}'.");
 
+            // OneDeploy (/api/publish) accepts the upload with 202 + a Location, then processes it asynchronously.
+            // Poll that Location so a server-side failure is surfaced instead of being reported as success.
+            if (response.StatusCode == HttpStatusCode.Accepted && response.Headers.Location != null)
+                await PollDeploymentUntilComplete(httpClient, response.Headers.Location, authenticationHeader, pollingTimeout);
+
             Log.Verbose("Finished deploying");
+        }
+
+        async Task PollDeploymentUntilComplete(HttpClient httpClient, Uri statusUrl, AuthenticationHeaderValue authenticationHeader, TimeSpan pollingTimeout)
+        {
+            Log.Verbose($"Deployment accepted; polling {statusUrl} for completion.");
+            var deadline = DateTimeOffset.UtcNow + pollingTimeout;
+
+            while (true)
+            {
+                var statusResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, statusUrl) { Headers = { Authorization = authenticationHeader } };
+                    var r = await httpClient.SendAsync(request);
+                    r.EnsureSuccessStatusCode();
+                    return r;
+                });
+
+                var json = JObject.Parse(await statusResponse.Content.ReadAsStringAsync());
+                var complete = json.Value<bool?>("complete") ?? false;
+                var status = json.Value<int?>("status");
+
+                if (complete)
+                {
+                    // Kudu DeployStatus: 4 = Success, 3 = Failed.
+                    if (status == 4)
+                        return;
+
+                    var statusText = json.Value<string>("status_text");
+                    throw new Exception($"Deployment failed with status {status}. {statusText}".Trim());
+                }
+
+                if (DateTimeOffset.UtcNow >= deadline)
+                    throw new Exception($"Deployment did not complete within {pollingTimeout}.");
+
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
         }
 
         static async Task<AuthenticationHeaderValue> GetAuthenticationHeaderValue(IAzureAccount azureAccount, PublishingProfile publishingProfile, bool scmPublishEnabled)
