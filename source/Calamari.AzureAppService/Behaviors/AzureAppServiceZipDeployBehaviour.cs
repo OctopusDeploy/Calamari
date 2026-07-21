@@ -173,20 +173,34 @@ namespace Calamari.AzureAppService.Behaviors
             }
         }
 
-        // Flex Consumption plans don't expose Kudu's /api/zipdeploy endpoint. The tier lives on the
-        // App Service Plan (ServerFarm), not the site, so we resolve the plan to read its SKU tier.
+        // The SKU tier lives on the App Service Plan (ServerFarm), not the site, so we resolve the plan to read it.
+        // Fails open: if the tier can't be read we fall back to ZipDeploy rather than break a valid deployment.
         async Task<bool> IsFlexConsumptionPlan(ArmClient armClient, WebSiteResource webSiteResource)
         {
-            var siteData = (await webSiteResource.GetAsync()).Value.Data;
-            var appServicePlanId = siteData.AppServicePlanId;
-            if (appServicePlanId is null)
-                return false;
+            try
+            {
+                var siteData = (await webSiteResource.GetAsync()).Value.Data;
+                var appServicePlanId = siteData.AppServicePlanId;
+                if (appServicePlanId is null)
+                {
+                    Log.Verbose("App Service has no associated App Service Plan; treating as non-Flex Consumption.");
+                    return false;
+                }
 
-            var appServicePlan = await armClient.GetAppServicePlanResource(appServicePlanId).GetAsync();
-            var planSku = appServicePlan.Value.Data.Sku;
-            Log.Verbose($"App Service Plan '{appServicePlanId.Name}' is on the '{planSku?.Tier}' tier (SKU '{planSku?.Name}').");
-            return string.Equals(planSku?.Tier, "FlexConsumption", StringComparison.OrdinalIgnoreCase);
+                var planSku = (await armClient.GetAppServicePlanResource(appServicePlanId).GetAsync()).Value.Data.Sku;
+                Log.Verbose($"App Service Plan '{appServicePlanId.Name}' is on the '{planSku?.Tier}' tier (SKU '{planSku?.Name}').");
+                return IsFlexConsumptionTier(planSku?.Tier, planSku?.Name);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Could not determine the App Service Plan tier ({ex.Message}). Treating as non-Flex Consumption and using the ZipDeploy endpoint. If this is a Flex Consumption plan, grant the account 'Microsoft.Web/serverfarms/read' on the plan.");
+                return false;
+            }
         }
+
+        internal static bool IsFlexConsumptionTier(string? skuTier, string? skuName)
+            => string.Equals(skuTier, "FlexConsumption", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(skuName, "FC1", StringComparison.OrdinalIgnoreCase);
 
         private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, AzureTargetSite site)
         {

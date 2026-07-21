@@ -27,8 +27,8 @@ namespace Calamari.AzureAppService
 
         protected static async Task<FileInfo> CopyNupkgToZip(FileInfo sourceFile)
         {
-            var newFilePath = sourceFile.FullName.Replace(".nupkg", ".zip");
-            await Task.Run(() => File.Copy(sourceFile.FullName, newFilePath));
+            var newFilePath = Path.ChangeExtension(sourceFile.FullName, ".zip");
+            await Task.Run(() => File.Copy(sourceFile.FullName, newFilePath, overwrite: true));
             return new FileInfo(newFilePath);
         }
     }

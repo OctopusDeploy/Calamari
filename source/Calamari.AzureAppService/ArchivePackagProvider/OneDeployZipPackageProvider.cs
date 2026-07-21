@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 
 namespace Calamari.AzureAppService
 {
-    // Flex Consumption plans don't expose Kudu's /api/zipdeploy endpoint; they require the OneDeploy
-    // (/api/publish) endpoint. This runs synchronously, mirroring the existing .jar (/api/publish?type=jar) path.
+    // Flex Consumption requires the OneDeploy (/api/publish) endpoint, not Kudu's /api/zipdeploy.
     public class OneDeployZipPackageProvider : BaseZipPackageProvider
     {
         public override string UploadUrlPath => @"/api/publish?type=zip";
