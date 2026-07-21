@@ -37,7 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
             using (var _ = new AssertionScope())
             {
                 actual.Executable.Should().BeEquivalentTo("helm");
-                actual.Arguments.Should().BeEquivalentTo($"version --client --short");
+                actual.Arguments.Should().BeEquivalentTo($"version --short");
             }
         }
 

@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
@@ -20,7 +19,6 @@ using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
-using Calamari.Util;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -454,44 +452,5 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        static HelmVersion GetVersion()
-        {
-            StringBuilder stdout = new StringBuilder();
-            var result = SilentProcessRunner.ExecuteCommand("helm",
-                "version --client --short",
-                Environment.CurrentDirectory,
-                output => stdout.AppendLine(output),
-                error => { });
-
-            result.ExitCode.Should().Be(0, $"Failed to retrieve version from Helm (Exit code {result.ExitCode}). Error output: \r\n{result.ErrorOutput}");
-
-            return ParseVersion(stdout.ToString());
-        }
-
-        //versionString from "helm version --client --short"
-        static HelmVersion ParseVersion(string versionString)
-        {
-            //eg of output for helm 2: Client: v2.16.1+gbbdfe5e
-            //eg of output for helm 3: v3.0.1+g7c22ef9
-
-            var indexOfVersionIdentifier = versionString.IndexOf('v');
-            if (indexOfVersionIdentifier == -1)
-                throw new FormatException($"Failed to find version identifier from '{versionString}'.");
-
-            var indexOfVersionNumber = indexOfVersionIdentifier + 1;
-            if (indexOfVersionNumber >= versionString.Length)
-                throw new FormatException($"Failed to find version number from '{versionString}'.");
-
-            var version = versionString[indexOfVersionNumber];
-            switch (version)
-            {
-                case '3':
-                    return HelmVersion.V3;
-                case '2':
-                    return HelmVersion.V2;
-                default:
-                    throw new InvalidOperationException($"Unsupported helm version '{version}'");
-            }
-        }
     }
 }
