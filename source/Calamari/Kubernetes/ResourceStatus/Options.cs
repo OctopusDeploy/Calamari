@@ -12,7 +12,13 @@ namespace Calamari.Kubernetes.ResourceStatus
         public bool WaitForJobs { get; set; }
 
         public bool PrintVerboseKubectlOutputOnError { get; set; }
-        
+
         public bool PrintVerboseOutput { get; set; }
+
+        /// <summary>
+        /// Break-glass toggle that reverts resource status checks to the legacy logic that predates
+        /// alignment with the gitops-engine health checks. Disabled by default.
+        /// </summary>
+        public bool EnableLegacyResourceStatusChecks { get; set; }
     }
 }

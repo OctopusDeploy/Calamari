@@ -26,9 +26,42 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 ?.ToObject<Dictionary<string, string>>() ?? new Dictionary<string, string>();
             NodeSelector = FormatNodeSelectors(selectors);
 
-            ResourceStatus = Available == Desired && UpToDate == Desired && Ready == Desired
+            ResourceStatus = options.EnableLegacyResourceStatusChecks
+                ? GetLegacyResourceStatus()
+                : GetResourceStatus();
+        }
+
+        ResourceStatus GetLegacyResourceStatus()
+            => Available == Desired && UpToDate == Desired && Ready == Desired
                 ? ResourceStatus.Successful
                 : ResourceStatus.InProgress;
+
+        // Aligns with gitops-engine getDaemonSetHealth.
+        ResourceStatus GetResourceStatus()
+        {
+            var generation = FieldOrDefault("$.metadata.generation", 0);
+            var observedGeneration = FieldOrDefault("$.status.observedGeneration", 0);
+            if (generation > observedGeneration)
+            {
+                return ResourceStatus.InProgress;
+            }
+
+            if (Field("$.spec.updateStrategy.type") == "OnDelete")
+            {
+                return ResourceStatus.Successful;
+            }
+
+            if (UpToDate < Desired)
+            {
+                return ResourceStatus.InProgress;
+            }
+
+            if (Available < Desired)
+            {
+                return ResourceStatus.InProgress;
+            }
+
+            return ResourceStatus.Successful;
         }
 
         public override bool HasUpdate(Resource lastStatus)

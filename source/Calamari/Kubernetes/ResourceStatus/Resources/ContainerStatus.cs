@@ -7,7 +7,10 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         [JsonProperty("state")]
         public ContainerState State { get; set; }
-        
+
+        [JsonProperty("lastState")]
+        public ContainerState LastState { get; set; }
+
         [JsonProperty("ready")]
         public bool Ready { get; set; }
         
