@@ -50,6 +50,8 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <inheritdoc />
         public IEnumerable<ResourceRetrieverResult> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options)
         {
+            var childResourceCache = new Dictionary<(ResourceGroupVersionKind, string), KubectlGetResult>();
+
             var results = resourceIdentifiers
                           .Select(identifier => GetResource(identifier, kubectl, options))
                           .ToList();
@@ -57,7 +59,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var result in results.Where(r => r.IsSuccess))
             {
                 var resource = result.Value;
-                resource.UpdateChildren(GetChildrenResources(resource, kubectl, options));
+                resource.UpdateChildren(GetChildrenResources(resource, kubectl, options, childResourceCache));
             }
 
             return results;
@@ -75,13 +77,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             return !parseResult.IsSuccess ? ResourceRetrieverResult.Failure(parseResult.ErrorMessage) : ResourceRetrieverResult.Success(parseResult.Value);
         }
 
-        IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
+        IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options,
+            Dictionary<(ResourceGroupVersionKind, string), KubectlGetResult> childResourceCache)
         {
             var childGvk = parentResource.ChildGroupVersionKind;
             if (childGvk is null) return Enumerable.Empty<Resource>();
 
-            var result = kubectlGet.AllResources(childGvk, parentResource.Namespace, kubectl);
-            LogKubectlErrorIfFailed(result, options, log);
+            var result = GetAllResourcesCached(childGvk, parentResource.Namespace, kubectl, options, childResourceCache);
 
             if (result.RawOutput.IsNullOrEmpty())
             {
@@ -103,10 +105,25 @@ namespace Calamari.Kubernetes.ResourceStatus
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
                             .Select(child =>
                                     {
-                                        child.UpdateChildren(GetChildrenResources(child, kubectl, options));
+                                        child.UpdateChildren(GetChildrenResources(child, kubectl, options, childResourceCache));
                                         return child;
                                     })
                             .ToList();
+        }
+
+        KubectlGetResult GetAllResourcesCached(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl, Options options,
+            Dictionary<(ResourceGroupVersionKind, string), KubectlGetResult> childResourceCache)
+        {
+            var cacheKey = (groupVersionKind, @namespace);
+            if (childResourceCache.TryGetValue(cacheKey, out var cachedResult))
+            {
+                return cachedResult;
+            }
+
+            var result = kubectlGet.AllResources(groupVersionKind, @namespace, kubectl);
+            LogKubectlErrorIfFailed(result, options, log);
+            childResourceCache[cacheKey] = result;
+            return result;
         }
 
         static ParseResult<T> TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options) where T : class

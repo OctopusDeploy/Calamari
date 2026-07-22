@@ -24,29 +24,78 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             
             Status = GetStatus(phase, initContainerStatuses, containerStatuses);
 
-            switch (phase)
-            {
-                case "Failed":
-                case "Unknown":
-                    ResourceStatus = ResourceStatus.Failed;
-                    break;
-                case "Succeeded":
-                    ResourceStatus = ResourceStatus.Successful;
-                    break;
-                case "Pending":
-                    ResourceStatus = ResourceStatus.InProgress;
-                    break;
-                default:
-                    ResourceStatus = ready == "True" ? ResourceStatus.Successful : ResourceStatus.InProgress;
-                    break;
-            }
+            var restartPolicy = FieldOrDefault("$.spec.restartPolicy", "Always");
+            ResourceStatus = options.EnableLegacyResourceStatusChecks
+                ? GetLegacyResourceStatus(phase, ready)
+                : GetResourceStatus(phase, containerStatuses, ready, restartPolicy);
 
             var containers = containerStatuses.Length;
             var readyContainers = containerStatuses.Count(status => status.Ready);
             Ready = $"{readyContainers}/{containers}";
             Restarts = containerStatuses.Select(status => status.RestartCount).Sum();
         }
-    
+
+        static ResourceStatus GetLegacyResourceStatus(string phase, string ready)
+        {
+            switch (phase)
+            {
+                case "Failed":
+                case "Unknown":
+                    return ResourceStatus.Failed;
+                case "Succeeded":
+                    return ResourceStatus.Successful;
+                case "Pending":
+                    return ResourceStatus.InProgress;
+                default:
+                    return ready == "True" ? ResourceStatus.Successful : ResourceStatus.InProgress;
+            }
+        }
+
+        // Aligns with gitops-engine getPodHealth.
+        static ResourceStatus GetResourceStatus(string phase, ContainerStatus[] containerStatuses, string ready, string restartPolicy)
+        {
+            // gitops-engine flags image-pull/crash-loop errors as failed, but only for pods that are meant to
+            // run continuously (RestartPolicy=Always) so that finite hook pods are not prematurely failed.
+            if (restartPolicy == "Always" && containerStatuses.Any(HasImageOrCrashError))
+            {
+                return ResourceStatus.Failed;
+            }
+
+            switch (phase)
+            {
+                case "Pending":
+                    return ResourceStatus.InProgress;
+                case "Succeeded":
+                    return ResourceStatus.Successful;
+                case "Failed":
+                    return ResourceStatus.Failed;
+                case "Running":
+                    if (restartPolicy == "OnFailure" || restartPolicy == "Never")
+                    {
+                        return ResourceStatus.InProgress;
+                    }
+                    if (ready == "True")
+                    {
+                        return ResourceStatus.Successful;
+                    }
+                    return containerStatuses.Any(status => status.LastState?.Terminated != null)
+                        ? ResourceStatus.Failed
+                        : ResourceStatus.InProgress;
+                default:
+                    return ResourceStatus.InProgress;
+            }
+        }
+
+        static bool HasImageOrCrashError(ContainerStatus status)
+        {
+            var reason = status.State?.Waiting?.Reason;
+            if (string.IsNullOrEmpty(reason))
+            {
+                return false;
+            }
+            return reason.StartsWith("Err") || reason.EndsWith("Error") || reason.EndsWith("BackOff");
+        }
+
         public override bool HasUpdate(Resource lastStatus)
         {
             var last = CastOrThrow<Pod>(lastStatus);
