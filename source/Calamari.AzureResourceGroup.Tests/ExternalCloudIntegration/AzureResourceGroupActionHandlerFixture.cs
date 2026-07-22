@@ -46,6 +46,7 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
             const string psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
+Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
