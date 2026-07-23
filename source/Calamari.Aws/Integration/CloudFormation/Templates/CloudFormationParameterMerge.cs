@@ -17,7 +17,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             foreach (var parameter in primary)
             {
                 if (string.IsNullOrWhiteSpace(parameter?.ParameterKey))
-                    throw new ArgumentException("CloudFormation parameter key must not be null or empty.", nameof(primary));
+                    throw new ArgumentException("Please provide a parameter key. CloudFormation parameter key must not be null or empty.", nameof(primary));
 
                 merged[parameter.ParameterKey] = parameter;
             }
@@ -25,7 +25,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             foreach (var parameter in overrides)
             {
                 if (string.IsNullOrWhiteSpace(parameter?.ParameterKey))
-                    throw new ArgumentException("CloudFormation parameter key must not be null or empty.", nameof(overrides));
+                    throw new ArgumentException("Please provide a parameter key. CloudFormation parameter key must not be null or empty.", nameof(overrides));
 
                 merged[parameter.ParameterKey] = parameter;
             }
