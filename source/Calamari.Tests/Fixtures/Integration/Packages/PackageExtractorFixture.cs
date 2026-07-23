@@ -54,7 +54,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("utf8.Filenámes-1.0.0.zip")]
         public void CanExtractZipFileContainingSpecialCharacters(string filename)
         {
-            var fileName = GetFixtureResource("Samples", string.Format(filename));
+            // The special-character variant is materialized locally rather than checked into git/build artifacts,
+            // since a non-ASCII filename doesn't reliably survive the Windows build -> zip artifact -> Linux test agent transfer.
+            using var tempDirectory = TemporaryDirectory.Create();
+            var sourceFile = GetFixtureResource("Samples", "utf8.Filenames-1.0.0.zip");
+            var fileName = Path.Combine(tempDirectory.DirectoryPath, filename);
+            File.Copy(sourceFile, fileName);
 
             var extractor = new ZipPackageExtractor(ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractor.GetType(), fileName);
