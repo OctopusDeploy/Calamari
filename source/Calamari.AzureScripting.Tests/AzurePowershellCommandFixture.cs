@@ -6,7 +6,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Scripting;
 using NUnit.Framework;
 using Calamari.Testing;
-using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 
 namespace Calamari.AzureScripting.Tests
@@ -33,7 +32,6 @@ namespace Calamari.AzureScripting.Tests
 
         [Test]
         [WindowsTest]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlineWindowsPowerShellScript()
         {
             var psScript = @"
@@ -54,7 +52,6 @@ az group list";
         }
 
         [Test]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlinePowerShellCoreScript()
         {
             var psScript = @"
@@ -76,7 +73,6 @@ az group list";
         }
 
         [Test]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlinePowerShellCoreScriptWithStrictMode()
         {
             var psScript = @"
@@ -96,7 +92,6 @@ az group list";
         }
 
         [Test]
-        [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlinePowerShellCoreScriptAgainstAnInvalidAzureEnvironment()
         {
             var psScript = @"

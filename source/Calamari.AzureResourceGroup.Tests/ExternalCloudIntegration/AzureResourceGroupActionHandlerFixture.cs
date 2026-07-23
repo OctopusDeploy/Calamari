@@ -37,7 +37,6 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
 
         [Test]
         [WindowsTest]
-        [RequiresPowerShell5OrAbove]
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
@@ -47,7 +46,7 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
             const string psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
-Get-AzureEnvironment
+Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
