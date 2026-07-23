@@ -47,14 +47,18 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.AreEqual(9, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 5 here.
             Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
         }
-        
-        
+
         [Test]
-        [TestCase("utf8.Filenames-1.0.0.zip")]
-        [TestCase("utf8.Filenámes-1.0.0.zip")]
-        public void CanExtractZipFileContainingSpecialCharacters(string filename)
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CanExtractZipFileContainingSpecialCharacters(bool nonAsciiFilename)
         {
-            var fileName = GetFixtureResource("Samples", string.Format(filename));
+            // The special-character variant is materialized locally rather than checked into git/build artifacts,
+            // since a non-ASCII filename doesn't reliably survive the Windows build -> zip artifact -> Linux test agent transfer.
+            using var tempDirectory = TemporaryDirectory.Create();
+            var sourceFile = GetFixtureResource("Samples", "utf8.Filenames-1.0.0.zip");
+            var fileName = Path.Combine(tempDirectory.DirectoryPath, nonAsciiFilename ? "👍Filẽnæmeş-1.0.0.zip": "Filenames-1.0.0.zip");
+            File.Copy(sourceFile, fileName);
 
             var extractor = new ZipPackageExtractor(ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractor.GetType(), fileName);
