@@ -48,7 +48,7 @@ namespace Calamari.Aws.Commands
             ICloudFormationRequestBuilder TemplateFactory()
             {
                 return new CloudFormationTemplate(() => GetTemplateBody(bucketName, publicAccess, objectWriterOwnership),
-                                                  new EmptyTemplateInputs<Parameter>(),
+                                                  Enumerable.Empty<Parameter>(),
                                                   stackName,
                                                   new List<string>(),
                                                   true,

@@ -46,7 +46,7 @@ public class DeployEcsServiceConvention(DeployEcsCommandInputs commandInputs, Aw
         ICloudFormationRequestBuilder TemplateFactory()
         {
             return new CloudFormationTemplate(() => generated.Body,
-                new ListTemplateInputs<Parameter>(generated.Parameters),
+                generated.Parameters,
                 commandInputs.CfStackName,
                 ["CAPABILITY_NAMED_IAM"],
                 false,

@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using Calamari.Common.Util;
 
 namespace Calamari.Aws.Integration.Ecs.Deploy;
 
@@ -42,9 +39,4 @@ public record EcsTemplateParameter<T>(string Name, T TypedValue) : IEcsTemplateP
 public static class EcsTemplateParameter
 {
     public static EcsTemplateParameter<T> Of<T>(string name, T value) => new(name, value);
-}
-
-public class ListTemplateInputs<TInput>(IEnumerable<TInput> inputs) : ITemplateInputs<TInput>
-{
-    public IEnumerable<TInput> Inputs { get; } = inputs.ToList();
 }
