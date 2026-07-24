@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Commands.Support;
 using System;
 using System.Collections.Generic;
@@ -91,6 +92,8 @@ namespace Calamari
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             base.ConfigureContainer(builder, options);
+
+            builder.RegisterType<ClaudeSettingsWriter>();
 
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();

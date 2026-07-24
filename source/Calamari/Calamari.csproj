@@ -56,6 +56,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />
     <EmbeddedResource Include="Scripts\**" />
+    <EmbeddedResource Include="AiAgent\ClaudeCodeBehaviour\DefaultContext\Skills\**\*.md" />
+    <EmbeddedResource Include="AiAgent\ClaudeCodeBehaviour\DefaultContext\system-prompt.md" />
+    <EmbeddedResource Include="AiAgent\ClaudeCodeBehaviour\DefaultContext\injection-check-system-prompt.md" />
     <None Update="Calamari.exe.manifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
