@@ -15,7 +15,7 @@ namespace Calamari.AzureAppService
         {
             await Task.Run(() =>
             {
-                using var archive = ZipArchive.Create();
+                using var archive = ZipArchive.CreateArchive();
                 archive.AddAllFromDirectory(
                     $"{sourceDirectory}");
                 archive.SaveTo($"{targetDirectory}/app.zip", CompressionType.Deflate);
