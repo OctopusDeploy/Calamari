@@ -24,7 +24,7 @@ namespace Calamari.Tests.Helpers
                 File.Delete(outputTarFilename);
 
             using (Stream stream = File.OpenWrite(outputTarFilename))
-            using (var writer = WriterFactory.Open(stream, ArchiveType.Tar, new WriterOptions(CompressionType.GZip) {LeaveStreamOpen = false}))
+            using (var writer = WriterFactory.OpenWriter(stream, ArchiveType.Tar, new WriterOptions(CompressionType.GZip) {LeaveStreamOpen = false}))
             {
                 var isRunningOnWindows = CalamariEnvironment.IsRunningOnWindows;
 

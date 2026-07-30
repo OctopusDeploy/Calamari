@@ -31,9 +31,9 @@ namespace Calamari.Common.Features.Packages.Decorators.ArchiveLimits
             {
                 if (maximumUncompressedSize > 0)
                 {
-                    using (var archive = ArchiveFactory.Open(packageFile))
+                    using (var archive = ArchiveFactory.OpenArchive(packageFile))
                     {
-                        var totalUncompressedSize = archive.TotalUncompressSize;
+                        var totalUncompressedSize = archive.TotalUncompressedSize;
 
                         if (totalUncompressedSize > maximumUncompressedSize)
                         {
