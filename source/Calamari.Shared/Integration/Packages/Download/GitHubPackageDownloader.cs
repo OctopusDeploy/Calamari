@@ -277,10 +277,10 @@ namespace Calamari.Integration.Packages.Download
         {
             var rootPathSeperator = -1;
             using (var readerStram = File.Open(src, FileMode.Open, FileAccess.ReadWrite))
-            using (var reader = ReaderFactory.Open(readerStram))
+            using (var reader = ReaderFactory.OpenReader(readerStram))
             {
                 using (var writerStream = File.Open(dest, FileMode.CreateNew, FileAccess.ReadWrite))
-                using (var writer = WriterFactory.Open(writerStream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate)))
+                using (var writer = WriterFactory.OpenWriter(writerStream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate)))
                 {
                     while (reader.MoveToNextEntry())
                     {

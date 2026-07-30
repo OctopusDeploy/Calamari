@@ -19,7 +19,7 @@ namespace Calamari.Common.Features.Packages
             
             var filesExtracted = 0;
             using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
-            using var archive = ZipArchive.Open(inStream);
+            using var archive = ZipArchive.OpenArchive(inStream);
             
             foreach (var entry in archive.Entries)
             {
@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.Packages
         {
             var strategy = PackageExtractorUtils.CreateIoExceptionRetryStrategy(log);
 
-            strategy.Execute(() => entry.WriteToDirectory(directory, new PackageExtractionOptions(log)));
+            strategy.Execute(() => entry.WriteToDirectory(directory, PackageExtractionOptions.Create(log)));
         }
 
         void ProcessEvent(ref int filesExtracted, IEntry entry)
