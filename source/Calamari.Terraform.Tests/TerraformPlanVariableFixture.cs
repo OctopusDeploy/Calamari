@@ -7,9 +7,9 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Terraform.Behaviours;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Shouldly;
 
 namespace Calamari.Terraform.Tests
 {
@@ -46,7 +46,7 @@ namespace Calamari.Terraform.Tests
         [TestCase("1.0", "--json")]
         public void EnsurePlanOnlyWorksForTwelveAndAbove(string version, string expected)
         {
-            new PlanBehaviour(log, calamariFileSystem, commandLineRunner).GetOutputParameter(runningDeployment, new Version(version)).ShouldBe(expected);
+            new PlanBehaviour(log, calamariFileSystem, commandLineRunner).GetOutputParameter(runningDeployment, new Version(version)).Should().Be(expected);
         }
 
         [Test]
@@ -57,12 +57,12 @@ namespace Calamari.Terraform.Tests
 
             for (var index = 0; index < splitOutput.Length; ++index)
             {
-                outputVars[$"TerraformPlanLine[{index}].JSON"].ShouldBe(splitOutput[index]);
+                outputVars[$"TerraformPlanLine[{index}].JSON"].Should().Be(splitOutput[index]);
             }
 
-            outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesAdd].ShouldBe("0");
-            outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesRemove].ShouldBe("0");
-            outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesChange].ShouldBe("0");
+            outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesAdd].Should().Be("0");
+            outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesRemove].Should().Be("0");
+            outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesChange].Should().Be("0");
         }
 
         public class MockableRunningDeployment : RunningDeployment
