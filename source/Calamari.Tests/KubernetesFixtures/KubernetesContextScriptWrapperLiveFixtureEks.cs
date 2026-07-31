@@ -715,7 +715,11 @@ namespace Calamari.Tests.KubernetesFixtures
                     var pathInPackage = Path.Combine(directory, fileName);
                     var readStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                     readStreams.Add(readStream);
-                    archive.AddEntry(pathInPackage, readStream);
+                    archive.AddEntry(
+                        pathInPackage,
+                        readStream,
+                        closeStream: true,
+                        size: readStream.Length);
                 }
 
                 using (var writeStream = File.OpenWrite(pathToPackage))
