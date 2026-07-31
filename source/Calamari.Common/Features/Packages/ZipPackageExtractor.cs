@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.Packages
         {
             var strategy = PackageExtractorUtils.CreateIoExceptionRetryStrategy(log);
 
-            strategy.Execute(() => entry.WriteToDirectory(directory, new PackageExtractionOptions(log)));
+            strategy.Execute(() => entry.WriteToDirectory(directory, new PackageExtractionOptions(log).ToExtractionOptions()));
         }
 
         void ProcessEvent(ref int filesExtracted, IEntry entry)
