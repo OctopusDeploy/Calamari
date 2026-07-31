@@ -28,7 +28,7 @@
         <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
         <ProjectReference Include="..\Calamari\Calamari.csproj"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0"/>
-        <PackageReference Include="NSubstitute" Version="2.0.3"/>
+        <PackageReference Include="NSubstitute" Version="6.0.0"/>
         <PackageReference Include="FluentAssertions" Version="7.2.0"/>
         <PackageReference Include="NUnit" Version="3.14.0"/>
         <PackageReference Include="NUnit3TestAdapter" Version="5.2.0"/>
