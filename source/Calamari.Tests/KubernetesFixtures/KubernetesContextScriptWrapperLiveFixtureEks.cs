@@ -707,7 +707,7 @@ namespace Calamari.Tests.KubernetesFixtures
             params (string directory, string fileName, string content)[] files)
         {
             var pathToPackage = Path.Combine(currentDirectory, packageFileName);
-            using (var archive = ZipArchive.Create())
+            using (var archive = ZipArchive.CreateArchive())
             {
                 var readStreams = new List<IDisposable>();
                 foreach (var (directory, fileName, content) in files)

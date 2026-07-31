@@ -40,7 +40,7 @@ namespace Calamari.Common.Features.Packages.NuGet
             var filesExtracted = 0;
 
             using (var packageStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
-            using (var archive = ZipArchive.Open(packageStream))
+            using (var archive = ZipArchive.OpenArchive(packageStream))
             {
                 foreach (var entry in archive.Entries)
                 {
@@ -63,7 +63,7 @@ namespace Calamari.Common.Features.Packages.NuGet
                         continue;
 
                     var targetFile = Path.Combine(targetDirectory, Path.GetFileName(unescapedKey));
-                    entry.WriteToFile(targetFile, new PackageExtractionOptions(log) { ExtractFullPath = false, PreserveFileTime = false });
+                    entry.WriteToFile(targetFile, new PackageExtractionOptions(log) { ExtractFullPath = false, PreserveFileTime = false }.ToExtractionOptions());
 
                     SetFileLastModifiedTime(entry, targetFile);
 

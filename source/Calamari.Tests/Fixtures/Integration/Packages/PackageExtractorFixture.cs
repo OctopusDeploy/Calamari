@@ -163,7 +163,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 var fileName = Path.Combine(tempFolder.DirectoryPath, $"package.{extension}");
                 using (Stream stream = File.OpenWrite(fileName))
-                using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType)
+                using (var writer = WriterFactory.OpenWriter(stream, archiveType, new WriterOptions(compressionType)
                 {
                     ArchiveEncoding = new ArchiveEncoding {Default = Encoding.UTF8}
                 }))
@@ -241,7 +241,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Directory.CreateDirectory(extractionDir);
 
             using (var stream = File.OpenWrite(packageFile))
-            using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType) { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } }))
+            using (var writer = WriterFactory.OpenWriter(stream, archiveType, new WriterOptions(compressionType) { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } }))
             {
                 var payload = "malicious content"u8.ToArray();
                 writer.Write("safe-file.txt", new MemoryStream(payload));

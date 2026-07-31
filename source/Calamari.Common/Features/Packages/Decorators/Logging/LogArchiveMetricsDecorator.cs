@@ -34,14 +34,14 @@ namespace Calamari.Common.Features.Packages.Decorators.Logging
             try
             {
                 var archiveInfo = new FileInfo(archivePath);
-                using (var archive = ArchiveFactory.Open(archivePath))
+                using (var archive = ArchiveFactory.OpenArchive(archivePath))
                 {
                     var compressedSize = archiveInfo.Length;
-                    var uncompressedSize = archive.TotalUncompressSize;
+                    var uncompressedSize = archive.TotalUncompressedSize;
                     var compressionRatio = compressedSize == 0 ? 0 : (double)uncompressedSize / compressedSize;
 
                     log.LogMetric("DeploymentPackageCompressedSize", compressedSize, operationId);
-                    log.LogMetric("DeploymentPackageUncompressedSize", archive.TotalUncompressSize, operationId);
+                    log.LogMetric("DeploymentPackageUncompressedSize", archive.TotalUncompressedSize, operationId);
                     log.LogMetric("DeploymentPackageCompressionRatio", compressionRatio, operationId);
                 }
             }
