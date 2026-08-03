@@ -24,6 +24,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Timeout;
@@ -93,9 +94,13 @@ namespace Calamari.AzureAppService.Behaviors
             var webSiteResource = armClient.GetWebSiteResource(targetSite.CreateWebSiteResourceIdentifier());
             Log.Verbose($"App Service '{targetSite.Site}' found, with Azure Resource Manager Id '{webSiteResource.Id.ToString()}'.");
 
+            var isFlexConsumption = await IsFlexConsumptionPlan(armClient, webSiteResource);
+            if (isFlexConsumption)
+                Log.Verbose("Flex Consumption plan detected; using the OneDeploy (/api/publish) endpoint instead of ZipDeploy (/api/zipdeploy).");
+
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
-            var packageProvider = PackageProviderFactory.GetProvider(packageFileInfo.Extension, Log, fileSystem, variables, context);
+            var packageProvider = PackageProviderFactory.GetProvider(packageFileInfo.Extension, isFlexConsumption, Log, fileSystem, variables, context);
 
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
@@ -157,7 +162,7 @@ namespace Calamari.AzureAppService.Behaviors
                 }
                 else
                 {
-                    await UploadZipAsync(account, publishingProfile, scmPublishEnabled, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                    await UploadZipAsync(account, publishingProfile, scmPublishEnabled, uploadPath, targetSite.ScmSiteAndSlot, packageProvider, pollingTimeout);
                 }
             }
             finally
@@ -168,6 +173,35 @@ namespace Calamari.AzureAppService.Behaviors
                 }
             }
         }
+
+        // The SKU tier lives on the App Service Plan (ServerFarm), not the site, so we resolve the plan to read it.
+        // Fails open: if the tier can't be read we fall back to ZipDeploy rather than break a valid deployment.
+        async Task<bool> IsFlexConsumptionPlan(ArmClient armClient, WebSiteResource webSiteResource)
+        {
+            try
+            {
+                var siteData = (await webSiteResource.GetAsync()).Value.Data;
+                var appServicePlanId = siteData.AppServicePlanId;
+                if (appServicePlanId is null)
+                {
+                    Log.Verbose("App Service has no associated App Service Plan; treating as non-Flex Consumption.");
+                    return false;
+                }
+
+                var planSku = (await armClient.GetAppServicePlanResource(appServicePlanId).GetAsync()).Value.Data.Sku;
+                Log.Verbose($"App Service Plan '{appServicePlanId.Name}' is on the '{planSku?.Tier}' tier (SKU '{planSku?.Name}').");
+                return IsFlexConsumptionTier(planSku?.Tier, planSku?.Name);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Could not determine the App Service Plan tier ({ex.Message}). Treating as non-Flex Consumption and using the ZipDeploy endpoint. If this is a Flex Consumption plan, grant the account 'Microsoft.Web/serverfarms/read' on the plan.");
+                return false;
+            }
+        }
+
+        internal static bool IsFlexConsumptionTier(string? skuTier, string? skuName)
+            => string.Equals(skuTier, "FlexConsumption", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(skuName, "FC1", StringComparison.OrdinalIgnoreCase);
 
         private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, AzureTargetSite site)
         {
@@ -195,7 +229,8 @@ namespace Calamari.AzureAppService.Behaviors
                                           bool scmPublishEnabled,
                                           string uploadZipPath,
                                           string targetSite,
-                                          IPackageProvider packageProvider)
+                                          IPackageProvider packageProvider,
+                                          TimeSpan pollingTimeout)
         {
             Log.Verbose($"Path to upload: {uploadZipPath}");
             Log.Verbose($"Target Site: {targetSite}");
@@ -226,8 +261,8 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                       {
                                                                                           await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                           using var streamContent = new StreamContent(fileStream);
-                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                                                                                          
+                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
+
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                           {
@@ -246,7 +281,48 @@ namespace Calamari.AzureAppService.Behaviors
             if (!response.IsSuccessStatusCode)
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status {(int)response.StatusCode} '{response.ReasonPhrase}'.");
 
+            // OneDeploy (/api/publish) accepts the upload with 202 + a Location, then processes it asynchronously.
+            // Poll that Location so a server-side failure is surfaced instead of being reported as success.
+            if (response.StatusCode == HttpStatusCode.Accepted && response.Headers.Location != null)
+                await PollDeploymentUntilComplete(httpClient, response.Headers.Location, authenticationHeader, pollingTimeout);
+
             Log.Verbose("Finished deploying");
+        }
+
+        async Task PollDeploymentUntilComplete(HttpClient httpClient, Uri statusUrl, AuthenticationHeaderValue authenticationHeader, TimeSpan pollingTimeout)
+        {
+            Log.Verbose($"Deployment accepted; polling {statusUrl} for completion.");
+            var deadline = DateTimeOffset.UtcNow + pollingTimeout;
+
+            while (true)
+            {
+                var statusResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, statusUrl) { Headers = { Authorization = authenticationHeader } };
+                    var r = await httpClient.SendAsync(request);
+                    r.EnsureSuccessStatusCode();
+                    return r;
+                });
+
+                var json = JObject.Parse(await statusResponse.Content.ReadAsStringAsync());
+                var complete = json.Value<bool?>("complete") ?? false;
+                var status = json.Value<int?>("status");
+
+                if (complete)
+                {
+                    // Kudu DeployStatus: 4 = Success, 3 = Failed.
+                    if (status == 4)
+                        return;
+
+                    var statusText = json.Value<string>("status_text");
+                    throw new Exception($"Deployment failed with status {status}. {statusText}".Trim());
+                }
+
+                if (DateTimeOffset.UtcNow >= deadline)
+                    throw new Exception($"Deployment did not complete within {pollingTimeout}.");
+
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
         }
 
         static async Task<AuthenticationHeaderValue> GetAuthenticationHeaderValue(IAzureAccount azureAccount, PublishingProfile publishingProfile, bool scmPublishEnabled)
@@ -304,7 +380,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                 //we have to create a new request message each time
                                                                                                 await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                                                                                                 using var streamContent = new StreamContent(fileStream);
-                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue(packageProvider.ContentType);
 
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                                 {

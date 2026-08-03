@@ -8,9 +8,11 @@ namespace Calamari.AzureAppService
 {
     // Maps a file extension to its package provider (upload endpoint + sync/async mode). The one Calamari-owned
     // decision in an otherwise Azure-bound deploy, so it's unit-tested in PackageProviderFactoryFixture.
+    // On a Flex Consumption plan, zip/nupkg packages use OneDeploy (/api/publish); Flex doesn't expose /api/zipdeploy.
     public static class PackageProviderFactory
     {
         public static IPackageProvider GetProvider(string fileExtension,
+                                                   bool isFlexConsumption,
                                                    ILog log,
                                                    ICalamariFileSystem fileSystem,
                                                    IVariables variables,
@@ -18,8 +20,8 @@ namespace Calamari.AzureAppService
         {
             return fileExtension switch
                    {
-                       ".zip" => new ZipPackageProvider(),
-                       ".nupkg" => new NugetPackageProvider(),
+                       ".zip" => isFlexConsumption ? new OneDeployZipPackageProvider() : new ZipPackageProvider(),
+                       ".nupkg" => isFlexConsumption ? new OneDeployZipPackageProvider() : new NugetPackageProvider(),
                        ".war" => new JavaPackageProvider(log, fileSystem, variables, deployment, "/api/wardeploy"),
                        ".jar" => new JavaPackageProvider(log, fileSystem, variables, deployment, "/api/publish?type=jar"),
                        _ => throw new Exception("Unsupported archive type")

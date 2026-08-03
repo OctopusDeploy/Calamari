@@ -15,6 +15,7 @@ namespace Calamari.AzureAppService
     {
         readonly ICalamariFileSystem fileSystem;
         public bool SupportsAsynchronousDeployment => false;
+        public string ContentType => "application/octet-stream";
         private ILog Log { get; }
         private IVariables Variables { get; }
         private RunningDeployment Deployment { get; }
