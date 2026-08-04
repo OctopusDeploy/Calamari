@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text.Json;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
@@ -6,7 +7,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ClaudeCode;
 
-namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
+namespace Calamari.Tests.AiAgent.ClaudeCodeBehaviour;
 
 [TestFixture]
 public class ClaudeCodeUsageReporterFixture

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using Calamari.AiAgent;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -11,7 +12,7 @@ using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
+namespace Calamari.Tests.AiAgent.ClaudeCodeBehaviour;
 
 [TestFixture]
 public class ArtifactManifestCollectorFixture

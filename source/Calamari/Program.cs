@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Calamari.AiAgent;
 using Calamari.Commands.Support;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,6 @@ using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
 using Calamari.ArgoCD;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.CommitToGit;
 using Calamari.Common;
@@ -40,7 +38,7 @@ namespace Calamari
 {
     public class Program : CalamariFlavourProgram
     {
-        protected Program(ILog log) : base(log)
+        public Program(ILog log) : base(log)
         {
         }
 
@@ -163,6 +161,7 @@ namespace Calamari
             builder.RegisterModule<ArgoCDModule>();
             builder.RegisterModule<CommitToGitModule>();
             builder.RegisterModule<PackageRetentionModule>();
+            builder.RegisterModule<AiAgentModule>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()

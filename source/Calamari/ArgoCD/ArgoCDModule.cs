@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab;
 using Microsoft.Extensions.Caching.Memory;
