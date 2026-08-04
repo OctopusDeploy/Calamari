@@ -18,6 +18,7 @@
              Octopus.1Password.Sdk (GHSA-4rr6-2v9v-wcpc). -->
         <PackageReference Include="RestSharp" Version="112.1.0" />
         <PackageReference Include="Serilog" Version="4.4.0" />
+        <PackageReference Include="Serilog" Version="4.0.2" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
         <PackageReference Include="System.Text.Json" Version="9.0.16" />
     </ItemGroup>
