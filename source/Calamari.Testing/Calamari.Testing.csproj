@@ -4,7 +4,7 @@
         <Nullable>enable</Nullable>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <PackageId>Octopus.Calamari.Testing</PackageId>
     </PropertyGroup>
@@ -12,12 +12,15 @@
         <PackageReference Include="FluentAssertions" Version="7.2.0" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
         <PackageReference Include="NUnit" Version="3.14.0" />
-        <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+        <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
         <PackageReference Include="Octopus.1Password.Sdk" Version="0.0.127"/>
         <PackageReference Include="Serilog" Version="4.4.0" />
         <PackageReference Include="Serilog" Version="4.0.2" />
+        <!-- Pinned to remediate the vulnerable RestSharp pulled in transitively via
+             Octopus.1Password.Sdk. Surfaced by .NET 10's transitive package auditing. -->
+        <PackageReference Include="RestSharp" Version="112.1.0" />
+        <PackageReference Include="Serilog" Version="4.4.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
-        <PackageReference Include="System.Text.Json" Version="9.0.16" />
     </ItemGroup>
 
     <ItemGroup>
