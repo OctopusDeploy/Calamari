@@ -26,6 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.Core" Version="4.0.100.9" />
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.21.1" />
