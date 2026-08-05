@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -8,7 +9,7 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
+namespace Calamari.Tests.AiAgent.ClaudeCodeBehaviour;
 
 [TestFixture]
 public class ClaudeSettingsWriterFixture

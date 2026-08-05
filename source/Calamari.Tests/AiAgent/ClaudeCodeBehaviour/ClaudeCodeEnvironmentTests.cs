@@ -1,9 +1,10 @@
+using System;
 using System.Collections.Generic;
 using Calamari.AiAgent.ClaudeCodeBehaviour;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.AiAgent.Tests.ClaudeCodeBehaviour;
+namespace Calamari.Tests.AiAgent.ClaudeCodeBehaviour;
 
 [TestFixture]
 public class ClaudeCodeEnvironmentTests
