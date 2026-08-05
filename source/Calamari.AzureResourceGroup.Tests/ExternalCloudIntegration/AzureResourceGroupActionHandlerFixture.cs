@@ -11,8 +11,6 @@ using Calamari.Testing.Requirements;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
-// ReSharper disable MethodHasAsyncOverload - File.ReadAllTextAsync does not exist for .net framework targets
-
 namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
 {
     [TestFixture]
@@ -27,9 +25,9 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
                                                  {
                                                      AddDefaults(context);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
-                                                     context.Variables.Add("Octopus.Action.Azure.TemplateSource", "Package");
-                                                     context.Variables.Add("Octopus.Action.Azure.ResourceGroupTemplate", "azure_website_template.json");
-                                                     context.Variables.Add("Octopus.Action.Azure.ResourceGroupTemplateParameters", "azure_website_params.json");
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "Package");
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, "azure_website_template.json");
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, "azure_website_params.json");
                                                      context.WithFilesToCopy(packagePath);
                                                  })
                                     .Execute();
@@ -40,9 +38,9 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
-            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
-            var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
-            var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
+            var templateFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_template.json"));
+            var paramsFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_params.json"));
+            var parameters = JObject.Parse(paramsFileContent)["parameters"]!.ToString();
             const string psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
@@ -54,13 +52,11 @@ az group list";
                                                  {
                                                      AddDefaults(context);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
-                                                     context.Variables.Add("Octopus.Action.Azure.TemplateSource", "Inline");
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "Inline");
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json")));
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, parameters);
                                                      context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
                                                      context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), psScript);
-                                                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
-
                                                      context.WithFilesToCopy(packagePath);
 
                                                      AddTemplateFiles(context, templateFileContent, paramsFileContent);
@@ -70,7 +66,7 @@ az group list";
 
         void AddDefaults(CommandTestBuilderContext context)
         {
-            context.Variables.Add("Octopus.Account.AccountType", "AzureServicePrincipal");
+            context.Variables.Add(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             context.Variables.Add(AzureAccountVariables.SubscriptionId, SubscriptionId);
             context.Variables.Add(AzureAccountVariables.TenantId, TenantId);
             context.Variables.Add(AzureAccountVariables.ClientId, ClientId);

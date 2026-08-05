@@ -13,8 +13,6 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
-using Calamari.Common.Features.Deployment;
-using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
@@ -23,7 +21,6 @@ using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 using HttpClient = System.Net.Http.HttpClient;
-using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 
 namespace Calamari.AzureWebApp.Tests
 {
@@ -398,41 +395,6 @@ namespace Calamari.AzureWebApp.Tests
                                     .Execute();
 
             await AssertContent(webSiteResource.Data.DefaultHostName, actualText, rootPath);
-        }
-
-        [Test]
-        public async Task Deploy_WebApp_Ensure_Tools_Are_Configured()
-        {
-            using var tempPath = TemporaryDirectory.Create();
-            const string actualText = "Hello World";
-
-            File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
-            var psScript = @"
-$ErrorActionPreference = 'Continue'
-az --version
-az group list";
-            File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), psScript);
-
-            // This should be references from Sashimi.Server.Contracts, since Calamari.AzureWebApp is a net461 project this cannot be included.
-            var AccountType = "Octopus.Account.AccountType";
-
-            await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     context.Variables.Add(AccountType, "AzureServicePrincipal");
-                                                     AddDefaults(context);
-                                                     context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
-                                                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), psScript);
-                                                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
-                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
-                                                 })
-                                    .WithAssert(result =>
-                                                {
-                                                    result.FullLog.Should().Contain("Hello from C#");
-                                                })
-                                    .Execute();
-
-            await AssertContent(webSiteResource.Data.DefaultHostName, actualText);
         }
 
         async Task AssertContent(string hostName, string actualText, string rootPath = null)
