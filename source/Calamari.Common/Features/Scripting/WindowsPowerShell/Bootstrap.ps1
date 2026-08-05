@@ -165,6 +165,23 @@ function Set-OctopusVariable([string]$name, [string]$value, [switch]$sensitive)
     }
 }
 
+function Set-EnvironmentState([string]$key, [string]$value, [switch]$sensitive)
+{
+    $key = Convert-ServiceMessageValue($key)
+    $value = Convert-ServiceMessageValue($value)
+    $type = Convert-ServiceMessageValue("State")
+    $trueEncoded = Convert-ServiceMessageValue("True")
+
+    If ($sensitive)
+    {
+        Write-Host "##octopus[set-environmentstate key='$( $key )' value='$( $value )' sensitive='$( $trueEncoded )' type='$( $type )']"
+    }
+    Else
+    {
+        Write-Host "##octopus[set-environmentstate key='$( $key )' value='$( $value )' type='$( $type )']"
+    }
+}
+
 function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 {
     $value = Convert-ServiceMessageValue($value)
