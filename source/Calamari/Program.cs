@@ -38,7 +38,7 @@ namespace Calamari
 {
     public class Program : CalamariFlavourProgram
     {
-        public Program(ILog log) : base(log)
+        protected Program(ILog log) : base(log)
         {
         }
 
