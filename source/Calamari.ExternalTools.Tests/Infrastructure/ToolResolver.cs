@@ -20,9 +20,21 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
             this.log = log;
         }
 
+        public const string SkipDownloadEnvVar = "CALAMARI_TOOL_SKIP_DOWNLOAD";
+
         public static string GetOverrideEnvVar(string toolName)
         {
             return $"CALAMARI_TOOL_{toolName.Replace("-", "_").ToUpperInvariant()}_VERSION";
+        }
+
+        public static bool ShouldSkipDownload()
+        {
+            return ShouldSkipDownload(Environment.GetEnvironmentVariable(SkipDownloadEnvVar));
+        }
+
+        public static bool ShouldSkipDownload(string? envVarValue)
+        {
+            return string.Equals(envVarValue, bool.TrueString, StringComparison.OrdinalIgnoreCase);
         }
 
         public string ResolveVersion(string toolName)

@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -6,7 +7,8 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
 {
     /// <summary>
     /// Base class for test fixtures that depend on an external tool.
-    /// Resolves the tool via: env var override -> PATH -> download.
+    /// Resolves the tool via: env var override -> manifest highest (downloaded), unless
+    /// CALAMARI_TOOL_SKIP_DOWNLOAD is set, in which case the tool must be found on PATH.
     /// Subclasses set PrimaryToolName and provide a download strategy.
     /// </summary>
     public abstract class ExternalToolFixture
@@ -28,11 +30,25 @@ namespace Calamari.ExternalTools.Tests.Infrastructure
 
             ToolVersion = resolver.ResolveVersion(PrimaryToolName);
 
-            var pathResult = ToolResolver.FindOnPath(PrimaryToolName);
-            if (pathResult != null)
+            if (ToolResolver.ShouldSkipDownload())
             {
-                Log($"Found {PrimaryToolName} on PATH at {pathResult}");
+                var pathResult = ToolResolver.FindOnPath(PrimaryToolName);
+                if (pathResult == null)
+                    throw new InvalidOperationException($"{ToolResolver.SkipDownloadEnvVar} was set but '{PrimaryToolName}' was not found on PATH.");
+
+                Log($"{ToolResolver.SkipDownloadEnvVar} is set; using {PrimaryToolName} found on PATH at {pathResult}");
                 ToolExecutablePath = pathResult;
+
+                var installedVersion = ToolResolver.GetInstalledVersion(pathResult);
+                if (!string.IsNullOrEmpty(installedVersion))
+                {
+                    ToolVersion = installedVersion;
+                }
+                else
+                {
+                    Log($"Could not determine the installed version of {PrimaryToolName} at {pathResult}; falling back to resolved version {ToolVersion}");
+                }
+
                 return;
             }
 
