@@ -5,7 +5,9 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Terraform.Behaviours;
 using FluentAssertions;
+using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -136,6 +138,158 @@ namespace Calamari.Terraform.Tests
 
             act.Should().Throw<CommandLineException>();
             commandLineRunner.Received(5).Execute(Arg.Any<CommandLineInvocation>());
+        }
+
+        [Test]
+        public void InitCommand_PreV015_IncludesGetPluginsFlagTrue()
+        {
+            var capturedArguments = new List<string>();
+            var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
+            testVariables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true).Returns(true);
+
+            var commandLineRunner = Substitute.For<ICommandLineRunner>();
+            commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
+            {
+                capturedArguments.Add(invocation.Arguments);
+                if (capturedArguments.Count == 1)
+                    invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v0.14.0");
+            })).Returns(new CommandResult("terraform", 0));
+
+            new TerraformCliExecutor(Substitute.For<ILog>(), Substitute.For<ICalamariFileSystem>(), commandLineRunner, new RunningDeployment("blah", testVariables), new Dictionary<string, string>());
+
+            capturedArguments[1].Should().Contain("-get-plugins=true");
+        }
+
+        [Test]
+        public void InitCommand_PreV015_PluginDownloadsDisabled_IncludesGetPluginsFlagFalse()
+        {
+            var capturedArguments = new List<string>();
+            var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
+            testVariables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true).Returns(false);
+
+            var commandLineRunner = Substitute.For<ICommandLineRunner>();
+            commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
+            {
+                capturedArguments.Add(invocation.Arguments);
+                if (capturedArguments.Count == 1)
+                    invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v0.14.0");
+            })).Returns(new CommandResult("terraform", 0));
+
+            new TerraformCliExecutor(Substitute.For<ILog>(), Substitute.For<ICalamariFileSystem>(), commandLineRunner, new RunningDeployment("blah", testVariables), new Dictionary<string, string>());
+
+            capturedArguments[1].Should().Contain("-get-plugins=false");
+        }
+
+        [Test]
+        public void InitCommand_V015AndAbove_OmitsGetPluginsFlag()
+        {
+            var capturedArguments = new List<string>();
+            var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
+
+            var commandLineRunner = Substitute.For<ICommandLineRunner>();
+            commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
+            {
+                capturedArguments.Add(invocation.Arguments);
+                if (capturedArguments.Count == 1)
+                    invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v0.15.0");
+            })).Returns(new CommandResult("terraform", 0));
+
+            new TerraformCliExecutor(Substitute.For<ILog>(), Substitute.For<ICalamariFileSystem>(), commandLineRunner, new RunningDeployment("blah", testVariables), new Dictionary<string, string>());
+
+            capturedArguments[1].Should().NotContain("-get-plugins");
+        }
+
+        [Test]
+        public void InitCommand_IncludesAdditionalInitParams()
+        {
+            var capturedArguments = new List<string>();
+            var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
+            testVariables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams).Returns("-backend-config=\"key=value\"");
+
+            var commandLineRunner = Substitute.For<ICommandLineRunner>();
+            commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
+            {
+                capturedArguments.Add(invocation.Arguments);
+                if (capturedArguments.Count == 1)
+                    invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v1.0.0");
+            })).Returns(new CommandResult("terraform", 0));
+
+            new TerraformCliExecutor(Substitute.For<ILog>(), Substitute.For<ICalamariFileSystem>(), commandLineRunner, new RunningDeployment("blah", testVariables), new Dictionary<string, string>());
+
+            capturedArguments[1].Should().Contain("-backend-config=\"key=value\"");
+            capturedArguments[1].Should().NotContain("-get-plugins");
+        }
+
+        [Test]
+        public void UntestedVersion_AboveSupportedRange_LogsInfoOnSuccessfulCommand()
+        {
+            var log = Substitute.For<ILog>();
+            var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
+
+            var commandLineRunner = Substitute.For<ICommandLineRunner>();
+            var callCount = 0;
+            commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
+            {
+                callCount++;
+                if (callCount == 1)
+                    invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v2.0.0");
+            })).Returns(new CommandResult("terraform", 0));
+
+            var executor = new TerraformCliExecutor(log, Substitute.For<ICalamariFileSystem>(), commandLineRunner, new RunningDeployment("blah", testVariables), new Dictionary<string, string>());
+            executor.ExecuteCommand("plan");
+
+            log.Received(1).Info(Arg.Is<string>(s => s.Contains("has not been tested")));
+        }
+
+        [Test]
+        public void SupportedVersion_WithinRange_DoesNotLogUntestedMessage()
+        {
+            var log = Substitute.For<ILog>();
+            var testVariables = Substitute.For<IVariables>();
+            testVariables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
+
+            var commandLineRunner = Substitute.For<ICommandLineRunner>();
+            var callCount = 0;
+            commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation =>
+            {
+                callCount++;
+                if (callCount == 1)
+                    invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v1.0.0");
+            })).Returns(new CommandResult("terraform", 0));
+
+            var executor = new TerraformCliExecutor(log, Substitute.For<ICalamariFileSystem>(), commandLineRunner, new RunningDeployment("blah", testVariables), new Dictionary<string, string>());
+            executor.ExecuteCommand("plan");
+
+            log.DidNotReceive().Info(Arg.Is<string>(s => s.Contains("has not been tested")));
+            log.DidNotReceive().Warn(Arg.Is<string>(s => s.Contains("has not been tested")));
+        }
+
+        [Test]
+        public void EnvironmentVariables_ParsedFromJson()
+        {
+            var variables = new CalamariVariables();
+            variables.Set(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
+                          JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_VAR_ami", "test-value" }, { "TF_LOG", "DEBUG" } }));
+
+            var result = TerraformDeployBehaviour.GetEnvironmentVariableArgs(variables);
+
+            result.Should().ContainKey("TF_VAR_ami").WhoseValue.Should().Be("test-value");
+            result.Should().ContainKey("TF_LOG").WhoseValue.Should().Be("DEBUG");
+        }
+
+        [Test]
+        public void EnvironmentVariables_NotSet_ReturnsEmptyDictionary()
+        {
+            var variables = new CalamariVariables();
+
+            var result = TerraformDeployBehaviour.GetEnvironmentVariableArgs(variables);
+
+            result.Should().BeEmpty();
         }
     }
 }
