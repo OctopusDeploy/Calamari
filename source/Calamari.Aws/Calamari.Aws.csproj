@@ -23,7 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.ECS" Version="4.0.19" />
-    <PackageReference Include="AWSSDK.EKS" Version="4.0.15.1" />
+    <PackageReference Include="AWSSDK.EKS" Version="4.0.101.7" />
     <PackageReference Include="AWSSDK.CloudFormation" Version="4.0.102" />
     <PackageReference Include="AWSSDK.Core" Version="4.0.100.9" />
     <PackageReference Include="AWSSDK.IdentityManagement" Version="4.0.9.18" />
