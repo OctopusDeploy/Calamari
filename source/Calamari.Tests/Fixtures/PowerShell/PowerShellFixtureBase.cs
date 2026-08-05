@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResource("Scripts", ProfileScript)),
+                .Argument("script", GetFixtureResource("Scripts", ProfileScript)), 
                 variables);
 
             output.AssertSuccess();
@@ -146,7 +146,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 new CalamariExecutionVariable("Octopus.Action[PreviousStep].Output.FirstName", "Steve", false),
                 new CalamariExecutionVariable("Octopus.Action[PreviousStep].Output.LastName", "Not Jobs", true)
             };
-
+            
             var serialized = variables.ToJsonString();
             var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
             var encoded = Convert.ToBase64String(bytes);
@@ -205,7 +205,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldWriteServiceMessageForArtifacts()
         {
             var artifactPath = IsRunningOnUnixLikeEnvironment ? @"\tmp\calamari\File.txt" : @"C:\Path\File.txt";
-            var (output, _) = RunPowerShellScript("CanCreateArtifact.ps1", new Dictionary<string, string> { { "ArtifactPath", artifactPath } });
+            var (output, _) = RunPowerShellScript("CanCreateArtifact.ps1", new Dictionary<string, string> {{"ArtifactPath", artifactPath}});
             output.AssertSuccess();
             var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
                 ? "##octopus[createArtifact path='L3RtcC9jYWxhbWFyaS9GaWxlLnR4dA==' name='XHRtcFxjYWxhbWFyaVxGaWxlLnR4dA==' length='MA==']"
@@ -245,7 +245,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             try
             {
-                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1", new Dictionary<string, string> { { "TempDirectory", tempPath } });
+                var (output, _) = RunPowerShellScript("CanCreateArtifactPiped.ps1", new Dictionary<string, string> {{"TempDirectory", tempPath}});
                 output.AssertSuccess();
                 foreach (var artifact in artifacts)
                 {
@@ -276,7 +276,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K' ns='bXk=']");
             AssertPowerShellEdition(output);
         }
-
+        
         [Test]
         public void ShouldWriteServiceMessageForKubernetesManifestFile()
         {
@@ -300,7 +300,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             try
             {
-                var (output, _) = RunPowerShellScript("ReportKubernetesManifestFile.ps1", new Dictionary<string, string> { { "ManifestFilePath", filePath } });
+                var (output, _) = RunPowerShellScript("ReportKubernetesManifestFile.ps1", new Dictionary<string, string> {{"ManifestFilePath", filePath}});
                 output.AssertSuccess();
                 output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
                 output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==']");
@@ -341,7 +341,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var nonExistantArtifactPath = IsRunningOnUnixLikeEnvironment
                 ? @"\tmp\NonExistantPath\NonExistantFile.txt"
                 : @"C:\NonExistantPath\NonExistantFile.txt";
-            var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1", new Dictionary<string, string> { { "ArtifactPath", nonExistantArtifactPath } });
+            var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1", new Dictionary<string, string> {{"ArtifactPath", nonExistantArtifactPath}});
             output.AssertSuccess();
             output.AssertOutput($@"There is no file at '{nonExistantArtifactPath}' right now. Writing the service message just in case the file is available when the artifacts are collected at a later point in time.");
             var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
@@ -676,12 +676,12 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variableDictionary = variables ?? new CalamariVariables();
             variableDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
 
-            using (var variablesFile = CreateVariablesFile(variableDictionary))
+            using (var variablesFile = CreateVariablesFile(variableDictionary ))
             {
                 var calamariCommand = Calamari();
                 buildCommand(calamariCommand);
                 calamariCommand.VariablesFileArguments(variablesFile.FilePath, variablesFile.EncryptionKey);
-
+                
                 return Invoke(calamariCommand);
             }
         }
@@ -700,8 +700,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
             public VariableFile(IVariables variables)
             {
                 FilePath = Path.GetTempFileName();
-                EncryptionKey = AesEncryption.RandomString(10);
-
+                EncryptionKey =  AesEncryption.RandomString(10);
+                
                 variables.SaveAsEncryptedExecutionVariables(FilePath, EncryptionKey);
                 tempFile = new TemporaryFile(FilePath);
             }
@@ -724,7 +724,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
         string GetPowerShellEditionVariable()
         {
-            switch (PowerShellEdition)
+            switch(PowerShellEdition)
             {
                 case PowerShellEdition.Desktop:
                     return "Desktop";

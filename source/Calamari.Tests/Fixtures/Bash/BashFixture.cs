@@ -23,7 +23,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldPrintEncodedVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("print-encoded-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("print-encoded-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldPrintSensitiveVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("print-sensitive-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("print-sensitive-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldSetEnvironmentState(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("set-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("set-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -65,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldSetSensitiveEnvironmentState(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("set-sensitive-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("set-sensitive-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -73,6 +73,7 @@ namespace Calamari.Tests.Fixtures.Bash
                                 output.AssertOutput("##octopus[set-environmentstate key='U2VjcmV0S2V5' value='U2VjcmV0IFZhbHVl' sensitive='VHJ1ZQ==' type='U3RhdGU=']");
                             });
         }
+
 
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
         [TestCase(null)]
@@ -93,22 +94,22 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldCreateArtifact(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             const string regexPattern = @"##octopus\[createArtifact path='([\S]+)' name='bXlmaWxl' length='MA==']";
-
+    
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
                                 output.AssertOutputMatches(regexPattern);
 
-
+                                
                                 var match = Regex.Match(output.CapturedOutput.ToString(), regexPattern);
                                 match.Success.Should().BeTrue();
-
+                                
                                 //the second match is the first match group
                                 var matchedPath = match.Groups[1];
-
+                                
                                 //decoded path
                                 var decodedPath = Encoding.UTF8.GetString(Convert.FromBase64String(matchedPath.Value));
 
@@ -122,7 +123,7 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldUpdateProgress(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("update-progress.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("update-progress.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -130,13 +131,13 @@ namespace Calamari.Tests.Fixtures.Bash
                                 output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
                             });
         }
-
+        
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
         [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldReportKubernetesManifest(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("report-kubernetes-manifest.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("report-kubernetes-manifest.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -147,7 +148,7 @@ namespace Calamari.Tests.Fixtures.Bash
                                 output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK' ns='bXk=']");
                             });
         }
-
+        
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
         [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
@@ -167,7 +168,7 @@ namespace Calamari.Tests.Fixtures.Bash
   ""name"": ""diffs""
 ""labels"":
     ""name"": ""diffs""".ReplaceLineEndings("\n");
-
+            
             var filePath = Path.Combine(tempPath, "ShouldWriteServiceMessageForKubernetesManifestFile.manifest.yaml");
             File.WriteAllText(filePath, manifest);
 
@@ -175,12 +176,12 @@ namespace Calamari.Tests.Fixtures.Bash
             var updatedFilePath = filePath;
             if (CalamariEnvironment.IsRunningOnWindows)
             {
-                var qualifiedPath = filePath.Replace(@"\", @"\\");
+                var qualifiedPath = filePath.Replace(@"\",@"\\");
 
                 var path = string.Empty;
                 var result = SilentProcessRunner.ExecuteCommand("wsl", $"wslpath -a -u {qualifiedPath}", tempPath, output => path = output,
                                                                 _ => { });
-
+                
                 if (result.ExitCode != 0)
                 {
                     Assert.Fail("Failed to convert windows path to WSL path");
@@ -222,7 +223,7 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("parameters.sh",
                                         new Dictionary<string, string>
-                                        { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+                                            { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -275,7 +276,7 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                        { ["Name"] = "NameToEncrypt" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }), sensitiveVariablesPassword:
+                                            { ["Name"] = "NameToEncrypt" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }), sensitiveVariablesPassword:
             "5XETGOgqYR2bRhlfhDruEg==");
 
             Assert.Multiple(() =>
@@ -292,7 +293,7 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                        { ["Name"] = null }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+                                            { ["Name"] = null }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -308,7 +309,7 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                        { ["Name"] = null }, sensitiveVariablesPassword:
+                                            { ["Name"] = null }, sensitiveVariablesPassword:
             "5XETGOgqYR2bRhlfhDruEg==");
 
             Assert.Multiple(() =>
@@ -340,7 +341,7 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("stderr.sh",
                                         new Dictionary<string, string>()
-                                        { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -356,7 +357,7 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                        { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             output.AssertSuccess();
         }
