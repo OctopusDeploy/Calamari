@@ -144,6 +144,31 @@ function set_environmentstate
   echo $MESSAGE
 }
 
+#	---------------------------------------------------------------------------
+# Function for setting an environment url
+#   Accepts 2 arguments:
+#     string: value of the name of the environment url
+#     string: value of the url of the environment
+#	---------------------------------------------------------------------------
+function set_environmenturl
+{
+  MESSAGE="##octopus[set-environmentstate"
+
+  if [ -n "$1" ]
+  then
+    MESSAGE="$MESSAGE key='$(encode_servicemessagevalue "$1")'"
+  fi
+
+  if [ -n "$2" ]
+  then
+    MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
+  fi
+
+  MESSAGE="$MESSAGE type='$(encode_servicemessagevalue "url")']"
+
+  echo $MESSAGE
+}
+
 # -----------------------------------------------------------------------------
 # Function to create a new octopus artifact
 #	Accepts 2 arguments:

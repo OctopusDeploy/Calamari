@@ -182,6 +182,15 @@ function Set-EnvironmentState([string]$key, [string]$value, [switch]$sensitive)
     }
 }
 
+function Set-EnvironmentUrl([string]$name, [string]$url)
+{
+    $name = Convert-ServiceMessageValue($name)
+    $url = Convert-ServiceMessageValue($url)
+    $type = Convert-ServiceMessageValue("url")
+
+    Write-Host "##octopus[set-environmentstate key='$( $name )' value='$( $url )' type='$( $type )']"
+}
+
 function Convert-ToServiceMessageParameter([string]$name, [string]$value)
 {
     $value = Convert-ServiceMessageValue($value)
