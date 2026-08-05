@@ -12,6 +12,15 @@ namespace Calamari.Testing.LogParser
             public const string SensitiveAttribute = "sensitive";
         }
 
+        public static class EnvironmentState
+        {
+            public const string Name = "set-environmentstate";
+            public const string KeyAttribute = "key";
+            public const string ValueAttribute = "value";
+            public const string SensitiveAttribute = "sensitive";
+            public const string TypeAttribute = "type";
+        }
+
         public static class StdOutBehaviour
         {
             public const string Ignore = "stdout-ignore";
