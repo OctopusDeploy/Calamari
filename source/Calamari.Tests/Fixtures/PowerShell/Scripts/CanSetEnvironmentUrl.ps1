@@ -1,2 +1,2 @@
 
-Set-EnvironmentUrl -Name "MyEnvironment" -Url "https://my-environment.example.com"
+Set-EnvironmentUrl -Key "MyEnvironment" -Url "https://my-environment.example.com"

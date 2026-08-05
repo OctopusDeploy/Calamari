@@ -147,7 +147,7 @@ function set_environmentstate
 #	---------------------------------------------------------------------------
 # Function for setting an environment url
 #   Accepts 2 arguments:
-#     string: value of the name of the environment url
+#     string: value of the key of the environment url
 #     string: value of the url of the environment
 #	---------------------------------------------------------------------------
 function set_environmenturl
