@@ -84,7 +84,7 @@ namespace Calamari.Tests.Fixtures.Bash
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
-                                output.AssertOutput("##octopus[set-environmentstate key='TXlFbnZpcm9ubWVudA==' value='aHR0cHM6Ly9teS1lbnZpcm9ubWVudC5leGFtcGxlLmNvbQ==' type='dXJs']");
+                                output.AssertOutput("##octopus[set-environmentstate key='TXlFbnZpcm9ubWVudA==' value='aHR0cHM6Ly9teS1lbnZpcm9ubWVudC5leGFtcGxlLmNvbQ==' type='VXJs']");
                             });
         }
 

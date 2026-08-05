@@ -164,7 +164,7 @@ function set_environmenturl
     MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
   fi
 
-  MESSAGE="$MESSAGE type='$(encode_servicemessagevalue "url")']"
+  MESSAGE="$MESSAGE type='$(encode_servicemessagevalue "Url")']"
 
   echo $MESSAGE
 }
