@@ -1,11 +1,15 @@
 using System.IO;
 using System.Runtime.Versioning;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
+using Microsoft.Win32;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment
@@ -51,6 +55,20 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldDeployAndInstallWithCustomUserName()
         {
+            DeployWithCustomUserNameAndAssertLogOnAccount();
+        }
+
+        [Test]
+        public void ShouldDeployAndInstallWithCustomUserNameUnderPowerShellCore()
+        {
+            AssertPowerShellCoreIsAvailable();
+            Variables[PowerShellVariables.Edition] = "Core";
+
+            DeployWithCustomUserNameAndAssertLogOnAccount();
+        }
+
+        void DeployWithCustomUserNameAndAssertLogOnAccount()
+        {
             TestUserPrincipal userPrincipal = null;
             try
             {
@@ -60,13 +78,28 @@ namespace Calamari.Tests.Fixtures.Deployment
                 Variables[SpecialVariables.Action.WindowsService.CustomAccountName] = userPrincipal.NTAccountName;
                 Variables[SpecialVariables.Action.WindowsService.CustomAccountPassword] = userPrincipal.Password;
 
-                RunDeployment();
+                RunDeployment(() => GetServiceLogOnAccount().Should().Be(userPrincipal.NTAccountName));
             }
             finally
             {
                 userPrincipal?.Delete();
             }
+        }
 
+        string GetServiceLogOnAccount()
+        {
+            using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{ServiceName}"))
+            {
+                return key?.GetValue("ObjectName") as string;
+            }
+        }
+
+        // RequiresPowerShellCoreAttribute can't be used here: SafelyGetPowerShellVersion probes powershell.exe first, so it always reports 5.x on Windows
+        static void AssertPowerShellCoreIsAvailable()
+        {
+            var path = new WindowsPowerShellCoreBootstrapper(new WindowsPhysicalFileSystem()).PathToPowerShellExecutable(new CalamariVariables());
+            if (!File.Exists(path))
+                Assert.Inconclusive("PowerShell Core is not installed on this machine");
         }
     }
 }
