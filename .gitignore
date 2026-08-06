@@ -205,3 +205,6 @@ source/Calamari.Tests/Some sample text
 # Claude Code: per-developer files
 CLAUDE.local.md
 .claude/settings.local.json
+
+# BenchmarkDotNet output (source/Calamari.Benchmarks)
+BenchmarkDotNet.Artifacts/
