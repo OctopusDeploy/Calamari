@@ -12,9 +12,6 @@ using NUnit.Framework;
 
 namespace Calamari.Terraform.Tests
 {
-    // Exercises ApplyBehaviour.Execute() against a mocked ICommandLineRunner - no real terraform binary
-    // involved. TerraformCliExecutor always issues "version --json" then "init ..." on construction, so
-    // captured argument index 2 is the "apply" command and index 3 is the "output -json" command.
     public class ApplyBehaviourFixture
     {
         IVariables variables;
