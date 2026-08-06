@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using System.Runtime.Versioning;
+using System.Security.Principal;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -78,7 +80,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 Variables[SpecialVariables.Action.WindowsService.CustomAccountName] = userPrincipal.NTAccountName;
                 Variables[SpecialVariables.Action.WindowsService.CustomAccountPassword] = userPrincipal.Password;
 
-                RunDeployment(() => GetServiceLogOnAccount().Should().Be(userPrincipal.NTAccountName));
+                RunDeployment(() => GetServiceLogOnAccountSid().Should().Be(userPrincipal.Sid.Value));
             }
             finally
             {
@@ -86,11 +88,17 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
         }
 
-        string GetServiceLogOnAccount()
+        // compared as a SID because the SCM rewrites a local account into the .\name form rather than storing what was passed
+        string GetServiceLogOnAccountSid()
         {
             using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{ServiceName}"))
             {
-                return key?.GetValue("ObjectName") as string;
+                var account = key?.GetValue("ObjectName") as string;
+                if (account == null)
+                    return null;
+                if (account.StartsWith(@".\"))
+                    account = $@"{Environment.MachineName}\{account.Substring(2)}";
+                return new NTAccount(account).Translate(typeof(SecurityIdentifier)).Value;
             }
         }
 
