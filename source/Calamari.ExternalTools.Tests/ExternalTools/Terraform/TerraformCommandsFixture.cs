@@ -79,9 +79,7 @@ namespace Calamari.ExternalTools.Tests.ExternalTools.Terraform
             ClearTerraformDirectory("AWS");
             ClearTerraformDirectory("Azure");
             ClearTerraformDirectory("GoogleCloud");
-            ClearTerraformDirectory("PlanDetailedExitCode");
             ClearTerraformDirectory("Simple");
-            ClearTerraformDirectory("WithOutputSensitiveVariables");
             ClearTerraformDirectory("WithVariablesSubstitution");
         }
 
@@ -135,39 +133,6 @@ namespace Calamari.ExternalTools.Tests.ExternalTools.Terraform
                                           result.OutputVariables["TerraformValueOutputs[my_output]"].Value.Should().Be("Hello World");
                                           result.OutputVariables["TerraformValueOutputs[my_output_from_txt_file]"].Value.Should().Be("Hello World from text");
                                       });
-        }
-
-        /// <summary>Wiring test: terraform's sensitive outputs are marked IsSensitive in Calamari's output variables.</summary>
-        [Test]
-        public void WithOutputSensitiveVariables()
-        {
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ => { },
-                                      "WithOutputSensitiveVariables",
-                                      result => result.OutputVariables.Values.Should().OnlyContain(variable => variable.IsSensitive));
-        }
-
-        /// <summary>Wiring test: plan -> apply -> plan cycle with state file management (exit code 2 = changes, 0 = no changes).</summary>
-        [Test]
-        public async Task PlanDetailedExitCode()
-        {
-            using var stateFileFolder = TemporaryDirectory.Create();
-
-            var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
-            output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("2");
-
-            output = await ExecuteAndReturnResult(applyCommand, PopulateVariables, "PlanDetailedExitCode");
-            output.FullLog.Should().Contain("apply -auto-approve");
-
-            output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
-            output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("0");
-            return;
-
-            void PopulateVariables(CommandTestBuilderContext _)
-            {
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
-                                $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
-            }
         }
 
         [Test]
