@@ -146,16 +146,21 @@ else
 }
 
 if ($serviceAccount -eq "_CUSTOM") {
-	# dont use sc.exe to set the username / password, as it may be logged to the windows audit log if process creation event logs are enabled 
+	# dont use sc.exe to set the username / password, as it may be logged to the windows audit log if process creation event logs are enabled
 	Write-Host "Setting custom service credentials for $serviceName"
-	$wmiService = Get-WmiObject win32_service -filter "name='$($serviceName -replace "'", "\'")'" -computer "."
-	if ($customAccountPassword -eq "") {
-        $customAccountPassword = $null
-    }
-	$result = $wmiService.change($null, $null, $null, $null, $null, $null, $customAccountName, $customAccountPassword, $null, $null, $null)
-	if ($result.ReturnValue -ne "0") {
+	# CIM rather than Get-WmiObject: the WMI cmdlets don't exist in PowerShell Core, and this script runs under both editions
+	$cimService = Get-CimInstance -ClassName Win32_Service -Filter "name='$($serviceName -replace "'", "\'")'"
+	$changeArguments = @{}
+	if (-not [string]::IsNullOrEmpty($customAccountName)) {
+		$changeArguments.StartName = $customAccountName
+	}
+	if (-not [string]::IsNullOrEmpty($customAccountPassword)) {
+		$changeArguments.StartPassword = $customAccountPassword
+	}
+	$result = Invoke-CimMethod -InputObject $cimService -MethodName Change -Arguments $changeArguments
+	if ($result.ReturnValue -ne 0) {
 		#return codes: https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/change-method-in-class-win32-service#return-value
-		throw "Unable to set custom service credentials for service '$serviceName'. Wmi returned $($result.ReturnValue)."
+		throw "Unable to set custom service credentials for service '$serviceName'. Win32_Service.Change returned $($result.ReturnValue)."
 	}
 }
 
@@ -195,8 +200,7 @@ if ($desiredStatus -eq "Stopped" -or $startMode -eq "disabled") {
     # This is the fallback for any steps that don't define a desired status (which is every step before the new
     # desired status option was added). It retains the old behaviour of starting services based on the start mode.
 
-    $wmiServiceName = $serviceName -replace "'", "\'"
-    $currentStartMode = Get-WMIObject win32_service -filter "name='$($serviceName -replace "'", "\'")'" -computer "." | select -expand startMode
+    $currentStartMode = (Get-CimInstance -ClassName Win32_Service -Filter "name='$($serviceName -replace "'", "\'")'").StartMode
     
     if ($startMode -eq "unchanged")
     {
