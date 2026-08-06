@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>Calamari.Benchmarks</RootNamespace>
+        <AssemblyName>Calamari.Benchmarks</AssemblyName>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <!-- BenchmarkDotNet refuses to run against a non-optimised build, so this is only meaningful in Release. -->
+        <IsBenchmarkProject>true</IsBenchmarkProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+            Deliberately no direct SharpCompress PackageReference. The extraction benchmarks are here to
+            detect whether a SharpCompress version change moves extraction cost, so this project must track
+            whatever version Calamari.Common resolves rather than pinning its own.
+        -->
+        <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+        <ProjectReference Include="..\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
+    </ItemGroup>
+
+</Project>
