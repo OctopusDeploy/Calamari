@@ -33,7 +33,7 @@ namespace Calamari.Benchmarks.Support
                 File.Delete(path);
 
             using (var stream = File.OpenWrite(path))
-            using (var writer = WriterFactory.Open(stream,
+            using (var writer = WriterFactory.OpenWriter(stream,
                                                    archiveFormat.Archive,
                                                    new WriterOptions(archiveFormat.Compression)
                                                    {

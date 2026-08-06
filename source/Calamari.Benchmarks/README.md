@@ -1,7 +1,12 @@
 # Calamari.Benchmarks
 
-Wall-clock and allocation measurements for archive handling. Nothing here runs in CI — it is a tool you run
-by hand when you need a number.
+Wall-clock and allocation measurements for archive handling. It is a tool you run by hand when you need a
+number; CI compiles this project as part of the solution build but never executes the benchmarks.
+
+That is deliberate. These are wall-clock, disk-touching measurements taken on shared build agents across
+several platforms, so any regression threshold would be either too loose to catch anything or flaky enough
+that people mute it. There is also no stored baseline to compare against, so a CI run would print numbers
+into a build log that nobody diffs. See "Keeping this from rotting" below for what is guarded instead.
 
 It exists because the repo had no benchmark of any kind, which left two questions unanswerable:
 
@@ -55,6 +60,26 @@ CALAMARI_BENCHMARK_CONSOLIDATED_PACKAGE=/path/to/Calamari.<hash>.zip \
 ```
 
 The `FilesPerPlatform` and `PayloadBytes` parameters are ignored when that variable is set.
+
+## Keeping this from rotting
+
+The solution build catches compile breakage, but nothing here is executed in CI, so the risk is that the
+harness quietly stops working and we only find out during the next upgrade — exactly when nobody wants to be
+debugging a benchmark.
+
+The fragile part is `Support/`, which builds the fixtures the benchmarks measure. Those classes are covered
+by ordinary tests in the existing suite:
+
+- `Calamari.Tests` → `SyntheticArchiveFixture` — every format it produces is extractable by the matching
+  Calamari extractor, entries are spread over a directory tree, and payloads don't compress away to nothing.
+- `Calamari.ConsolidateCalamariPackages.Tests` → `SyntheticConsolidatedPackageTests` — the generated package
+  is readable by the real `ConsolidatedPackageFactory`, every flavour and platform resolves its files, and
+  shared files really are stored once and referenced many times.
+
+Those projects **source-link** the `Support/` files with a `<Compile Include>` rather than taking a
+ProjectReference on this project, so BenchmarkDotNet does not become a dependency of packages that ship to
+test agents. That only works while `Support/` stays free of BenchmarkDotNet types — keep benchmark
+attributes in the benchmark classes, not in the builders.
 
 ## Reading the results
 
