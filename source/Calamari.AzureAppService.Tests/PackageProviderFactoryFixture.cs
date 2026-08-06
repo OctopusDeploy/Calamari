@@ -15,22 +15,29 @@ public class PackageProviderFactoryFixture
 {
     // The Kudu upload endpoint and sync/async behaviour are the only things that differ between package
     // types (notably .war and .jar route to the same JavaPackageProvider, differing solely by upload URL).
-    [TestCase(".zip", "/api/zipdeploy", true)]
-    [TestCase(".nupkg", "/api/zipdeploy", true)]
-    [TestCase(".war", "/api/wardeploy", false)]
-    [TestCase(".jar", "/api/publish?type=jar", false)]
-    public void GetProvider_SelectsCorrectUploadEndpointAndDeploymentMode(string extension, string expectedUploadUrlPath, bool expectedSupportsAsync)
+    // On a Flex Consumption plan, zip/nupkg packages must use the OneDeploy (/api/publish) endpoint instead
+    // of Kudu ZipDeploy (/api/zipdeploy), which Flex Consumption does not expose (returns 404).
+    [TestCase(".zip", false, "/api/zipdeploy", true, "application/octet-stream")]
+    [TestCase(".nupkg", false, "/api/zipdeploy", true, "application/octet-stream")]
+    [TestCase(".zip", true, "/api/publish?type=zip", false, "application/zip")]
+    [TestCase(".nupkg", true, "/api/publish?type=zip", false, "application/zip")]
+    [TestCase(".war", false, "/api/wardeploy", false, "application/octet-stream")]
+    [TestCase(".war", true, "/api/wardeploy", false, "application/octet-stream")]
+    [TestCase(".jar", false, "/api/publish?type=jar", false, "application/octet-stream")]
+    [TestCase(".jar", true, "/api/publish?type=jar", false, "application/octet-stream")]
+    public void GetProvider_SelectsCorrectUploadEndpointAndDeploymentMode(string extension, bool isFlexConsumption, string expectedUploadUrlPath, bool expectedSupportsAsync, string expectedContentType)
     {
-        var provider = PackageProviderFactory.GetProvider(extension, new InMemoryLog(), Substitute.For<ICalamariFileSystem>(), new CalamariVariables(), DeploymentContext());
+        var provider = PackageProviderFactory.GetProvider(extension, isFlexConsumption, new InMemoryLog(), Substitute.For<ICalamariFileSystem>(), new CalamariVariables(), DeploymentContext());
 
         provider.UploadUrlPath.Should().Be(expectedUploadUrlPath);
         provider.SupportsAsynchronousDeployment.Should().Be(expectedSupportsAsync);
+        provider.ContentType.Should().Be(expectedContentType);
     }
 
     [Test]
     public void GetProvider_ThrowsForUnsupportedExtension()
     {
-        Action act = () => PackageProviderFactory.GetProvider(".rpm", new InMemoryLog(), Substitute.For<ICalamariFileSystem>(), new CalamariVariables(), DeploymentContext());
+        Action act = () => PackageProviderFactory.GetProvider(".rpm", false, new InMemoryLog(), Substitute.For<ICalamariFileSystem>(), new CalamariVariables(), DeploymentContext());
 
         act.Should().Throw<Exception>().WithMessage("Unsupported archive type");
     }

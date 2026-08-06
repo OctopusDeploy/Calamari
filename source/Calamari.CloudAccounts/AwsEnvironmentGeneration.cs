@@ -136,11 +136,11 @@ namespace Calamari.CloudAccounts
         {
             get
             {
-                // "aws-global" routes to the global STS endpoint (sts.amazonaws.com), preserving SDK v3 behaviour.
-                // See: https://docs.aws.amazon.com/sdkref/latest/guide/feature-region.html
+                // Fall back to us-east-1: unsigned AssumeRoleWithWebIdentity fails against "aws-global".
+                // AWS recommends regional over global: https://docs.aws.amazon.com/general/latest/gr/sts.html
                 if (!EnvironmentVars.TryGetValue("AWS_REGION", out var awsRegion) || string.IsNullOrWhiteSpace(awsRegion))
                 {
-                    return RegionEndpoint.GetBySystemName("aws-global");
+                    return RegionEndpoint.USEast1;
                 }
 
                 return RegionEndpoint.GetBySystemName(awsRegion);

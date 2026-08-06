@@ -58,6 +58,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="AiAgent\ClaudeCodeBehaviour\DefaultContext\**\*.md" />
+  </ItemGroup>
   
   <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>

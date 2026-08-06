@@ -92,7 +92,7 @@ namespace Calamari.Tests.AWS
             awsEnvironmentGenerator.EnvironmentVars.Should().Contain(new KeyValuePair<string, string>("AWS_SESSION_TOKEN", sessionToken));
         }
         [Test]
-        public void FallsBackToAwsGlobalWhenRegionIsMissing()
+        public void FallsBackToUsEast1WhenRegionIsMissing()
         {
             IVariables variables = new CalamariVariables();
             variables.Add("Octopus.Account.AccountType", "AmazonWebServicesAccount");
@@ -101,7 +101,7 @@ namespace Calamari.Tests.AWS
             variables.Add("AWSAccount.SecretKey", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
 
             var envGeneration = new AwsEnvironmentGeneration(Substitute.For<ILog>(), variables);
-            envGeneration.AwsRegion.SystemName.Should().Be("aws-global");
+            envGeneration.AwsRegion.SystemName.Should().Be("us-east-1");
         }
 
         // Repros the Terraform-step-on-EKS scenario from Issues #8337
