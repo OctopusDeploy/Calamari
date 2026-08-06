@@ -181,10 +181,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase(typeof(ZipPackageExtractor), "zip", ArchiveType.Zip, CompressionType.Deflate)]
         public void CorruptedPayloadInCompressedArchiveThrows(Type extractorType, string extension, ArchiveType archiveType, CompressionType compressionType)
         {
-            // Each compressed format detects the damage, though not uniformly: zip and gzip surface a
-            // ZlibException, while bzip2 currently surfaces an IndexOutOfRangeException from inside the
-            // decoder. The exact type is an implementation detail of the archive library and is deliberately
-            // not asserted; that it fails rather than writing garbage is the property that matters.
+            // Every compressed format detects the damage. Zip and gzip surface a ZlibException; bzip2
+            // surfaces an InvalidFormatException on SharpCompress 0.49.1, where 0.37.2 leaked an
+            // IndexOutOfRangeException from inside the decoder — the upgrade turned an implementation
+            // artifact into a domain exception. The exact type is still an archive-library detail and is
+            // deliberately not asserted; that it fails rather than writing garbage is what matters.
             using var tempFolder = TemporaryDirectory.Create();
             var packageFile = Path.Combine(tempFolder.DirectoryPath, $"corrupt.{extension}");
             var extractionDir = CreateExtractionDirectory(tempFolder);
@@ -253,7 +254,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static void WriteArchive(string packageFile, ArchiveType archiveType, CompressionType compressionType, Action<IWriter> write)
         {
             using var stream = File.OpenWrite(packageFile);
-            using var writer = WriterFactory.Open(stream,
+            using var writer = WriterFactory.OpenWriter(stream,
                                                   archiveType,
                                                   new WriterOptions(compressionType)
                                                   {
