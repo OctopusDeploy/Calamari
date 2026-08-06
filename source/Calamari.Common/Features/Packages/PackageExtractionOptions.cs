@@ -4,22 +4,20 @@ using SharpCompress.Common;
 
 namespace Calamari.Common.Features.Packages
 {
-    public class PackageExtractionOptions : ExtractionOptions
+    // SharpCompress 0.48 sealed ExtractionOptions, so we can no longer subclass it.
+    // This factory builds a configured ExtractionOptions with Calamari's defaults instead.
+    public static class PackageExtractionOptions
     {
-        readonly ILog log;
-
-        public PackageExtractionOptions(ILog log)
+        public static ExtractionOptions Create(ILog log, bool extractFullPath = true, bool preserveFileTime = true)
         {
-            this.log = log;
-            ExtractFullPath = true;
-            Overwrite = true;
-            PreserveFileTime = true;
-            WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported;
-        }
-
-        void WarnThatSymbolicLinksAreNotSupported(string sourcepath, string targetpath)
-        {
-            log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", sourcepath);
+            return new ExtractionOptions
+            {
+                ExtractFullPath = extractFullPath,
+                Overwrite = true,
+                PreserveFileTime = preserveFileTime,
+                SymbolicLinkHandler = (sourcepath, targetpath) =>
+                    log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", sourcepath),
+            };
         }
     }
 }
