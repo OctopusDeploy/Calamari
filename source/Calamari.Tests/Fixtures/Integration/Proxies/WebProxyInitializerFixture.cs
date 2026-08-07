@@ -164,11 +164,11 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         void ResetProxyEnvironmentVariables()
         {
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, null);
         }
 
         void AssertAuthenticatedProxyUsed()
