@@ -384,6 +384,24 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        public void ShouldWriteServiceMessageForEnvironmentState()
+        {
+            var (output, _) = RunPowerShellScript("CanSetEnvironmentState.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[set-environmentstate key='TXlLZXk=' value='TXlWYWx1ZQ==' type='U3RhdGU=']");
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
+        public void ShouldWriteServiceMessageForSensitiveEnvironmentState()
+        {
+            var (output, _) = RunPowerShellScript("CanSetEnvironmentState.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[set-environmentstate key='U2VjcmV0S2V5' value='U2VjcmV0IFZhbHVl' sensitive='VHJ1ZQ==' type='U3RhdGU=']");
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
         public void ShouldSetActionIndexedOutputVariables()
         {
             var (output, variables) = RunPowerShellScript("CanSetVariable.ps1", new Dictionary<string, string>

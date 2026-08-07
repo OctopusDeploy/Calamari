@@ -113,6 +113,37 @@ function set_octopusvariable
   echo $MESSAGE
 }
 
+#	---------------------------------------------------------------------------
+# Function for setting environment state
+#   Accepts 3 arguments:
+#     string: value of the key of the environment state
+#     string: value of the value of the environment state
+#     string: optional '-sensitive' to make the value sensitive
+#	---------------------------------------------------------------------------
+function set_environmentstate
+{
+  MESSAGE="##octopus[set-environmentstate"
+
+  if [ -n "$1" ]
+  then
+    MESSAGE="$MESSAGE key='$(encode_servicemessagevalue "$1")'"
+  fi
+
+  if [ -n "$2" ]
+  then
+    MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
+  fi
+
+  if [ ! -z "${3:-}" ] && [ "$3" = "-sensitive" ]
+  then
+    MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
+  fi
+
+  MESSAGE="$MESSAGE type='$(encode_servicemessagevalue "State")']"
+
+  echo $MESSAGE
+}
+
 # -----------------------------------------------------------------------------
 # Function to create a new octopus artifact
 #	Accepts 2 arguments:
