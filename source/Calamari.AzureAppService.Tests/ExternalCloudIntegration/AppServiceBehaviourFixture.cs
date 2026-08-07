@@ -238,10 +238,9 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                                                                                                                 ResourceGroupResource.Data.Location)
                                                                        );
 
-                var keys = await storageAccountResponse
-                                 .Value
-                                 .GetKeysAsync()
-                                 .ToListAsync();
+                var keys = new List<StorageAccountKey>();
+                await foreach (var key in storageAccountResponse.Value.GetKeysAsync())
+                    keys.Add(key);
 
                 var linuxAppServicePlan = await resourceGroup.GetAppServicePlans()
                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
