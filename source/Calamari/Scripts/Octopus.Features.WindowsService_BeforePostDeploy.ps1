@@ -1,4 +1,4 @@
-﻿## --------------------------------------------------------------------------------------
+## --------------------------------------------------------------------------------------
 ## Functions
 ## --------------------------------------------------------------------------------------
 
@@ -146,7 +146,7 @@ else
 }
 
 if ($serviceAccount -eq "_CUSTOM") {
-	# dont use sc.exe to set the username / password, as it may be logged to the windows audit log if process creation event logs are enabled
+	# dont use sc.exe to set the username / password, as it may be logged to the windows audit log if process creation event logs are enabled 
 	Write-Host "Setting custom service credentials for $serviceName"
 
 	# an unset variable arrives as $null, one set to a blank value arrives as ""; only the latter is a misconfiguration
@@ -156,6 +156,10 @@ if ($serviceAccount -eq "_CUSTOM") {
 
 	# no -ComputerName: supplying it, even ".", switches the transport from local DCOM to WSMan and puts the password on the wire
 	$cimService = Get-CimInstance -ClassName Win32_Service -Filter "name='$($serviceName -replace "'", "\'")'"
+	if ($null -eq $cimService) {
+		throw "Could not find the service '$serviceName' when setting its custom account."
+	}
+
 	$changeArguments = @{}
 	if (-not [string]::IsNullOrEmpty($customAccountName)) {
 		$changeArguments.StartName = $customAccountName
