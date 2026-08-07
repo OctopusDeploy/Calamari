@@ -115,10 +115,11 @@ function set_octopusvariable
 
 #	---------------------------------------------------------------------------
 # Function for setting environment state
-#   Accepts 3 arguments:
+#   Accepts 4 arguments:
 #     string: value of the key of the environment state
 #     string: value of the value of the environment state
 #     string: optional '-sensitive' to make the value sensitive
+#     string: optional value of the type of the environment state, defaults to 'State'
 #	---------------------------------------------------------------------------
 function set_environmentstate
 {
@@ -139,9 +140,20 @@ function set_environmentstate
     MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
   fi
 
-  MESSAGE="$MESSAGE type='$(encode_servicemessagevalue "State")']"
+  MESSAGE="$MESSAGE type='$(encode_servicemessagevalue "${4:-State}")']"
 
   echo $MESSAGE
+}
+
+#	---------------------------------------------------------------------------
+# Function for setting an environment url
+#   Accepts 2 arguments:
+#     string: value of the key of the environment url
+#     string: value of the url of the environment
+#	---------------------------------------------------------------------------
+function set_environmenturl
+{
+  set_environmentstate "$1" "$2" "" "Url"
 }
 
 # -----------------------------------------------------------------------------
