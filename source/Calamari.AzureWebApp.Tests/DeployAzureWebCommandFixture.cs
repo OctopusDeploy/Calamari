@@ -13,7 +13,9 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
@@ -324,6 +326,47 @@ namespace Calamari.AzureWebApp.Tests
             await AssertContent(webSiteResource.Data.DefaultHostName, actualText, "newfile.html");
 
             var response = await client.GetAsync($"https://{webSiteResource.Data.DefaultHostName}/NotKeep", cancellationToken);
+            response.IsSuccessStatusCode.Should().BeFalse();
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        [Test]
+        public async Task Deploy_WebApp_Ignore_Preserve_Paths_Flag_Overrides_Preserve_Paths()
+        {
+            using var tempPath = TemporaryDirectory.Create();
+            const string actualText = "Hello World";
+
+            Directory.CreateDirectory(Path.Combine(tempPath.DirectoryPath, "Keep"));
+            File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "Keep", "index.html"), actualText);
+
+            await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
+
+            using var tempPath2 = TemporaryDirectory.Create();
+
+            File.WriteAllText(Path.Combine(tempPath2.DirectoryPath, "newfile.html"), actualText);
+
+            await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.RemoveAdditionalFiles, bool.TrueString);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.PreservePaths, @"\\Keep;\\Keep\\index.html");
+                                                     context.Variables.Add(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.AzureWebAppIgnorePreservePathsFeatureToggle);
+
+                                                     context.WithFilesToCopy(tempPath2.DirectoryPath);
+                                                 })
+                                    .Execute();
+
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText, "newfile.html");
+
+            var response = await client.GetAsync($"https://{webSiteResource.Data.DefaultHostName}/Keep", cancellationToken);
             response.IsSuccessStatusCode.Should().BeFalse();
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }

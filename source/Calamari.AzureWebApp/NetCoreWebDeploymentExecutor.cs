@@ -7,6 +7,7 @@ using Calamari.Azure.AppServices;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -224,10 +225,13 @@ namespace Calamari.AzureWebApp
                 args.Add("--useAppOffline");
             }
 
-            var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
-            if (preservePaths.Count > 0)
+            if (!OctopusFeatureToggles.AzureWebAppIgnorePreservePathsFeatureToggle.IsEnabled(variables))
             {
-                args.Add($"--preservePaths={string.Join("|",preservePaths.Select(s => $"\"{s}\""))}");
+                var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+                if (preservePaths.Count > 0)
+                {
+                    args.Add($"--preservePaths={string.Join("|",preservePaths.Select(s => $"\"{s}\""))}");
+                }
             }
 
             // ReSharper disable once InvertIf

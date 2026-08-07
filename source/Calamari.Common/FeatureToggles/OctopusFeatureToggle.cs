@@ -11,6 +11,7 @@ namespace Calamari.Common.FeatureToggles
             public const string UseDockerCredentialHelper = "calamari-use-docker-credential-helper";
             public const string GitDependenciesForScriptsFeatureToggle = "git-dependencies-for-scripts";
             public const string EnableLegacyKubernetesResourceChecks = "enable-legacy-kubernetes-resource-checks";
+            public const string AzureWebAppIgnorePreservePathsFeatureToggle = "azure-web-app-ignore-preserve-paths";
         };
 
         public static readonly OctopusFeatureToggle KustomizePatchImageUpdatesFeatureToggle = new(KnownSlugs.KustomizePatchImageUpdatesFeatureToggle);
@@ -18,6 +19,7 @@ namespace Calamari.Common.FeatureToggles
         public static readonly OctopusFeatureToggle UseDockerCredentialHelperFeatureToggle = new(KnownSlugs.UseDockerCredentialHelper);
         public static readonly OctopusFeatureToggle GitDependenciesForScriptsFeatureToggle = new(KnownSlugs.GitDependenciesForScriptsFeatureToggle);
         public static readonly OctopusFeatureToggle EnableLegacyKubernetesResourceChecksFeatureToggle = new(KnownSlugs.EnableLegacyKubernetesResourceChecks);
+        public static readonly OctopusFeatureToggle AzureWebAppIgnorePreservePathsFeatureToggle = new(KnownSlugs.AzureWebAppIgnorePreservePathsFeatureToggle);
 
         public class OctopusFeatureToggle
         {
