@@ -18,7 +18,7 @@
     <Product>Calamari</Product>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
     <NoWarn>CS8632</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -31,10 +31,6 @@
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Octokit" Version="14.0.0" />
@@ -43,9 +39,8 @@
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
     <PackageReference Include="SharpCompress" Version="0.49.1" />
-    <PackageReference Include="System.Text.Json" Version="9.0.16" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
-    <PackageReference Include="Autofac" Version="4.8.0" />
+    <PackageReference Include="Autofac" Version="9.3.1" />
     <PackageReference Include="KubernetesClient" Version="17.0.14" />
     <PackageReference Include="Octopus.LibGit2Sharp" Version="0.31.1-octopus.3" />
   </ItemGroup>
