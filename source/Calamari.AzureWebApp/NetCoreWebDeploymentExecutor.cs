@@ -37,6 +37,13 @@ namespace Calamari.AzureWebApp
                 throw new CommandException("Cannot execute on non-Windows operating systems as there is a required dependency on the Web Deploy tooling (msdeploy.exe).");
             }
 
+            if (variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
+            {
+                log.Warn("The `Use checksum to compare files` option is deprecated and will be removed in a future release.\r\n" +
+                         "Checksum-based comparison has no equivalent in the modern Azure deployment APIs; deployments will fall back to timestamp-based comparison.\r\n" +
+                         $"Remove the `{SpecialVariables.Action.Azure.UseChecksum}` variable from this step, or migrate to the `Deploy an Azure App Service` step.");
+            }
+
             var netCoreShimExeFolder = GetNetCoreShimExeFolder();
             var netCoreShimExePath = Path.Combine(netCoreShimExeFolder, ToolName);
 
