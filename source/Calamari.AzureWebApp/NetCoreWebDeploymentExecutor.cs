@@ -209,7 +209,7 @@ namespace Calamari.AzureWebApp
         {
             var args = new List<string>();
 
-            if (variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
+            if (!OctopusFeatureToggles.AzureWebAppIgnoreChecksumFeatureToggle.IsEnabled(variables) && variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
             {
                 args.Add("--useChecksum");
             }
