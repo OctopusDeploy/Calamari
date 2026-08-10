@@ -6,7 +6,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -59,7 +58,7 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
             this.log = log;
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
-            this.useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables) && !variables.GetFlag(SpecialVariables.Package.DisableDockerCredentialHelper, false);
+            this.useCredentialHelper = !variables.GetFlag(SpecialVariables.Package.DisableDockerCredentialHelper, false);
             this.dockerCredentialHelper = new DockerCredentialHelper(log);
         }
 
