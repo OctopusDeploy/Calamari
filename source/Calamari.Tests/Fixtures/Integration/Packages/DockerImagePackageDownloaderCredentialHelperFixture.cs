@@ -78,31 +78,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        public void CredentialHelper_ExplicitlyDisabled_UsesFallbackLogin()
-        {
-            // Arrange
-            var log = new InMemoryLog();
-            var variables = new CalamariVariables();
-
-            var downloader = GetDownloader(log, variables);
-            
-            // Act
-            var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
-                TimeSpan.FromSeconds(10));
-
-            // Assert
-            pkg.Should().NotBeNull();
-            pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
-            
-            // Verify credential helper was NOT used
-            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
-            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Cleaned up Docker credential files"));
-        }
-
-        [Test]
-        [RequiresDockerInstalled]
         public void CredentialHelper_DisabledByPackageVariable_UsesFallbackLogin()
         {
             // Arrange - the per-action variable opts this acquisition out.

@@ -113,11 +113,10 @@ namespace Calamari.Integration.Packages.Download
                 }
                 catch (CommandException) when (credentialHelperConfigured)
                 {
-                    // The credential-helper login failed (after retries); tear the helper down and retry
-                    // login once without it. (Docker emits its own "stored unencrypted" warning in this case.)
+                    // Un-retried, so maxDownloadAttempts stays the ceiling on logins against the registry.
                     log.Verbose("Docker login failed while the credential helper was enabled; retrying without the credential helper.");
                     dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
-                    strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+                    PerformLogin(username, password, feedHost, environmentVariables);
                 }
 
                 const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
