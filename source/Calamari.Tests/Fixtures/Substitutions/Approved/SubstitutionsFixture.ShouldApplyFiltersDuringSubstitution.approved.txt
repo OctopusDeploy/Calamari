@@ -13,3 +13,9 @@ PropertiesKeyEscape: \=\:'"\\\r\n\t\ <>\uffe6
 PropertiesValueEscape: =:'"\\\r\n\t <>\uffe6
 UriEscape: =:'%22%5C%0D%0A%09%20%3C%3E%EF%BF%A6
 UriDataEscape: %3D%3A%27%22%5C%0D%0A%09%20%3C%3E%EF%BF%A6
+AddTimeSpanHours: 2030-05-22T11:05:00.0000000
+AddTimeSpanNegative: 2030-05-22T07:05:00.0000000
+AddTimeSpanDays: 2030-05-24T09:05:00.0000000
+AddTimeSpanTwoAndAHalfDays: 2030-05-24T21:05:00.0000000
+AddTimeSpanLeadingFieldIsDaysOver23: 2030-07-09T09:05:00.0000000
+AddTimeSpanFormatted: 2030-05-22 11:05:00

@@ -8,3 +8,9 @@ PropertiesKeyEscape: #{var | PropertiesKeyEscape}
 PropertiesValueEscape: #{var | PropertiesValueEscape}
 UriEscape: #{var | UriEscape}
 UriDataEscape: #{var | UriDataEscape}
+AddTimeSpanHours: #{dateVar | AddTimeSpan 02:00:00}
+AddTimeSpanNegative: #{dateVar | AddTimeSpan -02:00:00}
+AddTimeSpanDays: #{dateVar | AddTimeSpan "2.00:00:00"}
+AddTimeSpanTwoAndAHalfDays: #{dateVar | AddTimeSpan "2.12:00:00"}
+AddTimeSpanLeadingFieldIsDaysOver23: #{dateVar | AddTimeSpan 48:00:00}
+AddTimeSpanFormatted: #{dateVar | AddTimeSpan 02:00:00 | Format "yyyy-MM-dd HH:mm:ss"}
