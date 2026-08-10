@@ -334,25 +334,25 @@ public class UploadAwsS3Convention(
         using var targetArchive = fileSystem.CreateTemporaryFile(string.Empty, out var targetArchivePath);
         if (supportedZipExtensions.Any(lowercasedFileName.EndsWith) || supportedJavaExtensions.Any(lowercasedFileName.EndsWith))
         {
-            using var archive = ZipArchive.Create();
+            using var archive = ZipArchive.CreateArchive();
             archive.AddAllFromDirectory(stagingDirectory);
             archive.SaveTo(targetArchive, CompressionType.Deflate);
         }
         else if (supportedTarExtensions.Any(lowercasedFileName.EndsWith))
         {
-            using var archive = TarArchive.Create();
+            using var archive = TarArchive.CreateArchive();
             archive.AddAllFromDirectory(stagingDirectory);
             archive.SaveTo(targetArchive, CompressionType.None);
         }
         else if (supportedTarGZipExtensions.Any(lowercasedFileName.EndsWith))
         {
-            using var archive = TarArchive.Create();
+            using var archive = TarArchive.CreateArchive();
             archive.AddAllFromDirectory(stagingDirectory);
             archive.SaveTo(targetArchive, CompressionType.GZip);
         }
         else if (supportedTarBZip2Extensions.Any(lowercasedFileName.EndsWith))
         {
-            using var archive = TarArchive.Create();
+            using var archive = TarArchive.CreateArchive();
             archive.AddAllFromDirectory(stagingDirectory);
             archive.SaveTo(targetArchive, CompressionType.BZip2);
         }

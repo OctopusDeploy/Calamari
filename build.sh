@@ -24,17 +24,53 @@ export DOTNET_MULTILEVEL_LOOKUP=0
 ###########################################################################
 
 function FirstJsonValue {
-    perl -nle 'print $1 if m{"'"$1"'": "([^"]+)",?}' <<< "${@:2}"
+    # Stock Nuke shells out to perl. The Amazon Linux execution container does not ship it, so fall
+    # back to sed rather than dying with "perl: command not found".
+    if command -v perl &>/dev/null; then
+        perl -nle 'print $1 if m{"'"$1"'": "([^"]+)",?}' <<< "${@:2}"
+    else
+        sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' <<< "${@:2}" | head -n 1
+    fi
 }
+
+# ----- Octopus Deploy Modification -----
+# Stock Nuke assumes curl. The Linux execution containers install wget instead
+function DownloadFile {
+    local url="$1"
+    local destination="$2"
+
+    if command -v curl &>/dev/null; then
+        curl -Lsfo "$destination" "$url"
+    elif command -v wget &>/dev/null; then
+        wget -qO "$destination" "$url"
+    else
+        echo "Unable to download $url - neither curl nor wget is available on this machine." >&2
+        return 1
+    fi
+}
+
+# Without this you get "command not found", makes you think missing tool but it's actually missing SDK
+function DotnetBootstrapReason {
+    if [[ ! -x "$(command -v dotnet)" ]]; then
+        echo "no 'dotnet' found on PATH"
+    else
+        local installed
+        installed=$(dotnet --list-sdks 2>/dev/null | cut -d' ' -f1 | paste -sd' ' -)
+        echo "'dotnet --version' failed - global.json likely pins an SDK that is not installed (found: ${installed:-none})"
+    fi
+}
+# ----- End Octopus Deploy Modification -----
 
 # If dotnet CLI is installed globally and it matches requested version, use for execution
 if [ -x "$(command -v dotnet)" ] && dotnet --version &>/dev/null; then
     export DOTNET_EXE="$(command -v dotnet)"
 else
+    echo "Bootstrapping a local .NET SDK: $(DotnetBootstrapReason)"
+
     # Download install script
     DOTNET_INSTALL_FILE="$TEMP_DIRECTORY/dotnet-install.sh"
     mkdir -p "$TEMP_DIRECTORY"
-    curl -Lsfo "$DOTNET_INSTALL_FILE" "$DOTNET_INSTALL_URL"
+    DownloadFile "$DOTNET_INSTALL_URL" "$DOTNET_INSTALL_FILE"
     chmod +x "$DOTNET_INSTALL_FILE"
 
     # If global.json exists, load expected version

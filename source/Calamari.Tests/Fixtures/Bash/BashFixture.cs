@@ -49,6 +49,49 @@ namespace Calamari.Tests.Fixtures.Bash
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
         [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
+        public void ShouldSetEnvironmentState(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("set-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[set-environmentstate key='TXlLZXk=' value='TXlWYWx1ZQ==' type='U3RhdGU=']");
+                            });
+        }
+
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldSetSensitiveEnvironmentState(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("set-sensitive-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[set-environmentstate key='U2VjcmV0S2V5' value='U2VjcmV0IFZhbHVl' sensitive='VHJ1ZQ==' type='U3RhdGU=']");
+                            });
+        }
+
+
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldSetEnvironmentUrl(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("set-environment-url.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[set-environmentstate key='TXlFbnZpcm9ubWVudA==' value='aHR0cHM6Ly9teS1lbnZpcm9ubWVudC5leGFtcGxlLmNvbQ==' type='VXJs']");
+                            });
+        }
+
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        [RequiresBashDotExeIfOnWindows]
         public void ShouldCreateArtifact(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));

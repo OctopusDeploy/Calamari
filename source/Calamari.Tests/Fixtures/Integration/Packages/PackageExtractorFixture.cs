@@ -163,7 +163,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 var fileName = Path.Combine(tempFolder.DirectoryPath, $"package.{extension}");
                 using (Stream stream = File.OpenWrite(fileName))
-                using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType)
+                using (var writer = WriterFactory.OpenWriter(stream, archiveType, new WriterOptions(compressionType)
                 {
                     ArchiveEncoding = new ArchiveEncoding {Default = Encoding.UTF8}
                 }))
@@ -241,7 +241,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Directory.CreateDirectory(extractionDir);
 
             using (var stream = File.OpenWrite(packageFile))
-            using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType) { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } }))
+            using (var writer = WriterFactory.OpenWriter(stream, archiveType, new WriterOptions(compressionType) { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } }))
             {
                 var payload = "malicious content"u8.ToArray();
                 writer.Write("safe-file.txt", new MemoryStream(payload));
@@ -252,6 +252,45 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             Assert.Throws<InvalidOperationException>(() => extractor.Extract(packageFile, extractionDir));
             Assert.That(File.Exists(Path.Combine(tempFolder.DirectoryPath, "traversal.txt")), Is.False, "Traversal file should not have been written outside the extraction directory");
+        }
+
+        // Directly targets the SharpCompress advisory GHSA-6c8g-7p36-r338 ("zip slip" via *directory entries*
+        // in WriteToDirectory). A normal archive writer won't emit a traversing directory entry, so we craft the
+        // zip with System.IO.Compression to inject one, then extract it through Calamari's Zip extractor.
+        // All traversal vectors stay one level up (inside the temp folder) so a regression can't write outside it.
+        [Test]
+        public void ExtractBlocksZipSlipViaDirectoryEntry()
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var packageFile = Path.Combine(tempFolder.DirectoryPath, "zip-slip.zip");
+            var extractionDir = Path.Combine(tempFolder.DirectoryPath, "extraction");
+            Directory.CreateDirectory(extractionDir);
+
+            using (var fileStream = File.Create(packageFile))
+            using (var zip = new System.IO.Compression.ZipArchive(fileStream, System.IO.Compression.ZipArchiveMode.Create))
+            {
+                WriteZipEntry(zip, "safe/ok.txt", "safe");        // a benign entry
+                zip.CreateEntry("../evil-dir/");                   // traversing *directory* entry (the CVE vector)
+                WriteZipEntry(zip, "../evil-dir/pwned.txt", "pwned"); // file inside the escaping directory
+            }
+
+            var extractor = new ZipPackageExtractor(ConsoleLog.Instance);
+
+            var ex = Assert.Throws<InvalidOperationException>(() => extractor.Extract(packageFile, extractionDir));
+            // Pin the failure to the path-traversal guard (not an unrelated read error), so the test can't pass vacuously.
+            ex.Message.Should().Contain("outside the intended extraction directory");
+
+            var escapedDir = Path.Combine(tempFolder.DirectoryPath, "evil-dir");
+            Assert.That(Directory.Exists(escapedDir), Is.False, "Directory entry escaped the extraction root");
+            Assert.That(File.Exists(Path.Combine(escapedDir, "pwned.txt")), Is.False, "File escaped via directory-entry traversal");
+        }
+
+        static void WriteZipEntry(System.IO.Compression.ZipArchive zip, string key, string content)
+        {
+            var entry = zip.CreateEntry(key);
+            using var stream = entry.Open();
+            var bytes = Encoding.UTF8.GetBytes(content);
+            stream.Write(bytes, 0, bytes.Length);
         }
 
         private string GetFileName(string extension)
