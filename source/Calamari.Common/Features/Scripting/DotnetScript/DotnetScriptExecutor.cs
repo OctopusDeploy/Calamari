@@ -13,6 +13,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
     {
         const string DotnetRollForwardVariableName = "DOTNET_ROLL_FORWARD";
         const string RollForwardVariable = "Octopus.Action.Script.CSharp.RollForward";
+        const string DisableIsolatedLoadContextVariable = "Octopus.Action.Script.CSharp.DisableIsolatedLoadContext";
 
         readonly ICommandLineRunner commandLineRunner;
 
@@ -36,7 +37,14 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var nugetSource = variables.Get("Octopus.Action.Script.CSharp.NuGetSource");
-            var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters, nugetSource);
+            bool.TryParse(variables.Get(DisableIsolatedLoadContextVariable, "false"), out var disableIsolatedLoadContext);
+
+            if (DotnetScriptBootstrapper.HasLegacyIsolatedLoadContextFlag(script.Parameters))
+                Log.Verbose($"Ignoring '{DotnetScriptBootstrapper.LegacyIsolatedLoadContextArgument}' in the script parameters: "
+                            + "the isolated assembly load context is the default from dotnet-script 2.0 on, so the flag is "
+                            + $"redundant. Set {DisableIsolatedLoadContextVariable} to true to turn isolation off instead.");
+
+            var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters, nugetSource, disableIsolatedLoadContext);
             bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.BypassIsolation", "false"), out var bypassDotnetScriptIsolation);
 
             var cli = CreateCommandLineInvocation(executable, arguments, !string.IsNullOrWhiteSpace(localDotnetScriptPath));
