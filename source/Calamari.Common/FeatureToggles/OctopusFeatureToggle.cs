@@ -11,6 +11,7 @@ namespace Calamari.Common.FeatureToggles
             public const string GitDependenciesForScriptsFeatureToggle = "git-dependencies-for-scripts";
             public const string EnableLegacyKubernetesResourceChecks = "enable-legacy-kubernetes-resource-checks";
             public const string AzureWebAppIgnorePreservePathsFeatureToggle = "azure-web-app-ignore-preserve-paths";
+            public const string AzureWebAppIgnoreChecksumFeatureToggle = "azure-web-app-ignore-checksum";
         };
 
         public static readonly OctopusFeatureToggle KustomizePatchImageUpdatesFeatureToggle = new(KnownSlugs.KustomizePatchImageUpdatesFeatureToggle);
@@ -18,6 +19,7 @@ namespace Calamari.Common.FeatureToggles
         public static readonly OctopusFeatureToggle GitDependenciesForScriptsFeatureToggle = new(KnownSlugs.GitDependenciesForScriptsFeatureToggle);
         public static readonly OctopusFeatureToggle EnableLegacyKubernetesResourceChecksFeatureToggle = new(KnownSlugs.EnableLegacyKubernetesResourceChecks);
         public static readonly OctopusFeatureToggle AzureWebAppIgnorePreservePathsFeatureToggle = new(KnownSlugs.AzureWebAppIgnorePreservePathsFeatureToggle);
+        public static readonly OctopusFeatureToggle AzureWebAppIgnoreChecksumFeatureToggle = new(KnownSlugs.AzureWebAppIgnoreChecksumFeatureToggle);
 
         public class OctopusFeatureToggle
         {
