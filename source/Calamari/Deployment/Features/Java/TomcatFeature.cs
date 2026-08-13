@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Integration.Tomcat;
 
 namespace Calamari.Deployment.Features.Java
 {
@@ -31,6 +33,12 @@ namespace Calamari.Deployment.Features.Java
                   (variables.Get(KnownVariables.Package.EnabledFeatures) ?? "").Contains(SpecialVariables.Action.Java.Tomcat.Feature)))
                 return;
 
+            if (OctopusFeatureToggles.TomcatNativeIntegrationFeatureToggle.IsEnabled(variables))
+            {
+                ExecuteNative(deployment);
+                return;
+            }
+
             // Environment variables are used to pass parameters to the Java library
             log.Verbose("Invoking java to perform Tomcat integration");
             javaRunner.Run("com.octopus.calamari.tomcat.TomcatDeploy", new Dictionary<string, string>()
@@ -43,6 +51,33 @@ namespace Calamari.Deployment.Features.Java
                 {"OctopusEnvironment_Tomcat_Deploy_Enabled", variables.Get(SpecialVariables.Action.Java.Tomcat.Enabled)},
                 {"OctopusEnvironment_Tomcat_Deploy_Version", variables.Get(SpecialVariables.Action.Java.Tomcat.Version)},
             });
+        }
+
+        void ExecuteNative(RunningDeployment deployment)
+        {
+            var variables = deployment.Variables;
+            var applicationPath = variables.Get(PackageVariables.Output.InstallationPackagePath, deployment.PackageFilePath);
+
+            var options = new TomcatManagerOptions(
+                                                    variables.Get(SpecialVariables.Action.Java.Tomcat.Controller),
+                                                    variables.Get(SpecialVariables.Action.Java.Tomcat.User),
+                                                    variables.Get(SpecialVariables.Action.Java.Tomcat.Password),
+                                                    applicationPath,
+                                                    variables.Get(SpecialVariables.Action.Java.Tomcat.DeployName),
+                                                    "",
+                                                    variables.Get(SpecialVariables.Action.Java.Tomcat.Version));
+
+            log.Verbose("Deploying application to Tomcat");
+            var client = new TomcatManagerClient(log);
+            client.Deploy(options, applicationPath);
+
+            var enabled = variables.GetFlag(SpecialVariables.Action.Java.Tomcat.Enabled, true);
+            if (enabled)
+                client.Start(options);
+            else
+                client.Stop(options);
+
+            client.VerifyState(options, enabled);
         }
     }
 }
