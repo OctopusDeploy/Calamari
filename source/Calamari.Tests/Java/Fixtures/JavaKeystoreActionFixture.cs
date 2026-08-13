@@ -75,7 +75,7 @@ namespace Calamari.Tests.Java.Fixtures
         {
             var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Action.Java.JavaKeystore.Variable, CertificateVariableName);
-            variables.Set(SpecialVariables.Action.Java.JavaKeystore.Password, "sekret");
+            variables.Set(SpecialVariables.Action.Java.JavaKeystore.Password, Some.String());
             variables.Set(SpecialVariables.Action.Java.JavaKeystore.KeystoreFilename, keystoreFilename);
             variables.Set(SpecialVariables.Action.Java.JavaKeystore.KeystoreAlias, "myalias");
             variables.Set(SpecialVariables.Certificate.PrivateKeyPem(CertificateVariableName), privateKeyPem);

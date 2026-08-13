@@ -1,14 +1,12 @@
 using System;
 using System.IO;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Certificates.Java;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
@@ -45,8 +43,8 @@ namespace Calamari.Tests.Java.Fixtures
 
             var keystorePath = Path.Combine(workingDirectory, "test.p12");
             var builder = new JavaKeystoreBuilder(log);
-
-            var resultPath = builder.SaveKeystoreToFile("myalias", privateKeyPem, certificatePem, "sekret", keystorePath);
+            var testPassword = Some.String();
+            var resultPath = builder.SaveKeystoreToFile("myalias", privateKeyPem, certificatePem, testPassword, keystorePath);
 
             resultPath.Should().Be(Path.GetFullPath(keystorePath));
             File.Exists(keystorePath).Should().BeTrue();
@@ -54,7 +52,7 @@ namespace Calamari.Tests.Java.Fixtures
             var reloaded = new Pkcs12StoreBuilder().Build();
             using (var fileStream = new FileStream(keystorePath, FileMode.Open))
             {
-                reloaded.Load(fileStream, "sekret".ToCharArray());
+                reloaded.Load(fileStream, testPassword.ToCharArray());
             }
 
             reloaded.ContainsAlias("myalias").Should().BeTrue();
@@ -93,7 +91,7 @@ namespace Calamari.Tests.Java.Fixtures
             var (privateKeyPem, certificatePem, _, _) = CreateSelfSignedRsaCertificate("CN=octopus-relative-path-test");
             var builder = new JavaKeystoreBuilder(log);
 
-            Action act = () => builder.SaveKeystoreToFile("myalias", privateKeyPem, certificatePem, "sekret", "relative/path.p12");
+            Action act = () => builder.SaveKeystoreToFile("myalias", privateKeyPem, certificatePem, Some.String(), "relative/path.p12");
 
             act.Should().Throw<CommandException>().WithMessage("*absolute path*");
         }
@@ -105,7 +103,7 @@ namespace Calamari.Tests.Java.Fixtures
             var builder = new JavaKeystoreBuilder(log);
             var keystorePath = Path.Combine(workingDirectory, "no-cert.p12");
 
-            Action act = () => builder.SaveKeystoreToFile("myalias", privateKeyPem, "not a certificate", "sekret", keystorePath);
+            Action act = () => builder.SaveKeystoreToFile("myalias", privateKeyPem, "not a certificate", Some.String(), keystorePath);
 
             act.Should().Throw<CommandException>().WithMessage("*does not contain any certificates*");
         }
@@ -119,7 +117,7 @@ namespace Calamari.Tests.Java.Fixtures
             var (leafKeyPem, leafCertPem, _, leafCert) = CreateRsaCertificate("CN=leaf", "CN=intermediate", intermediateKeyPair);
 
             var builder = new JavaKeystoreBuilder(log);
-            var store = builder.BuildPkcs12Store("myalias", leafKeyPem, leafCertPem + "\n" + intermediateCertPem, "sekret");
+            var store = builder.BuildPkcs12Store("myalias", leafKeyPem, leafCertPem + "\n" + intermediateCertPem, Some.String());
 
             var chain = store.GetCertificateChain("myalias");
             chain.Should().HaveCount(2);
