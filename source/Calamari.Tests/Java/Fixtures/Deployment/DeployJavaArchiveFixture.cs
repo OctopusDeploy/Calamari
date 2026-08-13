@@ -6,9 +6,9 @@ using Calamari.Commands.Java;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
@@ -29,7 +29,6 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         int returnCode;
         InMemoryLog log;
         string sourcePackage;
-
 
         [SetUp]
         public virtual void SetUp()
@@ -57,10 +56,11 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             CalamariPhysicalFileSystem.GetPhysicalFileSystem().PurgeDirectory(applicationDirectory, FailureOptions.IgnoreFailure);
         }
 
-        [Test]
-        public void CanDeployJavaArchive()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CanDeployJavaArchive(bool withNativeZipExtraction)
         {
-            DeployPackage(sourcePackage, GenerateVariables());
+            DeployPackage(sourcePackage, GenerateVariables( withNativeZipExtraction));
             Assert.AreEqual(0, returnCode);
 
             //Archive is re-packed
@@ -68,10 +68,11 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         }
 
         // https://github.com/OctopusDeploy/Issues/issues/4733
-        [Test]
-        public void EnsureMetafileDataRepacked()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void EnsureMetafileDataRepacked(bool withNativeZipExtraction)
         {
-            DeployPackage(sourcePackage, GenerateVariables());
+            DeployPackage(sourcePackage, GenerateVariables(withNativeZipExtraction));
             Assert.AreEqual(0, returnCode);
 
             var targetFile = Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");
@@ -93,11 +94,12 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             }
         }
 
-        [Test]
-        public void CanTransformConfigInJar()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CanTransformConfigInJar(bool withNativeZipExtraction)
         {
             const string configFile = "config.properties";
-            var variables = GenerateVariables();
+            var variables = GenerateVariables(withNativeZipExtraction);
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
             variables.Set(PackageVariables.SubstituteInFilesTargets, configFile);
 
@@ -106,10 +108,11 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             log.StandardOut.Should().Contain($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
         }
 
-        [Test]
-        public void CanDeployJavaArchiveUncompressed()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CanDeployJavaArchiveUncompressed(bool withNativeZipExtraction)
         {
-            var variables = GenerateVariables();
+            var variables = GenerateVariables(withNativeZipExtraction);
             variables.Set(PackageVariables.JavaArchiveCompression, false.ToString());
 
             DeployPackage(sourcePackage, variables);
@@ -149,10 +152,14 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
 
-        protected IVariables GenerateVariables()
+        protected IVariables GenerateVariables(bool withNativeZipExtraction)
         {
             var variables = new VariablesFactory(fileSystem, new SilentLog()).Create(new CommonOptions("test"));
             variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, applicationDirectory);
+            if (withNativeZipExtraction)
+            {
+                variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.JavaArchiveNativeZipExtraction);
+            }
             return variables;
         }
     }

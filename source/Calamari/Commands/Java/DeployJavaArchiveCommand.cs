@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Deployment.Journal;
@@ -71,7 +72,11 @@ namespace Calamari.Commands.Java
             Options.Parse(commandLineArguments);
 
             Guard.NotNullOrWhiteSpace(archiveFile, "No archive file was specified. Please pass --archive YourPackage.jar");
-            JavaRuntime.VerifyExists();
+
+            // The native zip path doesn't need a JVM at all - only check for one when we're
+            // still relying on the bundled jar tool to create/extract the archive.
+            if (!OctopusFeatureToggles.JavaArchiveNativeZipExtractionFeatureToggle.IsEnabled(variables))
+                JavaRuntime.VerifyExists();
 
             if (!File.Exists(archiveFile))
                 throw new CommandException("Could not find archive file: " + archiveFile);
