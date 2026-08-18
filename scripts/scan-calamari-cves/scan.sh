@@ -15,16 +15,18 @@
 # Comparing against a previous result:
 #   ./scan.sh --previous-state=old.json 2026.3.508
 #
-# Exits 3 when the reported CVE set differs from that previous state, so CI or a
-# scheduler can treat "the answer changed" as the actionable event. A plain run with
-# no previous state always exits 0.
+# Exits 3 when the reported CVE set differs from that previous state, so CI or a shell
+# can treat "the answer changed" as the actionable event. A plain run with no previous
+# state always exits 0. Under --octopus it always exits 0 and signals change through the
+# HasNewFindings output variable instead, because Octopus fails a step on any non-zero
+# exit and "changed" is the case that most needs the later steps to run.
 #
 # Requires: curl, unzip, python3, and either docker (default) or trivy+grype on PATH.
 # dotnet only for --local.
 
 set -euo pipefail
 
-WORKDIR="${CALAMARI_SCAN_WORKDIR:-${TMPDIR:-/tmp}/calamari-cve-scan}"
+WORKDIR="${CALAMARI_SCAN_WORKDIR:-}"
 FEED="https://f.feedz.io/octopus-deploy/dependencies/nuget/v3"
 PKG="octopus.calamari.consolidated"
 MODE="feed"
@@ -44,6 +46,13 @@ for arg in "$@"; do
     *) VERSIONS+=("$arg") ;;
   esac
 done
+
+# Octopus collects artifacts from the step's working directory on the host. When the step
+# runs in an execution container, anything written to /tmp lives and dies inside that
+# container, so artifacts registered from there are gone before collection.
+if [ -z "$WORKDIR" ]; then
+  if [ "$OCTOPUS" = 1 ]; then WORKDIR="$PWD/calamari-cve-scan"; else WORKDIR="${TMPDIR:-/tmp}/calamari-cve-scan"; fi
+fi
 
 # Only colour a real terminal. Octopus captures stdout into a task log, where raw
 # escape codes show up verbatim and make the log harder to read, not easier.
@@ -221,5 +230,14 @@ say "Done"
 note "artifacts kept in $WORKDIR (trivy.json / grype.json for raw detail)"
 note "If the two scanners disagree, prefer investigating over dismissing -"
 note "they use different databases and different matching rules."
+
+# Octopus fails a step on any non-zero exit. "The set changed" is the normal, expected
+# outcome and the one that most needs the notify and save-state steps to run, so under
+# --octopus it is signalled by the HasNewFindings output variable and the script exits 0.
+# Outside Octopus, exit 3 still lets a shell or CI treat "changed" as actionable.
+if [ "$OCTOPUS" = 1 ]; then
+  note "HasNewFindings=$([ "$CHANGED" -eq 3 ] && echo true || echo false) (exit 0; Octopus signals change by variable, not exit code)"
+  exit 0
+fi
 
 exit "$CHANGED"

@@ -11,8 +11,12 @@ Run `./scan.sh`. Takes about ten minutes, most of it downloading a ~270 MB packa
 ```
 
 `--previous-state` makes the script exit **3** when the reported CVE set differs from that
-file, so a scheduler can treat "the answer changed" as the actionable event. Without it the
-script always exits 0.
+file, so a shell or CI job can treat "the answer changed" as the actionable event. Without
+it the script always exits 0.
+
+Under `--octopus` it always exits 0 and reports change through the `HasNewFindings` output
+variable instead. Octopus fails a step on any non-zero exit, and "the set changed" is
+precisely the case that needs the notify and save-state steps to run.
 
 ## Why this rather than `dotnet list package --vulnerable`
 
