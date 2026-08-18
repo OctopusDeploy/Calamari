@@ -177,7 +177,13 @@ def main():
     else:
         print("  no change: same distinct CVE set, same bundled runtime")
 
-    (workdir / "summary.json").write_text(json.dumps(state, indent=2, sort_keys=True))
+    # Merge into the previous state rather than replacing it. A run only scans the versions
+    # it was asked for, so replacing would drop every other version's baseline: an ad-hoc
+    # "scan the version this customer reported" run would silently wipe the scheduled
+    # baseline, and the next scheduled run would re-alert from scratch as a first scan.
+    merged = dict(previous)
+    merged.update(state)
+    (workdir / "summary.json").write_text(json.dumps(merged, indent=2, sort_keys=True))
     (workdir / "slack.txt").write_text("\n".join(slack) if slack else "No change.")
 
     sys.exit(3 if changed else 0)
