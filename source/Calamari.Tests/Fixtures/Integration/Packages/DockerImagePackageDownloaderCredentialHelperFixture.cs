@@ -4,10 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Features.Scripting.DotnetScript;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -54,7 +51,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             var downloader = GetDownloader(log, variables);
 
             // Act
@@ -82,37 +78,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        public void CredentialHelper_ExplicitlyDisabled_UsesFallbackLogin()
-        {
-            // Arrange
-            var log = new InMemoryLog();
-            var variables = new CalamariVariables();
-
-            var downloader = GetDownloader(log, variables);
-            
-            // Act
-            var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
-                TimeSpan.FromSeconds(10));
-
-            // Assert
-            pkg.Should().NotBeNull();
-            pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
-            
-            // Verify credential helper was NOT used
-            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
-            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Cleaned up Docker credential files"));
-        }
-
-        [Test]
-        [RequiresDockerInstalled]
         public void CredentialHelper_DisabledByPackageVariable_UsesFallbackLogin()
         {
-            // Arrange - feature toggle ON, but the per-action variable opts this acquisition out.
+            // Arrange - the per-action variable opts this acquisition out.
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             variables.Set(SpecialVariables.Package.DisableDockerCredentialHelper, bool.TrueString);
             var downloader = GetDownloader(log, variables);
 
@@ -126,7 +96,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             pkg.Should().NotBeNull();
             pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
 
-            // The package variable must override the feature toggle: helper NOT used, plain login instead.
+            // The package variable opts out of the helper: plain login instead.
             log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
             log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Cleaned up Docker credential files"));
         }
@@ -138,7 +108,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange
             var log = new InMemoryLog();
                         var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             var downloader = GetDownloader(log, variables);
             
             // Act
@@ -162,7 +131,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange
             var log = new InMemoryLog();
                         var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             var downloader = GetDownloader(log, variables);
             
             // Act
@@ -189,7 +157,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange - Using a public registry that doesn't require auth for this test
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             var downloader = GetDownloader(log, variables);
 
             var customRegistryUri = new Uri("https://quay.io");
@@ -220,7 +187,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
 
             var downloader = GetDownloader(log, variables);
             
@@ -248,7 +214,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange
             var log = new InMemoryLog();
                         var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             var downloader = GetDownloader(log, variables);
 
             

@@ -6,7 +6,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -59,7 +58,7 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
             this.log = log;
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
-            this.useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables) && !variables.GetFlag(SpecialVariables.Package.DisableDockerCredentialHelper, false);
+            this.useCredentialHelper = !variables.GetFlag(SpecialVariables.Package.DisableDockerCredentialHelper, false);
             this.dockerCredentialHelper = new DockerCredentialHelper(log);
         }
 
@@ -114,11 +113,10 @@ namespace Calamari.Integration.Packages.Download
                 }
                 catch (CommandException) when (credentialHelperConfigured)
                 {
-                    // The credential-helper login failed (after retries); tear the helper down and retry
-                    // login once without it. (Docker emits its own "stored unencrypted" warning in this case.)
+                    // Un-retried, so maxDownloadAttempts stays the ceiling on logins against the registry.
                     log.Verbose("Docker login failed while the credential helper was enabled; retrying without the credential helper.");
                     dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
-                    strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
+                    PerformLogin(username, password, feedHost, environmentVariables);
                 }
 
                 const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
