@@ -70,6 +70,17 @@ def runtime_notes(runtimes, patches):
     return notes
 
 
+def advisory_url(ident):
+    """Where an identifier resolves.
+
+    Both schemes turn up here: the two scanners name the same underlying advisory
+    differently - Trivy reports CVE-2026-44788 where Grype reports GHSA-6c8g-7p36-r338.
+    """
+    if str(ident).upper().startswith("GHSA-"):
+        return f"https://github.com/advisories/{ident}"
+    return f"https://nvd.nist.gov/vuln/detail/{ident}"
+
+
 def main():
     workdir = Path(sys.argv[1])
     labels = sys.argv[2:]
@@ -91,7 +102,19 @@ def main():
     patches = latest_patches()
 
     changed = False
-    lines = []
+    plain, slack = [], []
+
+    # The same report is rendered twice: once for the task log, once for Slack. Slack
+    # gets bullets and links; the log gets bare URLs, which stay clickable in a terminal
+    # and readable in Octopus.
+    def emit(p, s_=None):
+        plain.append(p)
+        slack.append(p if s_ is None else s_)
+
+    def emit_ids(ids, indent="  "):
+        for ident in sorted(ids):
+            emit(f"{indent}- {ident}  {advisory_url(ident)}",
+                 f"{indent}\u2022 <{advisory_url(ident)}|{ident}>")
 
     # Drift is folded into the state rather than reported standalone. A runtime that
     # permanently trails the current patch would otherwise alert on every single run,
@@ -110,12 +133,16 @@ def main():
             # No baseline for this version. Report it once so the first run establishes
             # what "normal" looks like, rather than silently adopting it.
             changed = True
-            lines.append(f"*{label}* - first scan, establishing the baseline")
-            lines.append(f"  runtime: {', '.join(now['runtime']) or 'none found'}")
-            lines.append(f"  {len(cves_now)} distinct CVE(s)"
-                         + (": " + ", ".join(sorted(cves_now)) if cves_now else ""))
+            emit(f"{label} - first scan, establishing the baseline",
+                 f"*{label}* - first scan, establishing the baseline")
+            emit(f"  runtime: {', '.join(now['runtime']) or 'none found'}")
+            if cves_now:
+                emit(f"  {len(cves_now)} distinct CVE(s):")
+                emit_ids(cves_now)
+            else:
+                emit("  no CVEs reported")
             for note in now["drift"]:
-                lines.append(f"  runtime drift: {note}")
+                emit(f"  runtime drift: {note}")
             continue
 
         cves_before = set(before.get("cves") or [])
@@ -128,29 +155,30 @@ def main():
 
         if added or removed or rt_changed or drift_new:
             changed = True
-            lines.append(f"*{label}*")
+            emit(f"{label}", f"*{label}*")
             if added:
-                lines.append(f"  NEW: {', '.join(added)}")
+                emit(f"  NEW ({len(added)}):")
+                emit_ids(added)
             if removed:
-                lines.append(f"  gone: {', '.join(removed)}")
+                emit(f"  no longer reported ({len(removed)}):")
+                emit_ids(removed)
             if rt_changed:
-                lines.append(f"  runtime: {', '.join(rt_before) or 'none'}"
-                             f" -> {', '.join(now['runtime']) or 'none'}")
+                emit(f"  runtime: {', '.join(rt_before) or 'none'}"
+                     f" -> {', '.join(now['runtime']) or 'none'}")
             for note in drift_new:
-                lines.append(f"  runtime drift: {note}")
+                emit(f"  runtime drift: {note}")
 
-    print("\n\033[1mCompared against previous state\033[0m" if sys.stdout.isatty()
-          else "\nCompared against previous state")
+    print("\nCompared against previous state")
     if not previous:
         print("  no previous state supplied - this run establishes the baseline")
     if changed:
-        for line in lines:
-            print("  " + line.replace("*", ""))
+        for line in plain:
+            print("  " + line)
     else:
         print("  no change: same distinct CVE set, same bundled runtime")
 
     (workdir / "summary.json").write_text(json.dumps(state, indent=2, sort_keys=True))
-    (workdir / "slack.txt").write_text("\n".join(lines) if lines else "No change.")
+    (workdir / "slack.txt").write_text("\n".join(slack) if slack else "No change.")
 
     sys.exit(3 if changed else 0)
 
