@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Common.Commands;
 
 namespace Calamari.ArgoCD.Git
@@ -58,6 +57,12 @@ namespace Calamari.ArgoCD.Git
             return uri;
         }
     }
+
+    public class AnonymousGitConnection(string url, GitReference gitReference)
+        : HttpsGitConnection(null, null, url, gitReference);
+
+    public class UsernamePasswordGitConnection(string username, string password, string url, GitReference gitReference)
+        : HttpsGitConnection(username, password, url, gitReference);
 
     public record SshKeyGitConnection(
         string? Username,
