@@ -68,7 +68,7 @@ namespace Calamari.ArgoCD.Git
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
-            options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
+            options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler(log);
             options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler(log);
 
             string repoPath;
