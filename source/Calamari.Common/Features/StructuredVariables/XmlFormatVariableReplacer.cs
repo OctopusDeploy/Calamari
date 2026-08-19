@@ -111,23 +111,21 @@ namespace Calamari.Common.Features.StructuredVariables
                 }
             if (replaced == 0)
                 log.Info(StructuredConfigMessages.NoStructuresFound);
-
-            fileSystem.OverwriteFile(filePath,
-                                     textWriter =>
-                                     {
-                                         var xmlWriterSettings = new XmlWriterSettings
-                                         {
-                                             Indent = true,
-                                             NewLineChars = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n",
-                                             OmitXmlDeclaration = doc.FirstChild.NodeType != XmlNodeType.XmlDeclaration
-                                         };
-                                         using (var writer = XmlWriter.Create(textWriter, xmlWriterSettings))
-                                         {
-                                             doc.Save(writer);
-                                             writer.Close();
-                                         }
-                                     },
-                                     encoding);
+            
+            var xmlWriterSettings = new XmlWriterSettings
+            {
+                Indent = true,
+                NewLineChars = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n",
+                OmitXmlDeclaration = doc.FirstChild.NodeType != XmlNodeType.XmlDeclaration
+            };
+            using var textWriter = new StringWriter();
+            using (var writer = XmlWriter.Create(textWriter, xmlWriterSettings))
+            {
+                doc.Save(writer);
+                writer.Close();
+            }
+            
+            fileSystem.OverwriteFile(filePath, textWriter.ToString(), encoding);
         }
 
         void TrySetInnerXml(XmlElement element, string xpathExpression, string? variableValue)
