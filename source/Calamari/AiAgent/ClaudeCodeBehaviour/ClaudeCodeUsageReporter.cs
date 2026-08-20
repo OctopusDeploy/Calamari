@@ -44,14 +44,13 @@ public class ClaudeCodeUsageReporter
     {
         if (modelUsage.Count == 0 && summaryProperties.Count == 0)
             return;
+        
+        if (modelUsage.Count == 0)
+            log.Verbose("Claude Code reported no per-model usage for this run.");
 
         var properties = new Dictionary<string, string>(summaryProperties);
-
-        if (modelUsage.Count > 0)
-        {
-            var usageList = new List<ClaudeCodeModelUsage>(modelUsage.Values);
-            properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList);
-        }
+        var usageList = new List<ClaudeCodeModelUsage>(modelUsage.Values);
+        properties[ClaudeCodeServiceMessages.Usage.ModelUsageAttribute] = JsonSerializer.Serialize(usageList);
 
         log.WriteServiceMessage(new ServiceMessage(ClaudeCodeServiceMessages.Usage.Name, properties));
     }
