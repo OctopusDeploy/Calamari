@@ -107,6 +107,22 @@ public class ClaudeCodeUsageReporterFixture
         msg.GetValue(ClaudeCodeServiceMessages.Usage.ModelUsageAttribute).Should().NotBeNull();
     }
 
+    [Test]
+    public void RunSummaryWithoutModelUsage_StillCarriesAnEmptyModelUsageAttribute()
+    {
+        // The server requires the attribute; a run that fails before any model round-trip has none
+        reporter.SetRunSummary(new ClaudeCodeRunSummary
+        {
+            TotalCostUsd = 0,
+            DurationMs = 1234,
+            NumTurns = 0,
+        });
+
+        reporter.WriteServiceMessage(log);
+
+        DeserializeModelUsage().Should().BeEmpty();
+    }
+
     ClaudeCodeModelUsage[] DeserializeModelUsage()
     {
         var msg = log.ServiceMessages.Single(m => m.Name == ClaudeCodeServiceMessages.Usage.Name);
