@@ -11,20 +11,20 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public Pod(JObject json, Options options) : base(json, options)
         {
-            var phase = Field("$.status.phase");
-            var initContainerStatuses = data
+            var phase = Field(json, "$.status.phase");
+            var initContainerStatuses = json
                 .SelectToken("$.status.initContainerStatuses")
                 ?.ToObject<ContainerStatus[]>() ?? new ContainerStatus[] { };
-            var containerStatuses = data
+            var containerStatuses = json
                 .SelectToken("$.status.containerStatuses")
                 ?.ToObject<ContainerStatus[]>() ?? new ContainerStatus[] { };
-            var ready = data
+            var ready = json
                 .SelectToken("$.status.conditions[?(@.type == 'Ready')].status")
                 ?.Value<string>() ?? string.Empty;
             
             Status = GetStatus(phase, initContainerStatuses, containerStatuses);
 
-            var restartPolicy = FieldOrDefault("$.spec.restartPolicy", "Always");
+            var restartPolicy = FieldOrDefault(json, "$.spec.restartPolicy", "Always");
             ResourceStatus = options.EnableLegacyResourceStatusChecks
                 ? GetLegacyResourceStatus(phase, ready)
                 : GetResourceStatus(phase, containerStatuses, ready, restartPolicy);

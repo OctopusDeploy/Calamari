@@ -17,18 +17,18 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public DaemonSet(JObject json, Options options) : base(json, options)
         {
-            Desired = FieldOrDefault("$.status.desiredNumberScheduled", 0);
-            Current = FieldOrDefault("$.status.currentNumberScheduled", 0);
-            Ready = FieldOrDefault("$.status.numberReady", 0);
-            UpToDate = FieldOrDefault("$.status.updatedNumberScheduled", 0);
-            Available = FieldOrDefault("$.status.numberAvailable", 0);
-            var selectors = data.SelectToken("$.spec.template.spec.nodeSelector")
+            Desired = FieldOrDefault(json, "$.status.desiredNumberScheduled", 0);
+            Current = FieldOrDefault(json, "$.status.currentNumberScheduled", 0);
+            Ready = FieldOrDefault(json, "$.status.numberReady", 0);
+            UpToDate = FieldOrDefault(json, "$.status.updatedNumberScheduled", 0);
+            Available = FieldOrDefault(json, "$.status.numberAvailable", 0);
+            var selectors = json.SelectToken("$.spec.template.spec.nodeSelector")
                 ?.ToObject<Dictionary<string, string>>() ?? new Dictionary<string, string>();
             NodeSelector = FormatNodeSelectors(selectors);
 
             ResourceStatus = options.EnableLegacyResourceStatusChecks
                 ? GetLegacyResourceStatus()
-                : GetResourceStatus();
+                : GetResourceStatus(json);
         }
 
         ResourceStatus GetLegacyResourceStatus()
@@ -37,16 +37,16 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 : ResourceStatus.InProgress;
 
         // Aligns with gitops-engine getDaemonSetHealth.
-        ResourceStatus GetResourceStatus()
+        ResourceStatus GetResourceStatus(JObject json)
         {
-            var generation = FieldOrDefault("$.metadata.generation", 0);
-            var observedGeneration = FieldOrDefault("$.status.observedGeneration", 0);
+            var generation = FieldOrDefault(json, "$.metadata.generation", 0);
+            var observedGeneration = FieldOrDefault(json, "$.status.observedGeneration", 0);
             if (generation > observedGeneration)
             {
                 return ResourceStatus.InProgress;
             }
 
-            if (Field("$.spec.updateStrategy.type") == "OnDelete")
+            if (Field(json, "$.spec.updateStrategy.type") == "OnDelete")
             {
                 return ResourceStatus.Successful;
             }

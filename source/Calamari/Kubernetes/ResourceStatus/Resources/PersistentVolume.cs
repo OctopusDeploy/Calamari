@@ -12,9 +12,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public PersistentVolume(JObject json, Options options) : base(json, options)
         {
-            Status = Field("$.status.phase");
-            ReclaimPolicy = Field("$.spec.persistentVolumeReclaimPolicy");
-            Capacity = Field("$.spec.capacity.storage");
+            Status = Field(json, "$.status.phase");
+            ReclaimPolicy = Field(json, "$.spec.persistentVolumeReclaimPolicy");
+            Capacity = Field(json, "$.spec.capacity.storage");
         }
 
         public override bool HasUpdate(Resource lastStatus)

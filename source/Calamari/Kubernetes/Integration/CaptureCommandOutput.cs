@@ -14,21 +14,39 @@ namespace Calamari.Kubernetes.Integration
 
     public class CaptureCommandOutput : ICommandInvocationOutputSink, ICommandOutput
     {
-        private readonly List<Message> messages = new List<Message>();
-        public Message[] Messages => messages.ToArray();
+        readonly List<Message> messages = new List<Message>();
+        Message[] snapshot;
 
-        public IEnumerable<string> InfoLogs => Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray();
+        public Message[] Messages => snapshot ??= messages.ToArray();
+
+        public IEnumerable<string> InfoLogs
+        {
+            get
+            {
+                foreach (var message in Messages)
+                {
+                    if (message.Level == Level.Info)
+                        yield return message.Text;
+                }
+            }
+        }
 
         public string MergeInfoLogs() => string.Join(Environment.NewLine, InfoLogs);
 
         public void WriteInfo(string line)
         {
-            messages.Add(new Message(Level.Info, line));
+            Add(new Message(Level.Info, line));
         }
 
         public void WriteError(string line)
         {
-            messages.Add(new Message(Level.Error, line));
+            Add(new Message(Level.Error, line));
+        }
+
+        void Add(Message message)
+        {
+            messages.Add(message);
+            snapshot = null;
         }
     }
 

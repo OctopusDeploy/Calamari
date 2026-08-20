@@ -50,7 +50,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <inheritdoc />
         public IEnumerable<ResourceRetrieverResult> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options)
         {
-            var childResourceCache = new Dictionary<(ResourceGroupVersionKind, string), KubectlGetResult>();
+            var childResourceCache = new Dictionary<(ResourceGroupVersionKind, string), ChildResourceLookup>();
 
             var results = resourceIdentifiers
                           .Select(identifier => GetResource(identifier, kubectl, options))
@@ -70,7 +70,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var result = kubectlGet.Resource(resourceIdentifier, kubectl);
             LogKubectlErrorIfFailed(result, options, log);
 
-            if (result.RawOutput.IsNullOrEmpty())
+            if (!result.HasOutput)
                 return ResourceRetrieverResult.Failure($"Failed to get resource {resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
 
             var parseResult = TryParse(ResourceFactory.FromJson, result, options);
@@ -78,52 +78,63 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
 
         IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options,
-            Dictionary<(ResourceGroupVersionKind, string), KubectlGetResult> childResourceCache)
+            Dictionary<(ResourceGroupVersionKind, string), ChildResourceLookup> childResourceCache)
         {
             var childGvk = parentResource.ChildGroupVersionKind;
             if (childGvk is null) return Enumerable.Empty<Resource>();
 
-            var result = GetAllResourcesCached(childGvk, parentResource.Namespace, kubectl, options, childResourceCache);
+            var lookup = GetChildResourceLookupCached(childGvk, parentResource.Namespace, kubectl, options, childResourceCache);
+            var children = lookup.ForOwner(parentResource.Uid);
 
-            if (result.RawOutput.IsNullOrEmpty())
+            foreach (var child in children)
+            {
+                // the lookup is shared between parents, so resolve each child's children once
+                if (child.Children == null)
+                {
+                    child.UpdateChildren(GetChildrenResources(child, kubectl, options, childResourceCache));
+                }
+            }
+
+            return children;
+        }
+
+        // only cache the parsed results, or you'll cause bankruptcy given post-ai memory costs
+        ChildResourceLookup GetChildResourceLookupCached(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl, Options options,
+            Dictionary<(ResourceGroupVersionKind, string), ChildResourceLookup> childResourceCache)
+        {
+            var cacheKey = (groupVersionKind, @namespace);
+            if (childResourceCache.TryGetValue(cacheKey, out var cached))
+            {
+                return cached;
+            }
+
+            var lookup = BuildChildResourceLookup(groupVersionKind, @namespace, kubectl, options);
+            childResourceCache[cacheKey] = lookup;
+            return lookup;
+        }
+
+        ChildResourceLookup BuildChildResourceLookup(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl, Options options)
+        {
+            var result = kubectlGet.AllResources(groupVersionKind, @namespace, kubectl);
+            LogKubectlErrorIfFailed(result, options, log);
+
+            if (!result.HasOutput)
             {
                 // Child resources are ignored for determining deployment success.
-                log.Verbose($"Failed to get child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
-                return Enumerable.Empty<Resource>();
+                log.Verbose($"Failed to get child resources of type {groupVersionKind.Kind} in namespace {@namespace}");
+                return ChildResourceLookup.Empty;
             }
 
             var parseResult = TryParse(ResourceFactory.FromListJson, result, options);
             if (!parseResult.IsSuccess)
             {
                 // Child resources are ignored for determining deployment success.
-                log.Verbose($"Failed to parse child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
+                log.Verbose($"Failed to parse child resources of type {groupVersionKind.Kind} in namespace {@namespace}");
                 log.Verbose(parseResult.ErrorMessage);
-                return Enumerable.Empty<Resource>();
+                return ChildResourceLookup.Empty;
             }
 
-            var resources = parseResult.Value;
-            return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
-                            .Select(child =>
-                                    {
-                                        child.UpdateChildren(GetChildrenResources(child, kubectl, options, childResourceCache));
-                                        return child;
-                                    })
-                            .ToList();
-        }
-
-        KubectlGetResult GetAllResourcesCached(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl, Options options,
-            Dictionary<(ResourceGroupVersionKind, string), KubectlGetResult> childResourceCache)
-        {
-            var cacheKey = (groupVersionKind, @namespace);
-            if (childResourceCache.TryGetValue(cacheKey, out var cachedResult))
-            {
-                return cachedResult;
-            }
-
-            var result = kubectlGet.AllResources(groupVersionKind, @namespace, kubectl);
-            LogKubectlErrorIfFailed(result, options, log);
-            childResourceCache[cacheKey] = result;
-            return result;
+            return ChildResourceLookup.From(parseResult.Value);
         }
 
         static ParseResult<T> TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options) where T : class
@@ -165,15 +176,53 @@ namespace Calamari.Kubernetes.ResourceStatus
             log.Verbose($"kubectl failed with exit code: {getResult.ExitCode}");
             log.Verbose("---------------------------");
 
-            if (getResult.RawOutput != null && getResult.RawOutput.Any())
+            foreach (var line in getResult.RawOutput)
             {
-                foreach (var line in getResult.RawOutput)
-                {
-                    log.Verbose(line);
-                }
+                log.Verbose(line);
             }
 
             log.Verbose("---------------------------");
+        }
+
+        class ChildResourceLookup
+        {
+            public static readonly ChildResourceLookup Empty = new ChildResourceLookup(new Dictionary<string, List<Resource>>());
+
+            readonly Dictionary<string, List<Resource>> byOwnerUid;
+
+            ChildResourceLookup(Dictionary<string, List<Resource>> byOwnerUid)
+            {
+                this.byOwnerUid = byOwnerUid;
+            }
+
+            public static ChildResourceLookup From(IEnumerable<Resource> resources)
+            {
+                var byOwnerUid = new Dictionary<string, List<Resource>>();
+
+                foreach (var resource in resources)
+                {
+                    foreach (var ownerUid in resource.OwnerUids ?? Enumerable.Empty<string>())
+                    {
+                        if (ownerUid.IsNullOrEmpty())
+                            continue;
+
+                        if (!byOwnerUid.TryGetValue(ownerUid, out var owned))
+                        {
+                            owned = new List<Resource>();
+                            byOwnerUid[ownerUid] = owned;
+                        }
+
+                        owned.Add(resource);
+                    }
+                }
+
+                return new ChildResourceLookup(byOwnerUid);
+            }
+
+            public IReadOnlyList<Resource> ForOwner(string ownerUid)
+                => !ownerUid.IsNullOrEmpty() && byOwnerUid.TryGetValue(ownerUid, out var owned)
+                    ? owned
+                    : Array.Empty<Resource>();
         }
 
         class ParseResult<T> where T : class

@@ -32,7 +32,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public static IEnumerable<Resource> FromListJson(string json, Options options)
         {
             var listResponse = JObject.Parse(json);
-            return listResponse.SelectTokens("$.items[*]").Select(item => FromJObject((JObject)item, options));
+            return listResponse.SelectTokens("$.items[*]").Select(item => FromJObject((JObject)item, options)).ToList();
         }
 
         public static Resource FromJObject(JObject data, Options options)
