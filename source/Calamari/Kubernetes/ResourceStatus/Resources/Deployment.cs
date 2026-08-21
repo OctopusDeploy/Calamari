@@ -26,12 +26,12 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         {
             enableLegacyResourceStatusChecks = options.EnableLegacyResourceStatusChecks;
 
-            ReadyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
-            Desired = FieldOrDefault("$.spec.replicas", 0);
-            TotalReplicas = FieldOrDefault("$.status.replicas", 0);
+            ReadyReplicas = FieldOrDefault(json, "$.status.readyReplicas", 0);
+            Desired = FieldOrDefault(json, "$.spec.replicas", 0);
+            TotalReplicas = FieldOrDefault(json, "$.status.replicas", 0);
             Ready = $"{ReadyReplicas}/{Desired}";
-            Available = FieldOrDefault("$.status.availableReplicas", 0);
-            UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
+            Available = FieldOrDefault(json, "$.status.availableReplicas", 0);
+            UpToDate = FieldOrDefault(json, "$.status.updatedReplicas", 0);
 
             ResourceStatus = GetResourceStatus(json);
         }
@@ -40,13 +40,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         ResourceStatus GetResourceStatus(JObject json)
         {
             // gitops-engine treats a paused deployment as suspended rather than blocking on it.
-            if (!enableLegacyResourceStatusChecks && FieldOrDefault("$.spec.paused", false))
+            if (!enableLegacyResourceStatusChecks && FieldOrDefault(json, "$.spec.paused", false))
             {
                 return ResourceStatus.Successful;
             }
 
-            var generation = FieldOrDefault("$.metadata.generation", 0);
-            var observedGeneration = FieldOrDefault("$.status.observedGeneration", 0);
+            var generation = FieldOrDefault(json, "$.metadata.generation", 0);
+            var observedGeneration = FieldOrDefault(json, "$.status.observedGeneration", 0);
 
             if (generation > observedGeneration)
             {

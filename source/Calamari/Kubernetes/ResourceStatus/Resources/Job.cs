@@ -10,13 +10,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public Job(JObject json, Options options) : base(json, options)
         {
-            var succeeded = FieldOrDefault("$.status.succeeded", 0);
-            var desired = FieldOrDefault("$.spec.completions", 0);
+            var succeeded = FieldOrDefault(json, "$.status.succeeded", 0);
+            var desired = FieldOrDefault(json, "$.spec.completions", 0);
             Completions = $"{succeeded}/{desired}";
 
             var defaultTime = DateTime.UtcNow;
-            var completionTime = FieldOrDefault("$.status.completionTime", defaultTime);
-            var startTime = FieldOrDefault("$.status.startTime", defaultTime);
+            var completionTime = FieldOrDefault(json, "$.status.completionTime", defaultTime);
+            var startTime = FieldOrDefault(json, "$.status.startTime", defaultTime);
 
             Duration = $"{completionTime - startTime:c}";
 
@@ -27,16 +27,16 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             }
 
             ResourceStatus = options.EnableLegacyResourceStatusChecks
-                ? GetLegacyResourceStatus(succeeded, desired)
+                ? GetLegacyResourceStatus(json, succeeded, desired)
                 : GetResourceStatus(json);
         }
 
-        ResourceStatus GetLegacyResourceStatus(int succeeded, int desired)
+        static ResourceStatus GetLegacyResourceStatus(JObject json, int succeeded, int desired)
         {
-            var backoffLimit = FieldOrDefault("$.spec.backoffLimit", 0);
+            var backoffLimit = FieldOrDefault(json, "$.spec.backoffLimit", 0);
 
             // Using a default value of -1 rather than 0 as a job can be created with a backoffLimit of 0 and we don't want to immediately mark the job as failed
-            var failed = FieldOrDefault("$.status.failed", -1);
+            var failed = FieldOrDefault(json, "$.status.failed", -1);
 
             if (failed >= backoffLimit)
             {

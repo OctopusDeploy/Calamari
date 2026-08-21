@@ -12,13 +12,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public Ingress(JObject json, Options options) : base(json, options)
         {
-            Class = Field("$.spec.ingressClassName");
+            Class = Field(json, "$.spec.ingressClassName");
 
-            var rules = data.SelectToken("$.spec.rules")
+            var rules = json.SelectToken("$.spec.rules")
                 ?.ToObject<IngressRule[]>() ?? new IngressRule[] { };
             Hosts = FormatHosts(rules);            
 
-            var loadBalancerIngresses = data.SelectToken("$.status.loadBalancer.ingress")
+            var loadBalancerIngresses = json.SelectToken("$.status.loadBalancer.ingress")
                 ?.ToObject<LoadBalancerIngress[]>() ?? new LoadBalancerIngress[] { };
             
             Address = FormatAddress(loadBalancerIngresses);

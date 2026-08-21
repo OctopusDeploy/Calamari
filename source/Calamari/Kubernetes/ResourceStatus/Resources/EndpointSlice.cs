@@ -12,13 +12,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public EndpointSlice(JObject json, Options options) : base(json, options)
         {
-            AddressType = Field("$.addressType");
+            AddressType = Field(json, "$.addressType");
             
-            var ports = data.SelectToken("$.ports")
+            var ports = json.SelectToken("$.ports")
                 ?.ToObject<ServicePort[]>() ?? new ServicePort[] { };
             Ports = ports.Select(port => port.Port.ToString());
 
-            var endpoints = data.SelectToken("$.endpoints")
+            var endpoints = json.SelectToken("$.endpoints")
                 ?.ToObject<Endpoint[]>() ?? new Endpoint[] { };
             Endpoints = FormatEndpoints(endpoints);
         }

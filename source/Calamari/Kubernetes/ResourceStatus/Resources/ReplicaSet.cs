@@ -13,9 +13,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public ReplicaSet(JObject json, Options options) : base(json, options)
         {
-            Desired = FieldOrDefault("$.status.replicas", 0);
-            Current = FieldOrDefault($".status.availableReplicas", 0);
-            Ready = FieldOrDefault("$.status.readyReplicas", 0);
+            Desired = FieldOrDefault(json, "$.status.replicas", 0);
+            Current = FieldOrDefault(json, $".status.availableReplicas", 0);
+            Ready = FieldOrDefault(json, "$.status.readyReplicas", 0);
 
             ResourceStatus = options.EnableLegacyResourceStatusChecks
                 ? GetLegacyResourceStatus()
@@ -28,8 +28,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         // Aligns with gitops-engine getReplicaSetHealth.
         ResourceStatus GetResourceStatus(JObject json)
         {
-            var generation = FieldOrDefault("$.metadata.generation", 0);
-            var observedGeneration = FieldOrDefault("$.status.observedGeneration", 0);
+            var generation = FieldOrDefault(json, "$.metadata.generation", 0);
+            var observedGeneration = FieldOrDefault(json, "$.status.observedGeneration", 0);
             if (generation > observedGeneration)
             {
                 return ResourceStatus.InProgress;
@@ -42,7 +42,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 return ResourceStatus.Failed;
             }
 
-            var specReplicas = FieldOrDefault<int?>("$.spec.replicas", null);
+            var specReplicas = FieldOrDefault<int?>(json, "$.spec.replicas", null);
             if (specReplicas.HasValue && Current < specReplicas.Value)
             {
                 return ResourceStatus.InProgress;
