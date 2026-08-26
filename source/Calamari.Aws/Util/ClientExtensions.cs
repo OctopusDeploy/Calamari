@@ -10,6 +10,9 @@ namespace Calamari.Aws.Util;
 
 public static class ClientExtensions
 {
+    //The SDK's Standard retry mode allows only 2 retries, which is not enough to ride out AWS throttling
+    const int MaxErrorRetry = 5;
+
     public static TConfig AsClientConfig<TConfig>(this AwsEnvironmentGeneration environment)
         where TConfig : ClientConfig, new()
     {
@@ -17,6 +20,7 @@ public static class ClientExtensions
                                  {
                                      x.RegionEndpoint = environment.AwsRegion;
                                      x.AllowAutoRedirect = true;
+                                     x.MaxErrorRetry = MaxErrorRetry;
                                  });
     }}
 
