@@ -1,0 +1,198 @@
+## AUTOFAC
+9.3.1.0
+
+## REGISTRATIONS
+ApiResourceScopeLookup :: Calamari.Kubernetes.IApiResourceScopeLookup :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ApplyCloudFormationChangesetCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Apply an existing AWS CloudFormation changeset,Name=apply-aws-cloudformation-changeset,TypeId=RuntimeType]
+ApplyDeltaCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Applies a delta file to a package to create a new version of the package,Name=apply-delta,TypeId=RuntimeType]
+ArgoCDFilesUpdatedReporter :: Calamari.ArgoCD.IArgoCDFilesUpdatedReporter :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ArgoCDManifestsFileMatcher :: Calamari.ArgoCD.Conventions.IArgoCDManifestsFileMatcher :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+AssemblyEmbeddedResources :: Calamari.Common.Features.EmbeddedResources.ICalamariEmbeddedResources :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+AwsKubernetesDiscoverer :: Calamari.Common.Features.Discovery.IKubernetesDiscoverer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+AwsScriptWrapper :: Calamari.Common.Features.Scripting.IScriptWrapper :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+AwsTargetDiscoveryContextResolver :: Calamari.Aws.Discovery.IAwsTargetDiscoveryContextResolver :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+AzureDevOpsPullRequestClientFactory :: Calamari.ArgoCD.Git.PullRequests.IGitVendorPullRequestClientFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+AzureKubernetesDiscoverer :: Calamari.Common.Features.Discovery.IKubernetesDiscoverer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+BitBucketPullRequestClientFactory :: Calamari.ArgoCD.Git.PullRequests.IGitVendorPullRequestClientFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+CalamariCertificateStore :: Calamari.Integration.Certificates.ICertificateStore :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+CalamariExecutor :: Calamari.LaunchTools.ILaunchTool :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Tool=Calamari,TypeId=RuntimeType]
+ClaudeSettingsWriter :: Calamari.AiAgent.ClaudeCodeBehaviour.ClaudeSettingsWriter :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+CleanCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Removes packages and files according to the configured retention policy,Name=clean,TypeId=RuntimeType]
+CleanPackagesCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Apply retention to the package cache,Name=clean-packages,TypeId=RuntimeType]
+CodeGenFunctionsRegistry :: Calamari.Common.Features.FunctionScriptContributions.CodeGenFunctionsRegistry :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+CombinedPackageExtractor :: Calamari.Common.Features.Packages.ICombinedPackageExtractor :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+CommandLineRunner :: Calamari.Common.Features.Processes.ICommandLineRunner :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+CommitToGitCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Update a Git repository with selected package content, then transform with optional script,Name=commit-to-git,TypeId=RuntimeType]
+CommitToGitConfigFactory :: Calamari.CommitToGit.CommitToGitConfigFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+CommonOptions :: AutoActivate+Calamari.Common.Plumbing.Commands.CommonOptions :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: [__AutoActivated=True]
+CommonOptions :: AutoActivate+Calamari.Common.Plumbing.Commands.CommonOptions :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: [__AutoActivated=True]
+ConfigurationTransformer :: Calamari.Common.Features.ConfigurationTransforms.IConfigurationTransformer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ConfigurationTransformsBehaviour :: Calamari.Common.Features.Behaviours.ConfigurationTransformsBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ConfigurationVariablesBehaviour :: Calamari.Common.Features.Behaviours.ConfigurationVariablesBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ConfigurationVariablesReplacer :: Calamari.Common.Features.ConfigurationVariables.IConfigurationVariablesReplacer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ConfiguredScriptBehaviour :: Calamari.Common.Features.Behaviours.ConfiguredScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ConsoleLog :: AutoActivate+Calamari.Common.Plumbing.Logging.ILog :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: [__AutoActivated=True]
+CreateAwsS3Command :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Creates an AWS S3 bucket,Name=create-aws-s3,TypeId=RuntimeType]
+DefaultPathResolutionService :: Calamari.Common.Features.Processes.ScriptIsolation.IPathResolutionService :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+DeleteCloudFormationCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Destroy an existing AWS CloudFormation stack,Name=delete-aws-cloudformation,TypeId=RuntimeType]
+DeployCloudFormationCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Creates a new AWS CloudFormation deployment,Name=deploy-aws-cloudformation,TypeId=RuntimeType]
+DeployConfiguredScriptBehaviour :: Calamari.Common.Features.Behaviours.DeployConfiguredScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+DeployEcsServiceCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Deploys a service to an Amazon ECS cluster,Name=deploy-aws-ecs-service,TypeId=RuntimeType]
+DeployJavaArchiveCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Deploys a Java archive (.jar, .war, .ear),Name=deploy-java-archive,TypeId=RuntimeType]
+DeployPackageCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Extracts and installs a deployment package,Name=deploy-package,TypeId=RuntimeType]
+DeployPackagedScriptBehaviour :: Calamari.Common.Features.Behaviours.DeployPackagedScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+DeploymentConfigFactory :: Calamari.ArgoCD.Conventions.DeploymentConfigFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+DeploymentJournalWriter :: Calamari.Common.Plumbing.Deployment.Journal.IDeploymentJournalWriter :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+DownloadAndRegisterPackageCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Downloads a package and atomically registers its use in the package journal,Name=download-and-register-package,TypeId=RuntimeType]
+DownloadPackageCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Downloads a NuGet package from a NuGet feed,Name=download-package,TypeId=RuntimeType]
+EcsClientFactory :: Calamari.Aws.Integration.Ecs.IEcsClientFactory :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+EcsClusterDiscoveryBehaviour :: Calamari.Aws.Behaviours.EcsClusterDiscoveryBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+EcsClusterDiscoveryWriter :: Calamari.Aws.Integration.Ecs.IEcsClusterDiscoveryWriter :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+EcsClusterTargetDiscoveryCommand :: aws-ecs-cluster-target-discovery (Calamari.Common.Plumbing.Pipeline.PipelineCommand) :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Discover AWS ECS Clusters,Name=aws-ecs-cluster-target-discovery,TypeId=RuntimeType]
+EcsDiscoverer :: Calamari.Aws.Integration.Ecs.IEcsDiscoverer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+EcsImageNameResolver :: Calamari.Aws.Inputs.Ecs.IEcsImageNameResolver :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+EcsStackNameGenerator :: Calamari.Aws.Integration.Ecs.IEcsStackNameGenerator :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ExecuteManifestCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=null,Name=execute-manifest,TypeId=RuntimeType]
+ExtractBehaviour :: Calamari.Common.Features.Behaviours.ExtractBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ExtractPackage :: Calamari.Common.Features.Packages.IExtractPackage :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ExtractPackageCommand :: Calamari.Commands.ICommandWithInputs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=null,Name=extract-package,TypeId=RuntimeType]
+FileSubstituter :: Calamari.Common.Features.Substitutions.IFileSubstituter :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+FindAndRegisterPackageCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Finds a package and atomically registers its use in the package journal,Name=find-and-register-package,TypeId=RuntimeType]
+FindPackageCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Finds the package that matches the specified ID and version. If no exact match is found, it returns a list of the nearest packages that matches the ID,Name=find-package,TypeId=RuntimeType]
+FreeSpaceChecker :: Calamari.Common.Plumbing.FileSystem.IFreeSpaceChecker :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+FunctionAppenderScriptWrapper :: Calamari.Common.Features.Scripting.IScriptWrapper :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+GatherAndApplyRawYamlExecutor :: Calamari.Kubernetes.Commands.Executors.IRawYamlKubernetesApplyExecutor :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+GitHubPullRequestClientFactory :: Calamari.ArgoCD.Git.PullRequests.IGitVendorPullRequestClientFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+GitLabPullRequestClientFactory :: Calamari.ArgoCD.Git.PullRequests.IGitVendorPullRequestClientFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+GitVendorPullRequestClientResolver :: Calamari.ArgoCD.Git.PullRequests.IGitVendorPullRequestClientResolver :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+GlobSubstituteFileMatcher :: Calamari.Common.Features.Substitutions.ISubstituteFileMatcher :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+HealthCheckCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Run a health check on an AWS ECS Cluster,Name=aws-ecs-health-check,TypeId=RuntimeType]
+HelmTemplateValueSourcesParser :: Calamari.Kubernetes.Helm.HelmTemplateValueSourcesParser :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+HelmUpgradeCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Performs Helm Upgrade with Chart while performing variable replacement,Name=helm-upgrade,TypeId=RuntimeType]
+IFileLockService :: Calamari.Common.Features.Processes.ScriptIsolation.IFileLockService :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+INonSensitiveVariables :: Calamari.Common.Plumbing.Variables.INonSensitiveVariables :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+IVariables :: Calamari.Common.Plumbing.Variables.IVariables :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ImportCertificateCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Imports a X.509 certificate into a Windows certificate store,Name=import-certificate,TypeId=RuntimeType]
+InvokeClaudeCodeBehaviour :: Calamari.AiAgent.ClaudeCodeBehaviour.InvokeClaudeCodeBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+JavaLibraryCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Invokes the Octopus java library,Name=java-library,TypeId=RuntimeType]
+JsonFormatVariableReplacer :: Calamari.Common.Features.StructuredVariables.IFileFormatVariableReplacer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [RegistrationPriority=1]
+JsonJournalRepository :: Calamari.Deployment.PackageRetention.Repositories.IJournalRepository :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+Kubectl :: Calamari.Kubernetes.Integration.IKubectl+Calamari.Kubernetes.Integration.Kubectl :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+KubectlGet :: Calamari.Kubernetes.ResourceStatus.IKubectlGet :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+KubernetesApplyRawYamlCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Apply Raw Yaml to Kubernetes Cluster,Name=kubernetes-apply-raw-yaml,TypeId=RuntimeType]
+KubernetesAuthenticationCommand :: Calamari.Commands.ICommandWithInputs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=null,Name=authenticate-to-kubernetes,TypeId=RuntimeType]
+KubernetesContextScriptWrapper :: Calamari.Common.Features.Scripting.IScriptWrapper :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+KubernetesDiscovererFactory :: Calamari.Kubernetes.Commands.Discovery.IKubernetesDiscovererFactory :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+KubernetesDiscoveryCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Discover Kubernetes cluster targets,Name=kubernetes-target-discovery,TypeId=RuntimeType]
+KubernetesKustomizeCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Apply Kubernetes manifests with Kustomize,Name=kubernetes-kustomize,TypeId=RuntimeType]
+KubernetesManifestNamespaceResolver :: Calamari.Kubernetes.IKubernetesManifestNamespaceResolver :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+KubernetesVerifyResourcesCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Verifies that resources applied by a Kubernetes deploy step have reached their desired state,Name=kubernetes-verify-resources,TypeId=RuntimeType]
+KustomizeExecutor :: Calamari.Kubernetes.Commands.Executors.IKustomizeKubernetesApplyExecutor :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+LeastFrequentlyUsedWithAgingSort :: Calamari.Deployment.PackageRetention.Caching.ISortJournalEntries :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+LifetimeScope :: Autofac.IComponentContext+Autofac.ILifetimeScope :: Shared/CurrentScopeLifetime/ExternallyOwned :: []
+LockDirectoryFactory :: Calamari.Common.Features.Processes.ScriptIsolation.ILockDirectoryFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+LockOptionsResolver :: Calamari.Common.Features.Processes.ScriptIsolation.LockOptionsResolver :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ManifestReportScriptWrapper :: Calamari.Common.Features.Scripting.IScriptWrapper :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ManifestReporter :: Calamari.Kubernetes.IManifestReporter :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ManifestRetriever :: Calamari.Kubernetes.IManifestRetriever :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+MemoryCache :: Microsoft.Extensions.Caching.Memory.IMemoryCache :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+<PhysicalFileSystem> :: AutoActivate+Calamari.Common.Plumbing.FileSystem.ICalamariFileSystem :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: [__AutoActivated=True]
+NoOp<WindowsX509CertificateStore> :: Calamari.Integration.Certificates.I<WindowsX509CertificateStore> :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+NodeExecutor :: Calamari.LaunchTools.ILaunchTool :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Tool=Node,TypeId=RuntimeType]
+NonSensitiveFileSubstituter :: Calamari.Common.Features.Substitutions.INonSensitiveFileSubstituter :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+NonSensitiveSubstituteInFiles :: Calamari.Common.Features.Substitutions.INonSensitiveSubstituteInFiles :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+NonSensitiveSubstituteInFilesBehaviour :: Calamari.Common.Features.Behaviours.NonSensitiveSubstituteInFilesBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PackageJournal :: Calamari.Common.Plumbing.Deployment.PackageRetention.IManagePackageCache :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+PackageQuantityPackageCacheCleaner :: Calamari.Deployment.PackageRetention.Caching.IRetentionAlgorithm :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PackageStore :: Calamari.Integration.FileSystem.IPackageStore :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+PercentFreeDiskSpacePackageCacheCleaner :: Calamari.Deployment.PackageRetention.Caching.IRetentionAlgorithm :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PostDeployConfiguredScriptBehaviour :: Calamari.Common.Features.Behaviours.PostDeployConfiguredScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PostDeployPackagedScriptBehaviour :: Calamari.Common.Features.Behaviours.PostDeployPackagedScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PowerShellLanguage :: Calamari.Common.Features.FunctionScriptContributions.ICodeGenFunctions :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+PreDeployConfiguredScriptBehaviour :: Calamari.Common.Features.Behaviours.PreDeployConfiguredScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PreDeployPackagedScriptBehaviour :: Calamari.Common.Features.Behaviours.PreDeployPackagedScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PrioritisedList<IFileFormatVariableReplacer> :: Calamari.Common.Plumbing.Extensions.PrioritisedList`1[[Calamari.Common.Features.StructuredVariables.IFileFormatVariableReplacer, Calamari.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]] :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+PropertiesFormatVariableReplacer :: Calamari.Common.Features.StructuredVariables.IFileFormatVariableReplacer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [RegistrationPriority=4]
+RegisterPackageUseCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Register the use of a package in the package journal,Name=register-package,TypeId=RuntimeType]
+ReleasePackageLockCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Releases a given package lock for a specific task ID.,Name=release-package-lock,TypeId=RuntimeType]
+RequestedLockOptionsFactory :: Calamari.Common.Features.Processes.ScriptIsolation.RequestedLockOptionsFactory :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ResourceFinder :: Calamari.Kubernetes.ResourceStatus.IResourceFinder :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ResourceRetriever :: Calamari.Kubernetes.ResourceStatus.IResourceRetriever :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ResourceStatusCheckTask :: Calamari.Kubernetes.ResourceStatus.ResourceStatusCheckTask :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ResourceStatusReportExecutor :: Calamari.Kubernetes.ResourceStatus.IResourceStatusReportExecutor :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ResourceStatusReportScriptWrapper :: Calamari.Common.Features.Scripting.IScriptWrapper :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ResourceUpdateReporter :: Calamari.Kubernetes.ResourceStatus.IResourceUpdateReporter :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+RollbackScriptBehaviour :: Calamari.Common.Features.Behaviours.RollbackScriptBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+RunAgentCommand :: run-claude-code (Calamari.Common.Plumbing.Pipeline.PipelineCommand) :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Invokes an Claude Code CLI,Name=run-claude-code,TypeId=RuntimeType]
+RunScriptCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Invokes a script,Name=run-script,TypeId=RuntimeType]
+RunningResourceStatusCheck :: Calamari.Kubernetes.ResourceStatus.IRunningResourceStatusCheck :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+ScriptEngine :: Calamari.Common.Features.Scripting.IScriptEngine :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+ScriptIsolationEnforcer :: Calamari.Common.Features.Processes.ScriptIsolation.IScriptIsolationEnforcer :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+SelfHostedGitLabInspector :: Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab.SelfHostedGitLabInspector :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+StructuredConfigVariablesCommand :: Calamari.Commands.ICommandWithInputs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=null,Name=structured-config-variables,TypeId=RuntimeType]
+StructuredConfigVariablesService :: Calamari.Common.Features.StructuredVariables.IStructuredConfigVariablesService :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+StructuredConfigurationVariablesBehaviour :: Calamari.Common.Features.Behaviours.StructuredConfigurationVariablesBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+SubstituteInFiles :: Calamari.Common.Features.Substitutions.ISubstituteInFiles :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+SubstituteInFilesBehaviour :: Calamari.Common.Features.Behaviours.SubstituteInFilesBehaviour :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+SubstituteInFilesCommand :: Calamari.Commands.ICommandWithInputs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=null,Name=substitute-in-files,TypeId=RuntimeType]
+SubstituteVariablesInFilesCommand :: Calamari.Commands.ICommandWithInputs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=null,Name=substitute-variables-in-files,TypeId=RuntimeType]
+SystemMountedDrivesProvider :: Calamari.Common.Features.Processes.ScriptIsolation.IMountedDrivesProvider :: Shared/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+SystemSemaphoreManager :: AutoActivate+Calamari.Common.Features.Processes.Semaphores.ISemaphoreFactory :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: [__AutoActivated=True]
+TemporaryDirectoryFallbackProvider :: Calamari.Common.Features.Processes.ScriptIsolation.ITemporaryDirectoryFallbackProvider :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+Timer :: Calamari.Kubernetes.ResourceStatus.ITimer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+TransferPackageCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Copies a deployment package to a specific directory,Name=transfer-package,TypeId=RuntimeType]
+TransformFileLocator :: Calamari.Common.Features.ConfigurationTransforms.ITransformFileLocator :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+UpdateArgoCDAppImagesCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Update container image versions for one or more Argo CD Applications, persisting them in a Git repository,Name=update-argo-cd-app-images,TypeId=RuntimeType]
+UpdateArgoCDAppManifestsCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Update Kubernetes manifests from a package for one or more Argo CD Applications, persisting them in a Git repository,Name=update-argo-cd-app-manifests,TypeId=RuntimeType]
+UpdateEcsServiceCommand :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Updates an ECS service to a new task definition revision,Name=update-aws-ecs-service,TypeId=RuntimeType]
+UploadAwsS3Command :: Calamari.Commands.Support.ICommandWithArgs :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [Description=Uploads a package or package file(s) to an AWS s3 bucket,Name=upload-aws-s3,TypeId=RuntimeType]
+VariableJsonJournalPathProvider :: Calamari.Deployment.PackageRetention.Repositories.IJsonJournalPathProvider :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+VariableLogger :: Calamari.Common.Plumbing.Logging.VariableLogger :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: []
+VariablesFactory :: Calamari.Common.Plumbing.Variables.VariablesFactory :: Shared/RootScopeLifetime/OwnedByLifetimeScope :: []
+XmlFormatVariableReplacer :: Calamari.Common.Features.StructuredVariables.IFileFormatVariableReplacer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [RegistrationPriority=2]
+YamlFormatVariableReplacer :: Calamari.Common.Features.StructuredVariables.IFileFormatVariableReplacer :: None/CurrentScopeLifetime/OwnedByLifetimeScope :: [RegistrationPriority=3]
+
+## COLLECTION RESOLUTION ORDER
+IScriptWrapper: KubernetesContextScriptWrapper, ManifestReportScriptWrapper, ResourceStatusReportScriptWrapper, FunctionAppenderScriptWrapper, AwsScriptWrapper
+ICodeGenFunctions: PowerShellLanguage
+IKubernetesDiscoverer: AwsKubernetesDiscoverer, AzureKubernetesDiscoverer
+IFileFormatVariableReplacer: JsonFormatVariableReplacer, XmlFormatVariableReplacer, YamlFormatVariableReplacer, PropertiesFormatVariableReplacer
+ICommandWithArgs: HelmUpgradeCommand, KubernetesApplyRawYamlCommand, KubernetesDiscoveryCommand, KubernetesKustomizeCommand, KubernetesVerifyResourcesCommand, CleanCommand, CleanPackagesCommand, CommitToGitCommand, DeployPackageCommand, DownloadAndRegisterPackageCommand, DownloadPackageCommand, ExecuteManifestCommand, FindAndRegisterPackageCommand, FindPackageCommand, ImportCertificateCommand, RegisterPackageUseCommand, ReleasePackageLockCommand, RunScriptCommand, TransferPackageCommand, DeployJavaArchiveCommand, JavaLibraryCommand, UpdateArgoCDAppImagesCommand, UpdateArgoCDAppManifestsCommand, ApplyDeltaCommand, ApplyCloudFormationChangesetCommand, CreateAwsS3Command, DeleteCloudFormationCommand, DeployCloudFormationCommand, DeployEcsServiceCommand, HealthCheckCommand, UpdateEcsServiceCommand, UploadAwsS3Command
+
+## COMMANDS: metadata + injected concrete types
+apply-aws-cloudformation-changeset => ApplyCloudFormationChangesetCommand { log:ConsoleLog, packageFile:null, variables:CalamariVariables[KeyValuePair<String,String>], waitForComplete:False }
+apply-delta => ApplyDeltaCommand { basisFileName:null, commandLineRunner:CommandLineRunner, deltaFileName:null, fileHash:null, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, newFileName:null, showProgress:False, skipVerification:False }
+aws-ecs-health-check => HealthCheckCommand { <log>P:ConsoleLog, <variables>P:CalamariVariables[KeyValuePair<String,String>] }
+clean => CleanCommand { days:0, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, releases:0, retentionPolicySet:null, variables:CalamariVariables[KeyValuePair<String,String>] }
+clean-packages => CleanPackagesCommand { journal:PackageJournal }
+commit-to-git => CommitToGitCommand { commandLineRunner:CommandLineRunner, configFactory:CommitToGitConfigFactory, customPropertiesFile:null, customPropertiesPassword:null, deploymentJournalWriter:DeploymentJournalWriter, fileSystem:<PhysicalFileSystem>, gitVendorPullRequestClientResolver:GitVendorPullRequestClientResolver, log:ConsoleLog, nonSensitiveSubstituteInFiles:NonSensitiveSubstituteInFiles, pathToPackage:null, scriptEngine:ScriptEngine, scriptFileArg:null, scriptParametersArg:null, substituteInFiles:SubstituteInFiles, variables:CalamariVariables[KeyValuePair<String,String>] }
+create-aws-s3 => CreateAwsS3Command { <log>P:ConsoleLog, <variables>P:CalamariVariables[KeyValuePair<String,String>] }
+delete-aws-cloudformation => DeleteCloudFormationCommand { log:ConsoleLog, packageFile:null, variables:CalamariVariables[KeyValuePair<String,String>], waitForComplete:False }
+deploy-aws-cloudformation => DeployCloudFormationCommand { disableRollback:False, extractPackage:ExtractPackage, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, pathToPackage:null, stackName:null, structuredConfigVariablesService:StructuredConfigVariablesService, templateFile:null, templateParameterFile:null, templateParameterS3Url:null, templateS3Url:null, variables:CalamariVariables[KeyValuePair<String,String>], waitForComplete:False }
+deploy-aws-ecs-service => DeployEcsServiceCommand { <ecsImageNameResolver>P:EcsImageNameResolver, <log>P:ConsoleLog, <stackNameGenerator>P:EcsStackNameGenerator, <variables>P:CalamariVariables[KeyValuePair<String,String>] }
+deploy-java-archive => DeployJavaArchiveCommand { archiveFile:null, commandLineRunner:CommandLineRunner, deploymentJournalWriter:DeploymentJournalWriter, extractPackage:ExtractPackage, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, scriptEngine:ScriptEngine, structuredConfigVariablesService:StructuredConfigVariablesService, substituteInFiles:SubstituteInFiles, variables:CalamariVariables[KeyValuePair<String,String>] }
+deploy-package => DeployPackageCommand { commandLineRunner:CommandLineRunner, deploymentJournalWriter:DeploymentJournalWriter, extractPackage:ExtractPackage, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, pathToPackage:null, scriptEngine:ScriptEngine, structuredConfigVariablesService:StructuredConfigVariablesService, substituteInFiles:SubstituteInFiles, variables:CalamariVariables[KeyValuePair<String,String>], windowsX509CertificateStore:NoOp<WindowsX509CertificateStore> }
+download-and-register-package => DownloadAndRegisterPackageCommand { downloadService:PackageDownloadService, journal:PackageJournal, log:ConsoleLog, options:PackageDownloadAndRegisterOptions }
+download-package => DownloadPackageCommand { downloadService:PackageDownloadService, log:ConsoleLog, options:PackageDownloadOptions }
+execute-manifest => ExecuteManifestCommand { commandLineRunner:CommandLineRunner, executionTools:Meta`2[][Meta<ILaunchTool,LaunchToolMeta>], fileSystem:<PhysicalFileSystem>, log:ConsoleLog, variables:CalamariVariables[KeyValuePair<String,String>] }
+find-and-register-package => FindAndRegisterPackageCommand { fileSystem:<PhysicalFileSystem>, findService:PackageFindService, journal:PackageJournal, log:ConsoleLog, options:PackageFindRegistrationOptions }
+find-package => FindPackageCommand { findService:PackageFindService, options:PackageFindOptions }
+helm-upgrade => HelmUpgradeCommand { commandLineRunner:CommandLineRunner, extractPackage:ExtractPackage, fileSystem:<PhysicalFileSystem>, kubectl:Kubectl, log:ConsoleLog, manifestReporter:ManifestReporter, namespaceResolver:KubernetesManifestNamespaceResolver, pathToPackage:null, scriptEngine:ScriptEngine, statusExecutor:ResourceStatusReportExecutor, substituteInFiles:SubstituteInFiles, templateValueSourcesParser:HelmTemplateValueSourcesParser, variables:CalamariVariables[KeyValuePair<String,String>] }
+import-certificate => ImportCertificateCommand { log:ConsoleLog, variables:CalamariVariables[KeyValuePair<String,String>], windowsX509CertificateStore:NoOp<WindowsX509CertificateStore> }
+java-library => JavaLibraryCommand { actionType:null, commandLineRunner:CommandLineRunner, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, scriptEngine:ScriptEngine, variables:CalamariVariables[KeyValuePair<String,String>] }
+kubernetes-apply-raw-yaml => KubernetesApplyRawYamlCommand { kubernetesApplyExecutor:GatherAndApplyRawYamlExecutor, statusReporter:ResourceStatusReportExecutor, variables:CalamariVariables[KeyValuePair<String,String>] }
+kubernetes-kustomize => KubernetesKustomizeCommand { kubernetesApplyExecutor:KustomizeExecutor, log:ConsoleLog, statusReporter:ResourceStatusReportExecutor, variables:CalamariVariables[KeyValuePair<String,String>] }
+kubernetes-target-discovery => KubernetesDiscoveryCommand { discovererFactory:KubernetesDiscovererFactory, log:ConsoleLog, variables:CalamariVariables[KeyValuePair<String,String>] }
+kubernetes-verify-resources => KubernetesVerifyResourcesCommand { commandLineRunner:CommandLineRunner, fileSystem:<PhysicalFileSystem>, kubectl:Kubectl, log:ConsoleLog, statusReporter:ResourceStatusReportExecutor, variables:CalamariVariables[KeyValuePair<String,String>] }
+register-package => RegisterPackageUseCommand { fileSystem:<PhysicalFileSystem>, journal:PackageJournal, log:ConsoleLog, packageId:null, packagePath:null, packageVersion:null, rawVersionString:null, taskId:null, versionFormat:Semver }
+release-package-lock => ReleasePackageLockCommand { defaultTimeBeforeLockExpiration:TimeSpan, journal:PackageJournal, log:ConsoleLog, taskId:null, variables:CalamariVariables[KeyValuePair<String,String>] }
+run-script => RunScriptCommand { commandLineRunner:CommandLineRunner, deploymentJournalWriter:DeploymentJournalWriter, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, packageFile:null, scriptEngine:ScriptEngine, scriptFileArg:null, scriptParametersArg:null, structuredConfigVariablesService:StructuredConfigVariablesService, substituteInFiles:SubstituteInFiles, variables:CalamariVariables[KeyValuePair<String,String>] }
+transfer-package => TransferPackageCommand { deploymentJournalWriter:DeploymentJournalWriter, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, variables:CalamariVariables[KeyValuePair<String,String>] }
+update-argo-cd-app-images => UpdateArgoCDAppImagesCommand { configFactory:DeploymentConfigFactory, customPropertiesFile:null, customPropertiesPassword:null, fileSystem:<PhysicalFileSystem>, gitVendorPullRequestClientResolver:GitVendorPullRequestClientResolver, log:ConsoleLog, variables:CalamariVariables[KeyValuePair<String,String>] }
+update-argo-cd-app-manifests => UpdateArgoCDAppManifestsCommand { argoCDManifestsFileMatcher:ArgoCDManifestsFileMatcher, configFactory:DeploymentConfigFactory, customPropertiesFile:null, customPropertiesPassword:null, extractPackage:ExtractPackage, fileSystem:<PhysicalFileSystem>, gitVendorPullRequestClientResolver:GitVendorPullRequestClientResolver, log:ConsoleLog, nonSensitiveVariables:NonSensitiveCalamariVariables[KeyValuePair<String,String>], pathToPackage:null, substituteInFiles:NonSensitiveSubstituteInFiles, variables:CalamariVariables[KeyValuePair<String,String>] }
+update-aws-ecs-service => UpdateEcsServiceCommand { log:ConsoleLog, variables:CalamariVariables[KeyValuePair<String,String>] }
+upload-aws-s3 => UploadAwsS3Command { bucket:null, extractPackage:ExtractPackage, fileSystem:<PhysicalFileSystem>, log:ConsoleLog, pathToPackage:null, s3OutputVariablesStrategy:AllFiles, structuredConfigVariablesService:StructuredConfigVariablesService, substituteInFiles:SubstituteInFiles, targetMode:null, variables:CalamariVariables[KeyValuePair<String,String>] }
+
+## PIPELINE COMMANDS (named registrations)
+aws-ecs-cluster-target-discovery
+run-claude-code
