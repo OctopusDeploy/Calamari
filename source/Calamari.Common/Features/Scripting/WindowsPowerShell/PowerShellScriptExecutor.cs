@@ -51,7 +51,8 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 EnvironmentVars = effectiveEnvironmentVars,
                 WorkingDirectory = Path.GetDirectoryName(script.File),
                 UserName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(PowerShellVariables.UserName) : null,
-                Password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(PowerShellVariables.Password)) : null
+                Password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(PowerShellVariables.Password)) : null,
+                UseUTF8 = true, /* TODO Make UTF-8 encoding an opt-out setting */
             };
 
             return new[]
