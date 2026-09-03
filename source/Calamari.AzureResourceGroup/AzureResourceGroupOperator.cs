@@ -10,6 +10,7 @@ using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -143,8 +144,7 @@ class AzureResourceGroupOperator(ILog log) : IAzureResourceGroupOperator
         }
         catch (Exception ex)
         {
-            log.Error(await BuildDeploymentFailureMessage(resourceGroupResource, deploymentName, ex));
-            throw;
+            throw new CommandException(await BuildDeploymentFailureMessage(resourceGroupResource, deploymentName, ex), ex);
         }
     }
 
