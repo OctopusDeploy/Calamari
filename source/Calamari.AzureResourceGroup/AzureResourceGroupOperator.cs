@@ -10,7 +10,6 @@ using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
-using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -142,32 +141,42 @@ class AzureResourceGroupOperator(ILog log) : IAzureResourceGroupOperator
             var response = await deploymentOperation.WaitForCompletionAsync(delayStrategy, cancellationToken);
             log.Info($"Deployment completed with status: {response.Value?.Data.Properties?.ProvisioningState}");
         }
-        catch (Exception ex)
+        // This Azure exception is thrown for failed deployments. It is handled here to provide specific failure details
+        catch (RequestFailedException)
         {
-            throw new CommandException(await BuildDeploymentFailureMessage(resourceGroupResource, deploymentName, ex), ex);
+            var failureDetail = await BuildDeploymentFailureMessage(resourceGroupResource, deploymentName);
+            if (failureDetail != null)
+                log.Error(failureDetail);
+
+            throw;
+        }
+        catch
+        {
+            log.Error("Error polling for deployment completion");
+            throw;
         }
     }
 
-    async Task<string> BuildDeploymentFailureMessage(ResourceGroupResource resourceGroupResource,
-                                                     string deploymentName,
-                                                     Exception originalException)
+    async Task<string?> BuildDeploymentFailureMessage(ResourceGroupResource resourceGroupResource,
+                                                     string deploymentName)
     {
-        var baseMessage = $"Error polling for deployment completion: {originalException.Message}";
         try
         {
             using var errorLoggingCancellation = new CancellationTokenSource(FailureLoggingTimeout);
 
             var deploymentResponse = await resourceGroupResource.GetArmDeploymentAsync(deploymentName, errorLoggingCancellation.Token);
             if (!deploymentResponse.HasValue)
-                return baseMessage;
+            {
+                log.Warn($"Could not retrieve deployment '{deploymentName}' from Azure, so the resources that failed cannot be listed.");
+                return null;
+            }
 
             var report = await CollectFailedOperations(deploymentResponse.Value, errorLoggingCancellation.Token);
 
             if (report.FailureCount == 0)
-                return baseMessage;
+                return null;
 
-            var sb = new StringBuilder(baseMessage);
-            sb.Append($"\n\nFailed Azure resources ({report.FailureCount} of {report.TotalCount} operations failed or were canceled):");
+            var sb = new StringBuilder($"Failed Azure resources ({report.FailureCount} of {report.TotalCount} operations failed or were canceled):");
             sb.Append(report.Details);
             if (report.OmittedCount > 0)
                 sb.Append($"\n  ... and {report.OmittedCount} more. See the Azure Portal for the full list.");
@@ -178,8 +187,8 @@ class AzureResourceGroupOperator(ILog log) : IAzureResourceGroupOperator
         }
         catch (Exception ex)
         {
-            log.Verbose($"Could not retrieve detailed deployment error information: {ex.Message}");
-            return baseMessage;
+            log.Warn($"Could not retrieve details of the failed Azure resources: {ex.Message}");
+            return null;
         }
     }
 
