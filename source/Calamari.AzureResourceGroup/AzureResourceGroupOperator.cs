@@ -144,6 +144,7 @@ class AzureResourceGroupOperator(ILog log) : IAzureResourceGroupOperator
         // This Azure exception is thrown for failed deployments. It is handled here to provide specific failure details
         catch (RequestFailedException)
         {
+            log.Error("Error completing deployment");
             var failureDetail = await BuildDeploymentFailureMessage(resourceGroupResource, deploymentName);
             if (failureDetail != null)
                 log.Error(failureDetail);
