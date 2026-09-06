@@ -1,0 +1,10 @@
+{
+  "tools": {
+    "terraform": {
+      "lowest": "0.13.7",
+      "highest": "1.8.5",
+      "source": "https://releases.hashicorp.com/terraform/",
+      "architectures": ["amd64", "arm64"]
+    }
+  }
+}
