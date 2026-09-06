@@ -19,7 +19,7 @@
         <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.0" />
         <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
         <PackageReference Include="System.Threading.AccessControl" Version="4.3.0" />
-        <PackageReference Include="Autofac" Version="9.3.1" />
+        <PackageReference Include="Autofac" Version="9.3.2" />
         <PackageReference Include="Octopus.Globfish" Version="1.0.8" />
         <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
         <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
