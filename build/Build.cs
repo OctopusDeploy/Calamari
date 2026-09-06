@@ -125,6 +125,13 @@ partial class Build : NukeBuild
                                              s = s.SetProjectFile(Solution);
                                              if (!string.IsNullOrWhiteSpace(TargetRuntime))
                                                  s = s.SetRuntime(TargetRuntime);
+                                             // Publish pins RuntimeFrameworkVersion and runs with --no-restore, so the
+                                             // pinned runtime pack has to be downloaded here or publish fails with
+                                             // NETSDK1112 on an agent that hasn't cached it. Setting this at restore
+                                             // only affects which pack is downloaded - it does not force test projects
+                                             // to run on that runtime, since dotnet test doesn't pass the property.
+                                             // See BundledRuntime.
+                                             s = s.AddProperty("RuntimeFrameworkVersion", BundledRuntime.Version);
                                              return s;
                                          });
                        });

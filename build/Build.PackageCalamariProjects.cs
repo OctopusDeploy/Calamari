@@ -114,6 +114,9 @@ public partial class Build
                                                   .SetVersion(NugetVersion.Value)
                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                   .EnableSelfContained()
+                                                  // Pin the bundled runtime so it is a deliberate choice rather than a
+                                                  // property of whichever SDK the agent has. See BundledRuntime.
+                                                  .AddProperty("RuntimeFrameworkVersion", BundledRuntime.Version)
                                                   .EnablePublishSingleFile()
                                                   .EnablePublishTrimmed()
                                                   .SetOutput(stagingDirectory));
@@ -157,6 +160,9 @@ public partial class Build
                                               .SetVerbosity(BuildVerbosity)
                                               .EnableNoRestore()
                                               .EnableSelfContained()
+                                              // Pin the bundled runtime so it is a deliberate choice rather than a
+                                              // property of whichever SDK the agent has. See BundledRuntime.
+                                              .AddProperty("RuntimeFrameworkVersion", BundledRuntime.Version)
                                               .SetOutput(outputDirectory)));
 
         File.Copy(KnownPaths.RootDirectory / "global.json", outputDirectory / "global.json");
