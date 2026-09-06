@@ -205,3 +205,7 @@ source/Calamari.Tests/Some sample text
 # Claude Code: per-developer files
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Python bytecode from scripts/
+__pycache__/
+*.pyc
