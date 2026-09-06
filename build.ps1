@@ -65,14 +65,14 @@ else {
     # This means we would need to manually update our global.json file every time there is a new
     # .NET SDK available, and then all developers would need to immediately install this on their machines.
     #
-    # In our builds, we want the same "automatic roll-forward" behaviour that we get when we use the dotnet/sdk:8.0 docker
+    # In our builds, we want the same "automatic roll-forward" behaviour that we get when we use the dotnet/sdk:10.0 docker
     # images -- where we always get the latest patch version of the SDK without manual intervention.
     #
     # We achieve this with a small tweak to the Nuke bootstrapper to tell it to install the latest version from
-    # the 8.0 channel, regardless of what's in the global.json.
+    # the 10.0 channel, regardless of what's in the global.json.
 
     Remove-Variable DotNetVersion
-    $DotNetChannel = "8.0"
+    $DotNetChannel = "10.0"
     # ----- End Octopus Deploy Modification -----
 
     # Install by channel or version

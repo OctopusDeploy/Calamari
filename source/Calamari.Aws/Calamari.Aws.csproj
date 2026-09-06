@@ -18,7 +18,7 @@
     <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
