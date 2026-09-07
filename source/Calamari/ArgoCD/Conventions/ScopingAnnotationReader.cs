@@ -19,11 +19,13 @@ namespace Calamari.ArgoCD.Conventions
             applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(sourceName), out var projectAnnotation);
             applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(sourceName), out var environmentAnnotation);
             applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusTenantAnnotationKey(sourceName), out var tenantAnnotation);
+            applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusStepAnnotationKey(sourceName), out var stepAnnotation);
             
             return new AnnotationScope(
                                        projectAnnotation.ToProjectSlug(), 
                                        environmentAnnotation.ToEnvironmentSlug(),
-                                       tenantAnnotation.ToTenantSlug()
+                                       tenantAnnotation.ToTenantSlug(),
+                                       stepAnnotation.ToStepSlug()
                                       );
         }
         

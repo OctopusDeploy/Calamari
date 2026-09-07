@@ -10,11 +10,15 @@ namespace Calamari.ArgoCD.Conventions
     {
         public static void LogApplicationSourceScopeStatus(this ILog log, AnnotationScope annotatedScope, ApplicationSourceName? sourceName, DeploymentScope deploymentScope)
         {
-            log.Verbose($"Application source scopes are Project: '{annotatedScope.Project}', Environment: '{annotatedScope.Environment}', Tenant: '{annotatedScope.Tenant}'");
+            log.Verbose($"Application source scopes are Project: '{annotatedScope.Project}', Environment: '{annotatedScope.Environment}', Tenant: '{annotatedScope.Tenant}', Step: '{annotatedScope.Step}'");
             string applicationNameInLogs = sourceName == null ? "(unnamed)" : $"'{sourceName.Value}'";
             if (deploymentScope.Matches(annotatedScope))
             {
                 log.Info($"Updating application source {applicationNameInLogs}");
+            }
+            else if (annotatedScope.Step != null && deploymentScope.Step != null)
+            {
+                log.Verbose($"Not updating application source {applicationNameInLogs} because it is annotated for step '{annotatedScope.Step}', not '{deploymentScope.Step}'");
             }
             else
             {
@@ -31,6 +35,10 @@ namespace Calamari.ArgoCD.Conventions
             if (deploymentScope.Tenant != null)
             {
                 log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusTenantAnnotationKey("<sourcename>".ToApplicationSourceName()), deploymentScope.Tenant);
+            }
+            if (deploymentScope.Step != null)
+            {
+                log.WarnFormat(" - {0}: {1} (optional, only needed to reserve a source for one step)", ArgoCDConstants.Annotations.OctopusStepAnnotationKey("<sourcename>".ToApplicationSourceName()), deploymentScope.Step);
             }
             log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-annotations-docs", "here"));
         }

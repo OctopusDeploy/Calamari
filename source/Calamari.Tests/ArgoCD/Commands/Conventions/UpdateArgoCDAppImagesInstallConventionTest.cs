@@ -1281,6 +1281,98 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             source1.CommitSha.Should().HaveLength(40, "source 1 was updated and committed");
         }
 
+        [Test]
+        public void MultiSource_StepAnnotation_OnlyTheSourceAnnotatedForThisStepIsUpdated()
+        {
+            // Arrange: both sources are in project/environment scope, but each is reserved for a different step.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+            runningDeployment.Variables[StepVariables.Slug] = "update-image-tags";
+
+            var file0 = Path.Combine("source0", "deployment.yaml");
+            var file1 = Path.Combine("source1", "deployment.yaml");
+            originRepo.AddFilesToBranch(argoCDBranchName, [
+                (file0, MakeDeploymentYaml("source0-deployment", "nginx:1.19")),
+                (file1, MakeDeploymentYaml("source1-deployment", "nginx:1.19")),
+            ]);
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(TwoSourcesReservedForDifferentSteps());
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+            var actual = getResults().Single();
+            actual.TrackedSourceDetails.Should().HaveCount(1, "source 0 is reserved for another step");
+
+            var source1 = actual.TrackedSourceDetails.Single();
+            source1.SourceIndex.Should().Be(1);
+            source1.CommitSha.Should().HaveLength(40, "source 1 is annotated for this step and was updated");
+
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, file0, MakeDeploymentYaml("source0-deployment", "nginx:1.19"));
+        }
+
+        [Test]
+        public void MultiSource_NoStepAnnotations_EveryInScopeSourceIsUpdated()
+        {
+            // Arrange: unannotated sources aren't claimed by any step, so the executing step still updates both.
+            var updater = CreateConvention();
+            var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
+            runningDeployment.Variables[StepVariables.Slug] = "update-image-tags";
+
+            var file0 = Path.Combine("source0", "deployment.yaml");
+            var file1 = Path.Combine("source1", "deployment.yaml");
+            originRepo.AddFilesToBranch(argoCDBranchName, [
+                (file0, MakeDeploymentYaml("source0-deployment", "nginx:1.19")),
+                (file1, MakeDeploymentYaml("source1-deployment", "nginx:1.19")),
+            ]);
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(new ArgoCDApplicationBuilder()
+                                                        .WithName("App1").WithNamespace("argocd")
+                                                        .WithAnnotations(new Dictionary<string, string>
+                                                        {
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source0"))] = ProjectSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source0"))] = EnvironmentSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
+                                                            [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
+                                                        })
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                                                        .Build());
+
+            var getResults = CaptureReporterResults();
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            using var scope = new AssertionScope();
+            var actual = getResults().Single();
+            actual.TrackedSourceDetails.Should().HaveCount(2, "neither source is reserved for a particular step");
+        }
+
+        Application TwoSourcesReservedForDifferentSteps()
+            => new ArgoCDApplicationBuilder()
+               .WithName("App1").WithNamespace("argocd")
+               .WithAnnotations(new Dictionary<string, string>
+               {
+                   [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source0"))] = ProjectSlug,
+                   [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source0"))] = EnvironmentSlug,
+                   [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("source0"))] = "template-manifests",
+                   [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
+                   [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
+                   [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("source1"))] = "update-image-tags",
+               })
+               .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+               .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+               .Build();
+
         static string MakeDeploymentYaml(string name, params string[] images)
         {
             var containerName = (string image) => image.Split('/').Last().Split(':').First();
