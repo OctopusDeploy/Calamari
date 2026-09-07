@@ -34,6 +34,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     {
         const string ProjectSlug = "TheProject";
         const string EnvironmentSlug = "TheEnvironment";
+        const string StepSlug = "TheStep";
 
         // This is a rough-copy of the ArgoCDAppImageUpdater tests from Octopus
 
@@ -1034,6 +1035,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [StepVariables.Slug] = StepSlug,
             };
             foreach (var (packageName, imageReference) in images)
             {
@@ -1287,7 +1289,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             // Arrange: both sources are in project/environment scope, but each is reserved for a different step.
             var updater = CreateConvention();
             var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
-            runningDeployment.Variables[StepVariables.Slug] = "update-image-tags";
 
             var file0 = Path.Combine("source0", "deployment.yaml");
             var file1 = Path.Combine("source1", "deployment.yaml");
@@ -1323,7 +1324,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             // Arrange: unannotated sources aren't claimed by any step, so the executing step still updates both.
             var updater = CreateConvention();
             var runningDeployment = CreateRunningDeployment(("nginx", "index.docker.io/nginx:1.27.1"));
-            runningDeployment.Variables[StepVariables.Slug] = "update-image-tags";
 
             var file0 = Path.Combine("source0", "deployment.yaml");
             var file1 = Path.Combine("source1", "deployment.yaml");
@@ -1367,7 +1367,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                    [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("source0"))] = "template-manifests",
                    [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("source1"))] = ProjectSlug,
                    [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("source1"))] = EnvironmentSlug,
-                   [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("source1"))] = "update-image-tags",
+                   [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("source1"))] = StepSlug,
                })
                .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source0", Name = "source0", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
                .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "source1", Name = "source1", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)

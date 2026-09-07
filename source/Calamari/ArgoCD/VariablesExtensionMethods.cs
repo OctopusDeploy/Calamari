@@ -28,7 +28,7 @@ namespace Calamari.ArgoCD
             return new DeploymentScope(variables.GetMandatoryVariable(ProjectVariables.Slug).ToProjectSlug()!,
                                        variables.GetMandatoryVariable(DeploymentEnvironment.Slug).ToEnvironmentSlug()!,
                                        variables.Get(DeploymentVariables.Tenant.Slug)?.ToTenantSlug(),
-                                       variables.Get(StepVariables.Slug).ToStepSlug());
+                                       variables.GetMandatoryVariable(StepVariables.Slug).ToStepSlug()!);
         }
     }
 }

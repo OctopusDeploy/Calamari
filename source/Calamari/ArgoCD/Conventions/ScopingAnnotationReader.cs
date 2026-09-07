@@ -13,7 +13,7 @@ namespace Calamari.ArgoCD.Conventions
             //If we have multiple sources, scoping annotations can only match named sources
             if (containsMultipleSources && sourceName == null)
             {
-                return new AnnotationScope(null, null, null);
+                return new AnnotationScope(null, null, null, null);
             }
 
             applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(sourceName), out var projectAnnotation);

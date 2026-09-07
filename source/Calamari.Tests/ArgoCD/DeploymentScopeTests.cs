@@ -16,22 +16,6 @@ namespace Calamari.Tests.ArgoCD
         const string StepSlugValue = "update-image-tags";
 
         [Test]
-        public void NoStepInDeploymentScope_MatchesSourceAnnotatedForAnyStep()
-        {
-            var annotated = AnnotationsFor(step: "some-other-step");
-
-            Scope(step: null).Matches(annotated).Should().BeTrue();
-        }
-
-        [Test]
-        public void EmptyStepInDeploymentScope_MatchesSourceAnnotatedForAnyStep()
-        {
-            var annotated = AnnotationsFor(step: "some-other-step");
-
-            Scope(step: "").Matches(annotated).Should().BeTrue();
-        }
-
-        [Test]
         public void SourceWithNoStepAnnotation_MatchesAnyStep()
         {
             var annotated = AnnotationsFor(step: null);
@@ -122,7 +106,7 @@ namespace Calamari.Tests.ArgoCD
         }
 
         static DeploymentScope Scope(string step)
-            => new(ProjectSlugValue.ToProjectSlug()!, EnvironmentSlugValue.ToEnvironmentSlug()!, null, step.ToStepSlug());
+            => new(ProjectSlugValue.ToProjectSlug()!, EnvironmentSlugValue.ToEnvironmentSlug()!, null, step.ToStepSlug()!);
 
         static AnnotationScope AnnotationsFor(string step)
         {

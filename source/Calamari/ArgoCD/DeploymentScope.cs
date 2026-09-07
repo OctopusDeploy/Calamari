@@ -5,7 +5,7 @@ using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD;
 
-public record DeploymentScope(ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant, StepSlug? Step = null)
+public record DeploymentScope(ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant, StepSlug Step)
 {
     public bool Matches(AnnotationScope annotationScope)
     {
@@ -17,5 +17,5 @@ public record DeploymentScope(ProjectSlug Project, EnvironmentSlug Environment, 
 
     // An unannotated source means any step can act on it
     bool MatchesStep(AnnotationScope annotationScope)
-        => Step is null || annotationScope.Step is null || Step == annotationScope.Step;
+        => annotationScope.Step is null || Step == annotationScope.Step;
 }
