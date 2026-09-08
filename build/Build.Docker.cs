@@ -1,12 +1,15 @@
 ﻿using Calamari.Build.Utilities;
 using JetBrains.Annotations;
+using Nuke.Common.Tooling;
 using Nuke.Common.Tools.Docker;
-using Nuke.Common.Tools.PowerShell;
 
 namespace Calamari.Build;
 
 public partial class Build
 {
+    //Resolved from PATH so a missing gzip fails by name, rather than as a mystery exit code
+    static Tool Gzip => ToolResolver.GetPathTool("gzip");
+
     [PublicAPI]
     Target BuildDockerImages =>
         d =>
@@ -82,10 +85,10 @@ public partial class Build
                                                                                               return settings;
                                                                                           });
 
-                                                            //compress with gzip
-                                                            PowerShellTasks.PowerShell(_ => _
-                                                                                            .EnableNoProfile()
-                                                                                            .SetCommand($"gzip -k -9 -f '{outputFile}'"));
+                                                            //compress with gzip. Invoked directly rather than via pwsh, which only
+                                                            //added a dependency on whatever .NET runtime the agent's `pwsh` global tool
+                                                            //was built against - not the SDK this build pins.
+                                                            Gzip($"-k -9 -f \"{outputFile}\"");
 
                                                             //gzip always uses the .gz suffix
                                                             var compressedZipPath = $"{outputFile}.gz";
