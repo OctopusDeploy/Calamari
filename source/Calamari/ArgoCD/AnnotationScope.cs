@@ -4,4 +4,4 @@ using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD;
 
-public record AnnotationScope(ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant, StepSlug? Step);
+public record AnnotationScope(ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant, ActionSlug? Action);

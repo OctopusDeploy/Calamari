@@ -33,7 +33,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     {
         const string ProjectSlug = "TheProject";
         const string EnvironmentSlug = "TheEnvironment";
-        const string StepSlug = "TheStep";
+        const string ActionSlug = "TheAction";
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         InMemoryLog log;
         string tempDirectory;
@@ -124,8 +124,26 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
-        public void ExecuteCopiesFilesOfAnyNameFromPackageIntoRepo()
+        public void ExecuteCopiesFilesOfAnyNameIntoSourceMatchingActionSlugRatherThanParentStepSlug()
         {
+            const string parentStepSlug = "TheParentStep";
+            const string parentSourcePath = "parent-source";
+            var application = new ArgoCDApplicationBuilder()
+                              .WithName("App1").WithNamespace("argocd")
+                              .WithAnnotations(new Dictionary<string, string>
+                              {
+                                  [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("parent"))] = ProjectSlug,
+                                  [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("parent"))] = EnvironmentSlug,
+                                  [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("parent"))] = parentStepSlug,
+                                  [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("action"))] = ProjectSlug,
+                                  [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("action"))] = EnvironmentSlug,
+                                  [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("action"))] = ActionSlug,
+                              })
+                              .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = parentSourcePath, Name = "parent", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                              .WithSource(new ApplicationSource { OriginalRepoUrl = OriginUrl, Path = "", Name = "action", TargetRevision = ArgoCDBranchFriendlyName }, SourceTypeConstants.Directory)
+                              .Build();
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>()).Returns(application);
+
             const string firstFilename = "first.yaml";
             CreateFileUnderPackageDirectory(firstFilename);
             const string nestedFilename = "nested/second.yaml";
@@ -143,7 +161,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
+                [StepVariables.Slug] = parentStepSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -162,11 +181,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             resultNestedContent.Should().Be(nestedFilename);
             fileSystem.FileExists(Path.Combine(resultPath, thirdFilename)).Should().BeTrue();
             fileSystem.FileExists(Path.Combine(resultPath, fourthFilename)).Should().BeTrue();
+            fileSystem.FileExists(Path.Combine(resultPath, parentSourcePath, firstFilename)).Should().BeFalse();
 
             using var resultRepo = new Repository(resultPath);
             resultRepo.Head.Tip.Message.TrimEnd().Should().Be(nonSensitiveCalamariVariables[SpecialVariables.Git.CommitMessageSummary]);
 
-            AssertOutputVariables();
+            AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }
 
         [Test]
@@ -185,7 +205,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.PurgeOutput] = "True",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
 
             //add arbitrary file to the origin repo
@@ -227,7 +247,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -289,7 +309,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -359,7 +379,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -430,7 +450,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -472,7 +492,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -518,7 +538,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -601,7 +621,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -634,7 +654,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.PurgeOutput] = "True",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [StepVariables.Slug] = StepSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
 
             // Add the same file to the origin repo

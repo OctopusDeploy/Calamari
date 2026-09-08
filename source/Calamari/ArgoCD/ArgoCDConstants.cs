@@ -38,6 +38,8 @@ namespace Calamari.ArgoCD
                 ? OctopusTenantAnnotationKeyPrefix 
                 : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
             
+            // The public "step" annotation contains an action slug, called a step slug in the UI.
+            // See https://confluence.hq.octopus.com/wiki/spaces/RND/pages/4714235203/ADR+028+Use+action+slugs+for+step+scoping for more details
             static readonly string OctopusStepAnnotationKeyPrefix = $"{Prefix}/step";
             public static string OctopusStepAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusStepAnnotationKeyPrefix 

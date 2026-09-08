@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -13,50 +15,50 @@ namespace Calamari.Tests.ArgoCD
     {
         const string ProjectSlugValue = "the-project";
         const string EnvironmentSlugValue = "the-environment";
-        const string StepSlugValue = "update-image-tags";
+        const string ActionSlugValue = "update-image-tags";
 
         [Test]
-        public void SourceWithNoStepAnnotation_MatchesAnyStep()
+        public void SourceWithNoStepAnnotation_MatchesAnyAction()
         {
-            var annotated = AnnotationsFor(step: null);
+            var annotated = AnnotationsFor(action: null);
 
-            Scope(step: StepSlugValue).Matches(annotated).Should().BeTrue();
+            Scope(action: ActionSlugValue).Matches(annotated).Should().BeTrue();
         }
 
         [Test]
-        public void SourceAnnotatedForThisStep_Matches()
+        public void SourceAnnotatedForThisAction_Matches()
         {
-            var annotated = AnnotationsFor(step: StepSlugValue);
+            var annotated = AnnotationsFor(action: ActionSlugValue);
 
-            Scope(step: StepSlugValue).Matches(annotated).Should().BeTrue();
+            Scope(action: ActionSlugValue).Matches(annotated).Should().BeTrue();
         }
 
         [Test]
-        public void SourceAnnotatedForAnotherStep_DoesNotMatch()
+        public void SourceAnnotatedForAnotherAction_DoesNotMatch()
         {
-            var annotated = AnnotationsFor(step: "template-manifests");
+            var annotated = AnnotationsFor(action: "template-manifests");
 
-            Scope(step: StepSlugValue).Matches(annotated).Should().BeFalse();
+            Scope(action: ActionSlugValue).Matches(annotated).Should().BeFalse();
         }
 
         [Test]
-        public void StepAnnotationIsTrimmed()
+        public void StepAnnotationMatchesAfterTrimming()
         {
-            var annotated = AnnotationsFor(step: "  update-image-tags  ");
+            var annotated = AnnotationsFor(action: "  update-image-tags  ");
 
-            annotated.Step!.Value.Should().Be(StepSlugValue);
+            Scope(action: ActionSlugValue).Matches(annotated).Should().BeTrue();
         }
 
         [Test]
         public void StepAnnotationMatchesCaseInsensitively()
         {
-            var annotated = AnnotationsFor(step: "Update-Image-Tags");
+            var annotated = AnnotationsFor(action: "Update-Image-Tags");
 
-            Scope(step: StepSlugValue).Matches(annotated).Should().BeTrue();
+            Scope(action: ActionSlugValue).Matches(annotated).Should().BeTrue();
         }
 
         [Test]
-        public void SourceAnnotatedForThisStepButAnotherProject_DoesNotMatch()
+        public void SourceAnnotatedForThisActionButAnotherProject_DoesNotMatch()
         {
             var annotated = ScopingAnnotationReader.GetScopeForApplicationSource(
                 null,
@@ -64,26 +66,26 @@ namespace Calamari.Tests.ArgoCD
                 {
                     [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = "another-project",
                     [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlugValue,
-                    [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(null)] = StepSlugValue,
+                    [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(null)] = ActionSlugValue,
                 },
                 false);
 
-            Scope(step: StepSlugValue).Matches(annotated).Should().BeFalse();
+            Scope(action: ActionSlugValue).Matches(annotated).Should().BeFalse();
         }
 
         [Test]
-        public void MultiSourceApplication_UnnamedStepAnnotationIsIgnored()
+        public void MultiSourceApplication_UnnamedAnnotations_DoNotMatchUnnamedSource()
         {
             var annotations = new Dictionary<string, string>
             {
                 [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlugValue,
                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlugValue,
-                [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(null)] = "template-manifests",
+                [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(null)] = ActionSlugValue,
             };
 
             var annotated = ScopingAnnotationReader.GetScopeForApplicationSource(null, annotations, true);
 
-            annotated.Step.Should().BeNull();
+            Scope(action: ActionSlugValue).Matches(annotated).Should().BeFalse();
         }
 
         [Test]
@@ -93,22 +95,37 @@ namespace Calamari.Tests.ArgoCD
             {
                 [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("chart"))] = ProjectSlugValue,
                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("chart"))] = EnvironmentSlugValue,
-                [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("chart"))] = StepSlugValue,
+                [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("chart"))] = ActionSlugValue,
                 [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("values"))] = ProjectSlugValue,
                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("values"))] = EnvironmentSlugValue,
                 [ArgoCDConstants.Annotations.OctopusStepAnnotationKey(new ApplicationSourceName("values"))] = "template-manifests",
             };
 
-            var scope = Scope(step: StepSlugValue);
+            var scope = Scope(action: ActionSlugValue);
 
             scope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(new ApplicationSourceName("chart"), annotations, true)).Should().BeTrue();
             scope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(new ApplicationSourceName("values"), annotations, true)).Should().BeFalse();
         }
 
-        static DeploymentScope Scope(string step)
-            => new(ProjectSlugValue.ToProjectSlug()!, EnvironmentSlugValue.ToEnvironmentSlug()!, null, step.ToStepSlug()!);
+        [Test]
+        public void MissingActionSlug_DoesNotFallBackToParentStepSlug()
+        {
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlugValue,
+                [DeploymentEnvironment.Slug] = EnvironmentSlugValue,
+                [StepVariables.Slug] = "parent-step",
+            };
 
-        static AnnotationScope AnnotationsFor(string step)
+            Action getScope = () => variables.GetDeploymentScope();
+
+            getScope.Should().Throw<CommandException>();
+        }
+
+        static DeploymentScope Scope(string action)
+            => new(ProjectSlugValue.ToProjectSlug()!, EnvironmentSlugValue.ToEnvironmentSlug()!, null, action.ToActionSlug()!);
+
+        static AnnotationScope AnnotationsFor(string action)
         {
             var annotations = new Dictionary<string, string>
             {
@@ -116,9 +133,9 @@ namespace Calamari.Tests.ArgoCD
                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlugValue,
             };
 
-            if (step != null)
+            if (action != null)
             {
-                annotations[ArgoCDConstants.Annotations.OctopusStepAnnotationKey(null)] = step;
+                annotations[ArgoCDConstants.Annotations.OctopusStepAnnotationKey(null)] = action;
             }
 
             return ScopingAnnotationReader.GetScopeForApplicationSource(null, annotations, false);
