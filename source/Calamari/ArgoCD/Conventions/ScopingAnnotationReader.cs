@@ -13,17 +13,19 @@ namespace Calamari.ArgoCD.Conventions
             //If we have multiple sources, scoping annotations can only match named sources
             if (containsMultipleSources && sourceName == null)
             {
-                return new AnnotationScope(null, null, null);
+                return new AnnotationScope(null, null, null, null);
             }
 
             applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(sourceName), out var projectAnnotation);
             applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(sourceName), out var environmentAnnotation);
             applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusTenantAnnotationKey(sourceName), out var tenantAnnotation);
+            applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusStepAnnotationKey(sourceName), out var actionAnnotation);
             
             return new AnnotationScope(
                                        projectAnnotation.ToProjectSlug(), 
                                        environmentAnnotation.ToEnvironmentSlug(),
-                                       tenantAnnotation.ToTenantSlug()
+                                       tenantAnnotation.ToTenantSlug(),
+                                       actionAnnotation.ToActionSlug()
                                       );
         }
         
