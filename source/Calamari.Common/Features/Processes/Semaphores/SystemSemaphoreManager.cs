@@ -60,22 +60,23 @@ namespace Calamari.Common.Features.Processes.Semaphores
             //assign full control for all use
             SetFullAccessControlForAllUsers(semaphore, globalName);
             
-            using (StartSlowAcquisitionMonitor(name))
+            try
             {
-                try
+                if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
                 {
-                    if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
+                    log.Verbose(waitMessage);
+                    if (!semaphore.WaitOne(warnIfStillWaitingAfter))
                     {
-                        log.Verbose(waitMessage);
+                        log.Warn($"Still waiting to acquire the semaphore '{name}' after {warnIfStillWaitingAfter.TotalMinutes:0} minutes. Another process may be holding it, or may have abandoned it without releasing it.");
                         semaphore.WaitOne();
                     }
                 }
-                catch (AbandonedMutexException)
-                {
-                    // We are now the owners of the mutex
-                    // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                    // The state of the mutex is set to signaled and the next waiting thread gets ownership.
-                }
+            }
+            catch (AbandonedMutexException)
+            {
+                // We are now the owners of the mutex
+                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
+                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
             }
 
             return new Releaser(() =>
@@ -90,55 +91,29 @@ namespace Calamari.Common.Features.Processes.Semaphores
             var globalName = $"Global\\{name}";
             var mutex = new Mutex(false, globalName);
 
-            using (StartSlowAcquisitionMonitor(name))
+            try
             {
-                try
+                if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
                 {
-                    if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
+                    log.Verbose(waitMessage);
+                    if (!mutex.WaitOne(warnIfStillWaitingAfter))
                     {
-                        log.Verbose(waitMessage);
+                        log.Warn($"Still waiting to acquire the semaphore '{name}' after {warnIfStillWaitingAfter.TotalMinutes:0} minutes. Another process may be holding it, or may have abandoned it without releasing it.");
                         mutex.WaitOne();
                     }
                 }
-                catch (AbandonedMutexException)
-                {
-                    // We are now the owners of the mutex
-                    // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                    // The state of the mutex is set to signaled and the next waiting thread gets ownership.
-                }
+            }
+            catch (AbandonedMutexException)
+            {
+                // We are now the owners of the mutex
+                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
+                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
             }
 
             return new Releaser(() =>
                                 {
                                     mutex.ReleaseMutex();
                                     mutex.Dispose();
-                                });
-        }
-
-        // Starts a background thread that logs a warning if the acquisition hasn't finished (in either
-        // direction) within `warnIfStillWaitingAfter`. Dispose it as soon as the acquiring WaitOne call
-        // returns (successfully or not) so the monitor thread exits without logging anything.
-        IDisposable StartSlowAcquisitionMonitor(string name)
-        {
-            var acquired = new ManualResetEventSlim(false);
-
-            var monitorThread = new Thread(() =>
-            {
-                if (!acquired.Wait(warnIfStillWaitingAfter))
-                {
-                    log.Warn($"Still waiting to acquire the semaphore '{name}' after {warnIfStillWaitingAfter.TotalMinutes:0} minutes. Another process may be holding it, or may have abandoned it without releasing it.");
-                }
-            })
-            {
-                IsBackground = true
-            };
-            monitorThread.Start();
-
-            return new Releaser(() =>
-                                {
-                                    acquired.Set();
-                                    monitorThread.Join();
-                                    acquired.Dispose();
                                 });
         }
 
