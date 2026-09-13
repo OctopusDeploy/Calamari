@@ -15,6 +15,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
     {
         readonly ILog log;
         readonly int initialWaitBeforeShowingLogMessage;
+        readonly TimeSpan warnIfStillWaitingAfter = TimeSpan.FromMinutes(30);
         readonly ResiliencePipeline semaphoreAcquisitionPipeline;
 
         public SystemSemaphoreManager()
@@ -64,7 +65,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
                 {
                     log.Verbose(waitMessage);
-                    semaphore.WaitOne();
+                    WaitWithWarning(semaphore.WaitOne, name);
                 }
             }
             catch (AbandonedMutexException)
@@ -91,7 +92,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
                 {
                     log.Verbose(waitMessage);
-                    mutex.WaitOne();
+                    WaitWithWarning(mutex.WaitOne, name);
                 }
             }
             catch (AbandonedMutexException)
@@ -106,6 +107,18 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                     mutex.ReleaseMutex();
                                     mutex.Dispose();
                                 });
+        }
+
+        // Waits indefinitely for `waitOne` to signal, logging a warning every `warnIfStillWaitingAfter`
+        // period so a long/stuck wait is visible rather than silent.
+        void WaitWithWarning(Func<TimeSpan, bool> waitOne, string name)
+        {
+            var totalWaitTime = TimeSpan.Zero;
+            while (!waitOne(warnIfStillWaitingAfter))
+            {
+                totalWaitTime += warnIfStillWaitingAfter;
+                log.Warn($"Still waiting to acquire the semaphore '{name}' after {totalWaitTime.TotalMinutes:0} minutes. Another process may be holding it, or may have abandoned it without releasing it.");
+            }
         }
 
         [SupportedOSPlatform("windows")]
