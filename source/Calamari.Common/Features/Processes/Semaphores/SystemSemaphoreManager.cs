@@ -60,22 +60,22 @@ namespace Calamari.Common.Features.Processes.Semaphores
             //assign full control for all use
             SetFullAccessControlForAllUsers(semaphore, globalName);
             
-            try
+            using (StartSlowAcquisitionMonitor(name))
             {
-                if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
+                try
                 {
-                    log.Verbose(waitMessage);
-                    using (StartSlowAcquisitionMonitor(name))
+                    if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
                     {
+                        log.Verbose(waitMessage);
                         semaphore.WaitOne();
                     }
                 }
-            }
-            catch (AbandonedMutexException)
-            {
-                // We are now the owners of the mutex
-                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
+                catch (AbandonedMutexException)
+                {
+                    // We are now the owners of the mutex
+                    // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
+                    // The state of the mutex is set to signaled and the next waiting thread gets ownership.
+                }
             }
 
             return new Releaser(() =>
@@ -90,22 +90,22 @@ namespace Calamari.Common.Features.Processes.Semaphores
             var globalName = $"Global\\{name}";
             var mutex = new Mutex(false, globalName);
 
-            try
+            using (StartSlowAcquisitionMonitor(name))
             {
-                if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
+                try
                 {
-                    log.Verbose(waitMessage);
-                    using (StartSlowAcquisitionMonitor(name))
+                    if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
                     {
+                        log.Verbose(waitMessage);
                         mutex.WaitOne();
                     }
                 }
-            }
-            catch (AbandonedMutexException)
-            {
-                // We are now the owners of the mutex
-                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
+                catch (AbandonedMutexException)
+                {
+                    // We are now the owners of the mutex
+                    // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
+                    // The state of the mutex is set to signaled and the next waiting thread gets ownership.
+                }
             }
 
             return new Releaser(() =>
@@ -137,6 +137,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
             return new Releaser(() =>
                                 {
                                     acquired.Set();
+                                    monitorThread.Join();
                                     acquired.Dispose();
                                 });
         }
