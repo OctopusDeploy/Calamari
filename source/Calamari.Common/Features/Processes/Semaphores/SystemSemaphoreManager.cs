@@ -65,7 +65,10 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
                 {
                     log.Verbose(waitMessage);
-                    WaitWithWarning(semaphore.WaitOne, name);
+                    using (StartSlowAcquisitionMonitor(name))
+                    {
+                        semaphore.WaitOne();
+                    }
                 }
             }
             catch (AbandonedMutexException)
@@ -92,7 +95,10 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
                 {
                     log.Verbose(waitMessage);
-                    WaitWithWarning(mutex.WaitOne, name);
+                    using (StartSlowAcquisitionMonitor(name))
+                    {
+                        mutex.WaitOne();
+                    }
                 }
             }
             catch (AbandonedMutexException)
@@ -109,16 +115,30 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                 });
         }
 
-        // Waits indefinitely for `waitOne` to signal, logging a warning every `warnIfStillWaitingAfter`
-        // period so a long/stuck wait is visible rather than silent.
-        void WaitWithWarning(Func<TimeSpan, bool> waitOne, string name)
+        // Starts a background thread that logs a warning if the acquisition hasn't finished (in either
+        // direction) within `warnIfStillWaitingAfter`. Dispose it as soon as the acquiring WaitOne call
+        // returns (successfully or not) so the monitor thread exits without logging anything.
+        IDisposable StartSlowAcquisitionMonitor(string name)
         {
-            var totalWaitTime = TimeSpan.Zero;
-            while (!waitOne(warnIfStillWaitingAfter))
+            var acquired = new ManualResetEventSlim(false);
+
+            var monitorThread = new Thread(() =>
             {
-                totalWaitTime += warnIfStillWaitingAfter;
-                log.Warn($"Still waiting to acquire the semaphore '{name}' after {totalWaitTime.TotalMinutes:0} minutes. Another process may be holding it, or may have abandoned it without releasing it.");
-            }
+                if (!acquired.Wait(warnIfStillWaitingAfter))
+                {
+                    log.Warn($"Still waiting to acquire the semaphore '{name}' after {warnIfStillWaitingAfter.TotalMinutes:0} minutes. Another process may be holding it, or may have abandoned it without releasing it.");
+                }
+            })
+            {
+                IsBackground = true
+            };
+            monitorThread.Start();
+
+            return new Releaser(() =>
+                                {
+                                    acquired.Set();
+                                    acquired.Dispose();
+                                });
         }
 
         [SupportedOSPlatform("windows")]
