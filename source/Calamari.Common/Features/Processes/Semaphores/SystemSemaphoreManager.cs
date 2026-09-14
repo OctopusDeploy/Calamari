@@ -121,13 +121,12 @@ namespace Calamari.Common.Features.Processes.Semaphores
             try
             {
                 semaphore.SetAccessControl(semaphoreSecurity);
+                log.Verbose($"Set full control for all users on semaphore '{name}'");
             }
             catch (Exception e)
             {
                 log.Verbose($"Failed to set access controls on semaphore '{name}': {e.PrettyPrint()}");
             }
-            
-            log.Verbose($"Set full control for all users on semaphore '{name}'");
         }
 
         class Releaser : IDisposable
