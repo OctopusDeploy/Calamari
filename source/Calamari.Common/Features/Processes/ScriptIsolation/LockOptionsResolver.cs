@@ -14,6 +14,7 @@ public sealed class LockOptionsResolver(
 {
     public LockOptions? Create(RequestedLockOptions requestedOptions)
     {
+        log.Verbose($"Creating lock for lock options: {requestedOptions.Type} {requestedOptions.MutexName}");
         var lockDirectory = lockDirectoryFactory.Create(requestedOptions.PreferredLockDirectory);
 
         var lockFile = lockDirectory.GetLockFile($"ScriptIsolation.{requestedOptions.MutexName}.lock");

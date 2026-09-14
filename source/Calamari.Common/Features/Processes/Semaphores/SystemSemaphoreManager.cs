@@ -111,6 +111,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
         [SupportedOSPlatform("windows")]
         void SetFullAccessControlForAllUsers(Semaphore semaphore, string name)
         {
+            log.Verbose($"Setting full control for all users on semaphore '{name}'");
             var semaphoreSecurity = new SemaphoreSecurity();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
             var rule = new SemaphoreAccessRule(everyone, SemaphoreRights.FullControl, AccessControlType.Allow);
@@ -120,6 +121,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
             try
             {
                 semaphore.SetAccessControl(semaphoreSecurity);
+                log.Verbose($"Set full control for all users on semaphore '{name}'");
             }
             catch (Exception e)
             {

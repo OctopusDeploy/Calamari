@@ -79,8 +79,10 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
+                log.Verbose("Acquiring semaphore before applying package retention.");
                 using (AcquireSemaphore())
                 {
+                    log.Verbose("Loading journal and applying retention.");
                     journalRepository.Load();
                     var packagesToRemove = retentionAlgorithms.SelectMany(algorithm => algorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries()));
                     foreach (var package in packagesToRemove)
