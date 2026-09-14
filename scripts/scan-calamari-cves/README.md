@@ -3,10 +3,20 @@
 Run `./scan.sh`. Takes about ten minutes, most of it downloading a ~270 MB package.
 
 ```bash
-./scan.sh                # latest main-branch CI build
-./scan.sh 2026.3.508     # a specific published version
-./scan.sh --local        # publish from your working tree and scan that
+./scan.sh                              # latest main-branch CI build
+./scan.sh 2026.3.508                   # a specific published version
+./scan.sh 2025.3.417 2026.3.508        # several, e.g. the supported release tips
+./scan.sh --local                      # publish from your working tree and scan that
+./scan.sh --previous-state=old.json 2026.3.508   # only tell me what changed
 ```
+
+`--previous-state` makes the script exit **3** when the reported CVE set differs from that
+file, so a shell or CI job can treat "the answer changed" as the actionable event. Without
+it the script always exits 0.
+
+Under `--octopus` it always exits 0 and reports change through the `HasNewFindings` output
+variable instead. Octopus fails a step on any non-zero exit, and "the set changed" is
+precisely the case that needs the notify and save-state steps to run.
 
 ## Why this rather than `dotnet list package --vulnerable`
 
@@ -76,3 +86,43 @@ regression test for it passes on the *vulnerable* version, which is the proof.
 - Vulnerability databases move daily. `CVE-2026-44788` was absent from the NuGet audit
   source at 10:45 and present by 15:00 on the same day. Re-run rather than cite an old
   result.
+
+## Running it on a schedule
+
+The script only helps someone who thinks to run it, and two independent things change the
+answer:
+
+1. **The artifact changes** — a new build bundles a new .NET runtime.
+2. **The world changes** — a CVE is published against an artifact that has not moved.
+   Nothing in this repo changes. Only a schedule catches this, and it is the one that bites
+   (see the `CVE-2026-44788` note under Caveats).
+
+The `Scan Calamari for CVEs` runbook in the `calamari-cve-scanning` Octopus project runs
+this script daily and posts to Slack **only when the set changes**. It invokes the script
+straight from this repo, so there is one implementation and the runbook tracks `main`.
+
+`--octopus` is what it passes: read the previous state from the `Calamari.CveScan.State`
+variable, write the new state, `HasNewFindings` and `SlackSummary` back as output variables,
+and attach the raw scanner JSON as run artifacts.
+
+### Scanners in and out of containers
+
+By default the two scanners run as docker containers, so a local run needs no install step.
+Inside an Octopus execution container the step is *already* in a container, so
+docker-in-docker is unavailable — `--runner=native` (auto-detected) uses `trivy` and `grype`
+from `PATH` instead, installing them if missing.
+
+Those installs are **unpinned**, which is weaker than it should be for a scheduled job: a
+scanner upgrade and a genuine new CVE look identical in the diff. Set `TRIVY_VERSION` /
+`GRYPE_VERSION` to pin, or bake both into a pinned execution container image.
+
+### Why runtime drift is part of the state
+
+The comparison also flags a bundled runtime that trails the current patch, or has fallen out
+of support, using Microsoft's published releases index. That signal matters on its own —
+per the EOL trap below, a clean runtime scan on an old artifact usually means nobody is
+publishing advisories any more, not that it is safe.
+
+It is folded into the stored state rather than reported every run. A runtime that
+permanently trails would otherwise fire an identical alert every night, which is how an
+alert becomes something everyone mutes.
