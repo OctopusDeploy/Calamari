@@ -32,7 +32,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                                Delay = TimeSpan.FromMilliseconds(50),
                                                OnRetry = args =>
                                                          {
-                                                             log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Semaphore again");
+                                                             log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Mutex again");
                                                              return default;
                                                          }
                                            })
@@ -41,50 +41,17 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
         public IDisposable Acquire(string name, string waitMessage)
         {
-            return OperatingSystem.IsWindows()
-                ? AcquireSemaphore(name, waitMessage)
-                : AcquireMutex(name, waitMessage);
-        }
+            var globalName = $@"Global\{name}";
 
-        [SupportedOSPlatform("windows")]
-        IDisposable AcquireSemaphore(string name, string waitMessage)
-        {
-            var globalName = $"Global\\{name}";
-
-            //we try and create/acquire a global semaphore with some retry
-            //this is done to (hopefully) avoid situations where two instances of Calamari are trying to acquire the same semaphore
+            //we try and create/acquire a global mutex with some retry
+            //this is done to (hopefully) avoid situations where two instances of Calamari are trying to acquire the same mutex
             //this could happen in the case of parallel steps being executed on the same machine
-            var semaphore = semaphoreAcquisitionPipeline.Execute(() => new Semaphore(1,1, name));
-            
-            //assign full control for all use
-            SetFullAccessControlForAllUsers(semaphore, globalName);
-            
-            try
-            {
-                if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
-                {
-                    log.Verbose(waitMessage);
-                    semaphore.WaitOne();
-                }
-            }
-            catch (AbandonedMutexException)
-            {
-                // We are now the owners of the mutex
-                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
-            }
+            var mutex = semaphoreAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
 
-            return new Releaser(() =>
-                                {
-                                    semaphore.Release();
-                                    semaphore.Dispose();
-                                });
-        }
-
-        IDisposable AcquireMutex(string name, string waitMessage)
-        {
-            var globalName = $"Global\\{name}";
-            var mutex = new Mutex(false, globalName);
+            //assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
+            //is still accessible to Calamari running under a different account
+            if (OperatingSystem.IsWindows())
+                SetFullAccessControlForAllUsers(mutex, globalName);
 
             try
             {
@@ -96,9 +63,12 @@ namespace Calamari.Common.Features.Processes.Semaphores
             }
             catch (AbandonedMutexException)
             {
-                // We are now the owners of the mutex
-                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
+                // We are now the owners of the mutex.
+                // If a thread or process terminates while owning a mutex, the mutex is said to be abandoned:
+                // the kernel signals it and hands ownership to the next waiter. This recovery is the reason a
+                // Mutex is used here rather than a Semaphore - a Semaphore has no notion of ownership, so a
+                // holder that died without releasing would leave its count at zero and block every later
+                // waiter forever.
             }
 
             return new Releaser(() =>
@@ -109,21 +79,21 @@ namespace Calamari.Common.Features.Processes.Semaphores
         }
 
         [SupportedOSPlatform("windows")]
-        void SetFullAccessControlForAllUsers(Semaphore semaphore, string name)
+        void SetFullAccessControlForAllUsers(Mutex mutex, string name)
         {
-            var semaphoreSecurity = new SemaphoreSecurity();
+            var mutexSecurity = new MutexSecurity();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-            var rule = new SemaphoreAccessRule(everyone, SemaphoreRights.FullControl, AccessControlType.Allow);
+            var rule = new MutexAccessRule(everyone, MutexRights.FullControl, AccessControlType.Allow);
 
-            semaphoreSecurity.AddAccessRule(rule);
+            mutexSecurity.AddAccessRule(rule);
 
             try
             {
-                semaphore.SetAccessControl(semaphoreSecurity);
+                mutex.SetAccessControl(mutexSecurity);
             }
             catch (Exception e)
             {
-                log.Verbose($"Failed to set access controls on semaphore '{name}': {e.PrettyPrint()}");
+                log.Verbose($"Failed to set access controls on mutex '{name}': {e.PrettyPrint()}");
             }
         }
 
