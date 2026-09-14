@@ -13,10 +13,10 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
     [SupportedOSPlatform("windows")]
     public class WindowsSystemSemaphoreFixture : SemaphoreFixtureBase
     {
-        // On Windows, SystemSemaphoreManager backs Acquire() with a named Semaphore rather than a Mutex.
-        // A Semaphore has no notion of ownership, so when the holder goes away without running the Releaser
-        // the count is never restored, the AbandonedMutexException handler in AcquireSemaphore can never
-        // fire, and the unbounded WaitOne() waits forever.
+        // Acquire() must recover when the process holding the lock goes away without running the Releaser
+        // (killed mid-ApplyRetention, Tentacle restart, OOM). This is why the Windows path uses a named Mutex:
+        // an abandoned Mutex is signalled by the kernel and handed to the next waiter, whereas a Semaphore has
+        // no notion of ownership and would leave its count at zero, hanging every later waiter forever.
 
         // Must comfortably exceed the 3s initial wait inside SystemSemaphoreManager.
         static readonly TimeSpan RecoveryAllowance = TimeSpan.FromSeconds(15);
