@@ -21,27 +21,16 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         // Must comfortably exceed the 3s initial wait inside SystemSemaphoreManager.
         static readonly TimeSpan RecoveryAllowance = TimeSpan.FromSeconds(15);
 
-        // Held so the abandoned holder's handle is never closed or finalised, keeping the kernel object
-        // alive exactly as a second interested process would. Released in teardown.
+        // Held so the abandoned holder's handle is never closed or finalised during the test, keeping the
+        // kernel object alive exactly as a second interested process would. It cannot be released from here:
+        // a Mutex can only be released by its owning thread, which has deliberately exited. Dropping the
+        // reference in teardown lets the finaliser close the handle.
         IDisposable abandonedHolder;
 
         [TearDown]
-        public void ReleaseAbandonedHolder()
+        public void DropAbandonedHolder()
         {
-            try
-            {
-                // Unblocks any waiter still stuck on the abandoned holder, so a failing test does not
-                // leave a permanently blocked thread pool thread behind.
-                abandonedHolder?.Dispose();
-            }
-            catch (Exception)
-            {
-                // A Mutex can only be released by its owning thread, which has deliberately exited.
-            }
-            finally
-            {
-                abandonedHolder = null;
-            }
+            abandonedHolder = null;
         }
 
         [Test]
@@ -69,9 +58,9 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 
             Assert.That(acquire.Wait(RecoveryAllowance),
                         Is.True,
-                        "Acquire() never returned after the holder was abandoned. A named Semaphore cannot signal "
-                        + "abandonment, so the count stays at zero and the unbounded WaitOne() blocks forever. "
-                        + "Using a Mutex on Windows would hand ownership to this waiter instead.");
+                        "Acquire() never returned after the holder was abandoned. The lock must be a named Mutex so "
+                        + "that the kernel signals abandonment and hands ownership to this waiter; a Semaphore has no "
+                        + "owner, so its count stays at zero and the unbounded WaitOne() blocks forever.");
         }
     }
 }

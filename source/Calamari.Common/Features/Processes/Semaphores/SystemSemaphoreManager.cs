@@ -32,7 +32,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                                Delay = TimeSpan.FromMilliseconds(50),
                                                OnRetry = args =>
                                                          {
-                                                             log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Semaphore again");
+                                                             log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Mutex again");
                                                              return default;
                                                          }
                                            })
