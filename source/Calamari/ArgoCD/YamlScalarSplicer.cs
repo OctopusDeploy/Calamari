@@ -31,10 +31,33 @@ namespace Calamari.ArgoCD
         /// </summary>
         public static bool CanReplaceValue(string document, YamlScalarNode node)
         {
-            if (node.Style == ScalarStyle.Literal)
-                return node.End.Line > node.Start.Line;
+            return node.Style == ScalarStyle.Literal
+                ? TryGetBlockContentRegion(document, node, out _, out _)
+                : TryGetInlineValueRegion(document, node, out _, out _);
+        }
 
-            return TryGetInlineValueRegion(document, node, out _, out _);
+        /// <summary>
+        /// Locates a block scalar's indented content and confirms that rendering the parser's own
+        /// value back reproduces the original bytes exactly. When it does not — an explicit indent
+        /// indicator (|2) makes part of the indentation content, so reindenting would double it —
+        /// this block is not one we can describe, and replacing it would corrupt the file.
+        /// </summary>
+        static bool TryGetBlockContentRegion(string document, YamlScalarNode node, out int start, out int end)
+        {
+            start = 0;
+            end = 0;
+
+            if (node.End.Line <= node.Start.Line)
+                return false;
+
+            start = OffsetOfLine(document, (int)node.Start.Line + 1);
+            end = OffsetOfLine(document, (int)node.End.Line) + (int)node.End.Column - 1;
+
+            if (end < start || end > document.Length)
+                return false;
+
+            var region = document[start..end];
+            return RenderBlockContent(node.Value ?? "", region, document) == region;
         }
 
         /// <summary>
@@ -134,15 +157,24 @@ namespace Calamari.ArgoCD
         /// </summary>
         static string SpliceBlockScalar(string document, YamlScalarNode node, string newValue)
         {
-            var contentStart = OffsetOfLine(document, (int)node.Start.Line + 1);
-            var contentEnd = OffsetOfLine(document, (int)node.End.Line) + (int)node.End.Column - 1;
-            var originalContent = document[contentStart..contentEnd];
+            if (!TryGetBlockContentRegion(document, node, out var start, out var end))
+                throw new NotSupportedException("Cannot account for this block scalar's indentation to replace it. Check CanReplaceValue before creating an edit.");
 
-            var replacement = Reindent(newValue, BlockIndent(originalContent), document.DetectLineEnding() ?? "\n");
-            if (!EndsWithLineBreak(originalContent))
-                replacement = replacement.TrimEnd('\r', '\n');
+            var replacement = RenderBlockContent(newValue, document[start..end], document);
 
-            return document[..contentStart] + replacement + document[contentEnd..];
+            return document[..start] + replacement + document[end..];
+        }
+
+        /// <summary>
+        /// Renders a block scalar's value as it must appear in the file: indented to match the block,
+        /// using the document's line ending, and keeping the original region's trailing break or lack
+        /// of one.
+        /// </summary>
+        static string RenderBlockContent(string value, string originalRegion, string document)
+        {
+            var rendered = Reindent(value, BlockIndent(originalRegion), document.DetectLineEnding() ?? "\n");
+
+            return EndsWithLineBreak(originalRegion) ? rendered : rendered.TrimEnd('\r', '\n');
         }
 
         static string Reindent(string value, string indent, string newLine)
