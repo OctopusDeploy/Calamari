@@ -115,16 +115,21 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
-        public void CanReplaceValue_IsFalseWhenABlockIndentIndicatorMakesIndentationContent()
+        public void ReplaceValue_OnBlockWithAnIndentIndicatorAndSurplusIndentation_KeepsTheSurplus()
         {
-            // |2 fixes the block indent at 2, so the remaining 4 spaces on each line are part of the
-            // value. Reindenting would prepend all 6 again and double the indentation.
+            // |2 declares two spaces of structure, so the remaining four on each line are part of the
+            // value and must survive the replacement rather than being indented a second time.
             const string document = "a: |2\n      one\n      two\nb: keep\n";
 
             var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
             var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
 
-            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeFalse();
+            node.Value.Should().Be("    one\n    two\n");
+            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeTrue();
+
+            var result = YamlScalarSplicer.ReplaceValue(document, node, "    one\n    three\n");
+
+            result.Should().Be("a: |2\n      one\n      three\nb: keep\n");
         }
 
         [Test]
@@ -182,15 +187,34 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
-        public void CanReplaceValue_StillRefusesIndentationItCannotAccountFor_WhenLineEndingsAreMixed()
+        public void ReplaceValue_OnBlockWithAnIndentIndicatorAndMixedLineEndings_StillKeepsTheSurplus()
         {
-            // The |2 indentation problem must not be masked by ignoring line endings.
             const string document = "a: |2\r\n      one\n      two\r\nb: keep\r\n";
 
             var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
             var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
 
-            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeFalse();
+            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeTrue();
+
+            var result = YamlScalarSplicer.ReplaceValue(document, node, node.Value);
+
+            result.Should().Be("a: |2\r\n      one\r\n      two\r\nb: keep\r\n");
+        }
+
+        [Test]
+        public void ReplaceValue_ReplacingAnIndentIndicatorBlockWithItself_IsAByteForByteNoOp()
+        {
+            foreach (var surplus in new[] { "", "  ", "    " })
+            {
+                var document = $"a: |2\n  {surplus}one\n  {surplus}two\nb: keep\n";
+
+                var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+                var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
+
+                YamlScalarSplicer.ReplaceValue(document, node, node.Value)
+                                 .Should()
+                                 .Be(document, $"surplus of {surplus.Length} spaces should round-trip");
+            }
         }
 
         static string Replace(string document, string key, string newValue)

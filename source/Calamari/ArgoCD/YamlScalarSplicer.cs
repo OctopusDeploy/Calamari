@@ -32,38 +32,43 @@ namespace Calamari.ArgoCD
         public static bool CanReplaceValue(string document, YamlScalarNode node)
         {
             return node.Style == ScalarStyle.Literal
-                ? TryGetBlockContentRegion(document, node, out _, out _)
+                ? TryGetBlockRegion(document, node) != null
                 : TryGetInlineValueRegion(document, node, out _, out _);
         }
 
         /// <summary>
-        /// Locates a block scalar's indented content and confirms that rendering the parser's own
-        /// value back reproduces the original content. When it does not — an explicit indent
-        /// indicator (|2) makes part of the indentation content, so reindenting would double it —
-        /// this block is not one we can describe, and replacing it would corrupt the file.
-        /// Line endings are excluded from the comparison: a block whose own endings differ from the
-        /// rest of the file is harmonised to the document's ending rather than refused, which still
-        /// catches every indentation difference the check exists for.
+        /// Locates a block scalar's indented content and works out how much of the leading whitespace
+        /// is structure. Rendering the parser's own value back must then reproduce the original
+        /// content, so a block we cannot describe is refused rather than corrupted. Line endings are
+        /// excluded from that comparison: a block whose own endings differ from the rest of the file is
+        /// harmonised to the document's ending, which still catches indentation differences.
         /// </summary>
-        static bool TryGetBlockContentRegion(string document, YamlScalarNode node, out int start, out int end)
+        static BlockRegion? TryGetBlockRegion(string document, YamlScalarNode node)
         {
-            start = 0;
-            end = 0;
-
             if (node.End.Line <= node.Start.Line)
-                return false;
+                return null;
 
-            start = OffsetOfLine(document, (int)node.Start.Line + 1);
-            end = OffsetOfLine(document, (int)node.End.Line) + (int)node.End.Column - 1;
+            var start = OffsetOfLine(document, (int)node.Start.Line + 1);
+            var end = OffsetOfLine(document, (int)node.End.Line) + (int)node.End.Column - 1;
 
             if (end < start || end > document.Length)
-                return false;
+                return null;
 
             var region = document[start..end];
-            var rendered = RenderBlockContent(node.Value ?? "", region, document);
+            var value = node.Value ?? "";
 
-            return rendered.ReplaceLineEndings("\n") == region.ReplaceLineEndings("\n");
+            var indent = StructuralIndent(region, value);
+            if (indent == null)
+                return null;
+
+            var block = new BlockRegion(start, end, indent, EndsWithLineBreak(region));
+
+            return Render(value, block, document).ReplaceLineEndings("\n") == region.ReplaceLineEndings("\n")
+                ? block
+                : null;
         }
+
+        record BlockRegion(int Start, int End, string Indent, bool EndsWithBreak);
 
         /// <summary>
         /// Locates the value inside an inline scalar and confirms the located text is exactly what the
@@ -162,24 +167,21 @@ namespace Calamari.ArgoCD
         /// </summary>
         static string SpliceBlockScalar(string document, YamlScalarNode node, string newValue)
         {
-            if (!TryGetBlockContentRegion(document, node, out var start, out var end))
-                throw new NotSupportedException("Cannot account for this block scalar's indentation to replace it. Check CanReplaceValue before creating an edit.");
+            var block = TryGetBlockRegion(document, node)
+                        ?? throw new NotSupportedException("Cannot account for this block scalar's indentation to replace it. Check CanReplaceValue before creating an edit.");
 
-            var replacement = RenderBlockContent(newValue, document[start..end], document);
-
-            return document[..start] + replacement + document[end..];
+            return document[..block.Start] + Render(newValue, block, document) + document[block.End..];
         }
 
         /// <summary>
-        /// Renders a block scalar's value as it must appear in the file: indented to match the block,
-        /// using the document's line ending, and keeping the original region's trailing break or lack
-        /// of one.
+        /// Renders a value as a block scalar's content: indented to match the block, using the
+        /// document's line ending, and keeping the original region's trailing break or lack of one.
         /// </summary>
-        static string RenderBlockContent(string value, string originalRegion, string document)
+        static string Render(string value, BlockRegion block, string document)
         {
-            var rendered = Reindent(value, BlockIndent(originalRegion), document.DetectLineEnding() ?? "\n");
+            var rendered = Reindent(value, block.Indent, document.DetectLineEnding() ?? "\n");
 
-            return EndsWithLineBreak(originalRegion) ? rendered : rendered.TrimEnd('\r', '\n');
+            return block.EndsWithBreak ? rendered : rendered.TrimEnd('\r', '\n');
         }
 
         static string Reindent(string value, string indent, string newLine)
@@ -209,13 +211,36 @@ namespace Calamari.ArgoCD
             return lines.Take(count).Select(line => line.TrimEnd('\r'));
         }
 
-        static string BlockIndent(string content)
+        /// <summary>
+        /// The portion of a content line's leading whitespace that is structure rather than part of the
+        /// string. YAML normally takes it from the first non-empty line, but an explicit indicator
+        /// (|2) declares it, leaving any surplus as content. Deriving it from the difference between
+        /// the raw line and the parsed line covers both without having to interpret the indicator.
+        /// Returns null when the two do not correspond, so the caller refuses the block.
+        /// </summary>
+        static string? StructuralIndent(string region, string value)
         {
-            var firstContentLine = content.Split('\n')
-                                          .FirstOrDefault(line => line.Trim('\r').Trim().Length > 0)
-                                   ?? "";
+            var regionLines = ContentLines(region).ToList();
+            var valueLines = ContentLines(value).ToList();
 
-            return firstContentLine[..(firstContentLine.Length - firstContentLine.TrimStart(' ', '\t').Length)];
+            for (var index = 0; index < valueLines.Count; index++)
+            {
+                if (valueLines[index].Length == 0)
+                    continue;
+
+                if (index >= regionLines.Count)
+                    return null;
+
+                var indentLength = regionLines[index].Length - valueLines[index].Length;
+                if (indentLength < 0)
+                    return null;
+
+                var indent = regionLines[index][..indentLength];
+
+                return indent.All(character => character == ' ' || character == '\t') ? indent : null;
+            }
+
+            return "";
         }
 
         static bool EndsWithLineBreak(string content)
