@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Commands;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
@@ -72,12 +73,13 @@ namespace Calamari.ArgoCD.Helm
         public string UpdateContentForPath(string path, string newValue)
         {
             var nodeAtPath = GetNodeAtPath(path);
-            if (nodeAtPath != null)
-            {
-                return YamlScalarSplicer.ReplaceValue(yamlString, nodeAtPath, newValue);
-            }
+            if (nodeAtPath == null)
+                return yamlString;
 
-            return yamlString;
+            if (!YamlScalarSplicer.CanReplaceValue(yamlString, nodeAtPath))
+                throw new CommandException($"Cannot update the value at '{path}' on line {nodeAtPath.Start.Line}: {YamlScalarSplicer.DescribeUnsupportedValue(nodeAtPath)}.");
+
+            return YamlScalarSplicer.ReplaceValue(yamlString, nodeAtPath, newValue);
         }
 
         static void FlattenObject(object? obj, string currentPath, List<string> paths)

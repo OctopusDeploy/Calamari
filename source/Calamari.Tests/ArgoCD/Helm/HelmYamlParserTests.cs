@@ -1,5 +1,6 @@
 using System;
 using Calamari.ArgoCD.Helm;
+using Calamari.Common.Commands;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -201,6 +202,20 @@ root:
             var result = sut.UpdateContentForPath("root.missing", "69");
 
             result.Should().Be(yamlContent);
+        }
+
+        [Test]
+        public void UpdateNodeValue_WithAFoldedValue_FailsWithAMessageNamingThePathAndTheFix()
+        {
+            const string yamlContent = "image:\n  tag: >\n    1.21\n";
+
+            var sut = new HelmYamlParser(yamlContent);
+
+            var act = () => sut.UpdateContentForPath("image.tag", "1.25");
+
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage("*image.tag*line 2*folded block scalar (>)*literal block (|)*");
         }
 
         [Test]

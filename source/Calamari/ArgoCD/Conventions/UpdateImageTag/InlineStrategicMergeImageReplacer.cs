@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
@@ -37,7 +38,9 @@ public class InlineStrategicMergeImageReplacer : IContainerImageReplacer
         var edits = new List<YamlScalarEdit>();
         foreach (var patchNode in patchSequence.Children)
         {
-            if (patchNode is YamlScalarNode patchScalar && YamlScalarSplicer.CanReplaceValue(input, patchScalar))
+            // A literal block is inline patch content; a plain entry is a path to a patch file, which
+            // is not ours to rewrite.
+            if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
             {
                 var patchContent = patchScalar.Value ?? "";
                 var replacer = new ContainerImageReplacer(patchContent, defaultRegistry);
@@ -45,6 +48,9 @@ public class InlineStrategicMergeImageReplacer : IContainerImageReplacer
 
                 if (result.UpdatedImageReferences.Count > 0)
                 {
+                    if (!YamlScalarSplicer.CanReplaceValue(input, patchScalar))
+                        throw new CommandException($"Cannot update images in the strategic merge patch on line {patchScalar.Start.Line}: {YamlScalarSplicer.DescribeUnsupportedValue(patchScalar)}.");
+
                     edits.Add(new YamlScalarEdit(patchScalar, result.UpdatedContents));
                     allUpdatedImages.UnionWith(result.UpdatedImageReferences);
                 }

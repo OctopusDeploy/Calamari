@@ -19,6 +19,17 @@ namespace Calamari.ArgoCD
     /// </summary>
     public static class YamlScalarSplicer
     {
+        /// <summary>
+        /// Why a value cannot be replaced, phrased for the person whose file it is. Callers add their
+        /// own context (which image, which file) and raise it as a CommandException.
+        /// </summary>
+        public static string DescribeUnsupportedValue(YamlScalarNode node)
+        {
+            return node.Style == ScalarStyle.Folded
+                ? "it is written as a folded block scalar (>), which does not record where the original line breaks were. Updating it would collapse the block onto one line and reformat the file. Use a literal block (|) or a plain value instead"
+                : $"the layout of this {node.Style} scalar could not be interpreted, so updating it could corrupt the file";
+        }
+
         public static string ReplaceValue(string document, YamlScalarNode node, string newValue)
         {
             return ReplaceValues(document, new[] { new YamlScalarEdit(node, newValue) });

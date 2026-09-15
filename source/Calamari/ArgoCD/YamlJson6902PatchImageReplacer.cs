@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.RepresentationModel;
 
@@ -173,12 +174,9 @@ namespace Calamari.ArgoCD
             if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
             {
                 if (!YamlScalarSplicer.CanReplaceValue(yamlContent, imageScalar))
-                {
-                    log.WarnFormat("Cannot safely update the image reference at line {0} (a {1} scalar). Leaving it unchanged.",
-                                   imageScalar.Start.Line,
-                                   imageScalar.Style);
-                    return NoChangeResult;
-                }
+                    // Trimmed because a folded value carries the line break that made it unwritable,
+                    // which would otherwise break the message across lines.
+                    throw new CommandException($"Cannot update the image reference '{imageScalar.Value?.Trim()}' on line {imageScalar.Start.Line}: {YamlScalarSplicer.DescribeUnsupportedValue(imageScalar)}.");
 
                 var newImageRef = currentImageRef.WithTag(matchedUpdate.Reference.Tag);
                 edits.Add(new YamlScalarEdit(imageScalar, newImageRef.FriendlyName()));

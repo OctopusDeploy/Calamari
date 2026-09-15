@@ -6,6 +6,7 @@ using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
@@ -144,15 +145,14 @@ namespace Calamari.ArgoCD
                 // Checked only once there is something to write, so a patch we cannot write back but
                 // have no reason to touch stays silent.
                 if (!YamlScalarSplicer.CanReplaceValue(yamlContent, patchContentNode))
-                {
-                    log.WarnFormat("Cannot safely update images in the inline patch at line {0} (a {1} scalar). Leaving it unchanged.",
-                                   patchContentNode.Start.Line,
-                                   patchContentNode.Style);
-                    return changes;
-                }
+                    throw new CommandException($"Cannot update images in the inline patch on line {patchContentNode.Start.Line}: {YamlScalarSplicer.DescribeUnsupportedValue(patchContentNode)}.");
 
                 changes.UnionWith(result.UpdatedImageReferences);
                 edits.Add(new YamlScalarEdit(patchContentNode, result.UpdatedContents));
+            }
+            catch (CommandException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
