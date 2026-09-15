@@ -37,7 +37,7 @@ public class InlineStrategicMergeImageReplacer : IContainerImageReplacer
         var edits = new List<YamlScalarEdit>();
         foreach (var patchNode in patchSequence.Children)
         {
-            if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
+            if (patchNode is YamlScalarNode patchScalar && YamlScalarSplicer.CanReplaceValue(input, patchScalar))
             {
                 var patchContent = patchScalar.Value ?? "";
                 var replacer = new ContainerImageReplacer(patchContent, defaultRegistry);

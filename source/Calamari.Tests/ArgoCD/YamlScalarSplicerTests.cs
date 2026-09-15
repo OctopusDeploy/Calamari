@@ -73,6 +73,47 @@ namespace Calamari.Tests.ArgoCD
             result.Should().Be("a: nginx:1.25\r\nb: nginx:1.25\r\nc: nginx:1.25\r\n");
         }
 
+        [Test]
+        public void ReplaceValues_WithTheSameNodeEditedTwice_AppliesItOnce()
+        {
+            // An alias makes YamlDotNet hand back the same node object, so callers can collect the
+            // same edit twice. Splicing it twice would corrupt the document.
+            const string document = "a: &x nginx:1.21\nb: *x\n";
+
+            var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+            var shared = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
+            var edits = new[] { new YamlScalarEdit(shared, "nginx:9"), new YamlScalarEdit(shared, "nginx:9") };
+
+            var result = YamlScalarSplicer.ReplaceValues(document, edits);
+
+            result.Should().Be("a: &x nginx:9\nb: *x\n");
+        }
+
+        [Test]
+        public void CanReplaceValue_IsFalseForStylesThatCannotBeSpliced()
+        {
+            const string document = "a: >\n  folded\n";
+
+            var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+            var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
+
+            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeFalse();
+        }
+
+        [Test]
+        public void CanReplaceValue_IsTrueForPlainQuotedAndLiteralScalars()
+        {
+            const string document = "a: plain\nb: \"quoted\"\nc: |\n  block\n";
+
+            var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+
+            foreach (var key in new[] { "a", "b", "c" })
+            {
+                var node = (YamlScalarNode)root.Children[new YamlScalarNode(key)];
+                YamlScalarSplicer.CanReplaceValue(document, node).Should().BeTrue($"{key} should be spliceable");
+            }
+        }
+
         static string Replace(string document, string key, string newValue)
         {
             var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
