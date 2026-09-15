@@ -127,6 +127,14 @@ namespace Calamari.ArgoCD
                 if (string.IsNullOrEmpty(patchContent))
                     return changes;
 
+                if (!YamlScalarSplicer.CanReplaceValue(yamlContent, patchContentNode))
+                {
+                    log.WarnFormat("Cannot safely update images in the inline patch at line {0} (a {1} scalar). Leaving it unchanged.",
+                                   patchContentNode.Start.Line,
+                                   patchContentNode.Style);
+                    return changes;
+                }
+
                 IContainerImageReplacer patchImageReplacer;
                 if (discovery.IsJson6902PatchContent(patchContent!))
                 {

@@ -172,6 +172,14 @@ namespace Calamari.ArgoCD
 
             if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
             {
+                if (!YamlScalarSplicer.CanReplaceValue(yamlContent, imageScalar))
+                {
+                    log.WarnFormat("Cannot safely update the image reference at line {0} (a {1} scalar). Leaving it unchanged.",
+                                   imageScalar.Start.Line,
+                                   imageScalar.Style);
+                    return NoChangeResult;
+                }
+
                 var newImageRef = currentImageRef.WithTag(matchedUpdate.Reference.Tag);
                 edits.Add(new YamlScalarEdit(imageScalar, newImageRef.FriendlyName()));
 
