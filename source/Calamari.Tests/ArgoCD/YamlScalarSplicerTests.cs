@@ -114,6 +114,56 @@ namespace Calamari.Tests.ArgoCD
             }
         }
 
+        [Test]
+        public void CanReplaceValue_IsFalseWhenABlockIndentIndicatorMakesIndentationContent()
+        {
+            // |2 fixes the block indent at 2, so the remaining 4 spaces on each line are part of the
+            // value. Reindenting would prepend all 6 again and double the indentation.
+            const string document = "a: |2\n      one\n      two\nb: keep\n";
+
+            var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+            var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
+
+            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeFalse();
+        }
+
+        [Test]
+        public void CanReplaceValue_IsTrueForBlockIndicatorsWhoseIndentationWeCanAccountFor()
+        {
+            foreach (var indicator in new[] { "|", "|-", "|+", "|2" })
+            {
+                const string indent = "  ";
+                var document = $"a: {indicator}\n{indent}one\n{indent}two\nb: keep\n";
+
+                var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+                var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
+
+                YamlScalarSplicer.CanReplaceValue(document, node)
+                                 .Should()
+                                 .BeTrue($"{indicator} with matching indentation should be spliceable");
+            }
+        }
+
+        [Test]
+        public void ReplaceValue_ReplacingABlockValueWithItself_IsAByteForByteNoOp()
+        {
+            foreach (var indicator in new[] { "|", "|-", "|+" })
+            foreach (var newLine in new[] { "\n", "\r\n" })
+            {
+                var document = $"a: {indicator}{newLine}  one{newLine}{newLine}  two{newLine}b: keep{newLine}";
+
+                var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+                var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
+
+                if (!YamlScalarSplicer.CanReplaceValue(document, node))
+                    continue;
+
+                YamlScalarSplicer.ReplaceValue(document, node, node.Value)
+                                 .Should()
+                                 .Be(document, $"{indicator} should round-trip unchanged");
+            }
+        }
+
         static string Replace(string document, string key, string newValue)
         {
             var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
