@@ -22,6 +22,46 @@ namespace Calamari.Tests.ArgoCD
         ILog log = new InMemoryLog();
 
         [Test]
+        public void UpdateImages_WithAFoldedPatchThatHasNoRelevantImage_DoesNotWarn()
+        {
+            var inMemoryLog = new InMemoryLog();
+            const string inputYaml = "patches:\n"
+                                     + "  - patch: >\n"
+                                     + "      some: folded prose that mentions no image at all\n"
+                                     + "  - target:\n"
+                                     + "      kind: Deployment\n"
+                                     + "    patch: |-\n"
+                                     + "      apiVersion: apps/v1\n"
+                                     + "      kind: Deployment\n"
+                                     + "      spec:\n"
+                                     + "        template:\n"
+                                     + "          spec:\n"
+                                     + "            containers:\n"
+                                     + "              - name: nginx\n"
+                                     + "                image: nginx:1.21\n";
+
+            var result = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog).UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(inputYaml.Replace("nginx:1.21", "nginx:1.25"));
+            inMemoryLog.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
+        public void UpdateImages_WithAFoldedPatchThatDoesHoldTheImage_WarnsAndLeavesItAlone()
+        {
+            var inMemoryLog = new InMemoryLog();
+            const string inputYaml = "patches:\n"
+                                     + "  - patch: >\n"
+                                     + "      [{\"op\": \"replace\", \"path\": \"/spec/template/spec/containers/0/image\", \"value\": \"nginx:1.21\"}]\n";
+
+            var result = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog).UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(inputYaml);
+            result.UpdatedImageReferences.Should().BeEmpty();
+            inMemoryLog.MessagesWarnFormatted.Should().ContainMatch("*inline patch at line*Folded*");
+        }
+
+        [Test]
         public void UpdateImages_ChangesOnlyTheImageReference_PreservingCommentsAndLineEndings()
         {
             const string inputYaml = "# managed by the platform team\r\n"

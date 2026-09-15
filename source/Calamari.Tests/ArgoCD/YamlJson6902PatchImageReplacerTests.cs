@@ -236,6 +236,27 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
+        public void UpdateImages_WithAFoldedScalarElsewhereInTheFile_DoesNotWarn()
+        {
+            var inMemoryLog = new InMemoryLog();
+            const string yamlContent = "- op: add\n"
+                                       + "  path: /metadata/annotations/notes\n"
+                                       + "  value: >\n"
+                                       + "    some folded prose\n"
+                                       + "    spanning lines\n"
+                                       + "- op: replace\n"
+                                       + "  path: /spec/template/spec/containers/0/image\n"
+                                       + "  value: nginx:1.21\n";
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = replacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(yamlContent.Replace("nginx:1.21", "nginx:1.25"));
+            inMemoryLog.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
         public void UpdateImages_ChangesOnlyTheImageReference_PreservingCommentsAndLineEndings()
         {
             const string yamlContent = "# rollout patch\r\n"
