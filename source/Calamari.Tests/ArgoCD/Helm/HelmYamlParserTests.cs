@@ -1,5 +1,6 @@
 using System;
 using Calamari.ArgoCD.Helm;
+using Calamari.Common.Commands;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -141,6 +142,80 @@ root:
 
             //ensure platform-agnostic multiline comparison
             result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
+        }
+
+        [Test]
+        public void UpdateNodeValue_WithCrlfLineEndings_PreservesCrlfOnEveryLine()
+        {
+            const string yamlContent = "root:\r\n  node1: 42\r\n  node2: stable\r\n";
+
+            var sut = new HelmYamlParser(yamlContent);
+
+            var result = sut.UpdateContentForPath("root.node1", "69");
+
+            result.Should().Be("root:\r\n  node1: 69\r\n  node2: stable\r\n");
+        }
+
+        [Test]
+        public void UpdateNodeValue_WithLfLineEndings_PreservesLfOnEveryLine()
+        {
+            const string yamlContent = "root:\n  node1: 42\n  node2: stable\n";
+
+            var sut = new HelmYamlParser(yamlContent);
+
+            var result = sut.UpdateContentForPath("root.node1", "69");
+
+            result.Should().Be("root:\n  node1: 69\n  node2: stable\n");
+        }
+
+        [Test]
+        public void UpdateNodeValue_WithNoTrailingNewline_DoesNotAddOne()
+        {
+            const string yamlContent = "root:\n  node1: 42";
+
+            var sut = new HelmYamlParser(yamlContent);
+
+            var result = sut.UpdateContentForPath("root.node1", "69");
+
+            result.Should().Be("root:\n  node1: 69");
+        }
+
+        [Test]
+        public void UpdateNodeValue_WithCrlfAndNoTrailingNewline_PreservesBoth()
+        {
+            const string yamlContent = "root:\r\n  node1: 42\r\n  node2: \"latest\"";
+
+            var sut = new HelmYamlParser(yamlContent);
+
+            var result = sut.UpdateContentForPath("root.node2", "stable");
+
+            result.Should().Be("root:\r\n  node1: 42\r\n  node2: \"stable\"");
+        }
+
+        [Test]
+        public void UpdateNodeValue_WithUnchangedPath_ReturnsContentByteForByte()
+        {
+            const string yamlContent = "root:\r\n  node1: 42\r\n";
+
+            var sut = new HelmYamlParser(yamlContent);
+
+            var result = sut.UpdateContentForPath("root.missing", "69");
+
+            result.Should().Be(yamlContent);
+        }
+
+        [Test]
+        public void UpdateNodeValue_WithAFoldedValue_FailsWithAMessageNamingThePathAndTheFix()
+        {
+            const string yamlContent = "image:\n  tag: >\n    1.21\n";
+
+            var sut = new HelmYamlParser(yamlContent);
+
+            var act = () => sut.UpdateContentForPath("image.tag", "1.25");
+
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage("*image.tag*line 2*folded block scalar (>)*literal block (|)*");
         }
 
         [Test]
