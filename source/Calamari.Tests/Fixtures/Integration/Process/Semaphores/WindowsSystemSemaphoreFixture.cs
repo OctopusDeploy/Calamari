@@ -62,5 +62,35 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
                         + "that the kernel signals abandonment and hands ownership to this waiter; a Semaphore has no "
                         + "owner, so its count stays at zero and the unbounded WaitOne() blocks forever.");
         }
+
+        [Test]
+        public async Task ReleasingFromADifferentThreadThanAcquiredThrows()
+        {
+            var name = $"Octopus.Calamari.CrossThreadRelease.{Guid.NewGuid():N}";
+            var sut = new SystemSemaphoreManager();
+
+            // Acquire on whatever thread this async method happens to be running on right now - that thread
+            // becomes the Mutex's owner as far as the kernel is concerned.
+            var acquiringThread = Thread.CurrentThread.ManagedThreadId;
+            var releaser = sut.Acquire(name, "Another process is using the package journal");
+
+            // Hop onto other thread-pool threads via delay/yield, exactly what happens to any async method
+            // that awaits something after taking the lock. ConfigureAwait(false) lets the continuation land on
+            // whichever pool thread is free rather than being marshalled back, so this reliably changes threads.
+            int releasingThread;
+            do
+            {
+                await Task.Delay(1).ConfigureAwait(false);
+                await Task.Yield();
+                releasingThread = Thread.CurrentThread.ManagedThreadId;
+            } while (releasingThread == acquiringThread);
+
+            // Disposing here releases the Mutex from a thread other than the one that acquired it. A Mutex is
+            // owned by a specific thread (not the process), so the kernel rejects the release outright - this is
+            // exactly why ISemaphoreFactory.Acquire documents that the returned IDisposable must be disposed on
+            // the acquiring thread, and why async code cannot safely hold the lock across an await.
+            var ex = Assert.Throws<ApplicationException>(() => releaser.Dispose());
+            Assert.That(ex.Message, Does.Contain("unsynchronized"));
+        }
     }
 }
