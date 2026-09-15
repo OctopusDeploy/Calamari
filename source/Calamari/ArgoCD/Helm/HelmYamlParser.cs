@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
@@ -22,12 +21,10 @@ namespace Calamari.ArgoCD.Helm
             var reader = new StringReader(yamlString);
             yamlStream = new YamlStream();
             yamlStream.Load(reader);
-            endsWithNewline = yamlString.EndsWith(Environment.NewLine);
         }
 
         readonly string yamlString;
         readonly YamlStream yamlStream;
-        readonly bool endsWithNewline;
 
         public string GetValueAtPath(string path)
         {
@@ -83,48 +80,50 @@ namespace Calamari.ArgoCD.Helm
             return yamlString;
         }
 
+        // Splices the new value into the original text rather than rebuilding it line by line, so the
+        // file's own line endings, trailing newline and encoding survive untouched. Rebuilding produced
+        // whole-file diffs whenever the file's convention differed from the agent's Environment.NewLine.
         string ReplaceNodeContent(YamlScalarNode node, string newValue)
         {
-            var result = new StringBuilder();
-            using var reader = new StringReader(yamlString);
+            var (startColumn, endColumn) = ValueColumns(node);
+            var start = OffsetOfLine((int)node.Start.Line) + startColumn;
+            var end = OffsetOfLine((int)node.End.Line) + endColumn;
 
-            var targetLine = (int)node.Start.Line;
-            int startColumn;
-            int endColumn;
+            return yamlString[..start] + newValue + yamlString[end..];
+        }
+
+        static (int startColumn, int endColumn) ValueColumns(YamlScalarNode node)
+        {
             switch (node.Style)
             {
                 case ScalarStyle.Literal:
                 case ScalarStyle.Plain:
-                    startColumn = (int)node.Start.Column - 1;
-                    endColumn = (int)node.End.Column - 1;
-                    break;
+                    return ((int)node.Start.Column - 1, (int)node.End.Column - 1);
                 case ScalarStyle.DoubleQuoted:
                 case ScalarStyle.SingleQuoted:
-                    startColumn = (int)node.Start.Column;
-                    endColumn = (int)node.End.Column - 2;
-                    break;
+                    return ((int)node.Start.Column, (int)node.End.Column - 2);
                 default:
                     throw new NotSupportedException("Modifying Folded or Ambiguous Scar Values is not supported.");
             }
-            int currentLine = 1;
+        }
 
-            while (reader.ReadLine() is { } line)
+        /// <summary>
+        /// Index of the first character of the given 1-based line, counting YAML line breaks (\r\n, \n and \r).
+        /// </summary>
+        int OffsetOfLine(int line)
+        {
+            var currentLine = 1;
+            var index = 0;
+            while (currentLine < line && index < yamlString.Length)
             {
-                if (currentLine == targetLine)
-                {
-                    // Replace in this line
-                    var before = line[..startColumn];
-                    var after = line[endColumn..];
-                    result.AppendLine(before + newValue + after);
-                }
-                else
-                {
-                    result.AppendLine(line);
-                }
-                currentLine++;
+                var character = yamlString[index++];
+                if (character == '\r' && index < yamlString.Length && yamlString[index] == '\n')
+                    index++;
+                if (character == '\r' || character == '\n')
+                    currentLine++;
             }
 
-            return endsWithNewline ? result.ToString() : result.ToString().TrimEnd();
+            return index;
         }
 
         static void FlattenObject(object? obj, string currentPath, List<string> paths)
