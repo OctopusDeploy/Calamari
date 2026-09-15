@@ -127,14 +127,6 @@ namespace Calamari.ArgoCD
                 if (string.IsNullOrEmpty(patchContent))
                     return changes;
 
-                if (!YamlScalarSplicer.CanReplaceValue(yamlContent, patchContentNode))
-                {
-                    log.WarnFormat("Cannot safely update images in the inline patch at line {0} (a {1} scalar). Leaving it unchanged.",
-                                   patchContentNode.Start.Line,
-                                   patchContentNode.Style);
-                    return changes;
-                }
-
                 IContainerImageReplacer patchImageReplacer;
                 if (discovery.IsJson6902PatchContent(patchContent!))
                 {
@@ -146,12 +138,21 @@ namespace Calamari.ArgoCD
                 }
 
                 var result = patchImageReplacer.UpdateImages(imagesToUpdate);
-                changes.UnionWith(result.UpdatedImageReferences);
+                if (result.UpdatedImageReferences.Count == 0)
+                    return changes;
 
-                if (result.UpdatedImageReferences.Count > 0)
+                // Checked only once there is something to write, so a patch we cannot write back but
+                // have no reason to touch stays silent.
+                if (!YamlScalarSplicer.CanReplaceValue(yamlContent, patchContentNode))
                 {
-                    edits.Add(new YamlScalarEdit(patchContentNode, result.UpdatedContents));
+                    log.WarnFormat("Cannot safely update images in the inline patch at line {0} (a {1} scalar). Leaving it unchanged.",
+                                   patchContentNode.Start.Line,
+                                   patchContentNode.Style);
+                    return changes;
                 }
+
+                changes.UnionWith(result.UpdatedImageReferences);
+                edits.Add(new YamlScalarEdit(patchContentNode, result.UpdatedContents));
             }
             catch (Exception ex)
             {
