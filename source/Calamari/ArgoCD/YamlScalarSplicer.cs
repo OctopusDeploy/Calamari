@@ -38,9 +38,12 @@ namespace Calamari.ArgoCD
 
         /// <summary>
         /// Locates a block scalar's indented content and confirms that rendering the parser's own
-        /// value back reproduces the original bytes exactly. When it does not — an explicit indent
+        /// value back reproduces the original content. When it does not — an explicit indent
         /// indicator (|2) makes part of the indentation content, so reindenting would double it —
         /// this block is not one we can describe, and replacing it would corrupt the file.
+        /// Line endings are excluded from the comparison: a block whose own endings differ from the
+        /// rest of the file is harmonised to the document's ending rather than refused, which still
+        /// catches every indentation difference the check exists for.
         /// </summary>
         static bool TryGetBlockContentRegion(string document, YamlScalarNode node, out int start, out int end)
         {
@@ -57,7 +60,9 @@ namespace Calamari.ArgoCD
                 return false;
 
             var region = document[start..end];
-            return RenderBlockContent(node.Value ?? "", region, document) == region;
+            var rendered = RenderBlockContent(node.Value ?? "", region, document);
+
+            return rendered.ReplaceLineEndings("\n") == region.ReplaceLineEndings("\n");
         }
 
         /// <summary>

@@ -164,6 +164,35 @@ namespace Calamari.Tests.ArgoCD
             }
         }
 
+        [Test]
+        public void ReplaceValue_OnBlockWithLineEndingsDifferingFromTheFile_HarmonisesOnlyThatBlock()
+        {
+            // A CRLF file whose block content uses LF. The block is rewritten with the file's CRLF;
+            // everything outside it stays byte-identical.
+            const string document = "before: x\r\npatch: |-\r\n  kind: Deployment\n  image: nginx:1.21\r\nafter: y\r\n";
+
+            var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+            var node = (YamlScalarNode)root.Children[new YamlScalarNode("patch")];
+
+            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeTrue();
+
+            var result = YamlScalarSplicer.ReplaceValue(document, node, "kind: Deployment\nimage: nginx:1.25");
+
+            result.Should().Be("before: x\r\npatch: |-\r\n  kind: Deployment\r\n  image: nginx:1.25\r\nafter: y\r\n");
+        }
+
+        [Test]
+        public void CanReplaceValue_StillRefusesIndentationItCannotAccountFor_WhenLineEndingsAreMixed()
+        {
+            // The |2 indentation problem must not be masked by ignoring line endings.
+            const string document = "a: |2\r\n      one\n      two\r\nb: keep\r\n";
+
+            var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
+            var node = (YamlScalarNode)root.Children[new YamlScalarNode("a")];
+
+            YamlScalarSplicer.CanReplaceValue(document, node).Should().BeFalse();
+        }
+
         static string Replace(string document, string key, string newValue)
         {
             var root = (YamlMappingNode)Load(document).Documents[0].RootNode;
