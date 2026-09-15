@@ -34,6 +34,7 @@ public class InlineStrategicMergeImageReplacer : IContainerImageReplacer
         }
 
         var allUpdatedImages = new HashSet<string>();
+        var edits = new List<YamlScalarEdit>();
         foreach (var patchNode in patchSequence.Children)
         {
             if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
@@ -44,7 +45,7 @@ public class InlineStrategicMergeImageReplacer : IContainerImageReplacer
 
                 if (result.UpdatedImageReferences.Count > 0)
                 {
-                    patchScalar.Value = result.UpdatedContents;
+                    edits.Add(new YamlScalarEdit(patchScalar, result.UpdatedContents));
                     allUpdatedImages.UnionWith(result.UpdatedImageReferences);
                 }
             }
@@ -55,7 +56,7 @@ public class InlineStrategicMergeImageReplacer : IContainerImageReplacer
             return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
         }
 
-        var modifiedContent = YamlStreamLoader.SerializeDocuments(yamlStream.Documents, input);
+        var modifiedContent = YamlScalarSplicer.ReplaceValues(input, edits);
 
         return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
     }

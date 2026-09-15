@@ -197,6 +197,26 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
+        public void UpdateImages_ChangesOnlyTheImageReference_PreservingCommentsAndLineEndings()
+        {
+            const string yamlContent = "# rollout patch\r\n"
+                                       + "- op: replace\r\n"
+                                       + "  path: /spec/template/spec/containers/0/image   # web\r\n"
+                                       + "  value: nginx:1.21\r\n"
+                                       + "\r\n"
+                                       + "- op: replace\r\n"
+                                       + "  path: /spec/template/spec/initContainers/0/image\r\n"
+                                       + "  value: \"nginx:1.21\"\r\n";
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = replacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be("nginx:1.25");
+            result.UpdatedContents.Should().Be(yamlContent.Replace("nginx:1.21", "nginx:1.25"));
+        }
+
+        [Test]
         public void UpdateImages_WithComplexPatch_UpdatesCorrectly()
         {
             const string yamlContent = @"

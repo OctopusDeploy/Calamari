@@ -3,9 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using Calamari.Common.Plumbing.Extensions;
-using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 
@@ -23,12 +20,10 @@ namespace Calamari.ArgoCD.Helm
             var reader = new StringReader(yamlString);
             yamlStream = new YamlStream();
             yamlStream.Load(reader);
-            endsWithNewline = yamlString.HasTrailingNewLine();
         }
 
         readonly string yamlString;
         readonly YamlStream yamlStream;
-        readonly bool endsWithNewline;
 
         public string GetValueAtPath(string path)
         {
@@ -78,55 +73,10 @@ namespace Calamari.ArgoCD.Helm
             var nodeAtPath = GetNodeAtPath(path);
             if (nodeAtPath != null)
             {
-                return ReplaceNodeContent(nodeAtPath, newValue);
+                return YamlScalarSplicer.ReplaceValue(yamlString, nodeAtPath, newValue);
             }
 
             return yamlString;
-        }
-
-        string ReplaceNodeContent(YamlScalarNode node, string newValue)
-        {
-            var result = new StringBuilder();
-            using var reader = new StringReader(yamlString);
-            var newLine = yamlString.DetectLineEnding() ?? "\n";
-
-            var targetLine = (int)node.Start.Line;
-            int startColumn;
-            int endColumn;
-            switch (node.Style)
-            {
-                case ScalarStyle.Literal:
-                case ScalarStyle.Plain:
-                    startColumn = (int)node.Start.Column - 1;
-                    endColumn = (int)node.End.Column - 1;
-                    break;
-                case ScalarStyle.DoubleQuoted:
-                case ScalarStyle.SingleQuoted:
-                    startColumn = (int)node.Start.Column;
-                    endColumn = (int)node.End.Column - 2;
-                    break;
-                default:
-                    throw new NotSupportedException("Modifying Folded or Ambiguous Scar Values is not supported.");
-            }
-            int currentLine = 1;
-
-            while (reader.ReadLine() is { } line)
-            {
-                if (currentLine == targetLine)
-                {
-                    // Replace in this line
-                    var before = line[..startColumn];
-                    var after = line[endColumn..];
-                    result.Append(before + newValue + after).Append(newLine);
-                }
-                else
-                {
-                    result.Append(line).Append(newLine);
-                }
-                currentLine++;
-            }
-
-            return endsWithNewline ? result.ToString() : result.ToString().TrimEnd();
         }
 
         static void FlattenObject(object? obj, string currentPath, List<string> paths)
