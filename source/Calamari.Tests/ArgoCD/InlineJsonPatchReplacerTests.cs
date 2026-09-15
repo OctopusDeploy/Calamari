@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -22,7 +23,7 @@ namespace Calamari.Tests.ArgoCD
         ILog log = new InMemoryLog();
 
         [Test]
-        public void UpdateImages_WithAFoldedPatchThatHasNoRelevantImage_DoesNotWarn()
+        public void UpdateImages_WithAFoldedPatchThatHasNoRelevantImage_DoesNotFail()
         {
             var inMemoryLog = new InMemoryLog();
             const string inputYaml = "patches:\n"
@@ -47,18 +48,19 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
-        public void UpdateImages_WithAFoldedPatchThatDoesHoldTheImage_WarnsAndLeavesItAlone()
+        public void UpdateImages_WithAFoldedPatchThatDoesHoldTheImage_FailsWithAnActionableMessage()
         {
-            var inMemoryLog = new InMemoryLog();
             const string inputYaml = "patches:\n"
                                      + "  - patch: >\n"
                                      + "      [{\"op\": \"replace\", \"path\": \"/spec/template/spec/containers/0/image\", \"value\": \"nginx:1.21\"}]\n";
 
-            var result = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog).UpdateImages(imagesToUpdate);
+            var replacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            result.UpdatedContents.Should().Be(inputYaml);
-            result.UpdatedImageReferences.Should().BeEmpty();
-            inMemoryLog.MessagesWarnFormatted.Should().ContainMatch("*inline patch at line*Folded*");
+            var act = () => replacer.UpdateImages(imagesToUpdate);
+
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage("*inline patch on line 2*folded block scalar (>)*literal block (|)*");
         }
 
         [Test]

@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -223,16 +225,17 @@ namespace Calamari.Tests.ArgoCD
         }
 
         [Test]
-        public void UpdateImages_WithAFoldedImageValue_LeavesTheFileAloneInsteadOfThrowing()
+        public void UpdateImages_WithAFoldedImageValue_FailsWithAMessageNamingTheImageAndTheFix()
         {
             const string yamlContent = "- op: replace\n  path: /spec/template/spec/containers/0/image\n  value: >\n    nginx:1.21\n";
 
             var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = replacer.UpdateImages(imagesToUpdate);
+            var act = () => replacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().Be(yamlContent);
-            result.UpdatedImageReferences.Should().BeEmpty();
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage("*nginx:1.21*line 3*folded block scalar (>)*literal block (|)*");
         }
 
         [Test]
