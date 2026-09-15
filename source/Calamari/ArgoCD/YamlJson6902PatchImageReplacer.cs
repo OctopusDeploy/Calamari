@@ -1,7 +1,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
@@ -72,15 +71,9 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
-            using var writer = new StringWriter();
             // JSON 6902 patches are always single documents by design (RFC 6902 defines patches as single JSON arrays).
-            // Create a new stream with just the first document to avoid unwanted document separators.
-            if (stream.Documents.Count > 0)
-            {
-                var singleDocStream = new YamlStream(stream.Documents[0]);
-                singleDocStream.Save(writer, false);
-            }
-            var modifiedContent = writer.ToString().TrimEnd();
+            // Take just the first document to avoid unwanted document separators.
+            var modifiedContent = YamlStreamLoader.SerializeDocuments(stream.Documents.Take(1), yamlContent);
 
             return new ImageReplacementResult(modifiedContent, combinedResult.UpdatedImageReferences, combinedResult.AlreadyUpToDateImages);
         }

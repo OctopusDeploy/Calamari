@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
@@ -56,9 +55,7 @@ public class InlineStrategicMergeImageReplacer : IContainerImageReplacer
             return new ImageReplacementResult(input, new HashSet<string>(), new HashSet<string>());
         }
 
-        using var writer = new StringWriter();
-        yamlStream.Save(writer, false);
-        var modifiedContent = writer.ToString().TrimEnd();
+        var modifiedContent = YamlStreamLoader.SerializeDocuments(yamlStream.Documents, input);
 
         return new ImageReplacementResult(modifiedContent, allUpdatedImages, new HashSet<string>());
     }
