@@ -15,6 +15,37 @@ public class InlineStrategicMergeTest
 {
     readonly ILog log = new InMemoryLog();
     [Test]
+    public void UpdateImages_ChangesOnlyTheImageReference_PreservingCommentsAndLineEndings()
+    {
+        const string content = "# strategic merge patches\r\n"
+                               + "apiVersion: kustomize.config.k8s.io/v1beta1\r\n"
+                               + "kind: Kustomization\r\n"
+                               + "\r\n"
+                               + "patchesStrategicMerge:\r\n"
+                               + "  - |\r\n"
+                               + "    apiVersion: apps/v1\r\n"
+                               + "    kind: Deployment\r\n"
+                               + "    spec:\r\n"
+                               + "      template:\r\n"
+                               + "        spec:\r\n"
+                               + "          containers:\r\n"
+                               + "            - name: nginx   # the web tier\r\n"
+                               + "              image: nginx:1.21\r\n";
+
+        var imagesToUpdate = new List<ContainerImageReferenceAndHelmReference>
+        {
+            new(ContainerImageReference.FromReferenceString("nginx:1.25", "default-registry"))
+        };
+
+        var replacer = new InlineStrategicMergeImageReplacer(content, "default-registry", log);
+
+        var result = replacer.UpdateImages(imagesToUpdate);
+
+        result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be("nginx:1.25");
+        result.UpdatedContents.Should().Be(content.Replace("nginx:1.21", "nginx:1.25"));
+    }
+
+    [Test]
     public void ProcessInlineStrategicMergePatches_WithInlinePatches_UpdatesImages()
     {
         const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1

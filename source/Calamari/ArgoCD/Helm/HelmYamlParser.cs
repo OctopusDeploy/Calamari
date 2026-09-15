@@ -74,56 +74,10 @@ namespace Calamari.ArgoCD.Helm
             var nodeAtPath = GetNodeAtPath(path);
             if (nodeAtPath != null)
             {
-                return ReplaceNodeContent(nodeAtPath, newValue);
+                return YamlScalarSplicer.ReplaceValue(yamlString, nodeAtPath, newValue);
             }
 
             return yamlString;
-        }
-
-        // Splices the new value into the original text rather than rebuilding it line by line, so the
-        // file's own line endings, trailing newline and encoding survive untouched. Rebuilding produced
-        // whole-file diffs whenever the file's convention differed from the agent's Environment.NewLine.
-        string ReplaceNodeContent(YamlScalarNode node, string newValue)
-        {
-            var (startColumn, endColumn) = ValueColumns(node);
-            var start = OffsetOfLine((int)node.Start.Line) + startColumn;
-            var end = OffsetOfLine((int)node.End.Line) + endColumn;
-
-            return yamlString[..start] + newValue + yamlString[end..];
-        }
-
-        static (int startColumn, int endColumn) ValueColumns(YamlScalarNode node)
-        {
-            switch (node.Style)
-            {
-                case ScalarStyle.Literal:
-                case ScalarStyle.Plain:
-                    return ((int)node.Start.Column - 1, (int)node.End.Column - 1);
-                case ScalarStyle.DoubleQuoted:
-                case ScalarStyle.SingleQuoted:
-                    return ((int)node.Start.Column, (int)node.End.Column - 2);
-                default:
-                    throw new NotSupportedException("Modifying Folded or Ambiguous Scar Values is not supported.");
-            }
-        }
-
-        /// <summary>
-        /// Index of the first character of the given 1-based line, counting YAML line breaks (\r\n, \n and \r).
-        /// </summary>
-        int OffsetOfLine(int line)
-        {
-            var currentLine = 1;
-            var index = 0;
-            while (currentLine < line && index < yamlString.Length)
-            {
-                var character = yamlString[index++];
-                if (character == '\r' && index < yamlString.Length && yamlString[index] == '\n')
-                    index++;
-                if (character == '\r' || character == '\n')
-                    currentLine++;
-            }
-
-            return index;
         }
 
         static void FlattenObject(object? obj, string currentPath, List<string> paths)

@@ -1,9 +1,6 @@
 #nullable enable
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using YamlDotNet.RepresentationModel;
 
@@ -91,46 +88,6 @@ namespace Calamari.ArgoCD
                 return null;
 
             return stream.Documents[0].RootNode as YamlMappingNode;
-        }
-
-        /// <summary>
-        /// Serializes YAML documents back to string format, preserving line endings and handling document separators.
-        /// </summary>
-        /// <param name="documents">The YAML documents to serialize</param>
-        /// <param name="originalContent">Original YAML content to detect line endings from (optional)</param>
-        /// <returns>Serialized YAML string</returns>
-        public static string SerializeDocuments(IEnumerable<YamlDocument> documents, string? originalContent = null)
-        {
-            if (documents == null)
-                throw new ArgumentNullException(nameof(documents));
-
-            var documentList = documents.ToList();
-            if (documentList.Count == 0)
-                return string.Empty;
-
-            var newLine = originalContent?.DetectLineEnding() ?? "\n";
-            var serializedDocs = documentList.Select(doc => SerializeDocument(doc, newLine));
-
-            var joined = string.Join($"{newLine}---{newLine}", serializedDocs);
-            return EndsWithNewLine(originalContent) ? joined + newLine : joined;
-        }
-
-        static string SerializeDocument(YamlDocument document, string newLine)
-        {
-            // The emitter always writes '\n' regardless of the writer's NewLine, so the document's
-            // own line ending has to be reapplied afterwards.
-            using var writer = new StringWriter();
-            new YamlStream(document).Save(writer, false);
-
-            var serialized = writer.ToString().TrimEnd().ReplaceLineEndings(newLine);
-            return serialized.EndsWith("...")
-                ? serialized.Substring(0, serialized.Length - 3).TrimEnd()
-                : serialized;
-        }
-
-        static bool EndsWithNewLine(string? content)
-        {
-            return content != null && (content.EndsWith("\n") || content.EndsWith("\r"));
         }
     }
 }

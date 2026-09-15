@@ -22,6 +22,34 @@ namespace Calamari.Tests.ArgoCD
         ILog log = new InMemoryLog();
 
         [Test]
+        public void UpdateImages_ChangesOnlyTheImageReference_PreservingCommentsAndLineEndings()
+        {
+            const string inputYaml = "# managed by the platform team\r\n"
+                                     + "apiVersion: kustomize.config.k8s.io/v1beta1\r\n"
+                                     + "kind: Kustomization\r\n"
+                                     + "\r\n"
+                                     + "patches:\r\n"
+                                     + "  - target:\r\n"
+                                     + "      kind: Deployment   # only the web tier\r\n"
+                                     + "    patch: |-\r\n"
+                                     + "      apiVersion: apps/v1\r\n"
+                                     + "      kind: Deployment\r\n"
+                                     + "      spec:\r\n"
+                                     + "        template:\r\n"
+                                     + "          spec:\r\n"
+                                     + "            containers:\r\n"
+                                     + "              - name: nginx\r\n"
+                                     + "                image: nginx:1.21\r\n";
+
+            var replacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = replacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be("nginx:1.25");
+            result.UpdatedContents.Should().Be(inputYaml.Replace("nginx:1.21", "nginx:1.25"));
+        }
+
+        [Test]
         public void UpdateImages_WithInlinePatchContainerImage_UpdatesImageReference()
         {
             const string inputYaml = @"
