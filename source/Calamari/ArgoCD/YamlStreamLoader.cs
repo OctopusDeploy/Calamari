@@ -112,7 +112,7 @@ namespace Calamari.ArgoCD
             var serializedDocs = documentList.Select(doc => SerializeDocument(doc, newLine));
 
             var joined = string.Join($"{newLine}---{newLine}", serializedDocs);
-            return EndsWithNewLine(originalContent) ? joined + newLine : joined;
+            return originalContent.HasTrailingNewLine() ? joined + newLine : joined;
         }
 
         static string SerializeDocument(YamlDocument document, string newLine)
@@ -126,11 +126,6 @@ namespace Calamari.ArgoCD
             return serialized.EndsWith("...")
                 ? serialized.Substring(0, serialized.Length - 3).TrimEnd()
                 : serialized;
-        }
-
-        static bool EndsWithNewLine(string? content)
-        {
-            return content != null && (content.EndsWith("\n") || content.EndsWith("\r"));
         }
     }
 }

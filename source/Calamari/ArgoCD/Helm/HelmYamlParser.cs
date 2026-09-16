@@ -23,7 +23,7 @@ namespace Calamari.ArgoCD.Helm
             var reader = new StringReader(yamlString);
             yamlStream = new YamlStream();
             yamlStream.Load(reader);
-            endsWithNewline = yamlString.EndsWith("\n") || yamlString.EndsWith("\r");
+            endsWithNewline = yamlString.HasTrailingNewLine();
         }
 
         readonly string yamlString;
