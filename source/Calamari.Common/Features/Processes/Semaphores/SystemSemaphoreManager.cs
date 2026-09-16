@@ -16,28 +16,28 @@ namespace Calamari.Common.Features.Processes.Semaphores
     {
         readonly ILog log;
         readonly int initialWaitBeforeShowingLogMessage;
-        readonly ResiliencePipeline semaphoreAcquisitionPipeline;
+        readonly ResiliencePipeline mutexAcquisitionPipeline;
 
         public SystemSemaphoreManager()
         {
             log = ConsoleLog.Instance;
             initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
 
-            semaphoreAcquisitionPipeline = new ResiliencePipelineBuilder()
-                                           .AddRetry(new RetryStrategyOptions()
-                                           {
-                                               ShouldHandle = new PredicateBuilder().Handle<Exception>(),
-                                               MaxRetryAttempts = 5, //means we'll wait for a max of around 250ms
-                                               BackoffType = DelayBackoffType.Linear,
-                                               UseJitter = true,
-                                               Delay = TimeSpan.FromMilliseconds(50),
-                                               OnRetry = args =>
-                                                         {
-                                                             log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Mutex again");
-                                                             return default;
-                                                         }
-                                           })
-                                           .Build();
+            mutexAcquisitionPipeline = new ResiliencePipelineBuilder()
+                                          .AddRetry(new RetryStrategyOptions()
+                                          {
+                                              ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                                              MaxRetryAttempts = 5, //means we'll wait for a max of around 250ms
+                                              BackoffType = DelayBackoffType.Linear,
+                                              UseJitter = true,
+                                              Delay = TimeSpan.FromMilliseconds(50),
+                                              OnRetry = args =>
+                                                        {
+                                                            log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Mutex again");
+                                                            return default;
+                                                        }
+                                          })
+                                          .Build();
         }
 
         public IDisposable Acquire(string name, string waitMessage)
@@ -56,7 +56,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                         {
                                             // Create/acquire the global mutex with some retry, to (hopefully) avoid two instances of
                                             // Calamari racing to create it (e.g. parallel steps on the same machine)
-                                            mutex = semaphoreAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
+                                            mutex = mutexAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
 
                                             // Assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
                                             // is still accessible to Calamari running under a different account
@@ -79,7 +79,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                         }
                                         catch (Exception ex)
                                         {
-                                            // We never took the lock, so there is nothing to release - just
+                                            // We never took the mutex, so there is nothing to release - just
                                             // close the handle rather than leaving it to the finaliser
                                             mutex?.Dispose();
                                             acquisitionFailure = ex;
