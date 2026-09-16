@@ -88,5 +88,33 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             action.Should().Throw<CommandException>();
         }
+
+        [TestCase(null, GitCommitParameters.DefaultPushRetryAttempts, TestName = "Unset uses the default")]
+        [TestCase("5", 5, TestName = "Explicit value is honoured")]
+        [TestCase("0", 0, TestName = "Minimum is honoured")]
+        [TestCase("10", 10, TestName = "Maximum is honoured")]
+        [TestCase("25", 10, TestName = "Above maximum is clamped down")]
+        [TestCase("-5", 0, TestName = "Below minimum is clamped up")]
+        public void Create_PushRetryAttempts_DefaultedAndClamped(string variableValue, int expected)
+        {
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Summary",
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+            if (variableValue != null)
+                allVariables[SpecialVariables.Git.PushRetryAttempts] = variableValue;
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+
+            var factory = new DeploymentConfigFactory(nonSensitiveCalamariVariables);
+
+            var config = factory.CreateCommitToGitConfig(runningDeployment);
+
+            config.CommitParameters.PushRetryAttempts.Should().Be(expected);
+        }
     }
 }

@@ -11,6 +11,7 @@ using Calamari.CommitToGit;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using LibGit2Sharp;
 using Newtonsoft.Json;
@@ -37,13 +38,15 @@ public class CommitToGitCommandTest
     readonly GitBranchName targetBranchName = GitBranchName.CreateFromFriendlyName(targetBranchFriendlyName);
 
     CalamariExecutionVariableCollection variables;
+    Repository bareOrigin;
+    string originalCwd;
 
     [SetUp]
-    public void setUp()
+    public void SetUp()
     {
         executionDirectory = fileSystem.CreateTemporaryDirectory();
 
-        RepositoryHelpers.CreateBareRepository(OriginPath);
+        bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(targetBranchName, OriginPath);
 
         variables = new();
@@ -56,7 +59,16 @@ public class CommitToGitCommandTest
             new CalamariExecutionVariable(Deployment.SpecialVariables.Action.Git.CommitMessageSummary, "Git Commit Summary", false),
         ]);
 
+        originalCwd = Directory.GetCurrentDirectory();
         Directory.SetCurrentDirectory(executionDirectory);
+    }
+    
+    [TearDown]
+    public void Cleanup()
+    {
+        bareOrigin.Dispose();
+        Directory.SetCurrentDirectory(originalCwd);
+        fileSystem.DeleteDirectory(executionDirectory);
     }
 
     [Test]
@@ -517,6 +529,39 @@ public class CommitToGitCommandTest
     }
 
     [Test]
+    public void WhenThereAreNoChangesToCommit_OutputVariablesAreSetFromTheHeadOfTheTargetBranch()
+    {
+        var log = new InMemoryLog();
+
+        RunCommitToGit(log).Should().Be(0);
+
+        var branchTip = bareOrigin.Branches[targetBranchFriendlyName].Tip;
+        var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+        serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.CommitSha).Should().Be(branchTip.Sha);
+        serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.ShortSha).Should().Be(branchTip.ShortSha());
+        serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.CommitTimestamp).Should().Be(branchTip.Author.When.ToString("O"));
+    }
+
+    [Test]
+    public void WhenChangesAreCommitted_OutputVariablesAreSetFromTheNewCommit()
+    {
+        var previousTipSha = bareOrigin.Branches[targetBranchFriendlyName].Tip.Sha;
+        variables.AddRange([
+            new CalamariExecutionVariable(ScriptVariables.ScriptBody, "touch \"$(get_octopusvariable 'Octopus.Calamari.Git.RepositoryPath')/proof.txt\"", false),
+            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
+        ]);
+        var log = new InMemoryLog();
+
+        RunCommitToGit(log).Should().Be(0);
+
+        var branchTip = bareOrigin.Branches[targetBranchFriendlyName].Tip;
+        branchTip.Sha.Should().NotBe(previousTipSha, "the transform script should have created a new commit");
+        var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+        serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.CommitSha).Should().Be(branchTip.Sha);
+        serviceMessages.GetPropertyValue(CommitToGitOutputVariablesWriter.ShortSha).Should().Be(branchTip.ShortSha());
+    }
+
+    [Test]
     public void WhenBothScriptParametersArgAndVariableAreSetVariableTakesPrecedence()
     {
         var proofFile = Path.Combine(executionDirectory, "arg_check.txt");
@@ -559,12 +604,36 @@ public class CommitToGitCommandTest
             .Should().NotBe(0, "the command must reject runs whose --customPropertiesFile path does not exist");
     }
 
+    [Test]
+    public void CommitToGit_SkipsCommitting_WhenTransformationScript_ReturnsNonZeroExitCode()
+    {
+        const string packageReferenceName = "my-configs";
+        const string destinationPath = "output-dir";
+
+        var zipPath = CreateZipWithEntry(packageReferenceName, "configs/settings.json", "{\"setting\": \"value\"}");
+        AddInputPackageVariables(packageReferenceName, zipPath, destinationPath);
+        variables.AddRange([
+            new CalamariExecutionVariable(ScriptVariables.ScriptBody, "exit 1", false),
+            new CalamariExecutionVariable(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString(), false),
+        ]);
+
+        RunCommitToGit().Should().NotBe(0);
+        GetCommittedFileContent($"{destinationPath}/configs/settings.json")
+            .Should().BeNull("the package files should not have been committed into the repository under the destination path, when the transformation script returns non-zero exit code");
+    }
+
     // --- Helpers ---
 
     int RunCommitToGit(params string[] extraArgs)
-        => RunCommitToGit(includeCustomProperties: true, extraArgs);
+        => RunCommitToGit(new InMemoryLog(), includeCustomProperties: true, extraArgs);
+
+    int RunCommitToGit(InMemoryLog log, params string[] extraArgs)
+        => RunCommitToGit(log, includeCustomProperties: true, extraArgs);
 
     int RunCommitToGit(bool includeCustomProperties, params string[] extraArgs)
+        => RunCommitToGit(new InMemoryLog(), includeCustomProperties, extraArgs);
+
+    int RunCommitToGit(InMemoryLog log, bool includeCustomProperties, params string[] extraArgs)
     {
         var absPathToVariables = Path.Combine(executionDirectory, variableFileName);
         File.WriteAllBytes(absPathToVariables, AesEncryption.ForServerVariables(variablePassword).Encrypt(variables.ToJsonString()));
@@ -584,7 +653,7 @@ public class CommitToGitCommandTest
 
         args.AddRange(extraArgs);
 
-        return Program.Main(args.ToArray());
+        return new TestProgram(log).RunWithArgs(args.ToArray());
     }
 
     string WriteCustomPropertiesFile(string credentialName, string repositoryUrl, string username, string password)

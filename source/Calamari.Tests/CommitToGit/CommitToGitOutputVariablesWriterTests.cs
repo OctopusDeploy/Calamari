@@ -32,14 +32,6 @@ namespace Calamari.Tests.CommitToGit
         }
 
         [Test]
-        public void WritePushResultOutput_WhenPushResultIsNull_NoOutputVariablesAreWritten()
-        {
-            writer.WritePushResultOutput(null);
-
-            log.Messages.GetServiceMessagesOfType("setVariable").Should().BeEmpty();
-        }
-
-        [Test]
         public void WritePushResultOutput_WhenPushResultIsNotPullRequest_WritesCommitVariablesOnly()
         {
             writer.WritePushResultOutput(new PushResult(CommitSha, ShortSha, Timestamp));

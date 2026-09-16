@@ -19,7 +19,8 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
             this.baseUrl = baseUrl;
             
             var parts = repositoryConnection.Uri.Value.ExtractPropertiesFromUrlPath();
-            projectPath = $"{parts[^2]}/{parts[^1]}";
+            //projects can have nested sub-projects, so we assume the entire path is the project path
+            projectPath =string.Join('/', parts);
         }
 
         public string Name => "GitLab";

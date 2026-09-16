@@ -51,7 +51,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         [TestCase(0,1)]
         [TestCase(1,1)]
         [TestCase(1,2)]
-        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached(int backoffLimit, int failures)
+        public void WhenUsingLegacyChecks_ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached(int backoffLimit, int failures)
         {
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(1)
@@ -59,13 +59,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithFailed(failures)
                 .Build();
 
-            var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
+            var job = ResourceFactory.FromJson(jobResponse, new Options { WaitForJobs = true, EnableLegacyResourceStatusChecks = true });
 
             job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed);
         }
 
         [Test]
-        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfSuccessfulIfDesiredCompletionsHaveBeenAchieved()
+        public void WhenUsingLegacyChecks_ShouldHaveStatusOfSuccessfulIfDesiredCompletionsHaveBeenAchieved()
         {
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
@@ -74,13 +74,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithFailed(1)
                 .Build();
 
-            var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
+            var job = ResourceFactory.FromJson(jobResponse, new Options { WaitForJobs = true, EnableLegacyResourceStatusChecks = true });
 
             job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
         }
 
         [Test]
-        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfInProgressIsDesiredCompletionsHaveNotBeenReached()
+        public void WhenUsingLegacyChecks_ShouldHaveStatusOfInProgressIfDesiredCompletionsHaveNotBeenReached()
         {
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
@@ -89,7 +89,45 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithFailed(1)
                 .Build();
 
-            var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
+            var job = ResourceFactory.FromJson(jobResponse, new Options { WaitForJobs = true, EnableLegacyResourceStatusChecks = true });
+
+            job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress);
+        }
+
+        [Test]
+        public void WhenWaitForJobsIsEnabled_JobWithCompleteConditionShouldBeSuccessful()
+        {
+            var jobResponse = new JobResponseBuilder()
+                .WithCompletions(1)
+                .WithCondition("Complete", "True")
+                .Build();
+
+            var job = ResourceFactory.FromJson(jobResponse, new Options { WaitForJobs = true });
+
+            job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
+        }
+
+        [Test]
+        public void WhenWaitForJobsIsEnabled_JobWithFailedConditionShouldBeFailed()
+        {
+            var jobResponse = new JobResponseBuilder()
+                .WithCompletions(1)
+                .WithCondition("Failed", "True")
+                .Build();
+
+            var job = ResourceFactory.FromJson(jobResponse, new Options { WaitForJobs = true });
+
+            job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed);
+        }
+
+        [Test]
+        public void WhenWaitForJobsIsEnabled_JobWithoutConditionsShouldBeInProgress()
+        {
+            var jobResponse = new JobResponseBuilder()
+                .WithCompletions(1)
+                .Build();
+
+            var job = ResourceFactory.FromJson(jobResponse, new Options { WaitForJobs = true });
 
             job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress);
         }
@@ -113,7 +151,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""succeeded"": {2},
         ""failed"": {3},
         ""startTime"": ""{4}"",
-        ""completionTime"": ""{5}""
+        ""completionTime"": ""{5}""{6}
     }}
 }}";
 
@@ -123,6 +161,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         private int Failed { get; set; }
         private string StartTime { get; set; }
         private string CompletionTime { get; set; }
+        private string Conditions { get; set; } = "";
 
         public JobResponseBuilder WithCompletions(int completions)
         {
@@ -160,10 +199,17 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             return this;
         }
 
+        public JobResponseBuilder WithCondition(string type, string status)
+        {
+            Conditions = $@",
+        ""conditions"": [ {{ ""type"": ""{type}"", ""status"": ""{status}"" }} ]";
+            return this;
+        }
+
         public string Build()
         {
-            return string.Format(Template, Completions, BackoffLimit, Succeeded, Failed, StartTime, CompletionTime);
-        }        
+            return string.Format(Template, Completions, BackoffLimit, Succeeded, Failed, StartTime, CompletionTime, Conditions);
+        }
         
     }
 }

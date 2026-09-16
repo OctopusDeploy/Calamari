@@ -72,6 +72,7 @@ namespace Calamari.Deployment
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
+            public static readonly string DisableDockerCredentialHelper = "Octopus.Action.Package.DisableDockerCredentialHelper";
         }
 
         public static class GitResources
@@ -366,6 +367,8 @@ namespace Calamari.Deployment
 
                 public const string CommitMessageSummary = "Octopus.Action.Git.CommitMessageSummary";
                 public const string CommitMessageDescription = "Octopus.Action.Git.CommitMessageDescription";
+
+                public const string PushRetryAttempts = "Octopus.Action.Git.PushRetryAttempts";
 
                 public static class PullRequest
                 {

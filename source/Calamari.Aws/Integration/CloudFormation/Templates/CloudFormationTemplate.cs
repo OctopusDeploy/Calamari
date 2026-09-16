@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates;
 
 public class CloudFormationTemplate(
     Func<string> content,
-    ITemplateInputs<Parameter> parameters,
+    IEnumerable<Parameter> inputs,
     string stackName,
     List<string> iamCapabilities,
     bool disableRollback,
@@ -25,7 +25,7 @@ public class CloudFormationTemplate(
     StackArn stack,
     Func<IAmazonCloudFormation> clientFactory,
     IVariables variables)
-    : BaseTemplate(parameters.Inputs,
+    : BaseTemplate(inputs,
                    stackName,
                    iamCapabilities,
                    disableRollback,
@@ -38,6 +38,7 @@ public class CloudFormationTemplate(
     public static ICloudFormationRequestBuilder Create(ITemplateResolver templateResolver,
                                                        string templateFile,
                                                        string templateParameterFile,
+                                                       IEnumerable<Parameter> parameterOverrides,
                                                        bool filesInPackage,
                                                        ICalamariFileSystem fileSystem,
                                                        IVariables variables,
@@ -55,8 +56,11 @@ public class CloudFormationTemplate(
         if (!string.IsNullOrWhiteSpace(templateParameterFile) && !resolvedParameters.Some())
             throw new CommandException("Could not find template parameters file: " + templateParameterFile);
 
+        var primaryInputs = CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables).Inputs;
+        var mergedInputs = CloudFormationParameterMerge.Merge(primaryInputs, parameterOverrides);
+
         return new CloudFormationTemplate(() => variables.Evaluate(fileSystem.ReadFile(resolvedTemplate.Value)),
-                                          CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables),
+                                          mergedInputs,
                                           stackName,
                                           capabilities,
                                           disableRollback,

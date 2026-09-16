@@ -4,6 +4,7 @@ using System.Linq;
 using Amazon;
 using Amazon.EKS;
 using Amazon.EKS.Model;
+using Calamari.Aws.Discovery;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
@@ -14,6 +15,8 @@ namespace Calamari.Aws.Kubernetes.Discovery;
 
 public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
 {
+    readonly ILog log = log;
+
     /// <remarks>
     /// This type value here must be the same as in Octopus.Server.Orchestration.ServerTasks.Deploy.TargetDiscovery.AwsAuthenticationContext
     /// This value is hardcoded because:
@@ -28,16 +31,16 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
             yield break;
 
         if (!TryGetAwsAuthenticationDetails(
-                                            contextJson,
-                                            credentialsType,
-                                            out var workerPoolId, 
-                                            out var accountId,
-                                            out var roleArnOrAccessKeyOrWorkerCredentials,
-                                            out var authenticationDetails)) 
+                contextJson,
+                credentialsType,
+                out var workerPoolId,
+                out var accountId,
+                out var roleArnOrAccessKeyOrWorkerCredentials,
+                out var authenticationDetails))
             yield break;
 
         Log.Verbose("Looking for Kubernetes clusters in AWS using:");
-        Log.Verbose($"  Regions: [{string.Join(",",authenticationDetails.Regions)}]");
+        Log.Verbose($"  Regions: [{string.Join(",", authenticationDetails.Regions)}]");
 
         Log.Verbose("  Account:");
         Log.Verbose($"    {roleArnOrAccessKeyOrWorkerCredentials}");
@@ -58,13 +61,13 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
             Log.Verbose("  Role: No IAM Role provided.");
         }
 
-        if (!authenticationDetails.TryGetCredentials(Log, out var credentials))
+        if (!authenticationDetails.TryGetCredentials(log, out var credentials))
             yield break;
 
         foreach (var region in authenticationDetails.Regions)
         {
             var client = new AmazonEKSClient(credentials,
-                                             RegionEndpoint.GetBySystemName(region));
+                RegionEndpoint.GetBySystemName(region));
 
             var clusters = client.ListClustersAsync(new ListClustersRequest()).GetAwaiter().GetResult();
 
@@ -74,18 +77,18 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
                 var credentialsRole = authenticationDetails.Role;
                 var assumedRole = credentialsRole.Type == "assumeRole"
                     ? new AwsAssumeRole(credentialsRole.Arn,
-                                        credentialsRole.SessionName,
-                                        credentialsRole.SessionDuration,
-                                        credentialsRole.ExternalId)
+                        credentialsRole.SessionName,
+                        credentialsRole.SessionDuration,
+                        credentialsRole.ExternalId)
                     : null;
 
                 yield return KubernetesCluster.CreateForEks(cluster.Arn,
-                                                            cluster.Name,
-                                                            cluster.Endpoint,
-                                                            accountId,
-                                                            assumedRole,
-                                                            workerPoolId,
-                                                            (cluster.Tags ?? new Dictionary<string, string>()).ToTargetTags());
+                    cluster.Name,
+                    cluster.Endpoint,
+                    accountId,
+                    assumedRole,
+                    workerPoolId,
+                    (cluster.Tags ?? new Dictionary<string, string>()).ToTargetTags());
             }
         }
     }
@@ -96,9 +99,12 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
         {
             var targetDiscoveryContext = JsonConvert.DeserializeObject<JObject>(contextJson);
             credentialsType = targetDiscoveryContext
-                              ?.GetValue("Authentication", StringComparison.OrdinalIgnoreCase)?.Value<JObject>()
-                              ?.GetValue("Credentials", StringComparison.OrdinalIgnoreCase)?.Value<JObject>()
-                              ?.GetValue("Type", StringComparison.OrdinalIgnoreCase)?.Value<string>() 
+                              ?.GetValue("Authentication", StringComparison.OrdinalIgnoreCase)
+                              ?.Value<JObject>()
+                              ?.GetValue("Credentials", StringComparison.OrdinalIgnoreCase)
+                              ?.Value<JObject>()
+                              ?.GetValue("Type", StringComparison.OrdinalIgnoreCase)
+                              ?.Value<string>()
                               ?? throw new Exception("Credentials type is null");
             return true;
         }
@@ -124,13 +130,14 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
         if (credentialsType == "worker")
         {
             if (!TryGetDiscoveryContext<AwsWorkerAuthenticationDetails>(contextJson, out var awsWorkerAuthenticationDetails, out workerPoolId))
+            {
                 return false;
-                
+            }
+
             roleArnOrAccessKeyOrWorkerCredentials = $"Using Worker Credentials on Worker Pool: {workerPoolId}";
 
             accountId = awsWorkerAuthenticationDetails.Credentials.AccountId;
             awsAuthenticationDetails = awsWorkerAuthenticationDetails;
-
         }
         else
         {
@@ -139,10 +146,12 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
                 case "account":
                 {
                     if (!TryGetDiscoveryContext<AwsAccessKeyAuthenticationDetails>(
-                                                                                   contextJson,
-                                                                                   out var awsAccessKeyAuthentication,
-                                                                                   out workerPoolId))
+                            contextJson,
+                            out var awsAccessKeyAuthentication,
+                            out workerPoolId))
+                    {
                         return false;
+                    }
 
                     roleArnOrAccessKeyOrWorkerCredentials =
                         $"Access Key: {awsAccessKeyAuthentication.Credentials.Account.AccessKey}";
@@ -154,10 +163,12 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
                 case "oidcAccount":
                 {
                     if (!TryGetDiscoveryContext<AwsOidcAuthenticationDetails>(
-                                                                              contextJson,
-                                                                              out var awsOidcAuthentication,
-                                                                              out workerPoolId))
+                            contextJson,
+                            out var awsOidcAuthentication,
+                            out workerPoolId))
+                    {
                         return false;
+                    }
 
                     roleArnOrAccessKeyOrWorkerCredentials =
                         $"Role ARN: {awsOidcAuthentication.Credentials.Account.RoleArn}";
@@ -168,7 +179,9 @@ public class AwsKubernetesDiscoverer(ILog log) : KubernetesDiscovererBase(log)
                     break;
                 }
                 default:
+                {
                     throw new Exception("Unknown AWS account");
+                }
             }
         }
 

@@ -7,6 +7,7 @@ using Calamari.Azure.AppServices;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -34,6 +35,13 @@ namespace Calamari.AzureWebApp
             if (!OperatingSystem.IsWindows())
             {
                 throw new CommandException("Cannot execute on non-Windows operating systems as there is a required dependency on the Web Deploy tooling (msdeploy.exe).");
+            }
+
+            if (variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
+            {
+                log.Warn("The `Use checksum to compare files` option is deprecated and will be removed in a future release.\r\n" +
+                         "Checksum-based comparison has no equivalent in the modern Azure deployment APIs; deployments will fall back to timestamp-based comparison.\r\n" +
+                         $"Remove the `{SpecialVariables.Action.Azure.UseChecksum}` variable from this step, or migrate to the `Deploy an Azure App Service` step.");
             }
 
             var netCoreShimExeFolder = GetNetCoreShimExeFolder();
@@ -208,7 +216,7 @@ namespace Calamari.AzureWebApp
         {
             var args = new List<string>();
 
-            if (variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
+            if (!OctopusFeatureToggles.AzureWebAppIgnoreChecksumFeatureToggle.IsEnabled(variables) && variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
             {
                 args.Add("--useChecksum");
             }
@@ -224,10 +232,13 @@ namespace Calamari.AzureWebApp
                 args.Add("--useAppOffline");
             }
 
-            var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
-            if (preservePaths.Count > 0)
+            if (!OctopusFeatureToggles.AzureWebAppIgnorePreservePathsFeatureToggle.IsEnabled(variables))
             {
-                args.Add($"--preservePaths={string.Join("|",preservePaths.Select(s => $"\"{s}\""))}");
+                var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+                if (preservePaths.Count > 0)
+                {
+                    args.Add($"--preservePaths={string.Join("|",preservePaths.Select(s => $"\"{s}\""))}");
+                }
             }
 
             // ReSharper disable once InvertIf

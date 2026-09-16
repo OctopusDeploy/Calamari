@@ -1,0 +1,266 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "ClusterName": {
+      "Type": "String",
+      "Default": "TestCluster"
+    },
+    "TaskDefinitionName": {
+      "Type": "String",
+      "Default": "test-multi-container-template"
+    },
+    "TaskDefinitionCPU": {
+      "Type": "String",
+      "Default": "256"
+    },
+    "TaskDefinitionMemory": {
+      "Type": "String",
+      "Default": "512"
+    },
+    "TaskRole": {
+      "Type": "String",
+      "Default": "arn:aws:iam::120766170633:role/ecsTaskExecutionRole"
+    },
+    "TaskExecutionRole": {
+      "Type": "String",
+      "Default": "arn:aws:iam::120766170633:role/ecsTaskExecutionRole"
+    },
+    "DesiredCount": {
+      "Type": "Number",
+      "Default": 2
+    },
+    "LogGroupName": {
+      "Type": "String",
+      "Default": "/ecs/test-multi-container-template"
+    }
+  },
+  "Resources": {
+    "AwsLogGrouptestMultiContainerTemplate": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Ref": "LogGroupName"
+        }
+      }
+    },
+    "TaskDefinitiontestMultiContainerTemplate": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Name": "web-server",
+            "Image": "docker.io/nginx:1.31.1",
+            "Essential": true,
+            "DisableNetworking": false,
+            "WorkingDirectory": "/tmp",
+            "Memory": 200,
+            "MemoryReservation": 47,
+            "Cpu": 2,
+            "User": "test-user",
+            "StartTimeout": 40,
+            "StopTimeout": 60,
+            "DnsServers": [],
+            "DnsSearchDomains": [],
+            "ReadonlyRootFilesystem": true,
+            "Command": [
+              "echo 'Deployment successful"
+            ],
+            "EntryPoint": [
+              "sh",
+              "-c"
+            ],
+            "ResourceRequirements": [],
+            "DockerLabels": {
+              "some-label": "label-value"
+            },
+            "PortMappings": [
+              {
+                "ContainerPort": 80,
+                "HostPort": 80,
+                "Protocol": "tcp"
+              },
+              {
+                "ContainerPort": 443,
+                "HostPort": 443,
+                "Protocol": "tcp"
+              }
+            ],
+            "HealthCheck": {
+              "Command": [
+                "curl -f http://localhost/ || exit 1"
+              ],
+              "Interval": 240,
+              "Retries": 7,
+              "StartPeriod": 179,
+              "Timeout": 54
+            },
+            "ExtraHosts": [],
+            "Ulimits": [
+              {
+                "Name": "core",
+                "HardLimit": 12,
+                "SoftLimit": 10
+              }
+            ],
+            "MountPoints": [
+              {
+                "SourceVolume": "efs-volume",
+                "ContainerPath": "/etc",
+                "ReadOnly": false
+              }
+            ],
+            "VolumesFrom": [
+              {
+                "SourceContainer": "efs-volume",
+                "ReadOnly": true
+              }
+            ],
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "LogGroupName"
+                },
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": "ecs"
+              }
+            },
+            "EnvironmentFiles": [
+              {
+                "Type": "s3",
+                "Value": "jttestc668db76/test/keyarm-packagev1.0.3.zip"
+              }
+            ],
+            "FirelensConfiguration": {
+              "Type": "fluentd",
+              "Options": {
+                "enable-ecs-log-metadata": "true",
+                "config-file-type": "file",
+                "config-file-value": "/home/config"
+              }
+            },
+            "Environment": [
+              {
+                "Name": "containerenv",
+                "Value": "some-otherovalue"
+              }
+            ]
+          },
+          {
+            "Name": "cache",
+            "Image": "docker.io/bitnami/redis:sha256-fd997c4c52c0a0af686e5af2b671f4e3d538d26f28abd3b83a01ce57eea43752.sig",
+            "Essential": true,
+            "DisableNetworking": false,
+            "DnsServers": [],
+            "DnsSearchDomains": [],
+            "ReadonlyRootFilesystem": false,
+            "ResourceRequirements": [],
+            "PortMappings": [],
+            "HealthCheck": {
+              "Command": [
+                " [ \"CMD-SHELL\", \"curl -f http://localhost/ || exit 1\" ]."
+              ]
+            },
+            "ExtraHosts": [],
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "LogGroupName"
+                },
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": "ecs"
+              }
+            },
+            "EnvironmentFiles": []
+          }
+        ],
+        "Family": {
+          "Ref": "TaskDefinitionName"
+        },
+        "Cpu": {
+          "Ref": "TaskDefinitionCPU"
+        },
+        "Memory": {
+          "Ref": "TaskDefinitionMemory"
+        },
+        "ExecutionRoleArn": {
+          "Ref": "TaskExecutionRole"
+        },
+        "TaskRoleArn": {
+          "Ref": "TaskRole"
+        },
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "NetworkMode": "awsvpc",
+        "RuntimePlatform": {
+          "OperatingSystemFamily": "LINUX",
+          "CpuArchitecture": "X86_64"
+        },
+        "Volumes": [
+          {
+            "Name": "efs-volume",
+            "EFSVolumeConfiguration": {
+              "FilesystemId": "efs-fs-id",
+              "RootDirectory": "/root",
+              "TransitEncryption": "ENABLED",
+              "AuthorizationConfig": {
+                "IAM": "ENABLED",
+                "AccessPointId": "/data"
+              }
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "my-tag",
+            "Value": "a great test value"
+          }
+        ]
+      }
+    },
+    "ServicetestMultiContainerTemplate": {
+      "Type": "AWS::ECS::Service",
+      "DependsOn": "TaskDefinitiontestMultiContainerTemplate",
+      "Properties": {
+        "Cluster": {
+          "Ref": "ClusterName"
+        },
+        "LaunchType": "FARGATE",
+        "TaskDefinition": {
+          "Ref": "TaskDefinitiontestMultiContainerTemplate"
+        },
+        "DesiredCount": {
+          "Ref": "DesiredCount"
+        },
+        "EnableECSManagedTags": true,
+        "DeploymentConfiguration": {
+          "MinimumHealthyPercent": 100,
+          "MaximumPercent": 200
+        },
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "ENABLED",
+            "Subnets": [
+              "subnet-0650cd8a2119e8aaa"
+            ],
+            "SecurityGroups": [
+              "sg-0d5e06a4bde84daaa"
+            ]
+          }
+        },
+        "Tags": [
+          {
+            "Key": "my-tag",
+            "Value": "a great test value"
+          }
+        ]
+      }
+    }
+  }
+}

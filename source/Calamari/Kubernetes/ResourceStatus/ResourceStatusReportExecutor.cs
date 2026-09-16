@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 
@@ -35,8 +36,9 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             return runningResourceStatusCheckFactory(timeout, new Options
             {
-                WaitForJobs = waitForJobs, 
-                PrintVerboseKubectlOutputOnError = variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError)
+                WaitForJobs = waitForJobs,
+                PrintVerboseKubectlOutputOnError = variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError),
+                EnableLegacyResourceStatusChecks = OctopusFeatureToggles.EnableLegacyKubernetesResourceChecksFeatureToggle.IsEnabled(variables)
             }, initialResources);
         }
     }

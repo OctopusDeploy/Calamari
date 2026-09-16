@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -36,6 +37,27 @@ public class DescribeCloudFormationChangeSetConvention(
                                                  );
     }
         
+    //Repeated from the SDK, where this set is only exposed as an instance property on Amazon.Runtime.RetryPolicy
+    static readonly HashSet<string> ThrottlingErrorCodes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Throttling",
+        "ThrottlingException",
+        "ThrottledException",
+        "RequestThrottled",
+        "RequestThrottledException",
+        "TooManyRequestsException",
+        "ProvisionedThroughputExceededException",
+        "RequestLimitExceeded",
+        "BandwidthLimitExceeded",
+        "SlowDown",
+        "PriorRequestNotComplete",
+        "EC2ThrottledException"
+    };
+
+    static bool IsThrottling(AmazonCloudFormationException ex)
+        => (ex.ErrorCode != null && ThrottlingErrorCodes.Contains(ex.ErrorCode))
+           || ex.StatusCode == HttpStatusCode.TooManyRequests;
+
     public async Task DescribeChangeset(StackArn stack, ChangeSetArn changeSet, IVariables variables)
     {
         Guard.NotNull(stack, "The provided stack identifier or name may not be null");
@@ -55,6 +77,12 @@ public class DescribeCloudFormationChangeSetConvention(
                                           "The AWS account used to perform the operation does not have the required permissions to describe the change set.\n" +
                                           "Please ensure the current account has permission to perform action 'cloudformation:DescribeChangeSet'." +
                                           ex.Message + "\n");
+        }
+        catch (AmazonCloudFormationException ex) when (IsThrottling(ex))
+        {
+            throw new RateExceededException(
+                                            "AWS throttled the request to describe the CloudFormation change set. This is usually transient - try the deployment again.\n" +
+                                            ex.Message + "\n");
         }
         catch (AmazonCloudFormationException ex)
         {

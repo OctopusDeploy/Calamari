@@ -1,9 +1,7 @@
 // ReSharper disable ClassNeverInstantiated.Global
 using System;
 using System.Threading.Tasks;
-using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
@@ -15,10 +13,10 @@ using Octopus.CoreUtilities.Extensions;
 namespace Calamari.AzureResourceGroup;
 
 class DeployAzureResourceGroupBehaviour(
-    TemplateService templateService,
+    ITemplateService templateService,
     IResourceGroupTemplateNormalizer parameterNormalizer,
     ILog log,
-    AzureResourceGroupOperator azureResourceGroupOperator)
+    IAzureResourceGroupOperator azureResourceGroupOperator)
     : IDeployBehaviour
 {
     public bool IsEnabled(RunningDeployment context) => true;
@@ -30,8 +28,6 @@ class DeployAzureResourceGroupBehaviour(
         var variables = context.Variables;
         var hasAccessToken = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
         IAzureAccount account = hasAccessToken ? new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
-
-        var armClient = account.CreateArmClient();
 
         var resourceGroupName = variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupName);
         var subscriptionId = variables.GetRequiredVariable(AzureAccountVariables.SubscriptionId);
@@ -62,16 +58,13 @@ class DeployAzureResourceGroupBehaviour(
             ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackageOrRepository, variables))
             : null;
 
-        var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName));
-            
-        log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
-            
-        var deploymentOperation = await azureResourceGroupOperator.CreateDeployment(resourceGroupResource,
-                                                                                    deploymentName,
-                                                                                    deploymentMode,
-                                                                                    template,
-                                                                                    parameters);
-        await azureResourceGroupOperator.PollForCompletionWithTimeout(deploymentOperation, variables);
-        await azureResourceGroupOperator.FinalizeDeployment(deploymentOperation, variables);
+        await azureResourceGroupOperator.Deploy(account,
+                                                subscriptionId,
+                                                resourceGroupName,
+                                                deploymentName,
+                                                deploymentMode,
+                                                template,
+                                                parameters,
+                                                variables);
     }
 }

@@ -187,11 +187,12 @@ namespace Calamari.ArgoCD
             if (matchedUpdate == null || matchedUpdate.Comparison.TagMatch)
                 return;
 
-            var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
-            UpdateJsonImageValue(imageValue, newImageRef);
+            var currentImageRef = ContainerImageReference.FromReferenceString(currentImageString, defaultRegistry);
+            var newImageRef = currentImageRef.WithTag(matchedUpdate.Reference.Tag);
+            UpdateJsonImageValue(imageValue, newImageRef.FriendlyName());
 
-            changes.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
-            log.Verbose($"Updated container image in JSON patch: {newImageRef}");
+            changes.Add(newImageRef.FriendlyName());
+            log.Verbose($"Updated container image in JSON patch: {newImageRef.FriendlyName()}");
         }
 
         ImageReferenceMatch? FindMatchingImageUpdate(string currentImageString, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)

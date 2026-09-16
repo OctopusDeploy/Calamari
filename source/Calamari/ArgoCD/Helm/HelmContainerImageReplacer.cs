@@ -36,8 +36,8 @@ namespace Calamari.ArgoCD.Helm
             var fileContent = yamlContent;
             foreach (var existingImageReference in existingImageReferences)
             {
-                log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.ToString()}");
-                var imagesString = imagesToUpdate.Select(i => i.ContainerReference.ToString()).ToList();
+                log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.FriendlyName()}");
+                var imagesString = imagesToUpdate.Select(i => i.ContainerReference.FriendlyName()).ToList();
                 log.Verbose($"Images to Update = {string.Join(",", imagesString)}");
 
                 var matchedUpdate = imagesToUpdate.Select(i => new
@@ -62,7 +62,7 @@ namespace Calamari.ArgoCD.Helm
                             // We re-read the node value with the image details so we can ensure we only write out the image ref components expected
                             var imageTagNodeValue = originalYamlParser.GetValueAtPath(existingImageReference.TagPath);
                             var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry).WithTag(matchedUpdate.Reference.Tag);
-                            fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, replacementImageRef);
+                            fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, replacementImageRef.FriendlyName());
                         }
 
                         updatedImages.Add(matchedUpdate.Reference.FriendlyName());

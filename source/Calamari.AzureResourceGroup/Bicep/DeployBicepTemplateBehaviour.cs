@@ -1,13 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Azure;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -16,7 +11,7 @@ using Calamari.Common.Plumbing.Variables;
 namespace Calamari.AzureResourceGroup.Bicep;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ILog log)
+class DeployBicepTemplateBehaviour(IBicepTemplateBuilder bicepBuilder, ITemplateService templateService, IAzureResourceGroupOperator resourceGroupOperator, ILog log)
     : IDeployBehaviour
 {
     public bool IsEnabled(RunningDeployment context)
@@ -29,15 +24,11 @@ class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, Templat
         var accountType = context.Variables.GetRequiredVariable(AzureScripting.SpecialVariables.Account.AccountType);
         IAzureAccount account = accountType == nameof(AccountType.AzureOidc) ? new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
 
-        var armClient = account.CreateArmClient();
-
         var resourceGroupName = context.Variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupName);
         var resourceGroupLocation = context.Variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupLocation);
         var subscriptionId = context.Variables.GetRequiredVariable(AzureAccountVariables.SubscriptionId);
         var deploymentModeVariable = context.Variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode);
         var deploymentMode = (ArmDeploymentMode)Enum.Parse(typeof(ArmDeploymentMode), deploymentModeVariable);
-
-        var resourceGroup = await GetOrCreateResourceGroup(armClient, subscriptionId, resourceGroupName, resourceGroupLocation);
 
         var (template, parameters) = GetArmTemplateAndParameters(context);
 
@@ -45,37 +36,19 @@ class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, Templat
         log.Verbose($"Deployment Name: {armDeploymentName}, set to variable \"AzureRmOutputs[DeploymentName]\"");
         log.SetOutputVariable("AzureRmOutputs[DeploymentName]", armDeploymentName, context.Variables);
 
-        var deploymentOperation = await resourceGroupOperator.CreateDeployment(resourceGroup,
-                                                                               armDeploymentName,
-                                                                               deploymentMode,
-                                                                               template,
-                                                                               parameters);
-        await resourceGroupOperator.PollForCompletion(deploymentOperation);
-        await resourceGroupOperator.FinalizeDeployment(deploymentOperation, context.Variables);
-    }
-
-    async Task<ResourceGroupResource> GetOrCreateResourceGroup(ArmClient armClient, string subscriptionId, string resourceGroupName, string location)
-    {
-        var subscription = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
-
-        var resourceGroups = subscription.GetResourceGroups();
-        var existing = await resourceGroups.GetIfExistsAsync(resourceGroupName);
-
-        if (existing.HasValue && existing.Value != null)
-            return existing.Value;
-
-        log.Info($"The resource group with the name {resourceGroupName} does not exist");
-        log.Info($"Creating resource group {resourceGroupName} in location {location}");
-
-        var resourceGroupData = new ResourceGroupData(location);
-        var armOperation = await resourceGroups.CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName, resourceGroupData);
-        return armOperation.Value;
+        await resourceGroupOperator.DeployCreatingResourceGroup(account,
+                                                                subscriptionId,
+                                                                resourceGroupName,
+                                                                resourceGroupLocation,
+                                                                armDeploymentName,
+                                                                deploymentMode,
+                                                                template,
+                                                                parameters,
+                                                                context.Variables);
     }
 
     (string template, string? parameters) GetArmTemplateAndParameters(RunningDeployment context)
     {
-        var bicepCli = new BicepCli(log, commandLineRunner, context.CurrentDirectory);
-
         var bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplateFile, "template.bicep");
         var templateSource = context.Variables.Get(SpecialVariables.Action.Azure.TemplateSource, string.Empty);
 
@@ -86,11 +59,10 @@ class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, Templat
         }
 
         log.Info($"Processing Bicep file: {bicepTemplateFile}");
-        var armTemplateFile = bicepCli.BuildArmTemplate(bicepTemplateFile!);
+        var armTemplateFile = bicepBuilder.BuildArmTemplate(context.CurrentDirectory, bicepTemplateFile!);
         log.Info("Bicep file processed");
 
         var template = templateService.GetSubstitutedTemplateContent(armTemplateFile, filesInPackageOrRepository, context.Variables);
-
 
         var parametersValue = context.Variables.GetRaw(SpecialVariables.Action.Azure.BicepTemplateParameters) ?? string.Empty;
 

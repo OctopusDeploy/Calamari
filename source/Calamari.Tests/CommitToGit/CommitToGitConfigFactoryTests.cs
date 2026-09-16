@@ -1,4 +1,5 @@
 using System;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
@@ -67,5 +68,24 @@ public class CommitToGitConfigFactoryTests
         var config = factory.CreateRepositoryConfig(deployment, loader);
 
         config.DestinationPath.Should().Be(string.Empty);
+    }
+
+    [TestCase(null, GitCommitParameters.DefaultPushRetryAttempts, TestName = "Unset uses the default")]
+    [TestCase(5, 5, TestName = "Explicit value is honoured")]
+    [TestCase(0, 0, TestName = "Minimum is honoured")]
+    [TestCase(10, 10, TestName = "Maximum is honoured")]
+    [TestCase(25, 10, TestName = "Above maximum is clamped down")]
+    [TestCase(-5, 0, TestName = "Below minimum is clamped up")]
+    public void CreateRepositoryConfig_PushRetryAttempts_DefaultedAndClamped(int? variableValue, int expected)
+    {
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(new UsernamePasswordGitCredentialDto("MyCred", "https://example.invalid/repo.git", "user", "pwd")));
+        variables.GetInt32(SpecialVariables.Action.Git.PushRetryAttempts).Returns(variableValue);
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var config = factory.CreateRepositoryConfig(deployment, loader);
+
+        config.CommitParameters.PushRetryAttempts.Should().Be(expected);
     }
 }

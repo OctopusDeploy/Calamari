@@ -10,18 +10,6 @@
         <TargetFramework>net8.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
-
-    <ItemGroup>
-        <Content Include="DotnetScript/*.*">
-            <LinkBase>DotnetScript</LinkBase>
-            <Pack>true</Pack>
-            <Visible>false</Visible>
-            <PackagePath>contentFiles/any/any/DotnetScript/</PackagePath>
-            <PackageCopyToOutput>true</PackageCopyToOutput>
-            <PackageFlatten>false</PackageFlatten>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     </ItemGroup>

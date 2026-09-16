@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Calamari.Integration.Certificates.WindowsNative;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
@@ -184,10 +183,8 @@ namespace Calamari.Integration.Certificates
       {
         AccessControlSections accessControlSections = AccessControlSections.None;
         bool flag = false;
-        RuntimeHelpers.PrepareConstrainedRegions();
         try
         {
-          RuntimeHelpers.PrepareConstrainedRegions();
           try
           {
           }

@@ -1,28 +1,20 @@
 ﻿using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.TargetDiscovery;
 
-namespace Calamari.Common.Features.Discovery
+namespace Calamari.Common.Features.Discovery;
+
+/// <summary>
+/// For account-based authentication scopes.
+/// </summary>
+[method: JsonConstructor]
+public class AccountAuthenticationDetails<TAccountDetails>(string type, string accountId, string authenticationMethod, TAccountDetails accountDetails)
+    : ITargetDiscoveryAuthenticationDetails
 {
-    /// <summary>
-    /// For account-based authentication scopes.
-    /// </summary>
-    public class AccountAuthenticationDetails<TAccountDetails> : ITargetDiscoveryAuthenticationDetails
-    {
-        [JsonConstructor]
-        public AccountAuthenticationDetails
-            (string type, string accountId, string authenticationMethod, TAccountDetails accountDetails)
-        {
-            Type = type;
-            AccountId = accountId;
-            AuthenticationMethod = authenticationMethod;
-            AccountDetails = accountDetails;
-        }
+    public string Type { get; set; } = type;
 
-        public string Type { get; set; }
+    public string AuthenticationMethod { get; } = authenticationMethod;
 
-        public string AuthenticationMethod { get; }
+    public string AccountId { get; set; } = accountId;
 
-        public string AccountId { get; set; }
-
-        public TAccountDetails AccountDetails { get; set; }
-    }
+    public TAccountDetails AccountDetails { get; set; } = accountDetails;
 }

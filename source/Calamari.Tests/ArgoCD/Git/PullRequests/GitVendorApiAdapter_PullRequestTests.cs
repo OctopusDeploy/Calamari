@@ -133,7 +133,8 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                                                      new GitBranchName(defaultBranch),
                                                                      CancellationToken.None);
                 pullRequest.Number.Should().BeGreaterThan(0);
-            }finally
+            }
+            finally
             {
                 // Attempt to Delete Branch on Remote
                 var pushRefSpec = $":{newBranch.CanonicalName}";
@@ -141,8 +142,6 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                 {
                     CredentialsProvider = credentialsHandler,
                 });
-                
-                RepositoryHelpers.DeleteRepositoryDirectory(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), temporaryFolder.DirectoryPath);
             }
         }
     }

@@ -12,7 +12,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 
         public override bool CanConvert(Type objectType) => objectType == typeof(IVersion);
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
             var version = value as IVersion ?? throw new Exception("Type must implement IVersion to use this converter.");
             var outputVersion = new { Version = version.ToString(), Format = version.Format.ToString() };
@@ -20,7 +20,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
             serializer.Serialize(writer, outputVersion);
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
             var jsonObject = JObject.Load(reader);
             var versionString = jsonObject["Version"].Value<string>();

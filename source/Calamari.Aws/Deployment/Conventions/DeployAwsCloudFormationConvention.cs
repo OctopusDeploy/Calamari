@@ -31,7 +31,6 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
     readonly Func<IAmazonCloudFormation> clientFactory;
     readonly Func<ICloudFormationRequestBuilder> templateFactory;
     readonly Func<RunningDeployment, StackArn> stackProvider;
-    readonly Func<RunningDeployment, string> roleArnProvider;
     readonly bool waitForComplete;
     readonly string stackName;
     readonly TimeSpan? waitTimeout;
@@ -44,7 +43,6 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
         Func<ICloudFormationRequestBuilder> templateFactory,
         StackEventLogger stackEventLogger,
         Func<RunningDeployment, StackArn> stackProvider,
-        Func<RunningDeployment, string> roleArnProvider,
         bool waitForComplete,
         string stackName,
         AwsEnvironmentGeneration awsEnvironmentGeneration,
@@ -54,7 +52,6 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
         this.clientFactory = clientFactory;
         this.templateFactory = templateFactory;
         this.stackProvider = stackProvider;
-        this.roleArnProvider = roleArnProvider;
         this.waitForComplete = waitForComplete;
         this.stackName = stackName;
         this.awsEnvironmentGeneration = awsEnvironmentGeneration;
@@ -222,7 +219,7 @@ public class DeployAwsCloudFormationConvention : CloudFormationInstallationConve
 
     /// <summary>
     /// Not all exceptions are bad. Some just mean there is nothing to do, which is fine.
-    /// This method will ignore expected exceptions, and rethrow any that are really issues.
+    /// This method will ignore expected exceptions and rethrow any that are really issues.
     /// </summary>
     /// <param name="ex">The exception we need to deal with</param>
     /// <exception cref="AmazonCloudFormationException">The supplied exception if it really is an error</exception>

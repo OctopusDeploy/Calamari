@@ -14,12 +14,12 @@ public class SelfHostedGitLabInspector(IMemoryCache cache)
     readonly IMemoryCache cache = cache;
     readonly SemaphoreSlim semaphoreSlim = new(1, 1);
 
-    public static string GetSelfHostedBaseRepositoryUrl(Uri repositoryUri) => repositoryUri.GetLeftPart(UriPartial.Authority);//this elides the path & query
+    public static string GetSelfHostedBaseRepositoryUrl(Uri repositoryUri) => repositoryUri.GetLeftPart(UriPartial.Authority); //this elides the path & query
 
     public async Task<bool> IsSelfHostedGitLabInstance(Uri repositoryUri, CancellationToken cancellationToken)
     {
         var selfHostedUri = GetSelfHostedBaseRepositoryUrl(repositoryUri);
-        var key = $"gitlab_{selfHostedUri}";    
+        var key = $"gitlab_{selfHostedUri}";
 
         //we only want one piece of code checking this at once
         await semaphoreSlim.WaitAsync(cancellationToken);
@@ -31,16 +31,16 @@ public class SelfHostedGitLabInspector(IMemoryCache cache)
             }
 
             var httpClient = new HttpClient();
-
-            //we can make an anonymous HTTP call to `/api/v4` and inspect the headers for `X-GitLab-Meta`
-            var apiUrl = new UriBuilder(selfHostedUri)
-            {
-                Path = "/api/v4"
-            };
-
+            
             bool hasGitLabHeader;
             try
             {
+                //we can make an anonymous HTTP call to `/api/v4` and inspect the headers for `X-GitLab-Meta`
+                var apiUrl = new UriBuilder(selfHostedUri)
+                {
+                    Path = "/api/v4"
+                };
+
                 var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, apiUrl.Uri),
                     HttpCompletionOption.ResponseHeadersRead,
                     cancellationToken);

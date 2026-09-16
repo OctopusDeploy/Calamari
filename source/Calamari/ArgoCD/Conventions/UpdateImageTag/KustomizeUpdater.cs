@@ -97,10 +97,9 @@ public class KustomizeUpdater : BaseUpdater
 
         var allFilesToUpdate = new HashSet<string> { kustomizationFile };
 
+        log.Verbose("kustomization file found, processing images and discovering patch files");
         if (updateKustomizePatches)
         {
-            log.Verbose("kustomization file found, processing images and discovering patch files");
-
             var patchDiscovery = new KustomizePatchDiscovery(fileSystem, log);
             var patchFiles = patchDiscovery.DiscoverPatch(kustomizationFile);
 

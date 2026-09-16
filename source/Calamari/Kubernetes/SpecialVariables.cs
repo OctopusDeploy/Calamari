@@ -80,6 +80,8 @@ namespace Calamari.Kubernetes
 
             public static readonly string PurgeOutput = "Octopus.Action.ArgoCD.PurgeOutputFolder";
 
+            public static readonly string PushRetryAttempts = "Octopus.Action.ArgoCD.PushRetryAttempts";
+
             public static class PullRequest
             {
                 public static readonly string Create = "Octopus.Action.ArgoCD.PullRequest.Create";
@@ -173,18 +175,6 @@ namespace Calamari.Kubernetes
                 public const string Name = "k8s-manifest-applied";
                 public const string ManifestAttribute = "manifest";
                 public const string NamespaceAttribute = "ns";
-            }
-
-            public static class ArgoCDFilesUpdated
-            {
-                public const string Name = "argocd-files-updated";
-
-                public static class Attributes
-                {
-                    public const string GatewayId = "gatewayId";
-                    public const string ApplicationName = "applicationName";
-                    public const string Sources = "sources";
-                }
             }
         }
     }

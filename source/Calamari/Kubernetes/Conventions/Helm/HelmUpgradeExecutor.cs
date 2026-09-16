@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,18 +24,21 @@ namespace Calamari.Kubernetes.Conventions.Helm
         readonly HelmTemplateValueSourcesParser templateValueSourcesParser;
         readonly HelmCli helmCli;
         readonly IKubernetesManifestNamespaceResolver namespaceResolver;
+        readonly IManifestReporter manifestReporter;
 
         public HelmUpgradeExecutor(ILog log,
                                    ICalamariFileSystem fileSystem,
                                    HelmTemplateValueSourcesParser templateValueSourcesParser,
                                    HelmCli helmCli,
-                                   IKubernetesManifestNamespaceResolver namespaceResolver)
+                                   IKubernetesManifestNamespaceResolver namespaceResolver,
+                                   IManifestReporter manifestReporter = null)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.templateValueSourcesParser = templateValueSourcesParser;
             this.helmCli = helmCli;
             this.namespaceResolver = namespaceResolver;
+            this.manifestReporter = manifestReporter;
         }
 
         public void ExecuteHelmUpgrade(RunningDeployment deployment,
@@ -64,15 +67,15 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
             if (OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
             {
-                SetAppliedResourcesOutputVariable(deployment, releaseName, newRevisionNumber);
+                ReportManifestAndSetAppliedResources(deployment, releaseName, newRevisionNumber);
             }
 
             installCompletedCts.Cancel();
         }
 
-        void SetAppliedResourcesOutputVariable(RunningDeployment deployment, string releaseName, int revisionNumber)
+        void ReportManifestAndSetAppliedResources(RunningDeployment deployment, string releaseName, int revisionNumber)
         {
-            string manifest = null;
+            string manifest;
             try
             {
                 manifest = helmCli.GetManifest(releaseName, revisionNumber);
@@ -89,23 +92,56 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 return;
             }
 
+            //Manifest reporting normally happens inside HelmManifestAndStatusReporter, which is
+            //skipped on this path; emit it inline so the UI still gets the applied manifest.
+            manifestReporter?.ReportManifestApplied(manifest);
+
             var resources = ManifestParser.GetResourcesFromManifest(manifest, namespaceResolver, deployment.Variables, log);
             AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resources);
+        }
+
+        // Checks for a stuck pending release and recovers by uninstalling or rolling back.
+        // Returns the correct newRevisionNumber to use for the upgrade.
+        public int RecoverFromPendingRelease(string releaseName, string status, int expectedRevisionNumber)
+        {
+            switch (status?.ToLowerInvariant())
+            {
+                case "pending-install":
+                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled first install. Uninstalling to recover...");
+                    var uninstallResult = helmCli.Uninstall(releaseName);
+                    if (uninstallResult.ExitCode != 0)
+                        log.Warn($"Uninstall returned non-zero exit code {uninstallResult.ExitCode}. Continuing with upgrade...");
+                    // Uninstall resets the revision number
+                    return 1;
+
+                case "pending-upgrade":
+                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment. Rolling back to recover...");
+                    var rollbackResult = helmCli.Rollback(releaseName);
+                    if (rollbackResult.ExitCode != 0)
+                        log.Warn($"Rollback returned non-zero exit code {rollbackResult.ExitCode}. Continuing with upgrade...");
+                    // Rollback creates a new revision, so the subsequent upgrade will be one higher than expected.
+                    return expectedRevisionNumber + 1;
+
+                default:
+                    return expectedRevisionNumber;
+            }
         }
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment)
         {
             var args = new List<string>();
 
-            AssertHelmV3();
+            AssertSupportedHelmVersion();
 
             SetResetValuesParameter(deployment, args);
             SetTimeoutParameter(deployment, args);
             SetValuesParameters(deployment, args);
             var hasAdditionalArgs = SetAdditionalArguments(deployment, args);
 
-            //Adjust args based on KOS
-            if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+            //Adjust args based on KOS. When ArgoRollouts support is enabled, status checking moves
+            //to a separate verification action, so we don't force --wait on the deploy step.
+            if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck)
+                && !OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(deployment.Variables))
             {
                 AddKOSArgs(deployment.Variables, hasAdditionalArgs, args);
             }
@@ -347,7 +383,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
             return files;
         }
 
-        void AssertHelmV3()
+        void AssertSupportedHelmVersion()
         {
             var (exitCode, infoOutput) = helmCli.GetExecutableVersion();
             if (exitCode != 0)
@@ -356,14 +392,14 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 return;
             }
 
-            var toolVersion = HelmVersionParser.ParseVersion(infoOutput);
-            if (!toolVersion.HasValue)
+            var majorVersion = HelmVersionParser.ParseMajorVersion(infoOutput);
+            if (!majorVersion.HasValue)
             {
                 log.Warn("Unable to parse the Helm tool version text: " + infoOutput);
             }
-            else if (toolVersion.Value != HelmVersion.V3)
+            else if (majorVersion.Value < 3)
             {
-                throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
+                throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3 or later.");
             }
         }
     }

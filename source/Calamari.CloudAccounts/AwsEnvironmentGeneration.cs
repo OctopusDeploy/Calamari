@@ -136,11 +136,11 @@ namespace Calamari.CloudAccounts
         {
             get
             {
-                // "aws-global" routes to the global STS endpoint (sts.amazonaws.com), preserving SDK v3 behaviour.
-                // See: https://docs.aws.amazon.com/sdkref/latest/guide/feature-region.html
+                // Fall back to us-east-1: unsigned AssumeRoleWithWebIdentity fails against "aws-global".
+                // AWS recommends regional over global: https://docs.aws.amazon.com/general/latest/gr/sts.html
                 if (!EnvironmentVars.TryGetValue("AWS_REGION", out var awsRegion) || string.IsNullOrWhiteSpace(awsRegion))
                 {
-                    return RegionEndpoint.GetBySystemName("aws-global");
+                    return RegionEndpoint.USEast1;
                 }
 
                 return RegionEndpoint.GetBySystemName(awsRegion);
@@ -174,8 +174,17 @@ namespace Calamari.CloudAccounts
         /// </summary>
         void PopulateCommonSettings()
         {
-            EnvironmentVars["AWS_DEFAULT_REGION"] = region;
-            EnvironmentVars["AWS_REGION"] = region;
+            // When the step has no Octopus.Action.Aws.Region, `region` is null. Writing null into
+            // EnvironmentVars used to wipe the parent process's AWS_REGION in any spawned child
+            // (because SilentProcessRunner overlays the dict on ProcessStartInfo.EnvironmentVariables,
+            // where null means 'remove the var'). For Terraform steps on EKS Pods with IRSA, this
+            // erased the Pod's inherited region and broke `terraform plan` with 'invalid AWS Region:'.
+            // See Issues #8337.
+            if (!string.IsNullOrWhiteSpace(region))
+            {
+                EnvironmentVars["AWS_DEFAULT_REGION"] = region;
+                EnvironmentVars["AWS_REGION"] = region;
+            }
         }
 
         /// <summary>

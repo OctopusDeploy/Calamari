@@ -14,11 +14,11 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         
         public PersistentVolumeClaim(JObject json, Options options) : base(json, options)
         {
-            Status = Field("$.status.phase");
-            Volume = Field("$.spec.volumeName");
-            Capacity = Field("$.status.capacity.storage");
-            AccessModes = data.SelectToken("$.status.accessModes")?.Values<string>() ?? new string[] { };
-            StorageClass = Field("$.spec.storageClassName");
+            Status = Field(json, "$.status.phase");
+            Volume = Field(json, "$.spec.volumeName");
+            Capacity = Field(json, "$.status.capacity.storage");
+            AccessModes = json.SelectToken("$.status.accessModes")?.Values<string>().ToList() ?? new List<string>();
+            StorageClass = Field(json, "$.spec.storageClassName");
         }
 
         public override bool HasUpdate(Resource lastStatus)

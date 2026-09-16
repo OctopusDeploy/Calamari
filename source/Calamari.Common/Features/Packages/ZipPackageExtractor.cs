@@ -9,22 +9,9 @@ using SharpCompress.Readers;
 
 namespace Calamari.Common.Features.Packages
 {
-    public class ZipPackageExtractor : IPackageEntryExtractor
+    public class ZipPackageExtractor(ILog log) : IPackageEntryExtractor
     {
-        readonly ILog log;
-        readonly bool forceUtf8ZipFiles; //to be removed once transitioned to netcore
-        
-        //used by extractor tests.
-        public ZipPackageExtractor(ILog log): this(log, true) {
-        }
-        
-        public ZipPackageExtractor(ILog log, bool forceUtf8ZipFiles)
-        {
-            this.log = log;
-            this.forceUtf8ZipFiles = forceUtf8ZipFiles;
-        }
-
-        public string[] Extensions => new[] { ".zip", ".whl" };
+        public string[] Extensions => [".zip", ".whl"];
 
         public int Extract(string packageFile, string directory)
         {
@@ -32,10 +19,12 @@ namespace Calamari.Common.Features.Packages
             
             var filesExtracted = 0;
             using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
-            using var archive = ZipArchive.Open(inStream);
+            using var archive = ZipArchive.OpenArchive(inStream);
             
             foreach (var entry in archive.Entries)
             {
+                if (entry.Key != null)
+                    PackageExtractorUtils.ThrowIfPathTraversalAttempted(entry.Key, directory);
                 ProcessEvent(ref filesExtracted, entry);
                 ExtractEntry(directory, entry);
             }
@@ -47,7 +36,7 @@ namespace Calamari.Common.Features.Packages
         {
             var strategy = PackageExtractorUtils.CreateIoExceptionRetryStrategy(log);
 
-            strategy.Execute(() => entry.WriteToDirectory(directory, new PackageExtractionOptions(log)));
+            strategy.Execute(() => entry.WriteToDirectory(directory, PackageExtractionOptions.Create(log)));
         }
 
         void ProcessEvent(ref int filesExtracted, IEntry entry)

@@ -42,7 +42,8 @@ public class AuthenticatingRepositoryFactory
                     sshCredential.Username,
                     sshCredential.PrivateKey,
                     requestedUrl,
-                    GitReference.CreateFromString(targetRevision));
+                    GitReference.CreateFromString(targetRevision),
+                    sshCredential.KnownHosts.Select(kh => new SshKnownHost(kh.Host, kh.PublicKey)).ToArray());
                 return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
             }
             case null:

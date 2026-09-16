@@ -38,4 +38,6 @@
   <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" SkipUnchangedFiles="true" />
   </Target>
+
+  <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>

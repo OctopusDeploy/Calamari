@@ -54,6 +54,62 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress
             });
         }
+
+        [Test]
+        public void ShouldBeSuccessfulWhenUpdatedAndAvailableMatchDesired()
+        {
+            var daemonSet = ResourceFactory.FromJson(DaemonSet(desired: 2, updated: 2, available: 2, ready: 2), new Options());
+
+            daemonSet.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
+        }
+
+        [Test]
+        public void ShouldBeInProgressWhenGenerationIsGreaterThanObservedGeneration()
+        {
+            var daemonSet = ResourceFactory.FromJson(DaemonSet(desired: 2, updated: 2, available: 2, ready: 2, generation: 2, observedGeneration: 1), new Options());
+
+            daemonSet.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress);
+        }
+
+        [Test]
+        public void ShouldNotRequireReadyToMatchDesired()
+        {
+            // gitops-engine considers the rollout finished once updated and available pods match desired; it does not wait on numberReady.
+            var daemonSet = ResourceFactory.FromJson(DaemonSet(desired: 2, updated: 2, available: 2, ready: 0), new Options());
+
+            daemonSet.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
+        }
+
+        [Test]
+        public void WhenUsingLegacyChecks_RequiresReadyToMatchDesired()
+        {
+            var daemonSet = ResourceFactory.FromJson(DaemonSet(desired: 2, updated: 2, available: 2, ready: 0),
+                new Options { EnableLegacyResourceStatusChecks = true });
+
+            daemonSet.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress);
+        }
+
+        static string DaemonSet(int desired, int updated, int available, int ready, int generation = 1, int observedGeneration = 1)
+        {
+            return $@"{{
+    ""apiVersion"": ""apps/v1"",
+    ""kind"": ""DaemonSet"",
+    ""metadata"": {{
+        ""name"": ""my-ds"",
+        ""namespace"": ""default"",
+        ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62"",
+        ""generation"": {generation}
+    }},
+    ""status"": {{
+        ""desiredNumberScheduled"": {desired},
+        ""currentNumberScheduled"": {updated},
+        ""numberAvailable"": {available},
+        ""numberReady"": {ready},
+        ""updatedNumberScheduled"": {updated},
+        ""observedGeneration"": {observedGeneration}
+    }}
+}}";
+        }
     }
 }
 

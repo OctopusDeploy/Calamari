@@ -49,6 +49,7 @@ public class UpdateEcsServiceConvention(
             throw new CommandException($"Template task definition '{templateTaskDefinitionName}' not found.");
         }
         var template = templateResp.TaskDefinition;
+        log.Info($"Found task definition template \"{templateTaskDefinitionName}\".");
 
         // SPF behavior to check if the target task definition family exists before applying the update
         // Only needed if the target is different from the source
@@ -68,8 +69,10 @@ public class UpdateEcsServiceConvention(
 
         var taskDefTags = EcsDefaultTags.MergeAndDeduplicateTags(deployment.Variables, tags, templateResp.Tags);
         var registerRequest = RegisterTaskDefinitionRequestFactory.FromTaskDefinition(template, targetTaskDefinitionName, containers, taskDefTags, deployment.Variables);
+        log.Info($"Container image(s) to be updated: {string.Join(", ", containers.Select(c => c.ContainerName))}.");
         var registerResp = await ecs.RegisterTaskDefinitionAsync(registerRequest, ct);
         var registeredTaskDef = registerResp.TaskDefinition;
+        log.Info($"New revision for task definition \"{registeredTaskDef.Family}\" created. Revision number: {registeredTaskDef.Revision}.");
 
         var serviceResp = await ecs.DescribeServicesAsync(new DescribeServicesRequest
         {
@@ -88,6 +91,7 @@ public class UpdateEcsServiceConvention(
             ForceNewDeployment = true
         }, ct);
         var updatedService = updateResp.Service;
+        log.Info($"ECS Service \"{serviceName}\" has been updated successfully.");
 
         var serviceTags = EcsDefaultTags.MergeAndDeduplicateTags(deployment.Variables, tags, existingService.Tags);
         if (serviceTags.Count > 0)

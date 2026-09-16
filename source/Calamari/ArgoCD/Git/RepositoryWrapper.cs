@@ -62,6 +62,12 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
+        public PushResult GetHeadCommitDetails()
+        {
+            var commit = repository.Head.Tip;
+            return new PushResult(commit.Sha, commit.ShortSha(), commit.Author.When);
+        }
+
         public void StageAllChanges()
         {
             try
@@ -78,6 +84,7 @@ namespace Calamari.ArgoCD.Git
                                                   string summary,
                                                   string description,
                                                   GitReference branchName,
+                                                  int maxRetryAttempts,
                                                   CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
@@ -85,21 +92,24 @@ namespace Calamari.ArgoCD.Git
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
 
-            var retryPipeline = new ResiliencePipelineBuilder()
-                                .AddRetry(new RetryStrategyOptions
-                                {
-                                    ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
-                                    MaxRetryAttempts = 2,
-                                    UseJitter =  true,
-                                    Delay = TimeSpan.FromSeconds(2),
-                                    OnRetry = args =>
-                                    {
-                                        log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
-                                        FetchAndRebase(currentBranchName);
-                                        return default;
-                                    }
-                                })
-                                .Build();
+            // Polly rejects a retry strategy with MaxRetryAttempts < 1
+            var retryPipeline = maxRetryAttempts <= 0
+                ? ResiliencePipeline.Empty
+                : new ResiliencePipelineBuilder()
+                  .AddRetry(new RetryStrategyOptions
+                  {
+                      ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
+                      MaxRetryAttempts = maxRetryAttempts,
+                      UseJitter =  true,
+                      Delay = TimeSpan.FromSeconds(2),
+                      OnRetry = args =>
+                      {
+                          log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
+                          FetchAndRebase(currentBranchName);
+                          return default;
+                      }
+                  })
+                  .Build();
 
             try
             {
@@ -193,7 +203,7 @@ namespace Calamari.ArgoCD.Git
             {
                 CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
                 OnPushStatusError = errors => errorsDetected = errors,
-                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler()
+                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
             };
 
             repository.Network.Push(repository.Head, pushOptions);
@@ -210,7 +220,7 @@ namespace Calamari.ArgoCD.Git
             var fetchOptions = new FetchOptions
             {
                 CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
-                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler()
+                CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
             };
 
             try
@@ -268,13 +278,6 @@ namespace Calamari.ArgoCD.Git
             log.Verbose("Deleting local repository");
             try
             {
-                //some files in the .git folder can/are ReadOnly which makes them impossible to delete
-                //so just remove the ReadOnly attribute from all files (if they are ReadOnly)
-                foreach (var gitFile in calamariFileSystem.EnumerateFilesRecursively(Path.Combine(repoCheckoutDirectoryPath, ".git")))
-                {
-                    calamariFileSystem.RemoveReadOnlyAttributeFromFile(gitFile);
-                }
-
                 calamariFileSystem.DeleteDirectory(repoCheckoutDirectoryPath);
                 log.Verbose("Deleted local repository");
             }

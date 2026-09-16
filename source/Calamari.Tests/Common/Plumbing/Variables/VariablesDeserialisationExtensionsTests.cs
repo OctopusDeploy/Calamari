@@ -94,6 +94,23 @@ public class VariablesDeserialisationExtensionsTests
     }
 
     [Test]
+    public void VariableWithSubstitution_ExpandsBeforeDeserialisation()
+    {
+        // #{...} references inside the JSON must be expanded before the type binder runs;
+        // otherwise nested variables stay as literal "#{...}" text in the typed result.
+        var variables = new CalamariVariables
+        {
+            { "Octopus.Action.Package[nginx].Image", "docker.io/nginx:1.29.1" },
+            { TestKey, """{ "name": "Image is #{Octopus.Action.Package[nginx].Image}", "numericValue": 7 }""" }
+        };
+
+        var result = variables.GetValueDeserialisedAs<TestVariableClass>(TestKey);
+
+        result.Name.Should().Be("Image is docker.io/nginx:1.29.1");
+        result.NumericValue.Should().Be(7);
+    }
+
+    [Test]
     public void VariableSerialisedAndDeserialisedWithNullableProperty_AppearsTheSame()
     {
         var inputObject = new TestVariableClassWithNullableProperty

@@ -271,7 +271,7 @@ namespace Calamari.Tests.AWS
                                var file = await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
                                var memoryStream = new MemoryStream();
                                await file.ResponseStream.CopyToAsync(memoryStream);
-                               var text = await new StreamReader(ZipArchive.Open(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
+                               var text = await new StreamReader(ZipArchive.OpenArchive(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
                                JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
                            });
         }
@@ -428,7 +428,7 @@ namespace Calamari.Tests.AWS
                                var file = await client.GetObjectAsync(bucketName, $"{prefix}{fileName}");
                                var memoryStream = new MemoryStream();
                                await file.ResponseStream.CopyToAsync(memoryStream);
-                               var text = await new StreamReader(ZipArchive.Open(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
+                               var text = await new StreamReader(ZipArchive.OpenArchive(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
                                JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
                                memoryStream.Close();
                            });

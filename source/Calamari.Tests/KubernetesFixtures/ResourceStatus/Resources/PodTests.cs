@@ -41,7 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Namespace = "test",
                 Ready = "1/2",
                 Restarts = 3,
-                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress
+                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed
             });
         }
         
@@ -141,9 +141,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("ImagePullBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
         }
-        
+
         [Test]
         public void WhenContainerFailsExecutionAndRestarting_TheStatusShouldShowCrashLoopBackOff()
         {
@@ -159,7 +159,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("CrashLoopBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
         }
         
         [Test]
@@ -246,10 +246,46 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("ImagePullBackOff");
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+        }
+
+        [Test]
+        public void WhenAHookPodHasContainerErrors_ItShouldNotBeFailed()
+        {
+            // gitops-engine only fast-fails image-pull/crash-loop for RestartPolicy=Always pods so that
+            // finite hook pods (OnFailure/Never) are not prematurely failed.
+            var podResponse = new PodResponseBuilder()
+                .WithPhase("Pending")
+                .WithRestartPolicy("Never")
+                .WithContainerStates(new ContainerState[]
+                {
+                    new ContainerState { Waiting = new ContainerStateWaiting { Reason = "ImagePullBackOff" } }
+                })
+                .Build();
+
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
+
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
+        }
+
+        [Test]
+        public void WhenUsingLegacyChecks_ContainerErrorsAreInProgressNotFailed()
+        {
+            var podResponse = new PodResponseBuilder()
+                .WithPhase("Running")
+                .WithContainerStates(new ContainerState[]
+                {
+                    new ContainerState { Waiting = new ContainerStateWaiting { Reason = "CrashLoopBackOff" } }
+                })
+                .WithReady(false)
+                .Build();
+
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options { EnableLegacyResourceStatusChecks = true });
+
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
     }
-    
+
     public class PodResponseBuilder
     {
         private const string Template = @"
@@ -261,11 +297,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""namespace"": ""test"",
         ""uid"": ""123""
     }},
+    ""spec"": {{
+        ""restartPolicy"": ""{4}""
+    }},
     ""status"": {{
         ""phase"": ""{0}"",
         ""initContainerStatuses"": {1},
         ""containerStatuses"": {2},
-        ""conditions"": 
+        ""conditions"":
             [
                 {{
                     ""status"": ""{3}"",
@@ -274,15 +313,22 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             ]
     }}
 }}";
-    
+
         private string Phase { get; set; } = "Running";
         private string InitContainerStatuses { get; set; } = "[]";
         private string ContainerStatuses { get; set; } = "[]";
         private string Ready { get; set; } = "False";
-        
+        private string RestartPolicy { get; set; } = "Always";
+
         public string Build()
         {
-            return string.Format(Template, Phase, InitContainerStatuses, ContainerStatuses, Ready);
+            return string.Format(Template, Phase, InitContainerStatuses, ContainerStatuses, Ready, RestartPolicy);
+        }
+
+        public PodResponseBuilder WithRestartPolicy(string restartPolicy)
+        {
+            RestartPolicy = restartPolicy;
+            return this;
         }
         
         public PodResponseBuilder WithPhase(string phase)

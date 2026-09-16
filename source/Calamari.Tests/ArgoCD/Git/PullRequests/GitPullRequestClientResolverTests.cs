@@ -48,13 +48,12 @@ public class GitPullRequestClientResolverTests
     GitVendorPullRequestClientResolver CreateResolverWithAllRealFactories()
     {
         var inspector = new SelfHostedGitLabInspector(cache);
-        return new GitVendorPullRequestClientResolver(new IGitVendorPullRequestClientFactory[]
-        {
+        return new GitVendorPullRequestClientResolver([
             new GitHubPullRequestClientFactory(),
             new GitLabPullRequestClientFactory(inspector),
             new AzureDevOpsPullRequestClientFactory(),
             new BitBucketPullRequestClientFactory()
-        });
+        ]);
     }
 
     [Test]
@@ -71,7 +70,7 @@ public class GitPullRequestClientResolverTests
     [Test]
     public async Task GitLabCloudUrl_ResolvesToGitLabClient()
     {
-        ConfigureConnection("https://gitlab.com/org/repo");
+        ConfigureConnection("https://gitlab.com/org/team/sub-team/repo.git");
         var resolver = CreateResolverWithAllRealFactories();
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
@@ -105,10 +104,9 @@ public class GitPullRequestClientResolverTests
     public async Task UnrecognisedUrl_ReturnsNull()
     {
         ConfigureConnection("https://someunknown.example/org/repo");
-        var resolver = new GitVendorPullRequestClientResolver(new IGitVendorPullRequestClientFactory[]
-        {
+        var resolver = new GitVendorPullRequestClientResolver([
             new NeverMatchesFactory()
-        });
+        ]);
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
 
@@ -124,7 +122,7 @@ public class GitPullRequestClientResolverTests
         factory.CanHandleAsCloudHosted(Arg.Any<Uri>()).Returns(false);
         factory.CanHandleAsSelfHosted(Arg.Any<Uri>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
         factory.Create(connection, log, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedClient));
-        var resolver = new GitVendorPullRequestClientResolver(new[] { factory });
+        var resolver = new GitVendorPullRequestClientResolver([factory]);
 
         var client = await resolver.TryResolve(connection, log, CancellationToken.None);
 

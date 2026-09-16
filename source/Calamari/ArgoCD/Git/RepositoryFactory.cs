@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -48,6 +48,8 @@ namespace Calamari.ArgoCD.Git
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
         {
+            WindowsSshKeys.AssertSupported(gitConnection);
+
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
             fileSystem.CreateDirectory(repositoryPath);
 
@@ -67,7 +69,7 @@ namespace Calamari.ArgoCD.Git
                 };
 
             options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
-            options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler();
+            options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler(log);
 
             string repoPath;
             log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));

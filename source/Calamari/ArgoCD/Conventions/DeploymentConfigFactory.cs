@@ -36,9 +36,8 @@ namespace Calamari.ArgoCD.Conventions
             var commitParameters = CommitParameters(deployment);
             var packageHelmReference = deployment.Variables.GetContainerPackages().Select(p => new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString(p.PackageName),
                                                                                                                           p.HelmReference)).ToList();
-            var useHelmReferenceFromContainer = OctopusFeatureToggles.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle.IsEnabled(deployment.Variables);
             var updateKustomizePatches = OctopusFeatureToggles.KustomizePatchImageUpdatesFeatureToggle.IsEnabled(deployment.Variables);
-            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageHelmReference, useHelmReferenceFromContainer, updateKustomizePatches);
+            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageHelmReference, updateKustomizePatches);
         }
         
         bool RequiresPullRequest(RunningDeployment deployment)
@@ -53,7 +52,8 @@ namespace Calamari.ArgoCD.Conventions
             // the variable is sensitive
             var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Git.CommitMessageSummary));
             var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty);
-            return new GitCommitParameters(summary, description, requiresPullRequest);
+            var pushRetryAttempts = GitCommitParameters.ClampPushRetryAttempts(deployment.Variables.GetInt32(SpecialVariables.Git.PushRetryAttempts));
+            return new GitCommitParameters(summary, description, requiresPullRequest, pushRetryAttempts);
         }
         string EvaluateNonsensitiveExpression(string expression)
         {

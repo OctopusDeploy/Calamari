@@ -3,13 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Models;
+using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.ArgoCD
 {
-    public record FileHash(string FilePath, string Hash);
-
-    public record FileJsonPatch(string FilePath, string JsonPatch);
-
     public record TrackedSourceDetail(
         string? CommitSha,
         DateTimeOffset? CommitTimestamp,
@@ -19,7 +16,7 @@ namespace Calamari.ArgoCD
 
     public class ProcessApplicationResult(
         string gatewayId,
-        ApplicationName applicationName,
+        NamespacedApplicationName applicationName,
         int totalSourceCount,
         int matchingSourceCount,
         List<TrackedSourceDetail> trackedSourceDetails,
@@ -27,7 +24,7 @@ namespace Calamari.ArgoCD
         HashSet<string> gitReposUpdated)
     {
         public string GatewayId { get; } = gatewayId;
-        public ApplicationName ApplicationName { get; } = applicationName;
+        public NamespacedApplicationName ApplicationName { get; } = applicationName;
         public int TotalSourceCount { get; } = totalSourceCount;
         public int MatchingSourceCount { get; } = matchingSourceCount;
         public List<TrackedSourceDetail> TrackedSourceDetails { get; } = trackedSourceDetails;

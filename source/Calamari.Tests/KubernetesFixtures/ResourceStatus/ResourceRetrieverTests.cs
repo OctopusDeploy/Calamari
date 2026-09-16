@@ -326,6 +326,50 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
         [Test]
+        public void ChildResourceListsAreFetchedOncePerKindAndNamespacePerPass()
+        {
+            var deployment1Uid = Guid.NewGuid().ToString();
+            var deployment2Uid = Guid.NewGuid().ToString();
+            var replicaSet1Uid = Guid.NewGuid().ToString();
+            var replicaSet2Uid = Guid.NewGuid().ToString();
+
+            var deployment1 = new ResourceResponseBuilder().WithApiVersion("apps/v1").WithKind("Deployment").WithName("d1").WithUid(deployment1Uid).Build();
+            var deployment2 = new ResourceResponseBuilder().WithApiVersion("apps/v1").WithKind("Deployment").WithName("d2").WithUid(deployment2Uid).Build();
+            var replicaSet1 = new ResourceResponseBuilder().WithApiVersion("apps/v1").WithKind("ReplicaSet").WithName("rs1").WithUid(replicaSet1Uid).WithOwnerUid(deployment1Uid).Build();
+            var replicaSet2 = new ResourceResponseBuilder().WithApiVersion("apps/v1").WithKind("ReplicaSet").WithName("rs2").WithUid(replicaSet2Uid).WithOwnerUid(deployment2Uid).Build();
+            var pod1 = new ResourceResponseBuilder().WithApiVersion("v1").WithKind("Pod").WithName("pod-1").WithOwnerUid(replicaSet1Uid).Build();
+            var pod2 = new ResourceResponseBuilder().WithApiVersion("v1").WithKind("Pod").WithName("pod-2").WithOwnerUid(replicaSet2Uid).Build();
+
+            var kubectlGet = Substitute.For<IKubectlGet>();
+            kubectlGet.Resource(Arg.Is<IResourceIdentity>(r => r.Name == "d1"), Arg.Any<IKubectl>()).Returns(SingleResult(deployment1));
+            kubectlGet.Resource(Arg.Is<IResourceIdentity>(r => r.Name == "d2"), Arg.Any<IKubectl>()).Returns(SingleResult(deployment2));
+            kubectlGet.AllResources(Arg.Is<ResourceGroupVersionKind>(g => g.Kind == "ReplicaSet"), Arg.Any<string>(), Arg.Any<IKubectl>()).Returns(ListResult(replicaSet1, replicaSet2));
+            kubectlGet.AllResources(Arg.Is<ResourceGroupVersionKind>(g => g.Kind == "Pod"), Arg.Any<string>(), Arg.Any<IKubectl>()).Returns(ListResult(pod1, pod2));
+
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
+
+            resourceRetriever.GetAllOwnedResources(
+                new List<ResourceIdentifier>
+                {
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "d1", "octopus"),
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "d2", "octopus")
+                },
+                null, new Options()).ToList();
+
+            // Two deployments each own a ReplicaSet; without caching the Pod list would be fetched once per ReplicaSet.
+            kubectlGet.Received(1).AllResources(Arg.Is<ResourceGroupVersionKind>(g => g.Kind == "ReplicaSet"), Arg.Any<string>(), Arg.Any<IKubectl>());
+            kubectlGet.Received(1).AllResources(Arg.Is<ResourceGroupVersionKind>(g => g.Kind == "Pod"), Arg.Any<string>(), Arg.Any<IKubectl>());
+        }
+
+        static KubectlGetResult SingleResult(string json) => new KubectlGetResult(json, new List<string> { $"Info: {json}" }, 0);
+
+        static KubectlGetResult ListResult(params string[] items)
+        {
+            var json = $"{{items: [{string.Join(",", items)}]}}";
+            return new KubectlGetResult(json, new List<string> { $"Info: {json}" }, 0);
+        }
+
+        [Test]
         public void HandlesKubectlFailureWithExitCode()
         {
             var kubectlGet = new MockKubectlGet();

@@ -45,7 +45,7 @@ public class GitHttpSmartSubTransportTests
     {
         server?.Stop();
         server?.Dispose();
-        RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
+        fileSystem.DeleteDirectory(tempDirectory);
     }
 
     [Test]

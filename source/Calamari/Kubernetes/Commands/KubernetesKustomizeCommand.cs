@@ -5,6 +5,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -52,7 +53,10 @@ namespace Calamari.Kubernetes.Commands
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
         {
-            if (!variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+            //When ArgoRollouts support is enabled, status checking is performed by a separate verification action
+            var argoRolloutsEnabled = OctopusFeatureToggles.ArgoRolloutsSupportFeatureToggle.IsEnabled(variables);
+
+            if (argoRolloutsEnabled || !variables.GetFlag(SpecialVariables.ResourceStatusCheck))
             {
                 return await kubernetesApplyExecutor.Execute(runningDeployment);
             }

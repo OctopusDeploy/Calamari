@@ -56,23 +56,11 @@ namespace Calamari.Tests.ArgoCD.Git
             var subPath = Guid.NewGuid().ToString();
             var resultPath = Path.Combine(tempDirectory, subPath);
             Repository.Clone(originPath, resultPath);
-            var resultRepo = new Repository(resultPath);
+            
+            using var resultRepo = new Repository(resultPath);
             LibGit2Sharp.Commands.Checkout(resultRepo, branchName.ToFriendlyName());
 
             return resultPath;
         }
-        
-        public static void DeleteRepositoryDirectory(ICalamariFileSystem fileSystem, string path)
-        {
-            //Some files might be ReadOnly, clean up properly by removing the ReadOnly attribute
-            foreach (var file in fileSystem.EnumerateFilesRecursively(path))
-            {
-                fileSystem.RemoveReadOnlyAttributeFromFile(file);
-            }
-
-            fileSystem.DeleteDirectory(path, FailureOptions.IgnoreFailure);
-        }
     }
-    
-    
 }

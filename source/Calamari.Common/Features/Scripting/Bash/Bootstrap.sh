@@ -113,6 +113,49 @@ function set_octopusvariable
   echo $MESSAGE
 }
 
+#	---------------------------------------------------------------------------
+# Function for setting environment state
+#   Accepts 4 arguments:
+#     string: value of the key of the environment state
+#     string: value of the value of the environment state
+#     string: optional '-sensitive' to make the value sensitive
+#     string: optional value of the type of the environment state, defaults to 'State'
+#	---------------------------------------------------------------------------
+function set_environmentstate
+{
+  MESSAGE="##octopus[set-environmentstate"
+
+  if [ -n "$1" ]
+  then
+    MESSAGE="$MESSAGE key='$(encode_servicemessagevalue "$1")'"
+  fi
+
+  if [ -n "$2" ]
+  then
+    MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
+  fi
+
+  if [ ! -z "${3:-}" ] && [ "$3" = "-sensitive" ]
+  then
+    MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
+  fi
+
+  MESSAGE="$MESSAGE type='$(encode_servicemessagevalue "${4:-State}")']"
+
+  echo $MESSAGE
+}
+
+#	---------------------------------------------------------------------------
+# Function for setting an environment url
+#   Accepts 2 arguments:
+#     string: value of the key of the environment url
+#     string: value of the url of the environment
+#	---------------------------------------------------------------------------
+function set_environmenturl
+{
+  set_environmentstate "$1" "$2" "" "Url"
+}
+
 # -----------------------------------------------------------------------------
 # Function to create a new octopus artifact
 #	Accepts 2 arguments:
@@ -264,42 +307,27 @@ function decrypt_and_parse_variables {
     local encrypted="$1"
     local iv="$2"
 
-    local decrypted
-    decrypted=$(decrypt_variable "$encrypted" "$iv")
     declare -gA octopus_parameters=()
 
-    local -a key_byte_lengths=()
-    local -a value_byte_lengths=()
-    local -a hex_parts=()
+    # Decrypt the inline base64-encoded ciphertext and read NUL-delimited
+    # key\0value\0 pairs via mapfile in one shot.
+    local -a _kv
+    mapfile -d "" _kv < <(echo "$encrypted" | openssl enc -aes-256-cbc -d -a -A -nosalt -K "$sensitiveVariableKey" -iv "$iv")
 
-    while IFS='$' read -r hex_key hex_value; do
-        hex_value="${hex_value//$'\n'/}"
-        key_byte_lengths+=( $(( ${#hex_key} / 2 )) )
-        value_byte_lengths+=( $(( ${#hex_value} / 2 )) )
-        hex_parts+=( "${hex_key}${hex_value}" )
-    done <<< "$decrypted"
-
-    local concatenated_hex
-    concatenated_hex=$(printf "%s" "${hex_parts[@]}")
-
-    exec 3< <(echo -n "$concatenated_hex" | xxd -r -p)
-
-    local idx
-    for idx in "${!key_byte_lengths[@]}"; do
-        local key_byte_len="${key_byte_lengths[idx]}"
-        local value_byte_len="${value_byte_lengths[idx]}"
-        local decoded_key decoded_value
-
-        LC_ALL=C read -r -N "$key_byte_len" decoded_key <&3
-        LC_ALL=C read -r -N "$value_byte_len" decoded_value <&3
-
-        [[ "$decoded_value" == "nul" ]] && decoded_value=""
-        if [[ -n "$decoded_key" ]]; then
-            octopus_parameters["$decoded_key"]="$decoded_value"
-        fi
+    local i
+    for (( i = 0; i < ${#_kv[@]}; i += 2 )); do
+        [[ -n "${_kv[i]}" ]] && octopus_parameters["${_kv[i]}"]="${_kv[i+1]:-}"
     done
+}
 
-    exec 3<&-
+function _ensure_octopus_parameters_loaded {
+    # Load octopus_parameters if feature toggle is enabled and Bash version supports it
+    bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
+    if [[ "$bashParametersArrayFeatureToggle" == "true" ]]; then
+        if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
+            decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+        fi
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -366,16 +394,9 @@ function report_kubernetes_manifest_file
   report_kubernetes_manifest "$MANIFEST" "$NAMESPACE"
 }
 
-bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
+scriptUsesOctopusParameters=#### SCRIPT_USES_OCTOPUS_PARAMETERS ####
 
-if [ "$bashParametersArrayFeatureToggle" = true ]; then
-    if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
-        if command -v xxd > /dev/null; then
-            decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
-        else
-            echo "xxd is not installed, this is required to use octopus_parameters"
-        fi
-    else
-        echo "Bash version 4.2 or later is required to use octopus_parameters"
-    fi
+# Eagerly load octopus_parameters only if the user script actually uses it
+if [ "$scriptUsesOctopusParameters" = true ]; then
+    _ensure_octopus_parameters_loaded
 fi

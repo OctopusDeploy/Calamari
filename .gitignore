@@ -201,3 +201,7 @@ source/Calamari.Tests/Some sample text
 
 # CodeRush settings
 .cr/
+
+# Claude Code: per-developer files
+CLAUDE.local.md
+.claude/settings.local.json

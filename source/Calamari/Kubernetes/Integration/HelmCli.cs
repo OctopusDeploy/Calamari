@@ -65,7 +65,9 @@ namespace Calamari.Kubernetes.Integration
         
         public (int ExitCode, string InfoOutput) GetExecutableVersion()
         {
-            var result = ExecuteCommandAndReturnOutput("version", "--client", "--short");
+            //note: the `--client` flag was a no-op in Helm 3, but was removed entirely in Helm 4
+            //(passing it causes the command to fail). `version --short` alone works on both.
+            var result = ExecuteCommandAndReturnOutput("version", "--short");
             return (result.Result.ExitCode, result.Output.MergeInfoLogs());
         }
 
@@ -78,33 +80,46 @@ namespace Calamari.Kubernetes.Integration
                 log.Warn("Unable to retrieve the Helm tool version");
                 return null;
             }
-            
-            //helm v3 output looks like: v3.14.2+gc309b6f
+
+            //helm v3/v4 output looks like: v3.14.2+gc309b6f or v4.2.0+g0646808
             var vStripped = infoOutput.TrimStart('v');
 
             return SemVerFactory.CreateVersion(vStripped);
         }
 
-        public int? GetCurrentRevision(string releaseName)
+        public (int Revision, string Status)? GetCurrentReleaseMetadata(string releaseName)
         {
             var result = ExecuteCommandAndReturnOutput("get", "metadata", releaseName, "-o json", NamespaceArg());
 
-
             //if we get _any_ error back, assume it probably hasn't been installed yet
             if (result.Result.ExitCode != 0)
-                return null; //
-            
+                return null;
+
             //parse the output
             var json = result.Output.MergeInfoLogs();
-            var metadata = JsonConvert.DeserializeAnonymousType(json,
-                                                                new
-                                                                {
-                                                                    //we only care about parsing the revision
-                                                                    revision = 0
-                                                                });
+            var metadata = JsonConvert.DeserializeAnonymousType(json, new { revision = 0, status = string.Empty });
 
-            //the next revision 
-            return metadata.revision;
+            // Only revision and status are required for now
+            return (metadata.revision, metadata.status);
+        }
+
+        public CommandResult Rollback(string releaseName, int? revision = null)
+        {
+            var args = new List<string> { "rollback", releaseName };
+
+            if (revision.HasValue)
+                args.Add(revision.Value.ToString());
+
+            args.Add(NamespaceArg());
+
+            var result = ExecuteCommandAndLogOutput(args);
+            return result;
+        }
+
+        public CommandResult Uninstall(string releaseName)
+        {
+            var args = new List<string> { "uninstall", releaseName, NamespaceArg() };
+            return ExecuteCommandAndLogOutput(args);
         }
 
         public string GetManifest(string releaseName, int revisionNumber)

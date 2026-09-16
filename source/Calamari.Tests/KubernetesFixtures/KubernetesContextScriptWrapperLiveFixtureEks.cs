@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Assent;
-using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.Aws.Discovery;
 using Calamari.CloudAccounts;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
@@ -707,7 +707,7 @@ namespace Calamari.Tests.KubernetesFixtures
             params (string directory, string fileName, string content)[] files)
         {
             var pathToPackage = Path.Combine(currentDirectory, packageFileName);
-            using (var archive = ZipArchive.Create())
+            using (var archive = ZipArchive.CreateArchive())
             {
                 var readStreams = new List<IDisposable>();
                 foreach (var (directory, fileName, content) in files)
@@ -715,7 +715,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     var pathInPackage = Path.Combine(directory, fileName);
                     var readStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                     readStreams.Add(readStream);
-                    archive.AddEntry(pathInPackage, readStream);
+                    archive.AddEntry(pathInPackage, readStream, false);
                 }
 
                 using (var writeStream = File.OpenWrite(pathToPackage))

@@ -287,10 +287,22 @@ public class CommitToGitCommand : Command
         {
             new DelegateInstallConvention(d =>
                                           {
+                                              var exitCode = d.Variables.GetInt32(SpecialVariables.Action.Script.ExitCode) ?? 0;
+                                              if (exitCode != 0)
+                                              {
+                                                  throw new CommandException($"Transformation script exited with code {exitCode}. Changes will not be committed.");
+                                              }
+
                                               var commitParams = repositoryConfig!.CommitParameters;
                                               var updater = new RepositoryUpdater(commitParams, log, new UserDefinedCommitMessageGenerator(commitParams.Description));
                                               
                                               var pushResult = updater.PushToRemote(clonedRepository, repositoryConfig.GitConnection.GitReference, FileUpdateResult.EmptyFileUpdateResult);
+                                              if (pushResult is null)
+                                              {
+                                                  log.Info("No changes were committed");
+                                                  pushResult = clonedRepository.GetHeadCommitDetails();
+                                              }
+
                                               new CommitToGitOutputVariablesWriter(log).WritePushResultOutput(pushResult);
                                           })
         };

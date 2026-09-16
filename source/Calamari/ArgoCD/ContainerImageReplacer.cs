@@ -242,13 +242,13 @@ namespace Calamari.ArgoCD
 
                                                   })
                                                   .FirstOrDefault(i => i.Comparison.MatchesImage());
+                
                 if (matchedUpdate != null)
                 {
+                    var resultingReference = currentReference.WithTag(matchedUpdate.Reference.Tag);
                     // Only do replacement if the tag is different
                     if (!matchedUpdate.Comparison.TagMatch)
                     {
-                        var newReference = currentReference.WithTag(matchedUpdate.Reference.Tag);
-
                         // Pattern ensures we only update lines with  `image: <IMAGENAME>` OR  `- image: <IMAGENANME>`.
                         // Ignores comments and white space, while preserving any quotes around the image name
                         var pattern = $@"(?<=^\s*-?\s*image:\s*)([""']?){Regex.Escape(container.Image)}\1(?=\s*(#.*)?$)";
@@ -258,15 +258,15 @@ namespace Calamari.ArgoCD
                                                  {
                                                      var quote = match.Groups[1].Value; // quote char or empty
                                                      // Wrap newReference in the original quotes if any
-                                                     return $"{quote}{newReference}{quote}";
+                                                     return $"{quote}{resultingReference.FriendlyName()}{quote}";
                                                  },
                                                  RegexOptions.Multiline);
 
-                        replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+                        replacementsMade.Add(resultingReference.FriendlyName());
                     }
                     else
                     {
-                        alreadyUpToDate.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+                        alreadyUpToDate.Add(resultingReference.FriendlyName());
                     }
                 }
             }

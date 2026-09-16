@@ -54,9 +54,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("utf8.Filenámes-1.0.0.zip")]
         public void CanExtractZipFileContainingSpecialCharacters(string filename)
         {
-            var fileName = GetFixtureResource("Samples", string.Format(filename));
+            // The special-character variant is materialized locally rather than checked into git/build artifacts,
+            // since a non-ASCII filename doesn't reliably survive the Windows build -> zip artifact -> Linux test agent transfer.
+            using var tempDirectory = TemporaryDirectory.Create();
+            var sourceFile = GetFixtureResource("Samples", "utf8.Filenames-1.0.0.zip");
+            var fileName = Path.Combine(tempDirectory.DirectoryPath, filename);
+            File.Copy(sourceFile, fileName);
 
-            var extractor = new ZipPackageExtractor(ConsoleLog.Instance, true);
+            var extractor = new ZipPackageExtractor(ConsoleLog.Instance);
             var targetDir = GetTargetDir(extractor.GetType(), fileName);
 
             var filesExtracted = extractor.Extract(fileName, targetDir);
@@ -158,7 +163,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 var fileName = Path.Combine(tempFolder.DirectoryPath, $"package.{extension}");
                 using (Stream stream = File.OpenWrite(fileName))
-                using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType)
+                using (var writer = WriterFactory.OpenWriter(stream, archiveType, new WriterOptions(compressionType)
                 {
                     ArchiveEncoding = new ArchiveEncoding {Default = Encoding.UTF8}
                 }))
@@ -220,6 +225,72 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.That(File.Exists(symlink), Is.False, $"Symbolic link exists, please update this test.");
 
             log.StandardOut.Should().ContainMatch("Cannot create symbolic link*");
+        }
+
+        [Test]
+        [TestCase(typeof(NupkgExtractor), "nupkg", ArchiveType.Zip, CompressionType.Deflate)]
+        [TestCase(typeof(ZipPackageExtractor), "zip", ArchiveType.Zip, CompressionType.Deflate)]
+        [TestCase(typeof(TarPackageExtractor), "tar", ArchiveType.Tar, CompressionType.None)]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", ArchiveType.Tar, CompressionType.GZip)]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", ArchiveType.Tar, CompressionType.BZip2)]
+        public void ExtractThrowsWhenArchiveEntryAttemptsPathTraversal(Type extractorType, string extension, ArchiveType archiveType, CompressionType compressionType)
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var packageFile = Path.Combine(tempFolder.DirectoryPath, $"malicious.{extension}");
+            var extractionDir = Path.Combine(tempFolder.DirectoryPath, "extraction");
+            Directory.CreateDirectory(extractionDir);
+
+            using (var stream = File.OpenWrite(packageFile))
+            using (var writer = WriterFactory.OpenWriter(stream, archiveType, new WriterOptions(compressionType) { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } }))
+            {
+                var payload = "malicious content"u8.ToArray();
+                writer.Write("safe-file.txt", new MemoryStream(payload));
+                writer.Write("../traversal.txt", new MemoryStream(payload));
+            }
+
+            var extractor = (IPackageExtractor)Activator.CreateInstance(extractorType, ConsoleLog.Instance);
+
+            Assert.Throws<InvalidOperationException>(() => extractor.Extract(packageFile, extractionDir));
+            Assert.That(File.Exists(Path.Combine(tempFolder.DirectoryPath, "traversal.txt")), Is.False, "Traversal file should not have been written outside the extraction directory");
+        }
+
+        // Directly targets the SharpCompress advisory GHSA-6c8g-7p36-r338 ("zip slip" via *directory entries*
+        // in WriteToDirectory). A normal archive writer won't emit a traversing directory entry, so we craft the
+        // zip with System.IO.Compression to inject one, then extract it through Calamari's Zip extractor.
+        // All traversal vectors stay one level up (inside the temp folder) so a regression can't write outside it.
+        [Test]
+        public void ExtractBlocksZipSlipViaDirectoryEntry()
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var packageFile = Path.Combine(tempFolder.DirectoryPath, "zip-slip.zip");
+            var extractionDir = Path.Combine(tempFolder.DirectoryPath, "extraction");
+            Directory.CreateDirectory(extractionDir);
+
+            using (var fileStream = File.Create(packageFile))
+            using (var zip = new System.IO.Compression.ZipArchive(fileStream, System.IO.Compression.ZipArchiveMode.Create))
+            {
+                WriteZipEntry(zip, "safe/ok.txt", "safe");        // a benign entry
+                zip.CreateEntry("../evil-dir/");                   // traversing *directory* entry (the CVE vector)
+                WriteZipEntry(zip, "../evil-dir/pwned.txt", "pwned"); // file inside the escaping directory
+            }
+
+            var extractor = new ZipPackageExtractor(ConsoleLog.Instance);
+
+            var ex = Assert.Throws<InvalidOperationException>(() => extractor.Extract(packageFile, extractionDir));
+            // Pin the failure to the path-traversal guard (not an unrelated read error), so the test can't pass vacuously.
+            ex.Message.Should().Contain("outside the intended extraction directory");
+
+            var escapedDir = Path.Combine(tempFolder.DirectoryPath, "evil-dir");
+            Assert.That(Directory.Exists(escapedDir), Is.False, "Directory entry escaped the extraction root");
+            Assert.That(File.Exists(Path.Combine(escapedDir, "pwned.txt")), Is.False, "File escaped via directory-entry traversal");
+        }
+
+        static void WriteZipEntry(System.IO.Compression.ZipArchive zip, string key, string content)
+        {
+            var entry = zip.CreateEntry(key);
+            using var stream = entry.Open();
+            var bytes = Encoding.UTF8.GetBytes(content);
+            stream.Write(bytes, 0, bytes.Length);
         }
 
         private string GetFileName(string extension)

@@ -7,6 +7,7 @@ using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
+using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Calamari.Contracts.ArgoCD;
@@ -23,13 +24,14 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     protected string tempDirectory;
     protected string OriginPath => Path.Combine(tempDirectory, "origin");
     protected RepositoryFactory repositoryFactory;
+    Repository bareOrigin;
 
     [SetUp]
     public void Init()
     {
         log = new InMemoryLog();
         tempDirectory = fileSystem.CreateTemporaryDirectory();
-        RepositoryHelpers.CreateBareRepository(OriginPath);
+        bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
         RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
         repositoryFactory = new RepositoryFactory(
@@ -43,7 +45,8 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     [TearDown]
     public void Cleanup()
     {
-        RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
+        bareOrigin.Dispose();
+        fileSystem.DeleteDirectory(tempDirectory);
     }
 
     [TestFixture]
@@ -81,6 +84,8 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     public class SshUrlTests : AuthenticatingRepositoryFactoryTestBase
     {
         [Test]
+        // SSH not currently functional on Windows
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void SshCredentialBranch_IsSelectedAndDispatchesSshKeyGitConnection()
         {
             // Use an ssh:// URL so the new strict validation allows it, and mock the factory
@@ -105,6 +110,38 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
         public void HttpsCredentialTakesPriorityOverSshWhenBothMatchAnSshUrl()
         {
             AssertHttpsCredentialTakesPriorityOverSsh("ssh://git@github.com/org/repo.git");
+        }
+
+        [Test]
+        // SSH not currently functional on Windows
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        public void KnownHostsFromDtoAreCarriedOntoSshKeyGitConnection()
+        {
+            const string sshUrl = "ssh://git@github.com/org/repo.git";
+            var knownHosts = new[]
+            {
+                new SshKnownHostDto("github.com", "AAAAB3NzaC1yc2EAAAADAQABAAABAQ=="),
+                new SshKnownHostDto("bitbucket.org", "AAAAC3NzaC1lZDI1NTE5AAAAIA==")
+            };
+            var mockRepoFactory = Substitute.For<IRepositoryFactory>();
+
+            var factory = new AuthenticatingRepositoryFactory(
+                [new SshKeyGitCredentialDto(sshUrl, "git", "private-key", knownHosts)],
+                mockRepoFactory,
+                log);
+
+            factory.CloneRepository(sshUrl, branchName.ToFriendlyName());
+
+            mockRepoFactory.Received()
+                           .CloneRepository(
+                               Arg.Any<string>(),
+                               Arg.Is<IGitConnection>(c =>
+                                   c is SshKeyGitConnection
+                                   && ((SshKeyGitConnection)c).KnownHosts.Count == 2
+                                   && ((SshKeyGitConnection)c).KnownHosts[0].Host == "github.com"
+                                   && ((SshKeyGitConnection)c).KnownHosts[0].PublicKey == "AAAAB3NzaC1yc2EAAAADAQABAAABAQ=="
+                                   && ((SshKeyGitConnection)c).KnownHosts[1].Host == "bitbucket.org"
+                                   && ((SshKeyGitConnection)c).KnownHosts[1].PublicKey == "AAAAC3NzaC1lZDI1NTE5AAAAIA=="));
         }
     }
 

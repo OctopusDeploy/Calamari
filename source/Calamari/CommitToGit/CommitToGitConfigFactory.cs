@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Amazon.ECS.Model;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
@@ -32,14 +33,15 @@ namespace Calamari.CommitToGit
             var requiresPullRequest = variables.GetFlag(SpecialVariables.Action.Git.PullRequest.Create);
             var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Action.Git.CommitMessageSummary));
             var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Action.Git.CommitMessageDescription) ?? string.Empty);
-            var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest);
+            var pushRetryAttempts = GitCommitParameters.ClampPushRetryAttempts(variables.GetInt32(SpecialVariables.Action.Git.PushRetryAttempts));
+            var commitParameters = new GitCommitParameters(summary, description, requiresPullRequest, pushRetryAttempts);
 
             var properties = customPropertiesLoader.Load<CommitToGitCustomPropertiesDto>();
 
             IGitConnection connection = properties.GitCredential switch
                                         {
                                             UsernamePasswordGitCredentialDto usernamePassword => new HttpsGitConnection(usernamePassword.Username, usernamePassword.Password, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
-                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString)),
+                                            SshKeyGitCredentialDto ssh => new SshKeyGitConnection(ssh.Username, ssh.PrivateKey, uriAsString, GitReference.CreateFromString(gitReferenceAsString), ssh.KnownHosts.Select(kh => new SshKnownHost(kh.Host, kh.PublicKey)).ToArray()),
                                             _ => throw new NotSupportedException($"An unrecognised credential type '{properties.GitCredential.GetType().Name}' was found for '{uriAsString}'"),
                                         };
 

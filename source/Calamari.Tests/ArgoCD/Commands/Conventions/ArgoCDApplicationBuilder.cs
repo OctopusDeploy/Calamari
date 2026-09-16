@@ -7,6 +7,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     class ArgoCDApplicationBuilder
     {
         string name = "My App";
+        string @namespace = "argocd";
         Dictionary<string, string> annotations = new Dictionary<string, string>();
         readonly List<ApplicationSource> applicationSources = new List<ApplicationSource>();
         readonly List<string> applicationSourceTypes = new List<string>();
@@ -14,6 +15,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public ArgoCDApplicationBuilder WithName(string value)
         {
             name = value;
+            return this;
+        }
+
+        public ArgoCDApplicationBuilder WithNamespace(string value)
+        {
+            @namespace = value;
             return this;
         }
 
@@ -47,6 +54,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 Metadata = new Metadata()
                 {
                     Name = name,
+                    Namespace = @namespace,
                     Annotations = annotations
                 },
                 Spec = new ApplicationSpec()

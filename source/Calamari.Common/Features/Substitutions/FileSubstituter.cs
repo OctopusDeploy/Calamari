@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -22,7 +23,7 @@ namespace Calamari.Common.Features.Substitutions
         public void PerformSubstitution(string sourceFile)
             => PerformSubstitution(sourceFile, sourceFile);
 
-        public void PerformSubstitution(string sourceFile, string targetFile) 
+        public void PerformSubstitution(string sourceFile, string targetFile)
             => PerformSubstitutionAndUpdateFile(sourceFile, targetFile, variables.GetFlag(KnownVariables.ShouldFailDeploymentOnSubstitutionFails));
 
         protected virtual void PerformSubstitutionAndUpdateFile(string sourceFile, string targetFile, bool throwOnError, bool throwPlainOctostacheError = false)
@@ -36,15 +37,14 @@ namespace Calamari.Common.Features.Substitutions
 
             if (!string.IsNullOrEmpty(error))
             {
+                var errorMessage = $"Parsing file '{sourceFile}' with Octostache returned the following error: `{error}`";
                 if (throwOnError)
                 {
-                    var message = !throwPlainOctostacheError
-                        ? $"Parsing file '{sourceFile}' with Octostache returned the following error: `{error}`"
-                        : error;
-                    throw new InvalidOperationException(message);
+                    var message = throwPlainOctostacheError ? error : errorMessage;
+                    throw new CommandException(message);
                 }
 
-                log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+                log.Verbose(errorMessage);
             }
 
             fileSystem.OverwriteFile(targetFile, result, encoding);

@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         public void SetFileBasePath(string basePath) => File = new TestFile(basePath);
-        
+
         public override bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
         {
             throw new NotImplementedException("*testing* this is in TestCalamariPhysicalFileSystem");
@@ -29,6 +29,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             throw new NotImplementedException("*testing* this is in TestCalamariPhysicalFileSystem");
         }
+
         private class TestNixCalamariPhysicalFileSystem : NixCalamariPhysicalFileSystem, ICalamariFileSystem
         {
             public new string CreateTemporaryDirectory()
@@ -43,20 +44,16 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 return path;
             }
         }
+
         private class TestWindowsPhysicalFileSystem : WindowsPhysicalFileSystem, ICalamariFileSystem
         {
             public new string CreateTemporaryDirectory()
             {
-               var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
 
-                path = Path.Combine(path, Assembly.GetEntryAssembly()?.GetName().Name ?? Guid.NewGuid().ToString());
+                path = Path.Combine(path, Assembly.GetEntryAssembly()?.GetName().Name ?? Guid.NewGuid().ToString(), "Temp", Guid.NewGuid().ToString());
 
-                path = Path.Combine(path, Guid.NewGuid().ToString());
-
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
+                Directory.CreateDirectory(path);
 
                 return path;
             }

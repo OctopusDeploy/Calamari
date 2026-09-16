@@ -15,14 +15,14 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public Service(JObject json, Options options) : base(json, options)
         {
-            Type = Field("$.spec.type");
-            ClusterIp = Field("$.spec.clusterIP");
+            Type = Field(json, "$.spec.type");
+            ClusterIp = Field(json, "$.spec.clusterIP");
 
-            var ports = data.SelectToken("$.spec.ports")
+            var ports = json.SelectToken("$.spec.ports")
                 ?.ToObject<ServicePort[]>() ?? new ServicePort[] { };
             Ports = FormatPorts(ports);
 
-            var loadBalancerIngresses = data.SelectToken("$.status.loadBalancer.ingress")
+            var loadBalancerIngresses = json.SelectToken("$.status.loadBalancer.ingress")
                 ?.ToObject<LoadBalancerIngress[]>() ?? new LoadBalancerIngress[] { };
 
             ExternalIp = FormatExternalIp(loadBalancerIngresses);
