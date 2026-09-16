@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -20,6 +21,75 @@ namespace Calamari.Tests.ArgoCD
         };
 
         ILog log = new InMemoryLog();
+
+        [Test]
+        public void UpdateImages_WithAFoldedPatchThatHasNoRelevantImage_DoesNotFail()
+        {
+            var inMemoryLog = new InMemoryLog();
+            const string inputYaml = "patches:\n"
+                                     + "  - patch: >\n"
+                                     + "      some: folded prose that mentions no image at all\n"
+                                     + "  - target:\n"
+                                     + "      kind: Deployment\n"
+                                     + "    patch: |-\n"
+                                     + "      apiVersion: apps/v1\n"
+                                     + "      kind: Deployment\n"
+                                     + "      spec:\n"
+                                     + "        template:\n"
+                                     + "          spec:\n"
+                                     + "            containers:\n"
+                                     + "              - name: nginx\n"
+                                     + "                image: nginx:1.21\n";
+
+            var result = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog).UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(inputYaml.Replace("nginx:1.21", "nginx:1.25"));
+            inMemoryLog.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
+        public void UpdateImages_WithAFoldedPatchThatDoesHoldTheImage_FailsWithAnActionableMessage()
+        {
+            const string inputYaml = "patches:\n"
+                                     + "  - patch: >\n"
+                                     + "      [{\"op\": \"replace\", \"path\": \"/spec/template/spec/containers/0/image\", \"value\": \"nginx:1.21\"}]\n";
+
+            var replacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var act = () => replacer.UpdateImages(imagesToUpdate);
+
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage("*inline patch on line 2*folded block scalar (>)*literal block (|)*");
+        }
+
+        [Test]
+        public void UpdateImages_ChangesOnlyTheImageReference_PreservingCommentsAndLineEndings()
+        {
+            const string inputYaml = "# managed by the platform team\r\n"
+                                     + "apiVersion: kustomize.config.k8s.io/v1beta1\r\n"
+                                     + "kind: Kustomization\r\n"
+                                     + "\r\n"
+                                     + "patches:\r\n"
+                                     + "  - target:\r\n"
+                                     + "      kind: Deployment   # only the web tier\r\n"
+                                     + "    patch: |-\r\n"
+                                     + "      apiVersion: apps/v1\r\n"
+                                     + "      kind: Deployment\r\n"
+                                     + "      spec:\r\n"
+                                     + "        template:\r\n"
+                                     + "          spec:\r\n"
+                                     + "            containers:\r\n"
+                                     + "              - name: nginx\r\n"
+                                     + "                image: nginx:1.21\r\n";
+
+            var replacer = new InlineJsonPatchReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = replacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be("nginx:1.25");
+            result.UpdatedContents.Should().Be(inputYaml.Replace("nginx:1.21", "nginx:1.25"));
+        }
 
         [Test]
         public void UpdateImages_WithInlinePatchContainerImage_UpdatesImageReference()

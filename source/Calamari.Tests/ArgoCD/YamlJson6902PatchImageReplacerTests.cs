@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -194,6 +196,87 @@ namespace Calamari.Tests.ArgoCD
 
             result.UpdatedImageReferences.Should().BeEmpty();
             result.UpdatedContents.Should().Be(invalidYaml);
+        }
+
+        [Test]
+        public void UpdateImages_WithAnAliasedContainer_DoesNotCorruptTheDocument()
+        {
+            const string yamlContent = "- op: add\n"
+                                       + "  path: /spec/template/spec/containers\n"
+                                       + "  value:\n"
+                                       + "  - &web\n"
+                                       + "    name: a\n"
+                                       + "    image: nginx:1.21\n"
+                                       + "- op: add\n"
+                                       + "  path: /spec/template/spec/initContainers\n"
+                                       + "  value:\n"
+                                       + "  - *web\n";
+
+            var shorterTag = new List<ContainerImageReferenceAndHelmReference>
+            {
+                new(ContainerImageReference.FromReferenceString("nginx:9", ArgoCDConstants.DefaultContainerRegistry))
+            };
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = replacer.UpdateImages(shorterTag);
+
+            result.UpdatedContents.Should().Be(yamlContent.Replace("nginx:1.21", "nginx:9"));
+        }
+
+        [Test]
+        public void UpdateImages_WithAFoldedImageValue_FailsWithAMessageNamingTheImageAndTheFix()
+        {
+            const string yamlContent = "- op: replace\n  path: /spec/template/spec/containers/0/image\n  value: >\n    nginx:1.21\n";
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var act = () => replacer.UpdateImages(imagesToUpdate);
+
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage("*nginx:1.21*line 3*folded block scalar (>)*literal block (|)*");
+        }
+
+        [Test]
+        public void UpdateImages_WithAFoldedScalarElsewhereInTheFile_DoesNotWarn()
+        {
+            var inMemoryLog = new InMemoryLog();
+            const string yamlContent = "- op: add\n"
+                                       + "  path: /metadata/annotations/notes\n"
+                                       + "  value: >\n"
+                                       + "    some folded prose\n"
+                                       + "    spanning lines\n"
+                                       + "- op: replace\n"
+                                       + "  path: /spec/template/spec/containers/0/image\n"
+                                       + "  value: nginx:1.21\n";
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = replacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(yamlContent.Replace("nginx:1.21", "nginx:1.25"));
+            inMemoryLog.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
+        public void UpdateImages_ChangesOnlyTheImageReference_PreservingCommentsAndLineEndings()
+        {
+            const string yamlContent = "# rollout patch\r\n"
+                                       + "- op: replace\r\n"
+                                       + "  path: /spec/template/spec/containers/0/image   # web\r\n"
+                                       + "  value: nginx:1.21\r\n"
+                                       + "\r\n"
+                                       + "- op: replace\r\n"
+                                       + "  path: /spec/template/spec/initContainers/0/image\r\n"
+                                       + "  value: \"nginx:1.21\"\r\n";
+
+            var replacer = new YamlJson6902PatchImageReplacer(yamlContent, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var result = replacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be("nginx:1.25");
+            result.UpdatedContents.Should().Be(yamlContent.Replace("nginx:1.21", "nginx:1.25"));
         }
 
         [Test]

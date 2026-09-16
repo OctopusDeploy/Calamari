@@ -6,6 +6,7 @@ using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
@@ -80,9 +81,10 @@ namespace Calamari.ArgoCD
             }
 
             var replacementsMade = new HashSet<string>();
+            var edits = new List<YamlScalarEdit>();
             foreach (var patchNode in patchesSequence.OfType<YamlMappingNode>())
             {
-                var changes = ProcessPatchNode(patchNode, imagesToUpdate);
+                var changes = ProcessPatchNode(patchNode, imagesToUpdate, edits);
                 replacementsMade.UnionWith(changes);
             }
 
@@ -91,13 +93,11 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
-            using var writer = new StringWriter();
-            stream.Save(writer, false);
-            var modifiedYaml = writer.ToString().TrimEnd();
+            var modifiedYaml = YamlScalarSplicer.ReplaceValues(yamlContent, edits);
             return new ImageReplacementResult(modifiedYaml, replacementsMade, new HashSet<string>());
         }
 
-        HashSet<string> ProcessPatchNode(YamlMappingNode patchNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+        HashSet<string> ProcessPatchNode(YamlMappingNode patchNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, List<YamlScalarEdit> edits)
         {
             var changes = new HashSet<string>();
 
@@ -108,7 +108,7 @@ namespace Calamari.ArgoCD
                 {
                     if (kvp.Key is YamlScalarNode scalar && scalar.Value == FieldNames.Patch && kvp.Value is YamlScalarNode patchContentScalar)
                     {
-                        var patchChanges = ProcessInlinePatchContent(patchContentScalar, imagesToUpdate);
+                        var patchChanges = ProcessInlinePatchContent(patchContentScalar, imagesToUpdate, edits);
                         changes.UnionWith(patchChanges);
                         break;
                     }
@@ -118,7 +118,7 @@ namespace Calamari.ArgoCD
             return changes;
         }
 
-        HashSet<string> ProcessInlinePatchContent(YamlScalarNode patchContentNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+        HashSet<string> ProcessInlinePatchContent(YamlScalarNode patchContentNode, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, List<YamlScalarEdit> edits)
         {
             var changes = new HashSet<string>();
 
@@ -139,12 +139,20 @@ namespace Calamari.ArgoCD
                 }
 
                 var result = patchImageReplacer.UpdateImages(imagesToUpdate);
-                changes.UnionWith(result.UpdatedImageReferences);
+                if (result.UpdatedImageReferences.Count == 0)
+                    return changes;
 
-                if (result.UpdatedImageReferences.Count > 0)
-                {
-                    patchContentNode.Value = result.UpdatedContents;
-                }
+                // Checked only once there is something to write, so a patch we cannot write back but
+                // have no reason to touch stays silent.
+                if (!YamlScalarSplicer.CanReplaceValue(yamlContent, patchContentNode))
+                    throw new CommandException($"Cannot update images in the inline patch on line {patchContentNode.Start.Line}: {YamlScalarSplicer.DescribeUnsupportedValue(patchContentNode)}.");
+
+                changes.UnionWith(result.UpdatedImageReferences);
+                edits.Add(new YamlScalarEdit(patchContentNode, result.UpdatedContents));
+            }
+            catch (CommandException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
