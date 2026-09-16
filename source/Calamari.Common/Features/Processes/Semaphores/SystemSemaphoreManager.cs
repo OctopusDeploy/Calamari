@@ -54,9 +54,8 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                         Mutex? mutex = null;
                                         try
                                         {
-                                            // Wwe try and create/acquire a global semaphore mutex some retry
-                                            // to (hopefully) avoid situations where two instances of Calamari are trying to acquire the
-                                            // same mutex (e.g. parallel steps being executed on the same machine)
+                                            // Create/acquire the global mutex with some retry, to (hopefully) avoid two instances of
+                                            // Calamari racing to create it (e.g. parallel steps on the same machine)
                                             mutex = semaphoreAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
 
                                             // Assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
@@ -74,6 +73,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                             }
                                             catch (AbandonedMutexException)
                                             {
+                                                // The previous owner died without releasing; the kernel has handed ownership to us
                                             }
                                         }
                                         catch (Exception ex)
@@ -90,7 +90,8 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
                                         release.Wait();
 
-                                        // An unhandled exception here would terminate the process - threads are great.
+                                        // An unhandled exception here would terminate the process. Releasing is best effort:
+                                        // a failure leaves the mutex abandoned, which the next waiter recovers from.
                                         try
                                         {
                                             try
