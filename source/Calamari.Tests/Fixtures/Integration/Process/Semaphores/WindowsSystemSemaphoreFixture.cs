@@ -68,30 +68,39 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         }
 
         [Test]
-        public async Task ReleasingFromADifferentThreadThanAcquiredSucceeds()
+        public void ReleasingFromADifferentThreadThanAcquiredSucceeds()
         {
             var name = $"Octopus.Calamari.CrossThreadRelease.{Guid.NewGuid():N}";
             var sut = new SystemSemaphoreManager();
 
-            // Acquire on whatever thread this async method happens to be running on right now.
-            var acquiringThread = Thread.CurrentThread.ManagedThreadId;
             var releaser = sut.Acquire(name, "Another process is using the package journal");
 
-            // Hop onto other thread-pool threads via delay/yield, exactly what happens to any async method
-            // that awaits something after taking the lock. ConfigureAwait(false) lets the continuation land on
-            // whichever pool thread is free rather than being marshalled back, so this reliably changes threads.
-            int releasingThread;
-            do
-            {
-                await Task.Delay(1).ConfigureAwait(false);
-                await Task.Yield();
-                releasingThread = Thread.CurrentThread.ManagedThreadId;
-            } while (releasingThread == acquiringThread);
+            // Release from an explicit second thread rather than by hopping thread-pool threads after an await.
+            // The thread identity is then guaranteed to differ, with no dependency on how many cores the agent
+            // has - waiting for a pool continuation to land elsewhere can spin indefinitely on a small agent.
+            Exception releaseFailure = null;
+            var releasingThread = new Thread(() =>
+                                             {
+                                                 try
+                                                 {
+                                                     releaser.Dispose();
+                                                 }
+                                                 catch (Exception ex)
+                                                 {
+                                                     releaseFailure = ex;
+                                                 }
+                                             });
+            releasingThread.Start();
+
+            Assert.That(releasingThread.Join(TimeSpan.FromSeconds(5)), Is.True, "Dispose() did not complete on the releasing thread.");
 
             // A raw Mutex can only be released by the thread that acquired it, so SystemSemaphoreManager
-            // acquires and releases on its own dedicated thread internally. Disposing here - from a thread
-            // other than the one that called Acquire() - must not throw.
-            Assert.DoesNotThrow(() => releaser.Dispose());
+            // acquires and releases on its own dedicated thread internally. Disposing from another thread
+            // must not throw.
+            Assert.That(releaseFailure,
+                        Is.Null,
+                        "Disposing the releaser from a different thread threw. SystemSemaphoreManager must hide the "
+                        + "Mutex's thread affinity from callers.");
 
             // And the lock must actually have been released: a second Acquire() should succeed promptly rather
             // than hanging behind a lock nobody is going to release.

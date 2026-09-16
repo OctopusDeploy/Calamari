@@ -51,11 +51,11 @@ namespace Calamari.Common.Features.Processes.Semaphores
             // held, and Acquire()/Dispose() just hand signals to and from it.
             var acquired = new ManualResetEventSlim(false);
             var release = new ManualResetEventSlim(false);
-            Exception acquisitionFailure = null;
+            Exception? acquisitionFailure = null;
 
             var owner = new Thread(() =>
                                     {
-                                        Mutex mutex;
+                                        Mutex? mutex = null;
                                         try
                                         {
                                             //we try and create/acquire a global mutex with some retry
@@ -88,6 +88,9 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                         }
                                         catch (Exception ex)
                                         {
+                                            //we never took the lock, so there is nothing to release - just
+                                            //close the handle rather than leaving it to the finaliser
+                                            mutex?.Dispose();
                                             acquisitionFailure = ex;
                                             acquired.Set();
                                             return;
@@ -97,8 +100,24 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
                                         release.Wait();
 
-                                        mutex.ReleaseMutex();
-                                        mutex.Dispose();
+                                        //an unhandled exception here would terminate the process, because this
+                                        //is our own thread rather than the caller's. Releasing is best effort:
+                                        //if it fails the mutex is abandoned, which the next waiter recovers from.
+                                        try
+                                        {
+                                            try
+                                            {
+                                                mutex.ReleaseMutex();
+                                            }
+                                            finally
+                                            {
+                                                mutex.Dispose();
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            log.Verbose($"Failed to release the mutex '{globalName}': {ex.PrettyPrint()}");
+                                        }
                                     })
                          {
                              IsBackground = true,
@@ -108,12 +127,25 @@ namespace Calamari.Common.Features.Processes.Semaphores
             acquired.Wait();
 
             if (acquisitionFailure != null)
+            {
+                owner.Join();
+                acquired.Dispose();
+                release.Dispose();
                 ExceptionDispatchInfo.Capture(acquisitionFailure).Throw();
+            }
+
+            //guards against a caller disposing twice: the events are gone after the first time through
+            var released = 0;
 
             return new Releaser(() =>
                                 {
+                                    if (Interlocked.Exchange(ref released, 1) != 0)
+                                        return;
+
                                     release.Set();
                                     owner.Join();
+                                    acquired.Dispose();
+                                    release.Dispose();
                                 });
         }
 
