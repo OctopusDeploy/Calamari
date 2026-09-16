@@ -116,27 +116,15 @@ namespace Calamari.Common.Features.Processes.Semaphores
             owner.Start();
             acquired.Wait();
 
+            var releaser = new Releaser(owner, acquired, release);
+
             if (acquisitionFailure != null)
             {
-                owner.Join();
-                acquired.Dispose();
-                release.Dispose();
+                releaser.Dispose();
                 ExceptionDispatchInfo.Capture(acquisitionFailure).Throw();
             }
 
-            // Guards against a caller disposing twice: the events are gone after the first time through
-            var released = 0;
-
-            return new Releaser(() =>
-                                {
-                                    if (Interlocked.Exchange(ref released, 1) != 0)
-                                        return;
-
-                                    release.Set();
-                                    owner.Join();
-                                    acquired.Dispose();
-                                    release.Dispose();
-                                });
+            return releaser;
         }
 
         [SupportedOSPlatform("windows")]
@@ -160,16 +148,28 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
         class Releaser : IDisposable
         {
-            readonly Action dispose;
+            readonly Thread owner;
+            readonly ManualResetEventSlim acquired;
+            readonly ManualResetEventSlim release;
+            int released;
 
-            public Releaser(Action dispose)
+            public Releaser(Thread owner, ManualResetEventSlim acquired, ManualResetEventSlim release)
             {
-                this.dispose = dispose;
+                this.owner = owner;
+                this.acquired = acquired;
+                this.release = release;
             }
 
             public void Dispose()
             {
-                dispose();
+                // The events are gone after the first time through, so guard against a caller disposing twice
+                if (Interlocked.Exchange(ref released, 1) != 0)
+                    return;
+
+                release.Set();
+                owner.Join();
+                acquired.Dispose();
+                release.Dispose();
             }
         }
     }

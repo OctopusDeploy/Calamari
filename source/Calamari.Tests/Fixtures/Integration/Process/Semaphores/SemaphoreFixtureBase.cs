@@ -96,6 +96,27 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             Assert.That(reacquire.Wait(TimeSpan.FromSeconds(5)), Is.True, "Dispose() returned without actually releasing the mutex.");
         }
 
+        [Test]
+        public void DisposingTheReleaserTwiceIsANoOp()
+        {
+            var name = $"Octopus.Calamari.DoubleDispose.{Guid.NewGuid():N}";
+            var sut = new SystemSemaphoreManager();
+
+            var releaser = sut.Acquire(name, "Another process is using the package journal");
+            releaser.Dispose();
+
+            Assert.DoesNotThrow(() => releaser.Dispose(), "Disposing the releaser a second time threw.");
+
+            var reacquire = Task.Run(() =>
+                                     {
+                                         using (sut.Acquire(name, "Another process is using the package journal"))
+                                         {
+                                         }
+                                     });
+
+            Assert.That(reacquire.Wait(TimeSpan.FromSeconds(5)), Is.True, "The second Dispose() interfered with the released mutex.");
+        }
+
         static void ShouldIsolate(ISemaphoreFactory semaphore)
         {
             var result = 0;
