@@ -51,96 +51,56 @@ root:
             result.Should().Be(expected);
         }
 
-        [Test]
-        public void UpdateNodeValue_WithNonDelimitedNodeValue_ReplacesValueInDocument()
+        [TestCase("\n")]
+        [TestCase("\r\n")]
+        public void UpdateNodeValue_WithNonDelimitedNodeValue_ReplacesValueInDocument(string newLine)
         {
-            const string yamlContent = @"
-root:
-  node1: 42
-  node2: stable
-";
+            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  node2: stable", "");
 
             var sut = new HelmYamlParser(yamlContent);
-
-            const string expectedUpdate = @"
-root:
-  node1: 69
-  node2: stable
-";
 
             var result = sut.UpdateContentForPath("root.node1", "69");
 
-            //ensure platform-agnostic multiline comparison
-            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
+            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 69", "  node2: stable", ""));
         }
 
-        [Test]
-        public void UpdateNodeValue_WithDoubleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue()
+        [TestCase("\n")]
+        [TestCase("\r\n")]
+        public void UpdateNodeValue_WithDoubleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue(string newLine)
         {
-            const string yamlContent = @"
-root:
-  node1: 42
-  node2: ""latest""
-";
+            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  node2: \"latest\"", "");
 
             var sut = new HelmYamlParser(yamlContent);
-
-            const string expectedUpdate = @"
-root:
-  node1: 42
-  node2: ""stable""
-";
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
-            //ensure platform-agnostic multiline comparison
-            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
+            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 42", "  node2: \"stable\"", ""));
         }
 
-        [Test]
-        public void UpdateNodeValue_WithSingleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue()
+        [TestCase("\n")]
+        [TestCase("\r\n")]
+        public void UpdateNodeValue_WithSingleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue(string newLine)
         {
-            const string yamlContent = @"
-root:
-  node1: 42
-  node2: 'latest'
-";
+            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  node2: 'latest'", "");
 
             var sut = new HelmYamlParser(yamlContent);
-
-            const string expectedUpdate = @"
-root:
-  node1: 42
-  node2: 'stable'
-";
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
-            //ensure platform-agnostic multiline comparison
-            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
+            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 42", "  node2: 'stable'", ""));
         }
 
-        [Test]
-        public void UpdateNodeValue_RespectsTrailingWhitespaceFromInput()
+        [TestCase("\n")]
+        [TestCase("\r\n")]
+        public void UpdateNodeValue_RespectsTrailingWhitespaceFromInput(string newLine)
         {
-            const string yamlContent = @"
-root:
-  node1: 42
-  
-";
+            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  ", "");
 
             var sut = new HelmYamlParser(yamlContent);
-
-            const string expectedUpdate = @"
-root:
-  node1: 69
-  
-";
 
             var result = sut.UpdateContentForPath("root.node1", "69");
 
-            //ensure platform-agnostic multiline comparison
-            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
+            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 69", "  ", ""));
         }
 
         [Test]

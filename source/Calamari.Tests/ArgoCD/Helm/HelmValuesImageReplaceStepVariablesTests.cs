@@ -122,7 +122,6 @@ image:
     // .cs files out with native endings, so a literal's endings always match Environment.NewLine and
     // an assertion against it cannot distinguish "preserved the file's endings" from "used the
     // agent's". The customer's case was an LF file on a Windows agent, where those differ.
-    [Test]
     [TestCase("\n")]
     [TestCase("\r\n")]
     public void TwoImagesWithSameTag_OnlyUpdatesConfiguredPath(string newLine)
@@ -144,20 +143,25 @@ image:
               .Be(string.Join(newLine, "", "nginx:", "  tag: 1.27.1", "redis:", "  tag: 1.0", ""));
     }
 
-    [Test]
-    public void UpdatesTag_PreservingCrlfAndTheAbsenceOfATrailingNewline()
+    [TestCase("\n")]
+    [TestCase("\r\n")]
+    public void TwoImagesWithSameTag_WithoutATrailingNewline_OnlyUpdatesConfiguredPath(string newLine)
     {
-        const string yaml = "image:\r\n  tag: 1.0";
+        var yaml = string.Join(newLine, "", "nginx:", "  tag: 1.0", "redis:", "  tag: 1.0");
 
         var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
         var images = new List<ContainerImageReferenceAndHelmReference>
         {
-            new(ContainerImageReference.FromReferenceString("nginx:1.27.1", DefaultRegistry), "image.tag")
+            new(ContainerImageReference.FromReferenceString("nginx:1.27.1", DefaultRegistry), "nginx.tag")
         };
 
         var result = replacer.UpdateImages(images);
 
-        result.UpdatedContents.Should().Be("image:\r\n  tag: 1.27.1");
+        using var scope = new AssertionScope();
+        result.UpdatedImageReferences.Should().BeEquivalentTo(["nginx:1.27.1"]);
+        result.UpdatedContents
+              .Should()
+              .Be(string.Join(newLine, "", "nginx:", "  tag: 1.27.1", "redis:", "  tag: 1.0"));
     }
 
     [Test]
