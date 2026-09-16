@@ -72,7 +72,7 @@ namespace Calamari.ArgoCD
             if (indent == null)
                 return null;
 
-            var block = new BlockRegion(start, end, indent, EndsWithLineBreak(region));
+            var block = new BlockRegion(start, end, indent, region.HasTrailingNewLine());
 
             return Render(value, block, document).ReplaceLineEndings("\n") == region.ReplaceLineEndings("\n")
                 ? block
@@ -252,11 +252,6 @@ namespace Calamari.ArgoCD
             }
 
             return "";
-        }
-
-        static bool EndsWithLineBreak(string content)
-        {
-            return content.EndsWith("\n") || content.EndsWith("\r");
         }
 
         /// <summary>
