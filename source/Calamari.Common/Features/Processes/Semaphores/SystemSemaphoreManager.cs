@@ -74,6 +74,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                             catch (AbandonedMutexException)
                                             {
                                                 // The previous owner died without releasing; the kernel has handed ownership to us
+                                                log.Warn($"The lock '{name}' was abandoned by a previous process that exited without releasing it. Continuing, but anything it was protecting may have been left in an inconsistent state.");
                                             }
                                         }
                                         catch (Exception ex)
