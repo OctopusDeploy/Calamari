@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 
@@ -9,7 +9,7 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public class ApplicationDirectory
     {
-        static readonly ISemaphoreFactory Semaphore = new SystemSemaphoreManager();
+        static readonly INamedLockManager NamedLock = new MutexBasedNamedLockManager();
 
         /// <summary>
         /// Returns the directory where the package will be installed.
@@ -90,7 +90,7 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             var target = desiredTargetPath;
 
-            using (Semaphore.Acquire("Octopus.Calamari.ExtractionDirectory", "Another process is finding an extraction directory, please wait..."))
+            using (NamedLock.Acquire("Octopus.Calamari.ExtractionDirectory", "Another process is finding an extraction directory, please wait..."))
             {
                 for (var i = 1; fileSystem.DirectoryExists(target) || fileSystem.FileExists(target); i++)
                     target = desiredTargetPath + "_" + i;

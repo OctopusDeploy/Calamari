@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
+namespace Calamari.Tests.Fixtures.Integration.Process.NamedLocks
 {
-    public abstract class SemaphoreFixtureBase
+    public abstract class NamedLockFixtureBase
     {
-        // Must comfortably exceed the 3s initial wait inside SystemSemaphoreManager.
+        // Must comfortably exceed the 3s initial wait inside MutexBasedNamedLockManager.
         static readonly TimeSpan RecoveryAllowance = TimeSpan.FromSeconds(15);
 
         // Held so the abandoned mutex handle is never closed or finalised during the test
@@ -22,15 +22,15 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         }
 
         [Test]
-        public void SystemSemaphoreWaitsUntilFirstSemaphoreIsReleased()
+        public void SecondNamedLockWaitsUntilFirstIsReleased()
         {
-            SecondSemaphoreWaitsUntilFirstSemaphoreIsReleased(new SystemSemaphoreManager());
+            SecondWaitsUntilFirstIsReleased(new MutexBasedNamedLockManager());
         }
 
         [Test]
-        public void SystemSemaphoreShouldIsolate()
+        public void NamedLockShouldIsolate()
         {
-            ShouldIsolate(new SystemSemaphoreManager());
+            ShouldIsolate(new MutexBasedNamedLockManager());
         }
 
         // Acquire() must recover when the holder dies without running the Releaser (killed mid-ApplyRetention,
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         {
             var name = $"Octopus.Calamari.AbandonedHolder.{Guid.NewGuid():N}";
             var globalName = $@"Global\{name}";
-            var sut = new SystemSemaphoreManager();
+            var sut = new MutexBasedNamedLockManager();
 
             // Simulate the lock being abandoned by some other process entirely
             var holder = new Thread(() =>
@@ -65,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         public void ReleasingFromADifferentThreadThanAcquiredSucceeds()
         {
             var name = $"Octopus.Calamari.CrossThreadRelease.{Guid.NewGuid():N}";
-            var sut = new SystemSemaphoreManager();
+            var sut = new MutexBasedNamedLockManager();
 
             var releaser = sut.Acquire(name, "Another process is using the package journal");
 
@@ -100,7 +100,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         public void DisposingTheReleaserTwiceIsANoOp()
         {
             var name = $"Octopus.Calamari.DoubleDispose.{Guid.NewGuid():N}";
-            var sut = new SystemSemaphoreManager();
+            var sut = new MutexBasedNamedLockManager();
 
             var releaser = sut.Acquire(name, "Another process is using the package journal");
             releaser.Dispose();
@@ -117,7 +117,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             Assert.That(reacquire.Wait(TimeSpan.FromSeconds(5)), Is.True, "The second Dispose() interfered with the released mutex.");
         }
 
-        static void ShouldIsolate(ISemaphoreFactory semaphore)
+        static void ShouldIsolate(INamedLockManager namedLockManager)
         {
             var result = 0;
             var threads = new List<Thread>();
@@ -126,7 +126,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             {
                 threads.Add(new Thread(new ThreadStart(delegate
                 {
-                    using (semaphore.Acquire("CalamariTest", "Another process is performing arithmetic, please wait"))
+                    using (namedLockManager.Acquire("CalamariTest", "Another process is performing arithmetic, please wait"))
                     {
                         result = 1;
                         Thread.Sleep(200);
@@ -146,28 +146,28 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             Assert.That(result, Is.EqualTo(3));
         }
 
-        static void SecondSemaphoreWaitsUntilFirstSemaphoreIsReleased(ISemaphoreFactory semaphore)
+        static void SecondWaitsUntilFirstIsReleased(INamedLockManager namedLockManager)
         {
             AutoResetEvent autoEvent = new AutoResetEvent(false);
-            var threadTwoShouldGetSemaphore = true;
+            var threadTwoShouldGetTheLock = true;
 
             var threadOne = new Thread(() =>
             {
-                using (semaphore.Acquire("Octopus.Calamari.TestSemaphore", "Another process has the semaphore..."))
+                using (namedLockManager.Acquire("Octopus.Calamari.TestNamedLock", "Another process has the lock..."))
                 {
-                    threadTwoShouldGetSemaphore = false;
+                    threadTwoShouldGetTheLock = false;
                     autoEvent.Set();
                     Thread.Sleep(200);
-                    threadTwoShouldGetSemaphore = true;
+                    threadTwoShouldGetTheLock = true;
                 }
             });
 
             var threadTwo = new Thread(() =>
             {
                 autoEvent.WaitOne();
-                using (semaphore.Acquire("Octopus.Calamari.TestSemaphore", "Another process has the semaphore..."))
+                using (namedLockManager.Acquire("Octopus.Calamari.TestNamedLock", "Another process has the lock..."))
                 {
-                    Assert.That(threadTwoShouldGetSemaphore, Is.True);
+                    Assert.That(threadTwoShouldGetTheLock, Is.True);
                 }
             });
 

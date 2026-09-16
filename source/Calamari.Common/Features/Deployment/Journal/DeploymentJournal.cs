@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -12,16 +12,16 @@ namespace Calamari.Common.Features.Deployment.Journal
 {
     public class DeploymentJournal : IDeploymentJournal
     {
-        const string SemaphoreName = "Octopus.Calamari.DeploymentJournal";
+        const string NamedLockName = "Octopus.Calamari.DeploymentJournal";
         readonly ICalamariFileSystem fileSystem;
-        readonly ISemaphoreFactory semaphore;
+        readonly INamedLockManager namedLockManager;
         readonly IVariables variables;
         readonly ILog log;
 
-        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore, IVariables variables, ILog log)
+        public DeploymentJournal(ICalamariFileSystem fileSystem, INamedLockManager namedLockManager, IVariables variables, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.semaphore = semaphore;
+            this.namedLockManager = namedLockManager;
             this.variables = variables;
             this.log = log;
         }
@@ -30,7 +30,7 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         internal void AddJournalEntry(JournalEntry entry)
         {
-            using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
+            using (namedLockManager.Acquire(NamedLockName, "Another process is using the deployment journal"))
             {
                 var xElement = entry.ToXmlElement();
                 log.VerboseFormat("Adding journal entry:\n{0}", xElement.ToString());
@@ -40,7 +40,7 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         public List<JournalEntry> GetAllJournalEntries()
         {
-            using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
+            using (namedLockManager.Acquire(NamedLockName, "Another process is using the deployment journal"))
             {
                 return Read().Select(element => new JournalEntry(element)).ToList();
             }
@@ -48,7 +48,7 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         public void RemoveJournalEntries(IEnumerable<string> ids)
         {
-            using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
+            using (namedLockManager.Acquire(NamedLockName, "Another process is using the deployment journal"))
             {
                 var elements = Read();
 

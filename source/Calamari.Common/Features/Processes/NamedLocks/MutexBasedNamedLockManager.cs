@@ -10,15 +10,15 @@ using Calamari.Common.Plumbing.Logging;
 using Polly;
 using Polly.Retry;
 
-namespace Calamari.Common.Features.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.NamedLocks
 {
-    public class SystemSemaphoreManager : ISemaphoreFactory
+    public class MutexBasedNamedLockManager : INamedLockManager
     {
         readonly ILog log;
         readonly int initialWaitBeforeShowingLogMessage;
         readonly ResiliencePipeline mutexAcquisitionPipeline;
 
-        public SystemSemaphoreManager()
+        public MutexBasedNamedLockManager()
         {
             log = ConsoleLog.Instance;
             initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;

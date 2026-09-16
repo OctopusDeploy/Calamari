@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Calamari.Common.Features.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.NamedLocks
 {
-    public interface ISemaphoreFactory
+    public interface INamedLockManager
     {
         IDisposable Acquire(string name, string waitMessage);
     }
