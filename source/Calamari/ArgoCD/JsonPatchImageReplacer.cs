@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD
@@ -100,6 +101,12 @@ namespace Calamari.ArgoCD
 
                 var modifiedJson = JsonSerializer.Serialize(patchArray, options);
                 return new ImageReplacementResult(modifiedJson, replacementsMade, new HashSet<string>());
+            }
+            catch (CommandException)
+            {
+                // A failure we raised deliberately, with an actionable message. Degrading it to a
+                // warning here would report success while leaving the image at its old tag.
+                throw;
             }
             catch (Exception ex)
             {
