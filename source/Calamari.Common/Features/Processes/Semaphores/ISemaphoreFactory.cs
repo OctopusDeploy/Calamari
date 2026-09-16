@@ -5,9 +5,10 @@ namespace Calamari.Common.Features.Processes.Semaphores
     public interface ISemaphoreFactory
     {
         /// <summary>
-        /// Acquires a machine-wide lock. The lock is backed by a named Mutex, so the returned
-        /// <see cref="IDisposable"/> must be disposed on the same thread that called Acquire;
-        /// releasing from another thread (including after an await) throws.
+        /// Acquires a machine-wide lock. The lock may be backed by a named Mutex, which can only be waited
+        /// on and released by the thread that acquired it; implementations are responsible for hiding that
+        /// constraint, so the returned <see cref="IDisposable"/> is safe to dispose from any thread, including
+        /// after an await.
         /// </summary>
         IDisposable Acquire(string name, string waitMessage);
     }
