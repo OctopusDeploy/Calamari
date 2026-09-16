@@ -44,27 +44,23 @@ namespace Calamari.Common.Features.Processes.Semaphores
         {
             var globalName = $@"Global\{name}";
 
-            // A Mutex can only be waited on and released by the thread that acquired it, but callers may
-            // dispose the returned IDisposable from a different thread than the one that called Acquire -
-            // most obviously, any async method that awaits something in between. So the actual WaitOne() and
-            // ReleaseMutex() calls happen on a dedicated thread that lives for exactly as long as the lock is
-            // held, and Acquire()/Dispose() just hand signals to and from it.
             var acquired = new ManualResetEventSlim(false);
             var release = new ManualResetEventSlim(false);
             Exception? acquisitionFailure = null;
 
+            // A Mutex can only be waited on and released by the thread that acquired it
             var owner = new Thread(() =>
                                     {
                                         Mutex? mutex = null;
                                         try
                                         {
-                                            //we try and create/acquire a global mutex with some retry
-                                            //this is done to (hopefully) avoid situations where two instances of Calamari are trying to acquire the same mutex
-                                            //this could happen in the case of parallel steps being executed on the same machine
+                                            // Wwe try and create/acquire a global semaphore mutex some retry
+                                            // to (hopefully) avoid situations where two instances of Calamari are trying to acquire the
+                                            // same mutex (e.g. parallel steps being executed on the same machine)
                                             mutex = semaphoreAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
 
-                                            //assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
-                                            //is still accessible to Calamari running under a different account
+                                            // Assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
+                                            // is still accessible to Calamari running under a different account
                                             if (OperatingSystem.IsWindows())
                                                 SetFullAccessControlForAllUsers(mutex, globalName);
 
@@ -78,18 +74,12 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                             }
                                             catch (AbandonedMutexException)
                                             {
-                                                // We are now the owners of the mutex.
-                                                // If a thread or process terminates while owning a mutex, the mutex is said to be abandoned:
-                                                // the kernel signals it and hands ownership to the next waiter. This recovery is the reason a
-                                                // Mutex is used here rather than a Semaphore - a Semaphore has no notion of ownership, so a
-                                                // holder that died without releasing would leave its count at zero and block every later
-                                                // waiter forever.
                                             }
                                         }
                                         catch (Exception ex)
                                         {
-                                            //we never took the lock, so there is nothing to release - just
-                                            //close the handle rather than leaving it to the finaliser
+                                            // We never took the lock, so there is nothing to release - just
+                                            // close the handle rather than leaving it to the finaliser
                                             mutex?.Dispose();
                                             acquisitionFailure = ex;
                                             acquired.Set();
@@ -100,9 +90,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
                                         release.Wait();
 
-                                        //an unhandled exception here would terminate the process, because this
-                                        //is our own thread rather than the caller's. Releasing is best effort:
-                                        //if it fails the mutex is abandoned, which the next waiter recovers from.
+                                        // An unhandled exception here would terminate the process - threads are great.
                                         try
                                         {
                                             try
@@ -134,7 +122,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 ExceptionDispatchInfo.Capture(acquisitionFailure).Throw();
             }
 
-            //guards against a caller disposing twice: the events are gone after the first time through
+            // Guards against a caller disposing twice: the events are gone after the first time through
             var released = 0;
 
             return new Releaser(() =>
