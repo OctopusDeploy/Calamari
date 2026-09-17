@@ -41,6 +41,15 @@
         <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0"/>
     </ItemGroup>
     <ItemGroup>
+        <!--
+            Source-linked rather than referenced. A ProjectReference to Calamari.Benchmarks would drag
+            BenchmarkDotNet and its dependencies into this test package, which ships to every test agent.
+            Keeping Calamari.Benchmarks/Support free of BenchmarkDotNet types is what makes this work.
+        -->
+        <Compile Include="..\Calamari.Benchmarks\Support\SyntheticArchive.cs"
+                 Link="Fixtures\Integration\Packages\BenchmarkSupport\SyntheticArchive.cs"/>
+    </ItemGroup>
+    <ItemGroup>
         <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1"/>
         <None Include="Fixtures\ConfigurationVariables\Samples\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

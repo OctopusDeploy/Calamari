@@ -19,4 +19,13 @@
     <ItemGroup>
       <ProjectReference Include="..\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <!--
+            Source-linked rather than referenced, so BenchmarkDotNet does not become a dependency of this
+            test project. Keeping Calamari.Benchmarks/Support free of BenchmarkDotNet types is what makes
+            this work.
+        -->
+        <Compile Include="..\Calamari.Benchmarks\Support\SyntheticConsolidatedPackage.cs"
+                 Link="BenchmarkSupport\SyntheticConsolidatedPackage.cs"/>
+    </ItemGroup>
 </Project>
