@@ -57,7 +57,7 @@ namespace Calamari.AzureAppService.Tests
                                                                        {
                                                                            SiteConfig = new SiteConfigProperties
                                                                            {
-                                                                               WindowsFxVersion = "DOCKER|mcr.microsoft.com/dotnet/framework/samples:aspnetapp-windowsservercore-ltsc2022",
+                                                                               WindowsFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp-nanoserver-ltsc2022",
                                                                                IsAlwaysOn = true,
                                                                                AppSettings = new List<AppServiceNameValuePair>
                                                                                {
