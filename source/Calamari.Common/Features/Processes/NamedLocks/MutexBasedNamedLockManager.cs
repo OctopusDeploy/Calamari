@@ -15,14 +15,14 @@ namespace Calamari.Common.Features.Processes.NamedLocks
     {
         readonly ILog log;
         readonly int initialWaitBeforeShowingLogMessage;
-        readonly ResiliencePipeline mutexAcquisitionPipeline;
+        readonly ResiliencePipeline mutexCreationPipeline;
 
         public MutexBasedNamedLockManager()
         {
             log = ConsoleLog.Instance;
             initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
 
-            mutexAcquisitionPipeline = new ResiliencePipelineBuilder()
+            mutexCreationPipeline = new ResiliencePipelineBuilder()
                                           .AddRetry(new RetryStrategyOptions()
                                           {
                                               ShouldHandle = new PredicateBuilder().Handle<Exception>(),
@@ -32,7 +32,7 @@ namespace Calamari.Common.Features.Processes.NamedLocks
                                               Delay = TimeSpan.FromMilliseconds(50),
                                               OnRetry = args =>
                                                         {
-                                                            log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Mutex again");
+                                                            log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to create the Mutex again");
                                                             return default;
                                                         }
                                           })
@@ -41,6 +41,8 @@ namespace Calamari.Common.Features.Processes.NamedLocks
 
         public IDisposable Acquire(string name, string waitMessage)
         {
+            log.Verbose($"Acquiring named lock for {name}");
+            
             var trackedThread = new TrackedThread($"Mutex owner for '{name}'",
                 tracker =>
                 {
@@ -51,15 +53,20 @@ namespace Calamari.Common.Features.Processes.NamedLocks
                     {
                         // Create/acquire the global mutex with some retry, to (hopefully) avoid two instances of
                         // Calamari racing to create it (e.g. parallel steps on the same machine)
-                        mutex = mutexAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
+                        mutex = mutexCreationPipeline.Execute(() => new Mutex(false, globalName));
+                        
 
                         // Assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
                         // is still accessible to Calamari running under a different account
                         if (OperatingSystem.IsWindows())
+                        {
                             SetFullAccessControlForAllUsers(mutex, globalName);
+                            log.Verbose($"Calamari mutex configured to allow control for all users on '{name}'");
+                        }
 
                         try
                         {
+                            log.Verbose($"Attempting to acquire mutex on Calamari '{name}'");
                             if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
                             {
                                 log.Verbose(waitMessage);
@@ -69,7 +76,7 @@ namespace Calamari.Common.Features.Processes.NamedLocks
                         catch (AbandonedMutexException)
                         {
                             // The previous owner died without releasing; the kernel has handed ownership to us
-                            log.Warn($"The lock '{name}' was abandoned by a previous process that exited without releasing it. Continuing, but anything it was protecting may have been left in an inconsistent state.");
+                            log.Warn($"The mutex '{name}' was abandoned by a previous process that exited without releasing it. Continuing, but anything it was protecting may have been left in an inconsistent state.");
                         }
                     }
                     catch (Exception ex)
@@ -81,6 +88,7 @@ namespace Calamari.Common.Features.Processes.NamedLocks
                         return;
                     }
 
+                    log.Verbose($"Acquired lock on Calamari for '{name}'");
                     tracker.HoldUntilDisposed();
 
                     // An unhandled exception here would terminate the process. Releasing is best effort:
