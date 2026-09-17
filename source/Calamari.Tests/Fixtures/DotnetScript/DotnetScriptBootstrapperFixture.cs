@@ -31,5 +31,30 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             result.Should().Contain($"-s {customSource} ");
             result.Should().NotContain("api.nuget.org");
         }
+
+        [Test]
+        public void FormatCommandArguments_DoesNotDisableIsolatedLoadContext_ByDefault()
+        {
+            var result = DotnetScriptBootstrapper.FormatCommandArguments("Bootstrap.csx", null);
+            result.Should().NotContain("--disable-isolated-load-context");
+        }
+
+        [Test]
+        public void FormatCommandArguments_DisablesIsolatedLoadContext_WhenRequested()
+        {
+            var result = DotnetScriptBootstrapper.FormatCommandArguments("Bootstrap.csx", null, null, true);
+            result.Should().Contain("--disable-isolated-load-context ");
+        }
+
+        [Test]
+        public void FormatCommandArguments_PlacesDisableIsolatedLoadContextBeforeTheScriptFile()
+        {
+            // Anything after the bootstrap file is passed to the script, not to dotnet-script.
+            var bootstrapFile = "Bootstrap.csx";
+            var result = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, "--verbosity debug -- \"Parameter 1\"", null, true);
+            result.IndexOf("--disable-isolated-load-context", StringComparison.Ordinal)
+                  .Should()
+                  .BeLessThan(result.IndexOf($"\"{bootstrapFile}\"", StringComparison.Ordinal));
+        }
     }
 }
