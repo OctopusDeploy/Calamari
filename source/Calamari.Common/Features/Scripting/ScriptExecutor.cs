@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
@@ -42,7 +42,7 @@ namespace Calamari.Common.Features.Scripting
                 try
                 {
                     if (execution.CommandLineInvocation.Isolate)
-                        using (new SystemSemaphoreManager()
+                        using (new MutexBasedNamedLockManager()
                             .Acquire("CalamariSynchronizeProcess",
                                 "Waiting for other process to finish executing script"))
                         {

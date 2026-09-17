@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment.Journal;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -37,7 +37,7 @@ namespace Calamari.Commands
             if (packageFile == null) // required: true in the above call means it will throw rather than return null, but there's no way to tell the compiler that. And ! doesn't work in older frameworks
                 throw new CommandException("Package File path could not be determined");
 
-            var journal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables, log);
+            var journal = new DeploymentJournal(fileSystem, new MutexBasedNamedLockManager(), variables, log);
 
             var conventions = new List<IConvention>
             {

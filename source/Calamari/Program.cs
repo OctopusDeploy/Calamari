@@ -13,7 +13,7 @@ using Calamari.CommitToGit;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
@@ -119,7 +119,7 @@ namespace Calamari
                    .As<IKubernetesDiscovererFactory>()
                    .SingleInstance();
 
-            builder.RegisterInstance(new SystemSemaphoreManager()).As<ISemaphoreFactory>();
+            builder.RegisterInstance(new MutexBasedNamedLockManager()).As<INamedLockManager>();
 
             TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
 

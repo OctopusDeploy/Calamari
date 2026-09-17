@@ -1,10 +1,10 @@
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
+namespace Calamari.Tests.Fixtures.Integration.Process.NamedLocks
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
-    public class WindowsSystemSemaphoreFixture : SemaphoreFixtureBase
+    public class WindowsNamedLockFixture : NamedLockFixtureBase
     { }
 }

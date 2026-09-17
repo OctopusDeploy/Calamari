@@ -2,7 +2,7 @@
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment.Journal;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -31,8 +31,8 @@ namespace Calamari.Common.Plumbing.Deployment.Journal
         {
             if (deployment.SkipJournal)
                 return;
-            var semaphore = new SystemSemaphoreManager();
-            var journal = new DeploymentJournal(fileSystem, semaphore, deployment.Variables, log);
+            var namedLockManager = new MutexBasedNamedLockManager();
+            var journal = new DeploymentJournal(fileSystem, namedLockManager, deployment.Variables, log);
 
             var hasPackages = !string.IsNullOrWhiteSpace(packageFile) || deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
 
