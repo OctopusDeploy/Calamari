@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Calamari.Common.Features.Deployment.Journal;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
@@ -15,7 +15,7 @@ namespace Calamari.Common.Plumbing.Variables
             if (string.IsNullOrWhiteSpace(policySet))
                 return;
 
-            var journal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables, log);
+            var journal = new DeploymentJournal(fileSystem, new MutexBasedNamedLockManager(), variables, log);
             Previous(variables, journal, policySet);
             PreviousSuccessful(variables, journal, policySet);
         }

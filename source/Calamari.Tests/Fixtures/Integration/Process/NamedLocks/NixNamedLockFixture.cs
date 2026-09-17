@@ -1,11 +1,11 @@
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
+namespace Calamari.Tests.Fixtures.Integration.Process.NamedLocks
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
-    public class NixSystemSemaphoreFixture : SemaphoreFixtureBase
+    public class NixNamedLockFixture : NamedLockFixtureBase
     {
     }
 }
