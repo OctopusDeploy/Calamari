@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
@@ -118,15 +118,17 @@ image:
         result.UpdatedContents.Should().Contain("name: us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld:v2");
     }
 
-    // Line endings are spelled out rather than taken from a verbatim literal: .gitattributes checks
-    // .cs files out with native endings, so a literal's endings always match Environment.NewLine and
-    // an assertion against it cannot distinguish "preserved the file's endings" from "used the
-    // agent's". The customer's case was an LF file on a Windows agent, where those differ.
-    [TestCase("\n")]
-    [TestCase("\r\n")]
-    public void TwoImagesWithSameTag_OnlyUpdatesConfiguredPath(string newLine)
+    [Test]
+    public void TwoImagesWithSameTag_OnlyUpdatesConfiguredPath()
     {
-        var yaml = string.Join(newLine, "", "nginx:", "  tag: 1.0", "redis:", "  tag: 1.0", "");
+        const string yaml = """
+
+                            nginx:
+                              tag: 1.0
+                            redis:
+                              tag: 1.0
+
+                            """;
 
         var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
         var images = new List<ContainerImageReferenceAndHelmReference>
@@ -136,18 +138,68 @@ image:
 
         var result = replacer.UpdateImages(images);
 
+        const string expectedYaml = """
+
+                                    nginx:
+                                      tag: 1.27.1
+                                    redis:
+                                      tag: 1.0
+
+                                    """;
+
         using var scope = new AssertionScope();
         result.UpdatedImageReferences.Should().BeEquivalentTo(["nginx:1.27.1"]);
-        result.UpdatedContents
-              .Should()
-              .Be(string.Join(newLine, "", "nginx:", "  tag: 1.27.1", "redis:", "  tag: 1.0", ""));
+        result.UpdatedContents.ReplaceLineEndings("\n").Should().Be(expectedYaml.ReplaceLineEndings("\n"));
+    }
+
+    // The endings are forced with ReplaceLineEndings rather than inherited from the literal:
+    // .gitattributes checks .cs files out with native endings, so an inherited ending always matches
+    // Environment.NewLine and the assertion cannot distinguish "preserved the input's endings" from
+    // "used the agent's". The customer's case was an LF file on a Windows agent.
+    [TestCase("\n")]
+    [TestCase("\r\n")]
+    public void UpdatedYaml_PreservesTheInputLineEndings(string newLine)
+    {
+        var yaml = """
+
+                   nginx:
+                     tag: 1.0
+                   redis:
+                     tag: 1.0
+
+                   """.ReplaceLineEndings(newLine);
+
+        var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
+        var images = new List<ContainerImageReferenceAndHelmReference>
+        {
+            new(ContainerImageReference.FromReferenceString("nginx:1.27.1", DefaultRegistry), "nginx.tag")
+        };
+
+        var result = replacer.UpdateImages(images);
+
+        var expectedYaml = """
+
+                           nginx:
+                             tag: 1.27.1
+                           redis:
+                             tag: 1.0
+
+                           """.ReplaceLineEndings(newLine);
+
+        result.UpdatedContents.Should().Be(expectedYaml);
     }
 
     [TestCase("\n")]
     [TestCase("\r\n")]
-    public void TwoImagesWithSameTag_WithoutATrailingNewline_OnlyUpdatesConfiguredPath(string newLine)
+    public void UpdatedYaml_WithoutATrailingNewline_DoesNotAddOne(string newLine)
     {
-        var yaml = string.Join(newLine, "", "nginx:", "  tag: 1.0", "redis:", "  tag: 1.0");
+        var yaml = """
+
+                   nginx:
+                     tag: 1.0
+                   redis:
+                     tag: 1.0
+                   """.ReplaceLineEndings(newLine);
 
         var replacer = new HelmValuesImageReplaceStepVariables(yaml, DefaultRegistry, log);
         var images = new List<ContainerImageReferenceAndHelmReference>
@@ -157,11 +209,15 @@ image:
 
         var result = replacer.UpdateImages(images);
 
-        using var scope = new AssertionScope();
-        result.UpdatedImageReferences.Should().BeEquivalentTo(["nginx:1.27.1"]);
-        result.UpdatedContents
-              .Should()
-              .Be(string.Join(newLine, "", "nginx:", "  tag: 1.27.1", "redis:", "  tag: 1.0"));
+        var expectedYaml = """
+
+                           nginx:
+                             tag: 1.27.1
+                           redis:
+                             tag: 1.0
+                           """.ReplaceLineEndings(newLine);
+
+        result.UpdatedContents.Should().Be(expectedYaml);
     }
 
     [Test]

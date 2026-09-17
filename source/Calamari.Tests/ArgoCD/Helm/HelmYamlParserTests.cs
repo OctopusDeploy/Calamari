@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Calamari.ArgoCD.Helm;
 using FluentAssertions;
 using NUnit.Framework;
@@ -55,52 +55,92 @@ root:
         [TestCase("\r\n")]
         public void UpdateNodeValue_WithNonDelimitedNodeValue_ReplacesValueInDocument(string newLine)
         {
-            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  node2: stable", "");
+            var yamlContent = """
+
+                              root:
+                                node1: 42
+                                node2: stable
+
+                              """.ReplaceLineEndings(newLine);
 
             var sut = new HelmYamlParser(yamlContent);
 
             var result = sut.UpdateContentForPath("root.node1", "69");
 
-            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 69", "  node2: stable", ""));
+            var expected = """
+
+                           root:
+                             node1: 69
+                             node2: stable
+
+                           """.ReplaceLineEndings(newLine);
+            result.Should().Be(expected);
         }
 
         [TestCase("\n")]
         [TestCase("\r\n")]
         public void UpdateNodeValue_WithDoubleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue(string newLine)
         {
-            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  node2: \"latest\"", "");
+            var yamlContent = """
+
+                              root:
+                                node1: 42
+                                node2: "latest"
+
+                              """.ReplaceLineEndings(newLine);
 
             var sut = new HelmYamlParser(yamlContent);
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
-            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 42", "  node2: \"stable\"", ""));
+            var expected = """
+
+                           root:
+                             node1: 42
+                             node2: "stable"
+
+                           """.ReplaceLineEndings(newLine);
+            result.Should().Be(expected);
         }
 
         [TestCase("\n")]
         [TestCase("\r\n")]
         public void UpdateNodeValue_WithSingleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue(string newLine)
         {
-            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  node2: 'latest'", "");
+            var yamlContent = """
+
+                              root:
+                                node1: 42
+                                node2: 'latest'
+
+                              """.ReplaceLineEndings(newLine);
 
             var sut = new HelmYamlParser(yamlContent);
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
-            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 42", "  node2: 'stable'", ""));
+            var expected = """
+
+                           root:
+                             node1: 42
+                             node2: 'stable'
+
+                           """.ReplaceLineEndings(newLine);
+            result.Should().Be(expected);
         }
 
         [TestCase("\n")]
         [TestCase("\r\n")]
         public void UpdateNodeValue_RespectsTrailingWhitespaceFromInput(string newLine)
         {
-            var yamlContent = string.Join(newLine, "", "root:", "  node1: 42", "  ", "");
+            var yamlContent = "\nroot:\n  node1: 42\n  \n".ReplaceLineEndings(newLine);
 
             var sut = new HelmYamlParser(yamlContent);
 
             var result = sut.UpdateContentForPath("root.node1", "69");
 
-            result.Should().Be(string.Join(newLine, "", "root:", "  node1: 69", "  ", ""));
+            var expected = "\nroot:\n  node1: 69\n  \n".ReplaceLineEndings(newLine);
+            result.Should().Be(expected);
         }
 
         [Test]

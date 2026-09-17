@@ -102,28 +102,30 @@ service:
         [TestCase("\r\n")]
         public void UpdateNodeValue_ReturnsModifiedYaml(string newLine)
         {
-            var yamlContent = string.Join(newLine,
-                                          "root:",
-                                          "  node1: \"node1value\"",
-                                          "  node2:",
-                                          "     node2Nest:",
-                                          "         node2nestedValue: \"banana\"",
-                                          "     node2Child1: \"node2child1value\"",
-                                          "     node2Child2: 42",
-                                          "");
+            var yamlContent = """
+                              root:
+                                node1: "node1value"
+                                node2:
+                                   node2Nest:
+                                       node2nestedValue: "banana"
+                                   node2Child1: "node2child1value"
+                                   node2Child2: 42
+
+                              """.ReplaceLineEndings(newLine);
 
             var result = HelmValuesEditor.UpdateNodeValue(yamlContent, "root.node1", "awesome new value");
 
-            result.Should()
-                  .Be(string.Join(newLine,
-                                  "root:",
-                                  "  node1: \"awesome new value\"",
-                                  "  node2:",
-                                  "     node2Nest:",
-                                  "         node2nestedValue: \"banana\"",
-                                  "     node2Child1: \"node2child1value\"",
-                                  "     node2Child2: 42",
-                                  ""));
+            var expected = """
+                           root:
+                             node1: "awesome new value"
+                             node2:
+                                node2Nest:
+                                    node2nestedValue: "banana"
+                                node2Child1: "node2child1value"
+                                node2Child2: 42
+
+                           """.ReplaceLineEndings(newLine);
+            result.Should().Be(expected);
         }
     }
 }
