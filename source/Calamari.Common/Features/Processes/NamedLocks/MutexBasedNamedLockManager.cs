@@ -4,7 +4,6 @@ using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
-using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Polly;
@@ -42,89 +41,69 @@ namespace Calamari.Common.Features.Processes.NamedLocks
 
         public IDisposable Acquire(string name, string waitMessage)
         {
-            var globalName = $@"Global\{name}";
+            var trackedThread = new TrackedThread($"Mutex owner for '{name}'",
+                tracker =>
+                {
+                    var globalName = $@"Global\{name}";
 
-            var acquired = new ManualResetEventSlim(false);
-            var release = new ManualResetEventSlim(false);
-            Exception? acquisitionFailure = null;
+                    Mutex? mutex = null;
+                    try
+                    {
+                        // Create/acquire the global mutex with some retry, to (hopefully) avoid two instances of
+                        // Calamari racing to create it (e.g. parallel steps on the same machine)
+                        mutex = mutexAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
 
-            // A Mutex can only be waited on and released by the thread that acquired it
-            var owner = new Thread(() =>
-                                    {
-                                        Mutex? mutex = null;
-                                        try
-                                        {
-                                            // Create/acquire the global mutex with some retry, to (hopefully) avoid two instances of
-                                            // Calamari racing to create it (e.g. parallel steps on the same machine)
-                                            mutex = mutexAcquisitionPipeline.Execute(() => new Mutex(false, globalName));
+                        // Assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
+                        // is still accessible to Calamari running under a different account
+                        if (OperatingSystem.IsWindows())
+                            SetFullAccessControlForAllUsers(mutex, globalName);
 
-                                            // Assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
-                                            // is still accessible to Calamari running under a different account
-                                            if (OperatingSystem.IsWindows())
-                                                SetFullAccessControlForAllUsers(mutex, globalName);
+                        try
+                        {
+                            if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
+                            {
+                                log.Verbose(waitMessage);
+                                mutex.WaitOne();
+                            }
+                        }
+                        catch (AbandonedMutexException)
+                        {
+                            // The previous owner died without releasing; the kernel has handed ownership to us
+                            log.Warn($"The lock '{name}' was abandoned by a previous process that exited without releasing it. Continuing, but anything it was protecting may have been left in an inconsistent state.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // We never took the mutex, so there is nothing to release - just
+                        // close the handle rather than leaving it to the finaliser
+                        mutex?.Dispose();
+                        tracker.MarkAsErrored(ex);
+                        return;
+                    }
 
-                                            try
-                                            {
-                                                if (!mutex.WaitOne(initialWaitBeforeShowingLogMessage))
-                                                {
-                                                    log.Verbose(waitMessage);
-                                                    mutex.WaitOne();
-                                                }
-                                            }
-                                            catch (AbandonedMutexException)
-                                            {
-                                                // The previous owner died without releasing; the kernel has handed ownership to us
-                                                log.Warn($"The lock '{name}' was abandoned by a previous process that exited without releasing it. Continuing, but anything it was protecting may have been left in an inconsistent state.");
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            // We never took the mutex, so there is nothing to release - just
-                                            // close the handle rather than leaving it to the finaliser
-                                            mutex?.Dispose();
-                                            acquisitionFailure = ex;
-                                            acquired.Set();
-                                            return;
-                                        }
+                    tracker.HoldUntilDisposed();
 
-                                        acquired.Set();
+                    // An unhandled exception here would terminate the process. Releasing is best effort:
+                    // a failure leaves the mutex abandoned, which the next waiter recovers from.
+                    try
+                    {
+                        try
+                        {
+                            mutex.ReleaseMutex();
+                        }
+                        finally
+                        {
+                            mutex.Dispose();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Verbose($"Failed to release the mutex '{globalName}': {ex.PrettyPrint()}");
+                    }
+                });
 
-                                        release.Wait();
-
-                                        // An unhandled exception here would terminate the process. Releasing is best effort:
-                                        // a failure leaves the mutex abandoned, which the next waiter recovers from.
-                                        try
-                                        {
-                                            try
-                                            {
-                                                mutex.ReleaseMutex();
-                                            }
-                                            finally
-                                            {
-                                                mutex.Dispose();
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            log.Verbose($"Failed to release the mutex '{globalName}': {ex.PrettyPrint()}");
-                                        }
-                                    })
-                         {
-                             IsBackground = true,
-                             Name = $"Mutex owner for '{name}'"
-                         };
-            owner.Start();
-            acquired.Wait();
-
-            var releaser = new Releaser(owner, acquired, release);
-
-            if (acquisitionFailure != null)
-            {
-                releaser.Dispose();
-                ExceptionDispatchInfo.Capture(acquisitionFailure).Throw();
-            }
-
-            return releaser;
+            trackedThread.StartAndBlockUntilLockAcquired();
+            return trackedThread;
         }
 
         [SupportedOSPlatform("windows")]
@@ -146,18 +125,48 @@ namespace Calamari.Common.Features.Processes.NamedLocks
             }
         }
 
-        class Releaser : IDisposable
+        class TrackedThread : IDisposable
         {
+            readonly ManualResetEventSlim acquired = new(false);
+            readonly ManualResetEventSlim release = new(false);
             readonly Thread owner;
-            readonly ManualResetEventSlim acquired;
-            readonly ManualResetEventSlim release;
-            int released;
 
-            public Releaser(Thread owner, ManualResetEventSlim acquired, ManualResetEventSlim release)
+            int released;
+            Exception? error;
+
+            public TrackedThread(string name, Action<TrackedThread> threadStart)
             {
-                this.owner = owner;
-                this.acquired = acquired;
-                this.release = release;
+                owner = new Thread(() => threadStart(this))
+                {
+                    IsBackground = true,
+                    Name = name
+                };
+            }
+
+            public void StartAndBlockUntilLockAcquired()
+            {
+                owner.Start();
+
+                // Wait for the owner thread to signal it has "entered", or errored
+                acquired.Wait();
+
+                if (error != null)
+                {
+                    Dispose();
+                    ExceptionDispatchInfo.Capture(error).Throw();
+                }
+            }
+
+            public void HoldUntilDisposed()
+            {
+                acquired.Set();
+                release.Wait();
+            }
+
+            public void MarkAsErrored(Exception ex)
+            {
+                error = ex;
+                acquired.Set();
             }
 
             public void Dispose()
