@@ -3,6 +3,30 @@
     <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
         <ItemGroup>
             <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
+
+            <!--
+                dotnet-script is a framework-dependent application. The zip we vendor requests
+                Microsoft.NETCore.App 8.0.0 and declares no rollForward of its own, so the default
+                policy is Minor: any 8.x, and nothing higher. On a target that has no 8.x runtime
+                installed it therefore fails to launch before any script runs, with
+                "You must install or update .NET to run this application" (exit 150).
+
+                We overwrite its runtimeconfig.json with a copy carrying a rollForward policy. The
+                host reads this file on every launch path - Linux `dotnet "<path>/dotnet-script.dll"`
+                and Windows `dotnet-script.cmd` (which is just `dotnet exec "%~dp0dotnet-script.dll"`)
+                alike - so it covers both platforms with no change to how Calamari invokes the tool.
+
+                The zip stays byte-for-byte upstream, and the policy stays reviewable as text that
+                cannot be lost silently the next time someone re-vendors the zip.
+
+                Precedence is command line > DOTNET_ROLL_FORWARD > runtimeconfig, so this is a
+                default a step can still override via Octopus.Action.Script.CSharp.RollForward.
+
+                Keep this file in sync when bumping the vendored zip: it is a verbatim copy of the
+                zip's own dotnet-script.runtimeconfig.json plus the rollForward property, and
+                DotnetScriptRuntimeConfigFixture fails if the two drift apart.
+            -->
+            <DotnetScriptRuntimeConfig Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.runtimeconfig.json"/>
         </ItemGroup>
     </Target>
     <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
@@ -10,6 +34,7 @@
             <DotnetScriptFilesExe Include="$(OutputPath)/dotnet-script/*.sh;$(OutputPath)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
+        <Copy SourceFiles="@(DotnetScriptRuntimeConfig)" DestinationFolder="$(OutputPath)/dotnet-script/" OverwriteReadOnlyFiles="true" />
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 
@@ -18,6 +43,7 @@
             <DotnetScriptFilesExe Include="$(PublishDir)/dotnet-script/*.sh;$(PublishDir)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
+        <Copy SourceFiles="@(DotnetScriptRuntimeConfig)" DestinationFolder="$(PublishDir)/dotnet-script/" OverwriteReadOnlyFiles="true" />
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 </Project>
