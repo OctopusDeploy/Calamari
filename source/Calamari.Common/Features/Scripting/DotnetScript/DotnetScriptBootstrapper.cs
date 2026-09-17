@@ -102,10 +102,30 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var source = string.IsNullOrWhiteSpace(nugetSource) ? "https://api.nuget.org/v3/index.json" : nugetSource;
             var commandArguments = new StringBuilder();
             commandArguments.Append($"-s {source} ");
+            // dotnet-script 2.0 turned the isolated assembly load context on by default, which
+            // changes which assembly a script gets when it references a package that dotnet-script
+            // also carries: a script asking for Newtonsoft.Json 9.0.1 used to bind to the 13.0.3
+            // dotnet-script bundles, and under isolation it gets 9.0.1. That is arguably more
+            // correct, but it is a silent change to what customer scripts run against, so hold the
+            // existing behaviour here and treat adopting isolation as its own decision.
+            //
+            // Unless the customer asked for isolation themselves. When both flags are passed,
+            // --disable-isolated-load-context wins, so adding it unconditionally would override
+            // the one group of customers who made a deliberate choice here.
+            if (!HasIsolatedLoadContextFlag(scriptCommandArguments))
+                commandArguments.Append("--disable-isolated-load-context ");
             if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
             commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptArguments, encryptionKey);
             return commandArguments.ToString();
         }
+
+        /// <summary>
+        /// True when the caller already passed --isolated-load-context. Note that
+        /// --disable-isolated-load-context does not match: "--isolated-load-context" is not a
+        /// substring of it, because the character before "isolated" there is a single dash.
+        /// </summary>
+        static bool HasIsolatedLoadContextFlag(string? scriptCommandArguments)
+            => scriptCommandArguments?.IndexOf("--isolated-load-context", StringComparison.OrdinalIgnoreCase) >= 0;
 
         [return: NotNullIfNotNull("scriptParameters")]
         static (string? scriptCommandArguments, string? scriptArguments) RetrieveParameterValues(string? scriptParameters)
