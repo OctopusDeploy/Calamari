@@ -90,7 +90,12 @@ namespace Calamari.Build
         {
             try
             {
+                // SYSLIB0057 points at X509CertificateLoader, but that only loads certificate *files*.
+                // There is no replacement for reading the Authenticode signature embedded in a signed
+                // PE file, so this API is still the only way to do this check.
+#pragma warning disable SYSLIB0057
                 X509Certificate.CreateFromSignedFile(filePath);
+#pragma warning restore SYSLIB0057
                 return true;
             }
             catch

@@ -93,14 +93,14 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         void ResetProxyEnvironmentVariables()
         {
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, string.Empty);
-            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", string.Empty);
-            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", string.Empty);
-            EnvironmentHelper.SetEnvironmentVariable("NO_PROXY", string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, null);
+            EnvironmentHelper.SetEnvironmentVariable("HTTP_PROXY", null);
+            EnvironmentHelper.SetEnvironmentVariable("HTTPS_PROXY", null);
+            EnvironmentHelper.SetEnvironmentVariable("NO_PROXY", null);
         }
 
         protected virtual void AssertAuthenticatedProxyUsed(CalamariResult output)

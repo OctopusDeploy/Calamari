@@ -62,6 +62,14 @@ namespace Calamari.AzureWebApp
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
             try
             {
+                // TODO: this callback appears to be dead code and should be removed or reinstated properly.
+                // NetCoreWebDeploymentExecutor runs Web Deploy in a separate net462 child process (the
+                // NetCoreShim), so a ServicePointManager callback registered here cannot affect the TLS
+                // validation the child performs. That has been true since Web Deploy moved into the shim,
+                // not something .NET 10 changed - but .NET 10's obsoletion message says these settings no
+                // longer affect SslStream or HttpClient, which makes it worth resolving deliberately rather
+                // than deleting as a drive-by in a framework migration.
+#pragma warning disable SYSLIB0014
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
 
@@ -70,6 +78,7 @@ namespace Calamari.AzureWebApp
             finally
             {
                 ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
+#pragma warning restore SYSLIB0014
             }
         }
 
