@@ -34,6 +34,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     {
         const string ProjectSlug = "TheProject";
         const string EnvironmentSlug = "TheEnvironment";
+        const string ActionSlug = "TheAction";
 
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         InMemoryLog log;
@@ -150,6 +151,7 @@ image:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -215,6 +217,7 @@ service:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
 
                 //NOTE: No Packages are defined in the variables
                 // [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
@@ -246,6 +249,7 @@ service:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
@@ -286,6 +290,7 @@ image2:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.IndexedImage("alpine")] = "alpine:2.2",
@@ -368,6 +373,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
@@ -452,6 +458,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
@@ -530,6 +537,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
@@ -603,6 +611,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
@@ -688,6 +697,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
@@ -772,6 +782,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
@@ -802,6 +813,7 @@ image:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -897,6 +909,7 @@ containerPort: 8070
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -969,6 +982,7 @@ containerPort: 8070
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1064,6 +1078,7 @@ containerPort: 8070
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1137,6 +1152,7 @@ service:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1251,6 +1267,7 @@ service:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1371,6 +1388,7 @@ service:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1478,6 +1496,7 @@ service:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1546,6 +1565,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.IndexedImage("alpine")] = "alpine:2.2",
@@ -1597,6 +1617,7 @@ image:
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1690,6 +1711,7 @@ image:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             });
 
             // Act
@@ -1721,6 +1743,7 @@ image:
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.tag",
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             });
 
             // Act
@@ -1745,6 +1768,7 @@ image:
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1832,6 +1856,7 @@ image:
                 // NOTE: no HelmReplacementPath for alpine
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
             };
 
             var runningDeployment = new RunningDeployment(null, variables);
@@ -1860,6 +1885,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             });
@@ -1895,6 +1921,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("nginx")] = imagePackageValue,
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             });
@@ -1923,6 +1950,7 @@ image:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.tag",
@@ -1953,6 +1981,7 @@ redis:
             {
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [ActionVariables.Slug] = ActionSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.HelmReplacementPath("nginx")] = "nginx.tag",
