@@ -1,0 +1,43 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "ReplicaSet",
+      "metadata": {
+        "creationTimestamp": "2023-03-06T06:23:16Z",
+        "generation": 1,
+        "labels": {
+          "app": "nginx"
+        },
+        "name": "nginx-748c667d99",
+        "namespace": "test",
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "name": "nginx",
+            "uid": "42c67fbc-486c-4091-a4df-3827d32b23c7",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "resourceVersion": "1052117",
+        "uid": "8dd1bd54-2c4e-4f1a-9b7f-6e63f0d0a1c2"
+      },
+      "spec": {
+        "replicas": 1
+      },
+      "status": {
+        "availableReplicas": 1,
+        "observedGeneration": 1,
+        "readyReplicas": 1,
+        "replicas": 1
+      }
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": ""
+  }
+}
