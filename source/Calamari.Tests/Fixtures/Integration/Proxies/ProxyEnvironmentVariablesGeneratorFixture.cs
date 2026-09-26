@@ -179,17 +179,17 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         void ResetProxyEnvironmentVariables()
         {
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, string.Empty);
-            Environment.SetEnvironmentVariable("HTTP_PROXY", string.Empty);
-            Environment.SetEnvironmentVariable("http_proxy", string.Empty);
-            Environment.SetEnvironmentVariable("HTTPS_PROXY", string.Empty);
-            Environment.SetEnvironmentVariable("https_proxy", string.Empty);
-            Environment.SetEnvironmentVariable("NO_PROXY", string.Empty);
-            Environment.SetEnvironmentVariable("no_proxy", string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, null);
+            Environment.SetEnvironmentVariable("HTTP_PROXY", null);
+            Environment.SetEnvironmentVariable("http_proxy", null);
+            Environment.SetEnvironmentVariable("HTTPS_PROXY", null);
+            Environment.SetEnvironmentVariable("https_proxy", null);
+            Environment.SetEnvironmentVariable("NO_PROXY", null);
+            Environment.SetEnvironmentVariable("no_proxy", null);
         }
 
         void AssertAuthenticatedProxyUsed(IEnumerable<EnvironmentVariable> result)
