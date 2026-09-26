@@ -59,7 +59,7 @@ namespace Calamari.Terraform.Behaviours
             await Execute(context, environmentVariables);
         }
 
-        static Dictionary<string, string> GetEnvironmentVariableArgs(IVariables variables)
+        internal static Dictionary<string, string> GetEnvironmentVariableArgs(IVariables variables)
         {
             var rawJson = variables.Get(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables);
             if (string.IsNullOrEmpty(rawJson))

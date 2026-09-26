@@ -23,7 +23,13 @@ public partial class Build
 
                            //its assumed each project has a corresponding test project
                            var testProjectNames = projectNames.Select(f => $"{f}.Tests");
-                           var allProjectNames = projectNames.Concat(testProjectNames).ToHashSet();
+
+                           // Calamari.ExternalTools.Tests has no corresponding non-test flavour - it's a standalone
+                           // test project covering tools (Terraform, etc.) that need a real external CLI binary.
+                           // Included here (rather than via the flavour+".Tests" convention above) purely so it
+                           // gets published/zipped for the nightly TestCalamariExternalTools build to consume -
+                           // it is never run as part of this (default) pipeline.
+                           var allProjectNames = projectNames.Concat(testProjectNames).Append("Calamari.ExternalTools.Tests").ToHashSet();
 
                            var calamariProjects = Solution.Projects
                                                           .Where(project => allProjectNames.Contains(project.Name))
