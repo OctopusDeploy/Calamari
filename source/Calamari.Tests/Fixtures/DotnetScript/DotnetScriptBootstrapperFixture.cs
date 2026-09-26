@@ -23,6 +23,23 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         }
 
         [Test]
+        public void FormatCommandArguments_DisablesIsolatedLoadContext_ByDefault()
+        {
+            var result = DotnetScriptBootstrapper.FormatCommandArguments("Bootstrap.csx", null);
+            result.Should().Contain("--disable-isolated-load-context ");
+        }
+
+        [TestCase("--isolated-load-context -- \"Parameter 1\"")]
+        [TestCase("--isolated-load-context -d -- \"Parameter 1\"")]
+        public void FormatCommandArguments_LeavesIsolationOn_WhenTheCallerAskedForIt(string scriptParameters)
+        {
+            // Both flags together resolve to disabled, so we must not add ours on top of theirs.
+            var result = DotnetScriptBootstrapper.FormatCommandArguments("Bootstrap.csx", scriptParameters);
+            result.Should().NotContain("--disable-isolated-load-context");
+            result.Should().Contain("--isolated-load-context ");
+        }
+
+        [Test]
         public void FormatCommandArguments_UsesCustomNuGetSource_WhenProvided()
         {
             var bootstrapFile = "Bootstrap.csx";
