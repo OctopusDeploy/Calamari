@@ -95,13 +95,23 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             throw new CommandException(string.Format("dotnet-script was not found at '{0}'", executable));
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters, string? nugetSource = null)
+        // dotnet-script 2.0 makes the isolated assembly load context the default and renames the
+        // opt-in flag to an opt-out. Isolation is what makes native NuGet assets work (SQLite,
+        // SkiaSharp, Microsoft.Data.SqlClient), but it also means a type loaded via
+        // Assembly.LoadFrom is no longer reference-equal to the same type in the script's own
+        // closure. This flag restores the pre-2.0 behaviour for a step that needs it.
+        // dotnet-script 1.6.0 ignores the flag, so it is safe to pass to a customer's own
+        // locally-installed copy as well.
+        const string DisableIsolatedLoadContextArgument = "--disable-isolated-load-context";
+
+        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters, string? nugetSource = null, bool disableIsolatedLoadContext = false)
         {
             var (scriptCommandArguments, scriptArguments) = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var source = string.IsNullOrWhiteSpace(nugetSource) ? "https://api.nuget.org/v3/index.json" : nugetSource;
             var commandArguments = new StringBuilder();
             commandArguments.Append($"-s {source} ");
+            if (disableIsolatedLoadContext) commandArguments.Append($"{DisableIsolatedLoadContextArgument} ");
             if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
             commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptArguments, encryptionKey);
             return commandArguments.ToString();
