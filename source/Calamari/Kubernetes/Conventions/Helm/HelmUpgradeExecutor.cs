@@ -102,29 +102,48 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
         // Checks for a stuck pending release and recovers by uninstalling or rolling back.
         // Returns the correct newRevisionNumber to use for the upgrade.
-        public int RecoverFromPendingRelease(string releaseName, string status, int expectedRevisionNumber)
+        public int RecoverFromPendingRelease(RunningDeployment deployment, string releaseName, string status, int expectedRevisionNumber)
         {
-            switch (status?.ToLowerInvariant())
+            var normalisedStatus = status?.ToLowerInvariant();
+            var isUninstallRecovery = normalisedStatus == "pending-install" || normalisedStatus == "uninstalling";
+            var isRollbackRecovery = normalisedStatus == "pending-upgrade" || normalisedStatus == "pending-rollback";
+
+            if (!isUninstallRecovery && !isRollbackRecovery)
+                return expectedRevisionNumber;
+
+            if (!deployment.Variables.GetFlag(SpecialVariables.Helm.RecoverPendingRelease, true))
+                throw new CommandException($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment, and automatic recovery is disabled by {SpecialVariables.Helm.RecoverPendingRelease}. "
+                                           + "Recover the release manually (for example with `helm rollback` or `helm uninstall`) before deploying again.");
+
+            if (isUninstallRecovery)
             {
-                case "pending-install":
-                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled first install. Uninstalling to recover...");
-                    var uninstallResult = helmCli.Uninstall(releaseName);
-                    if (uninstallResult.ExitCode != 0)
-                        log.Warn($"Uninstall returned non-zero exit code {uninstallResult.ExitCode}. Continuing with upgrade...");
-                    // Uninstall resets the revision number
-                    return 1;
+                log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled first install or uninstall. Uninstalling to recover...");
+                var uninstallResult = helmCli.Uninstall(releaseName);
+                if (uninstallResult.ExitCode != 0)
+                    throw new CommandException($"Failed to recover release {releaseName} from {status} state: helm uninstall returned non-zero exit code {uninstallResult.ExitCode}.");
 
-                case "pending-upgrade":
-                    log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment. Rolling back to recover...");
-                    var rollbackResult = helmCli.Rollback(releaseName);
-                    if (rollbackResult.ExitCode != 0)
-                        log.Warn($"Rollback returned non-zero exit code {rollbackResult.ExitCode}. Continuing with upgrade...");
-                    // Rollback creates a new revision, so the subsequent upgrade will be one higher than expected.
-                    return expectedRevisionNumber + 1;
-
-                default:
-                    return expectedRevisionNumber;
+                // Uninstall resets the revision number
+                return 1;
             }
+
+            // Helm only marks the previous release superseded once an upgrade or rollback succeeds,
+            // so while stuck pending the last good release is still the one marked deployed.
+            var lastDeployedRevision = helmCli.GetReleaseHistory(releaseName)
+                                              .Where(h => string.Equals(h.Status, "deployed", StringComparison.OrdinalIgnoreCase))
+                                              .Select(h => (int?)h.Revision)
+                                              .Max();
+
+            if (lastDeployedRevision == null)
+                throw new CommandException($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment, but has no deployed revision to roll back to. "
+                                           + "Recover the release manually (for example with `helm rollback <revision>` or `helm uninstall`) before deploying again.");
+
+            log.Warn($"Release {releaseName} is stuck in {status} state, likely from a cancelled deployment. Rolling back to last deployed revision {lastDeployedRevision} to recover...");
+            var rollbackResult = helmCli.Rollback(releaseName, lastDeployedRevision.Value);
+            if (rollbackResult.ExitCode != 0)
+                throw new CommandException($"Failed to recover release {releaseName} from {status} state: helm rollback to revision {lastDeployedRevision} returned non-zero exit code {rollbackResult.ExitCode}.");
+
+            // Rollback creates a new revision, so the subsequent upgrade will be one higher than expected.
+            return expectedRevisionNumber + 1;
         }
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment)
