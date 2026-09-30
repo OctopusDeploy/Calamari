@@ -103,17 +103,21 @@ namespace Calamari.Kubernetes.Integration
             return (metadata.revision, metadata.status);
         }
 
-        public CommandResult Rollback(string releaseName, int? revision = null)
+        public IReadOnlyList<(int Revision, string Status)> GetReleaseHistory(string releaseName)
         {
-            var args = new List<string> { "rollback", releaseName };
+            var result = ExecuteCommandAndReturnOutput("history", releaseName, "-o json", NamespaceArg());
+            result.Result.VerifySuccess();
 
-            if (revision.HasValue)
-                args.Add(revision.Value.ToString());
+            var json = result.Output.MergeInfoLogs();
+            var history = JsonConvert.DeserializeAnonymousType(json, new[] { new { revision = 0, status = string.Empty } });
 
-            args.Add(NamespaceArg());
+            return history?.Select(h => (h.revision, h.status)).ToList() ?? new List<(int, string)>();
+        }
 
-            var result = ExecuteCommandAndLogOutput(args);
-            return result;
+        public CommandResult Rollback(string releaseName, int revision)
+        {
+            var args = new List<string> { "rollback", releaseName, revision.ToString(), NamespaceArg() };
+            return ExecuteCommandAndLogOutput(args);
         }
 
         public CommandResult Uninstall(string releaseName)
