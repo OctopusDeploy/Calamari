@@ -15,7 +15,7 @@ namespace Calamari.GoogleCloudScripting
     {
         private readonly ILog log;
         readonly IVariables variables;
-        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell, ScriptSyntax.Bash};
+        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell, ScriptSyntax.Bash, ScriptSyntax.Python, ScriptSyntax.CSharp};
 
         public GoogleCloudContextScriptWrapper(ILog log, IVariables variables)
         {

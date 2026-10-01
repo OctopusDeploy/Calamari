@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -16,26 +16,26 @@ namespace Calamari.Deployment.PackageRetention.Model
         readonly IRetentionAlgorithm[] retentionAlgorithms;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
-        readonly ISemaphoreFactory semaphoreFactory;
+        readonly INamedLockManager namedLockManager;
 
         public PackageJournal(IJournalRepository journalRepository,
                               ILog log,
                               ICalamariFileSystem fileSystem,
                               IEnumerable<IRetentionAlgorithm> retentionAlgorithms,
-                              ISemaphoreFactory semaphoreFactory)
+                              INamedLockManager namedLockManager)
         {
             this.journalRepository = journalRepository;
             this.log = log;
             this.fileSystem = fileSystem;
             this.retentionAlgorithms = retentionAlgorithms.ToArray();
-            this.semaphoreFactory = semaphoreFactory;
+            this.namedLockManager = namedLockManager;
         }
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, ulong packageSizeBytes)
         {
             try
             {
-                using (AcquireSemaphore())
+                using (AcquireNamedLock())
                 {
                     journalRepository.Load();
                     journalRepository.Cache.IncrementCacheAge();
@@ -66,7 +66,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RemoveAllLocks(ServerTaskId serverTaskId)
         {
-            using (AcquireSemaphore())
+            using (AcquireNamedLock())
             {
                 log.Verbose($"Releasing package locks for task {serverTaskId}");
                 journalRepository.Load();
@@ -79,7 +79,7 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                using (AcquireSemaphore())
+                using (AcquireNamedLock())
                 {
                     journalRepository.Load();
                     var packagesToRemove = retentionAlgorithms.SelectMany(algorithm => algorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries()));
@@ -110,7 +110,7 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                using (AcquireSemaphore())
+                using (AcquireNamedLock())
                 {
                     journalRepository.Load();
                     foreach (var entry in journalRepository.GetAllJournalEntries())
@@ -134,9 +134,9 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        IDisposable AcquireSemaphore()
+        IDisposable AcquireNamedLock()
         {
-            return semaphoreFactory.Acquire(nameof(PackageJournal), "Another process is using the package journal");
+            return namedLockManager.Acquire(nameof(PackageJournal), "Another process is using the package journal");
         }
     }
 }

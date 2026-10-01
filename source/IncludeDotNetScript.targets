@@ -1,0 +1,23 @@
+<Project>
+    <!-- Extract dotnet-script zip files to support C# script execution -->
+    <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
+        <ItemGroup>
+            <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
+        </ItemGroup>
+    </Target>
+    <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+        <ItemGroup>
+            <DotnetScriptFilesExe Include="$(OutputPath)/dotnet-script/*.sh;$(OutputPath)/dotnet-script/*.exe"/>
+        </ItemGroup>
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+    </Target>
+
+    <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+        <ItemGroup>
+            <DotnetScriptFilesExe Include="$(PublishDir)/dotnet-script/*.sh;$(PublishDir)/dotnet-script/*.exe"/>
+        </ItemGroup>
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+    </Target>
+</Project>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -10,18 +11,16 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     /// </summary>
     public class Resource : IResourceIdentity
     {
-        [JsonIgnore] protected JObject data;
-
         [JsonIgnore] public IEnumerable<string> OwnerUids { get; }
 
         [JsonIgnore] public string Uid { get; protected set; }
-        
+
         [JsonIgnore] public ResourceGroupVersionKind GroupVersionKind { get; protected set; }
         [JsonIgnore] public string Name { get; }
         [JsonIgnore] public string Namespace { get; }
 
         [JsonIgnore] public virtual ResourceStatus ResourceStatus { get; set; } = ResourceStatus.Successful;
-        
+
         [JsonIgnore]
         public virtual ResourceGroupVersionKind ChildGroupVersionKind => default;
 
@@ -30,24 +29,25 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         internal Resource() { }
 
+        // json stays a parameter - retaining it pinned the whole parsed document via JToken.Parent
         public Resource(JObject json, Options options)
         {
-            data = json;
-            OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
-            Uid = Field("$.metadata.uid");
-            GroupVersionKind  = json.ToResourceGroupVersionKind();
-            Name = Field("$.metadata.name");
+            // force enumeration to prevent memory growth
+            OwnerUids = json.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>().ToList();
+            Uid = Field(json, "$.metadata.uid");
+            GroupVersionKind = json.ToResourceGroupVersionKind();
+            Name = Field(json, "$.metadata.name");
             //we explicitly want null if there is no namespace
-            Namespace = FieldOrDefault<string>("$.metadata.namespace", null);
+            Namespace = FieldOrDefault<string>(json, "$.metadata.namespace", null);
         }
 
         public virtual bool HasUpdate(Resource lastStatus) => false;
 
         public virtual void UpdateChildren(IEnumerable<Resource> children) => Children = children;
 
-        protected string Field(string jsonPath) => FieldOrDefault(jsonPath, "");
+        protected static string Field(JObject data, string jsonPath) => FieldOrDefault(data, jsonPath, "");
 
-        protected T FieldOrDefault<T>(string jsonPath, T defaultValue)
+        protected static T FieldOrDefault<T>(JObject data, string jsonPath, T defaultValue)
         {
             var result = data.SelectToken(jsonPath);
             if (result == null)

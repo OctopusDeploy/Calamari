@@ -26,6 +26,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -81,6 +82,7 @@ namespace Calamari.Common.Plumbing
         ///     Gets or sets the new line character to use.
         ///     </para>
         /// </devdoc>
+        [AllowNull]
         public override string NewLine
         {
             get => InnerWriter.NewLine;
@@ -151,7 +153,7 @@ namespace Calamari.Common.Plumbing
         ///     to the text stream.
         ///     </para>
         /// </devdoc>
-        public override void Write(string s)
+        public override void Write(string? s)
         {
             OutputTabs();
             InnerWriter.Write(s);
@@ -185,7 +187,7 @@ namespace Calamari.Common.Plumbing
         ///     character array to the text stream.
         ///     </para>
         /// </devdoc>
-        public override void Write(char[] buffer)
+        public override void Write(char[]? buffer)
         {
             OutputTabs();
             InnerWriter.Write(buffer);
@@ -255,7 +257,7 @@ namespace Calamari.Common.Plumbing
         ///     to the text stream.
         ///     </para>
         /// </devdoc>
-        public override void Write(object value)
+        public override void Write(object? value)
         {
             OutputTabs();
             InnerWriter.Write(value);
@@ -266,7 +268,7 @@ namespace Calamari.Common.Plumbing
         ///     Writes out a formatted string, using the same semantics as specified.
         ///     </para>
         /// </devdoc>
-        public override void Write(string format, object arg0)
+        public override void Write(string format, object? arg0)
         {
             OutputTabs();
             InnerWriter.Write(format, arg0);
@@ -278,7 +280,7 @@ namespace Calamari.Common.Plumbing
         ///     using the same semantics as specified.
         ///     </para>
         /// </devdoc>
-        public override void Write(string format, object arg0, object arg1)
+        public override void Write(string format, object? arg0, object? arg1)
         {
             OutputTabs();
             InnerWriter.Write(format, arg0, arg1);
@@ -290,7 +292,7 @@ namespace Calamari.Common.Plumbing
         ///     using the same semantics as specified.
         ///     </para>
         /// </devdoc>
-        public override void Write(string format, params object[] arg)
+        public override void Write(string format, params object?[] arg)
         {
             OutputTabs();
             InnerWriter.Write(format, arg);
@@ -313,7 +315,7 @@ namespace Calamari.Common.Plumbing
         ///     a line terminator to the text stream.
         ///     </para>
         /// </devdoc>
-        public override void WriteLine(string s)
+        public override void WriteLine(string? s)
         {
             OutputTabs();
             InnerWriter.WriteLine(s);
@@ -358,7 +360,7 @@ namespace Calamari.Common.Plumbing
         /// <devdoc>
         ///     <para>[To be supplied.]</para>
         /// </devdoc>
-        public override void WriteLine(char[] buffer)
+        public override void WriteLine(char[]? buffer)
         {
             OutputTabs();
             InnerWriter.WriteLine(buffer);
@@ -418,7 +420,7 @@ namespace Calamari.Common.Plumbing
         /// <devdoc>
         ///     <para>[To be supplied.]</para>
         /// </devdoc>
-        public override void WriteLine(object value)
+        public override void WriteLine(object? value)
         {
             OutputTabs();
             InnerWriter.WriteLine(value);
@@ -428,7 +430,7 @@ namespace Calamari.Common.Plumbing
         /// <devdoc>
         ///     <para>[To be supplied.]</para>
         /// </devdoc>
-        public override void WriteLine(string format, object arg0)
+        public override void WriteLine(string format, object? arg0)
         {
             OutputTabs();
             InnerWriter.WriteLine(format, arg0);
@@ -438,7 +440,7 @@ namespace Calamari.Common.Plumbing
         /// <devdoc>
         ///     <para>[To be supplied.]</para>
         /// </devdoc>
-        public override void WriteLine(string format, object arg0, object arg1)
+        public override void WriteLine(string format, object? arg0, object? arg1)
         {
             OutputTabs();
             InnerWriter.WriteLine(format, arg0, arg1);
@@ -448,7 +450,7 @@ namespace Calamari.Common.Plumbing
         /// <devdoc>
         ///     <para>[To be supplied.]</para>
         /// </devdoc>
-        public override void WriteLine(string format, params object[] arg)
+        public override void WriteLine(string format, params object?[] arg)
         {
             OutputTabs();
             InnerWriter.WriteLine(format, arg);

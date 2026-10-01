@@ -6,8 +6,7 @@
 [Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing --request-timeout=1m
 [Verbose] "kubectl" config use-context octocontext --request-timeout=1m
 [Info] Creating kubectl context to <server> (namespace calamari-testing) using EKS cluster name my-eks-cluster
-[Verbose] Attempting to authenticate with aws-cli
-[Verbose] The EKS cluster Url specified should contain a valid aws region name
+[Verbose] Could not determine AWS region from the EKS cluster URL. The AWS CLI requires a region to authenticate. Falling back to aws-iam-authenticator.
 [Verbose] Attempting to authenticate with aws-iam-authenticator
 [Verbose] "kubectl" config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1beta1 --exec-arg=token --exec-arg=-i --exec-arg=my-eks-cluster --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m

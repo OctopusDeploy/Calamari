@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.IO;
 using Calamari.ArgoCD.Git;
@@ -11,6 +10,8 @@ namespace Calamari.Tests.ArgoCD.Git
     {
         public static Repository CreateBareRepository(string repositoryPath)
         {
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             Directory.CreateDirectory(repositoryPath);
             Repository.Init(repositoryPath, isBare: true);
             return new Repository(repositoryPath);
@@ -20,6 +21,8 @@ namespace Calamari.Tests.ArgoCD.Git
         
         public static void CreateBranchIn(GitBranchName branchName, string originPath)
         {
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             var signature = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
 
             var repository = new Repository(originPath);
@@ -37,33 +40,27 @@ namespace Calamari.Tests.ArgoCD.Git
 
             repository.Refs.UpdateTarget("HEAD", MainBranchName.Value);
 
-            //create our branch
-            repository.CreateBranch(branchName.ToFriendlyName(), emptyCommit);
+            //create our branch (main already exists).
+            if (branchName != GitBranchName.CreateFromFriendlyName("main"))
+            {
+                repository.CreateBranch(branchName.ToFriendlyName(), emptyCommit);
+            }
         }
+
+        public static string ToFileUri(string path) => new Uri(path).AbsoluteUri;
 
         public static string CloneOrigin(string tempDirectory, string originPath, GitBranchName branchName)
         {
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
             var subPath = Guid.NewGuid().ToString();
             var resultPath = Path.Combine(tempDirectory, subPath);
             Repository.Clone(originPath, resultPath);
-            var resultRepo = new Repository(resultPath);
+            
+            using var resultRepo = new Repository(resultPath);
             LibGit2Sharp.Commands.Checkout(resultRepo, branchName.ToFriendlyName());
 
             return resultPath;
         }
-        
-        public static void DeleteRepositoryDirectory(ICalamariFileSystem fileSystem, string path)
-        {
-            //Some files might be ReadOnly, clean up properly by removing the ReadOnly attribute
-            foreach (var file in fileSystem.EnumerateFilesRecursively(path))
-            {
-                fileSystem.RemoveReadOnlyAttributeFromFile(file);
-            }
-
-            fileSystem.DeleteDirectory(path, FailureOptions.IgnoreFailure);
-        }
     }
-    
-    
 }
-#endif

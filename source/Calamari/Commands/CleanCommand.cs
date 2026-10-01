@@ -1,7 +1,7 @@
 ﻿using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment.Journal;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -42,7 +42,7 @@ namespace Calamari.Commands
             if (days <=0 && releases <= 0)
                 throw new CommandException("A value must be provided for either --days or --releases");
 
-            var deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables, log);
+            var deploymentJournal = new DeploymentJournal(fileSystem, new MutexBasedNamedLockManager(), variables, log);
             var clock = new SystemClock();
 
             var retentionPolicy = new RetentionPolicy(fileSystem, deploymentJournal, clock, log);

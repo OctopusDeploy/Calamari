@@ -44,6 +44,20 @@ namespace Calamari.Tests.Fixtures.Util
             Assert.AreEqual(expected, source.AsRelativePathFrom(baseDirectory));
         }
 
+        [TestCase("a\n", true)]
+        [TestCase("a\r\n", true)]
+        [TestCase("a\r", true)]
+        [TestCase("a\n\n", true)]
+        [TestCase("a", false)]
+        [TestCase("a  ", false)]
+        [TestCase("", false)]
+        [TestCase(null, false)]
+        [Test]
+        public void HasTrailingNewLine_DetectsATrailingLineBreak(string input, bool expected)
+        {
+            input.HasTrailingNewLine().Should().Be(expected);
+        }
+
         [TestCase("to_camel_case_function", "toCamelCaseFunction")]
         [TestCase("My S3 Bucket", "myS3Bucket")]
         [TestCase("-only-$AlphaNUMERIC-characters%^",  "onlyAlphanumericCharacters")]

@@ -24,15 +24,11 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         readonly Action<string> log;
 
-#if NETCORE
         readonly IHttpClientFactory httpClientFactory;
-#endif
         public InstallTools(Action<string> log)
         {
             this.log = log;
-#if NETCORE
             httpClientFactory = new TestHttpClientFactory();
-#endif
         }
 
         public string TerraformExecutable { get; private set; }
@@ -118,7 +114,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
                                                                async () =>
                                                                {
-                                                                   string requiredVersion = "v0.5.9";
+                                                                   string requiredVersion = "v0.7.10";
                                                                    client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
                                                                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", await ExternalVariables.Get(ExternalVariable.GitHubRateLimitingPersonalAccessToken, CancellationToken.None));
                                                                    var json = await client.GetAsync(
@@ -475,9 +471,9 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 await Download(zipPath, client, downloadUrl);
                 using (Stream stream = File.OpenRead(zipPath))
-                using (var reader = ReaderFactory.Open(stream))
+                using (var reader = ReaderFactory.OpenReader(stream))
                 {
-                    reader.WriteAllToDirectory(destination, new ExtractionOptions { ExtractFullPath = true, Overwrite = true, WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported });
+                    reader.WriteAllToDirectory(destination, new ExtractionOptions { ExtractFullPath = true, Overwrite = true, SymbolicLinkHandler = WarnThatSymbolicLinksAreNotSupported });
                 }
             }
         }
@@ -585,13 +581,8 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             //we are _totally_ Chrome :joy:
             const string userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
-#if NETCORE
             var httpClient = httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
-#else
-            var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
-#endif
             return httpClient;
         }
     }

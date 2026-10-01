@@ -10,8 +10,10 @@ namespace Calamari.Serialization
 {
     public abstract class InheritedClassConverter<TBaseResource, TEnumType> : JsonConverter
     {
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+
             writer.WriteStartObject();
             var contractResolver = serializer.ContractResolver;
 
@@ -39,7 +41,7 @@ namespace Calamari.Serialization
         }
 
 
-        public override object? ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;

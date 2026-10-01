@@ -1,14 +1,14 @@
-#if NET
 using System;
 using System.IO;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using System.Linq;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.GitHub;
+using System.Threading;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Integration.Time;
 using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Git
@@ -23,18 +23,33 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory)
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
+                                 IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
+            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
+            this.clock = clock;
+
+            LibGit2SharpTransportRegistration.EnsureRegistered();
+
+            // Calamari runs as a single-purpose process per deployment step and always receives
+            // explicit credentials. Clear the search paths for all global config levels so libgit2
+            // cannot load ~/.gitconfig or /etc/gitconfig and pick up a credential helper (e.g.
+            // osxkeychain) that would silently override or bypass the credentials we provide.
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Global, []);
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.System, []);
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Xdg, []);
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
         {
+            WindowsSshKeys.AssertSupported(gitConnection);
+
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
             fileSystem.CreateDirectory(repositoryPath);
 
@@ -49,17 +64,12 @@ namespace Calamari.ArgoCD.Git
                 ? new CloneOptions()
                 : new CloneOptions
                 {
+                    //note: when cloning, libgit2sharp prepends "refs/remotes/origin/" to this value (so _must_ be a branch to succeed).
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
-            if (gitConnection.Username != null && gitConnection.Password != null)
-            {
-                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
-                {
-                    Username = gitConnection.Username!,
-                    Password = gitConnection.Password!
-                };
-            }
+            options.FetchOptions.CredentialsProvider = gitConnection.ToLibGit2SharpCredentialHandler();
+            options.FetchOptions.CertificateCheck = gitConnection.ToLibGit2SharpCertificateCheckHandler(log);
 
             string repoPath;
             log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
@@ -67,41 +77,59 @@ namespace Calamari.ArgoCD.Git
             {
                 try
                 {
-                    repoPath = Repository.Clone(gitConnection.Url.AbsoluteUri, checkoutPath, options);
+                    repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
                     timedOp.Complete();
                 }
                 catch (Exception e)
                 {
                     timedOp.Abandon(e);
-                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository?");
+                    log.Error("Cloning repository failed");
+                    log.Verbose(e.PrettyPrint());
+                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?", e);
                 }
             }
 
             var repo = new Repository(repoPath);
 
+            try
+            {
             //this is required to handle the issue around "HEAD"
             var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
             var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
-            
+
             log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
-            
+
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
             if (repo.Branches[branchToCheckout.Value] == null)
             {
                 repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
             }
-            
+
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
-            
-            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
+            }
+            catch (LibGit2SharpException e)
+            {
+                throw new CommandException($"Failed to checkout branch '{gitConnection.GitReference}' in repository at {gitConnection.Url}. Error: {e.Message}", e);
+            }
+
+            //TODO(tmm): Make this function (and all callers async).
+            var gitVendorApiAdapter = gitConnection is HttpsGitConnection httpsGitConnection
+                ? gitVendorPullRequestClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
+                : null;
+
+            if (gitConnection is SshKeyGitConnection)
+            {
+                log.Verbose("Git is using SSH authentication, Git vendor functionality such as PR creation will not be available");
+            }
+
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,
                                          log,
                                          gitConnection,
-                                         gitVendorApiAdapter);
+                                         gitVendorApiAdapter,
+                                         clock);
         }
     }
 }
-#endif

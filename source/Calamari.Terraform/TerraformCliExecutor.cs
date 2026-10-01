@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
@@ -11,6 +12,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
+using Calamari.Common.Plumbing.Retry;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Terraform.Helpers;
 using Newtonsoft.Json;
@@ -210,14 +212,34 @@ namespace Calamari.Terraform
         {
             var initParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
-            string initCommand = $"init -no-color";
 
+            var initCommand = "init";
             if (Version?.IsLessThan("0.15.0") == true)
                 initCommand += $" -get-plugins={allowPluginDownloads.ToString().ToLower()}";
-
             initCommand += $" {initParams}";
 
-            ExecuteCommandAndVerifySuccess(new[] { initCommand }, out _, true);
+            var retry = new RetryTracker(maxRetries: 3, timeLimit: null, new LimitedExponentialRetryInterval(2000, 30000, 2));
+            while (retry.Try())
+            {
+                var commandResult = ExecuteCommandInternal(new[] { initCommand }, out _, true);
+                if (commandResult.ExitCode == 0)
+                    return;
+
+                if (IsTransientInitError(commandResult.Errors) && retry.CanRetry())
+                {
+                    log.Warn($"Terraform init failed with a transient error (attempt {retry.CurrentTry} of 4). Retrying after backoff...");
+                    Thread.Sleep(retry.Sleep());
+                    continue;
+                }
+
+                VerifySuccess(commandResult);
+            }
+        }
+
+        internal static bool IsTransientInitError(string errors)
+        {
+            if (string.IsNullOrEmpty(errors)) return false;
+            return Regex.IsMatch(errors, @"50[23] (Bad Gateway|Service Unavailable)", RegexOptions.IgnoreCase);
         }
 
         class TerraformVersionCommandOutput

@@ -25,12 +25,14 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             { SupportedResourceGroupVersionKinds.PersistentVolumeV1, (d, o) => new PersistentVolume(d, o) }
         };
 
+        public static bool IsVerifiable(ResourceGroupVersionKind gvk) => resourceFactories.ContainsKey(gvk);
+
         public static Resource FromJson(string json, Options options) => FromJObject(JObject.Parse(json), options);
 
         public static IEnumerable<Resource> FromListJson(string json, Options options)
         {
             var listResponse = JObject.Parse(json);
-            return listResponse.SelectTokens("$.items[*]").Select(item => FromJObject((JObject)item, options));
+            return listResponse.SelectTokens("$.items[*]").Select(item => FromJObject((JObject)item, options)).ToList();
         }
 
         public static Resource FromJObject(JObject data, Options options)

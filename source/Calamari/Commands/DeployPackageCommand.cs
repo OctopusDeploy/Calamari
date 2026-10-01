@@ -11,7 +11,7 @@ using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
@@ -91,15 +91,18 @@ namespace Calamari.Commands
             var embeddedResources = new AssemblyEmbeddedResources();
 
             var iis = new InternetInformationServer();
-            featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore, log), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
 
-            if (!CalamariEnvironment.IsRunningOnWindows)
+            if (OperatingSystem.IsWindows())
+            {
+                featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore, log), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
+            }
+            else
             {
                 featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem, log));
             }
 
-            var semaphore = new SystemSemaphoreManager();
-            var journal = new DeploymentJournal(fileSystem, semaphore, variables, log);
+            var namedLockManager = new MutexBasedNamedLockManager();
+            var journal = new DeploymentJournal(fileSystem, namedLockManager, variables, log);
 
             var conventions = new List<IConvention>
             {

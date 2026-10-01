@@ -5,8 +5,7 @@
         <AssemblyName>Calamari.Terraform.Tests</AssemblyName>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
-        <LangVersion>9</LangVersion>
-        <TargetFrameworks>net462;net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
         <NoWarn>CS8632</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -17,9 +16,7 @@
         <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
-        <PackageReference Include="NSubstitute" Version="4.2.2" />
-        <PackageReference Include="Shouldly" Version="2.8.2" />
-        <PackageReference Include="Octopus.Dependencies.TerraformCLI" Version="1.0.10" />
+        <PackageReference Include="NSubstitute" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>

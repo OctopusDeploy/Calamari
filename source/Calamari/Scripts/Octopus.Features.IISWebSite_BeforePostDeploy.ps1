@@ -517,7 +517,7 @@ $DeployIISScriptBlock = {
 			$hostname = $_.host
 			Execute-WithRetry { 
 		
-				#If we are supporting SNI then we need to bind cert to hostname instead of ip
+				# if we are supporting SNI then we need to bind cert to hostname instead of ip
 				if($_.sslFlags -eq 1){
 			
 					$existing = & netsh http show sslcert hostnameport="$($hostname):$port"

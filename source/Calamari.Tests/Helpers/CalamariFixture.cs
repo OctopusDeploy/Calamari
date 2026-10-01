@@ -31,17 +31,13 @@ namespace Calamari.Tests.Helpers
 
         protected CommandLine Calamari()
         {
-#if NETFX
-            var calamariFullPath = typeof(DeployPackageCommand).Assembly.FullLocalPath();
-            return new CommandLine(calamariFullPath);
-#else
             var folder = Path.GetDirectoryName(typeof(Program).Assembly.FullLocalPath());
             var calamariFullPath = Path.Combine(folder, "Calamari.Tests.dll");
 
             if (!File.Exists(calamariFullPath))
                 throw new Exception($"Could not find Calamari test wrapper at {calamariFullPath}");
+            
             return new CommandLine(calamariFullPath).UseDotnet().OutputToLog(false);
-#endif
         }
 
         protected CommandLine OctoDiff()

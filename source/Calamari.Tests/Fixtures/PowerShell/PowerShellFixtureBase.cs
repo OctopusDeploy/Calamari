@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Common.Features.Processes;
@@ -25,7 +26,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
         Core
     }
 
-#pragma warning disable CA1416 // API not supported on all platforms
     public abstract class PowerShellFixtureBase : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
@@ -133,6 +133,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [SupportedOSPlatform("Windows")]
         public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
             if (IsRunningOnUnixLikeEnvironment)
@@ -379,6 +380,33 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
             Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
+        public void ShouldWriteServiceMessageForEnvironmentState()
+        {
+            var (output, _) = RunPowerShellScript("CanSetEnvironmentState.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[set-environmentstate key='TXlLZXk=' value='TXlWYWx1ZQ==' type='U3RhdGU=']");
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
+        public void ShouldWriteServiceMessageForSensitiveEnvironmentState()
+        {
+            var (output, _) = RunPowerShellScript("CanSetEnvironmentState.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[set-environmentstate key='U2VjcmV0S2V5' value='U2VjcmV0IFZhbHVl' sensitive='VHJ1ZQ==' type='U3RhdGU=']");
+            AssertPowerShellEdition(output);
+        }
+
+        [Test]
+        public void ShouldWriteServiceMessageForEnvironmentUrl()
+        {
+            var (output, _) = RunPowerShellScript("CanSetEnvironmentUrl.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[set-environmentstate key='TXlFbnZpcm9ubWVudA==' value='aHR0cHM6Ly9teS1lbnZpcm9ubWVudC5leGFtcGxlLmNvbQ==' type='VXJs']");
             AssertPowerShellEdition(output);
         }
 
@@ -707,5 +735,4 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
     }
-#pragma warning restore CA1416 // API not supported on all platforms
 }

@@ -4,12 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Certificates.WindowsNative;
 using Org.BouncyCastle.Pkcs;
@@ -19,11 +20,12 @@ using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native
 
 namespace Calamari.Integration.Certificates
 {
+    [SupportedOSPlatform("windows")]
     public class WindowsX509CertificateStore : IWindowsX509CertificateStore
     {
         readonly ILog log;
-        public static readonly ISemaphoreFactory Semaphores = new SystemSemaphoreManager();
-        public static readonly string SemaphoreName = nameof(WindowsX509CertificateStore);
+        public static readonly INamedLockManager NamedLocks = new MutexBasedNamedLockManager();
+        public static readonly string NamedLockName = nameof(WindowsX509CertificateStore);
 
         const string IntermediateAuthorityStoreName = "CA";
         public static readonly string RootAuthorityStoreName = "Root";
@@ -39,9 +41,9 @@ namespace Calamari.Integration.Certificates
             
         }
         
-        private static IDisposable AcquireSemaphore()
+        private static IDisposable AcquireNamedLock()
         {
-            return Semaphores.Acquire(SemaphoreName, "Another process is working with the certificate store, please wait...");
+            return NamedLocks.Acquire(NamedLockName, "Another process is working with the certificate store, please wait...");
         }
 
         public string? FindCertificateStore(string thumbprint, StoreLocation storeLocation)
@@ -65,7 +67,7 @@ namespace Calamari.Integration.Certificates
         
         public void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation, string storeName, bool privateKeyExportable)
         {
-            using (AcquireSemaphore())
+            using (AcquireNamedLock())
             {
                 CertificateSystemStoreLocation systemStoreLocation;
                 bool useUserKeyStore;
@@ -94,7 +96,7 @@ namespace Calamari.Integration.Certificates
         /// </summary>
         public void ImportCertificateToStore(byte[] pfxBytes, string password, string userName, string storeName, bool privateKeyExportable)
         {
-            using (AcquireSemaphore())
+            using (AcquireNamedLock())
             {
                 var account = new NTAccount(userName);
                 var sid = (SecurityIdentifier) account.Translate(typeof(SecurityIdentifier));
@@ -123,7 +125,7 @@ namespace Calamari.Integration.Certificates
         public void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName,
             ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
-            using (AcquireSemaphore())
+            using (AcquireNamedLock())
             {
                 var store = new X509Store(storeName, storeLocation);
                 store.Open(OpenFlags.ReadWrite);
@@ -150,7 +152,7 @@ namespace Calamari.Integration.Certificates
         /// </summary>
         public void RemoveCertificateFromStore(string thumbprint, StoreLocation storeLocation, string storeName)
         {
-            using (AcquireSemaphore())
+            using (AcquireNamedLock())
             {
                 var store = new X509Store(storeName, storeLocation);
                 store.Open(OpenFlags.ReadWrite);

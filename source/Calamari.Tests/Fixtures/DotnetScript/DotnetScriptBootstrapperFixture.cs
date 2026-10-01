@@ -21,5 +21,15 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             var formattedCommandArgument = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, scriptParameters);
             formattedCommandArgument.Should().Contain($"{commandArguments}\"{bootstrapFile}\" -- {scriptArguments}");
         }
+
+        [Test]
+        public void FormatCommandArguments_UsesCustomNuGetSource_WhenProvided()
+        {
+            var bootstrapFile = "Bootstrap.csx";
+            var customSource = "https://my.internal.nuget/v3/index.json";
+            var result = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, null, customSource);
+            result.Should().Contain($"-s {customSource} ");
+            result.Should().NotContain("api.nuget.org");
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Octopus.CoreUtilities;
@@ -68,8 +68,8 @@ namespace Calamari.Kubernetes.Authentication
         /// </remarks>
         void WarnCustomersAboutAuthToolingRequirements()
         {
-            var kubeCtlVersion = kubectlCli.GetVersion();
-            if (kubeCtlVersion.None() || kubeCtlVersion.Value < new SemanticVersion("1.26.0"))
+            var versionOutput = kubectlCli.GetVersion();
+            if (versionOutput == null || versionOutput.KubectlVersion < new SemanticVersion("1.26.0"))
                 return;
 
             if (!authPluginCli.ExistsOnPath())

@@ -98,14 +98,13 @@ namespace Calamari.Common.Plumbing.Extensions
 
         Aes GetCryptoProvider(byte[]? iv = null)
         {
-            var provider = new AesCryptoServiceProvider
-            {
-                Mode = CipherMode.CBC,
-                Padding = PaddingMode.PKCS7,
-                KeySize = keySizeBits,
-                BlockSize = BlockSizeBits,
-                Key = EncryptionKey
-            };
+            var provider = Aes.Create();
+            provider.Mode = CipherMode.CBC;
+            provider.Padding = PaddingMode.PKCS7;
+            provider.KeySize = keySizeBits;
+            provider.BlockSize = BlockSizeBits;
+            provider.Key = EncryptionKey;
+            
             if (iv != null)
                 provider.IV = iv;
             
@@ -135,7 +134,7 @@ namespace Calamari.Common.Plumbing.Extensions
 
         static byte[] GetEncryptionKey(string encryptionPassword, int keySizeBits)
         {
-            var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations);
+            var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations, HashAlgorithmName.SHA1);
             return passwordGenerator.GetBytes(keySizeBits / 8);
         }
 

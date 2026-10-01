@@ -5,16 +5,16 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net8.0</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
 
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.44.1"/>
-    <PackageReference Include="Azure.ResourceManager" Version="1.12.0"/>
+    <PackageReference Include="Azure.ResourceManager" Version="1.13.0"/>
     <PackageReference Include="Azure.ResourceManager.AppService" Version="1.2.0"/>
     <PackageReference Include="Azure.ResourceManager.DeploymentManager" Version="1.0.0-beta.3"/>
     <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2"/>
@@ -26,11 +26,7 @@
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(IsWindowsNetCoreBuild)' == 'true'">
+  <ItemGroup>
     <Content Include="netcoreshim/*.*">
       <LinkBase>netcoreshim</LinkBase>
       <Pack>true</Pack>
@@ -56,28 +52,15 @@
 
   <Target Name="GetNetCoreShimFiles">
     <ItemGroup>
-      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(IsWindowsNetCoreBuild)' == 'true'"/>
+      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip"/>
     </ItemGroup>
   </Target>
-  <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" >
-    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutputPath)/netcoreshim" />
+  <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" />
   </Target>
-  <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" >
+  <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" />
   </Target>
 
-  <!-- Extract dotnet-script zip files to support C# script execution -->
-  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
-  <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
-    <ItemGroup>
-      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
-    </ItemGroup>
-  </Target>
-<Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
-</Target>
-
-<Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
-</Target>
+  <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>
 </Project>

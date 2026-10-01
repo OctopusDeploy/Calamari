@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net.Http;
 
-#if NETSTANDARD || NETCORE
 namespace Calamari.Testing;
 
 public sealed class TestHttpClientFactory : IHttpClientFactory, IDisposable
@@ -18,5 +17,3 @@ public sealed class TestHttpClientFactory : IHttpClientFactory, IDisposable
         }
     }
 }
-
-#endif

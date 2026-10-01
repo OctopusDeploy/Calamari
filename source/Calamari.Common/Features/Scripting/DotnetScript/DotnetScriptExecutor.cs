@@ -12,12 +12,10 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
     public class DotnetScriptExecutor : ScriptExecutor
     {
         readonly ICommandLineRunner commandLineRunner;
-        readonly DotnetScriptCompilationWarningOutputSink outputSink;
 
-        public DotnetScriptExecutor(ICommandLineRunner commandLineRunner, ILog log, DotnetScriptCompilationWarningOutputSink outputSink): base(log)
+        public DotnetScriptExecutor(ICommandLineRunner commandLineRunner, ILog log): base(log)
         {
             this.commandLineRunner = commandLineRunner;
-            this.outputSink = outputSink;
         }
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
@@ -34,7 +32,8 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
-            var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
+            var nugetSource = variables.Get("Octopus.Action.Script.CSharp.NuGetSource");
+            var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters, nugetSource);
             bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.BypassIsolation", "false"), out var bypassDotnetScriptIsolation);
 
             var cli = CreateCommandLineInvocation(executable, arguments, !string.IsNullOrWhiteSpace(localDotnetScriptPath));
@@ -42,8 +41,6 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             cli.WorkingDirectory = workingDirectory;
             cli.Isolate = !bypassDotnetScriptIsolation;
             cli.UseUTF8 = true; /* TODO Make UTF-8 encoding an opt-out setting */
-
-            cli.AdditionalInvocationOutputSink = outputSink;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }

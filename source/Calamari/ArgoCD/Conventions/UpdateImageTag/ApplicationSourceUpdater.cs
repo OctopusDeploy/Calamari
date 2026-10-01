@@ -1,0 +1,115 @@
+using System;
+using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Models;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Octopus.Calamari.Contracts.ArgoCD;
+
+namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
+
+public class ApplicationSourceUpdater
+{
+    readonly Application applicationFromYaml;
+    readonly ArgoCDGatewayDto gateway;
+    readonly RepositoryAdapter repositoryAdapter;
+    readonly DeploymentScope deploymentScope;
+    readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
+    readonly ILog log;
+    readonly string defaultRegistry;
+    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
+    readonly ICalamariFileSystem fileSystem;
+
+    public ApplicationSourceUpdater(Application applicationFromYaml,
+                                    RepositoryAdapter repositoryAdapter,
+                                    DeploymentScope deploymentScope,
+                                    UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                    ILog log,
+                                    ArgoCDGatewayDto gateway,
+                                    string defaultRegistry,
+                                    ArgoCDOutputVariablesWriter outputVariablesWriter,
+                                    ICalamariFileSystem fileSystem)
+    {
+        this.applicationFromYaml = applicationFromYaml;
+        this.repositoryAdapter = repositoryAdapter;
+        this.deploymentScope = deploymentScope;
+        this.deploymentConfig = deploymentConfig;
+        this.log = log;
+        this.gateway = gateway;
+        this.defaultRegistry = defaultRegistry;
+        this.outputVariablesWriter = outputVariablesWriter;
+        this.fileSystem = fileSystem;
+    }
+
+    public bool IsAppInScope(ApplicationSourceWithMetadata sourceWithMetadata)
+    {
+        var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
+
+        var applicationSource = sourceWithMetadata.Source;
+        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+
+        log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+        return deploymentScope.Matches(annotatedScope);
+    }
+
+    public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
+    {
+        var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
+
+        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+
+        outputVariablesWriter.WriteSourceUpdateResultOutputWhenPushResultExists(gateway.Name,
+            NamespacedApplicationName.Create(applicationFromYaml.Metadata.Name, applicationFromYaml.Metadata.Namespace),
+                                                            sourceWithMetadata.Index,
+                                                            sourceUpdateResult);
+
+        return sourceUpdateResult;
+    }
+
+    ISourceUpdater CreateSpecificUpdater(ApplicationSourceWithMetadata sourceWithMetadata)
+    {
+        ISourceUpdater sourceUpdater;
+        // A ref source resolves $ref-prefixed value files regardless of the SourceType ArgoCD reports (it reports Helm when the ref's path contains a Chart.yaml).
+        if (sourceWithMetadata.Source.Ref != null)
+        {
+            sourceUpdater = new RefUpdater(applicationFromYaml,
+                                           deploymentConfig,
+                                           defaultRegistry,
+                                           log,
+                                           fileSystem);
+        }
+        else if (sourceWithMetadata.SourceType == SourceType.Directory)
+        {
+            sourceUpdater = new DirectoryUpdater(deploymentConfig.ImageReferences,
+                                                 defaultRegistry,
+                                                 log,
+                                                 fileSystem);
+        }
+        else if (sourceWithMetadata.SourceType == SourceType.Helm)
+        {
+            sourceUpdater = new HelmUpdater(applicationFromYaml,
+                                            deploymentConfig,
+                                            defaultRegistry,
+                                            log,
+                                            fileSystem);
+        }
+        else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
+        {
+            sourceUpdater = new KustomizeUpdater(deploymentConfig,
+                                                 defaultRegistry,
+                                                 log,
+                                                 fileSystem);
+        }
+        else if (sourceWithMetadata.SourceType == SourceType.Plugin)
+        {
+            log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
+            sourceUpdater = new NoOpSourceUpdater();
+        }
+        else
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return sourceUpdater;
+    }
+}

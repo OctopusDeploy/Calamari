@@ -9,14 +9,6 @@ namespace Calamari.AzureServiceFabric
         public static bool IsServiceFabricSdkInstalled()
         {
             var isInstalled = false;
-#if NETFRAMEWORK
-            using (var rootKey =  Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64))
-            using (var subKey = rootKey.OpenSubKey(@"SOFTWARE\Microsoft\Service Fabric SDK", false))
-            {
-                if (subKey != null)
-                    isInstalled = true;
-            }
-#else
             var programFiles = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
             var sdkFolderPath = System.IO.Path.Combine("Microsoft SDKs", "Service Fabric");
 
@@ -41,8 +33,6 @@ namespace Calamari.AzureServiceFabric
                 //check to see if the directory exists again in the new program files
                 isInstalled = System.IO.Directory.Exists(System.IO.Path.Combine(programFiles, sdkFolderPath));
             }
-
-#endif
             return isInstalled;
         }
         

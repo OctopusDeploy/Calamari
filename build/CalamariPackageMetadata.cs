@@ -2,19 +2,9 @@ using Nuke.Common.ProjectModel;
 
 namespace Calamari.Build;
 
-public class CalamariPackageMetadata
+public class CalamariPackageMetadata(Project project, string framework, string architecture)
 {
-    public CalamariPackageMetadata(Project project, string framework, string? architecture, bool isCrossPlatform)
-    {
-        Project = project;
-        Framework = framework;
-        Architecture = architecture;
-        IsCrossPlatform = isCrossPlatform;
-    }
-
-    public Project Project { get; }
-    public string Framework { get; }
-    public string? Architecture { get; }
-    public bool IsCrossPlatform { get; }
-    
+    public Project Project { get; } = project;
+    public string Framework { get; } = framework;
+    public string Architecture { get; } = architecture;
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.PackageRetention.Caching;
@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                              Substitute.For<ILog>(),
                                              new TestCalamariPhysicalFileSystem(),
                                              Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
-                                             new SystemSemaphoreManager());
+                                             new MutexBasedNamedLockManager());
             var serverTask = new ServerTaskId("ServerTasks-1");
             for (var i = 0; i < 50000; i++)
             {

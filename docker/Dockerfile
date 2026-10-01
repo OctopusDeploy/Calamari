@@ -1,0 +1,7 @@
+FROM scratch
+
+ARG TARGETOS
+ARG TARGETARCH
+ARG FLAVOUR
+
+COPY "outputs/${FLAVOUR}/${TARGETOS}-${TARGETARCH}" docker/Success.txt "/${FLAVOUR}"/

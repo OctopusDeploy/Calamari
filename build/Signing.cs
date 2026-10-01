@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Nuke.Common.Tools.AzureSignTool;
 using Nuke.Common.Tools.SignTool;
 using Nuke.Common.Utilities.Collections;
-using Serilog;
 
 namespace Calamari.Build
 {
@@ -38,7 +35,9 @@ namespace Calamari.Build
                                                                         "Calamari*.exe",
                                                                         "Calamari*.dll",
                                                                         "Octo*.exe",
-                                                                        "Octo*.dll")
+                                                                        "Octo*.dll",
+                                                                        "docker-credential-octopus*.exe",
+                                                                        "docker-credential-octopus*.dll")
                                                   .Where(f => !HasAuthenticodeSignature(f))
                                                   .ToArray();
 

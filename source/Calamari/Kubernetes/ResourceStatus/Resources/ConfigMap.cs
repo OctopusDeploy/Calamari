@@ -9,7 +9,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         
         public ConfigMap(JObject json, Options options) : base(json, options)
         {
-            Data = (data.SelectToken("$.data")
+            Data = (json.SelectToken("$.data")
                 ?.ToObject<Dictionary<string, string>>() ?? new Dictionary<string, string>())
                 .Count;
         }

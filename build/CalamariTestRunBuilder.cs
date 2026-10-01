@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Nuke.Common.CI.TeamCity;
-using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.DotNet;
 
 namespace Calamari.Build;
 
@@ -44,7 +39,7 @@ public class CalamariTestRunBuilder(string projectFile, AbsolutePath outputDirec
                                                              _ => throw new ProcessException(process)
                                                          })
                        .AddLoggers("console;verbose=normal")
-                       .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(OutputDirectory));
+                       .When(_ => runningInTeamCity, x => x.EnableTeamCityTestLogger(OutputDirectory));
 
         var runSettingsFilePath = TryBuildExcludedTestsSettingsFile(Filter);
         if (runSettingsFilePath is not null)

@@ -1,12 +1,7 @@
-﻿namespace Calamari.Aws.Integration.CloudFormation.Templates
-{
-    public class StackFormationNamedOutput
-    {
-        public string Name { get; }
+﻿namespace Calamari.Aws.Integration.CloudFormation.Templates;
 
-        public StackFormationNamedOutput(string name)
-        {
-            Name = name;
-        }
-    }
+// Can we delete this?
+public class StackFormationNamedOutput(string name)
+{
+    public string Name { get; } = name;
 }

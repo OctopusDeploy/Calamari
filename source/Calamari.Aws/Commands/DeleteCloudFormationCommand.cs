@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Deployment.Conventions;
-using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
@@ -15,7 +13,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 
 namespace Calamari.Aws.Commands
 {
@@ -24,8 +21,8 @@ namespace Calamari.Aws.Commands
     {
         readonly ILog log;
         readonly IVariables variables;
-        private string packageFile;
-        private bool waitForComplete;
+        string packageFile;
+        bool waitForComplete;
         
         public DeleteCloudFormationCommand(ILog log, IVariables variables)
         {
@@ -42,11 +39,7 @@ namespace Calamari.Aws.Commands
 
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();;
             var stackEventLogger = new StackEventLogger(log);
-         
-            
-            IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
-            StackArn StackProvider (RunningDeployment x) => new StackArn( x.Variables.Get(AwsSpecialVariables.CloudFormation.StackName));
-            
+
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
@@ -58,6 +51,9 @@ namespace Calamari.Aws.Commands
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
             return 0;
+
+            IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
+            StackArn StackProvider (RunningDeployment x) => new(x.Variables.Get(AwsSpecialVariables.CloudFormation.StackName));
         }
     }
 }

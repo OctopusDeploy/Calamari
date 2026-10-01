@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using Octopus.Calamari.ConsolidatedPackage.Api;
-using SharpCompress.Archives.Zip;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {
     public class ConsolidatedPackage : IConsolidatedPackage
     {
         readonly IConsolidatedPackageStreamProvider packageStreamProvider;
-        
+
         public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, IConsolidatedPackageIndex index)
         {
             this.packageStreamProvider = packageStreamProvider;
@@ -28,21 +28,19 @@ namespace Octopus.Calamari.ConsolidatedPackage
                 throw new Exception($"Could not find platform {platform} for {calamariFlavour}");
             }
 
-            using (var sourceStream = packageStreamProvider.OpenStream())
+            using var sourceStream = packageStreamProvider.OpenStream();
+            using var source = new ZipArchive(sourceStream, ZipArchiveMode.Read);
+
+            var entriesLookup = source.Entries.ToDictionary(e => e.FullName);
+            foreach (var fileTransfer in platformFiles)
             {
-                using (var source = ZipArchive.Open(sourceStream))
+                if (!entriesLookup.TryGetValue(fileTransfer.Source, out var sourceEntry))
                 {
-                    foreach (var fileTransfer in platformFiles)
-                    {
-                        var sourceEntry = source.Entries.FirstOrDefault(e => e.Key is not null && e.Key.Equals(fileTransfer.Source));
-                        if(sourceEntry is null) continue;
-                    
-                        using (var sourceEntryStream = sourceEntry.OpenEntryStream())
-                        {
-                            yield return (fileTransfer.Destination, sourceEntry.Size, sourceEntryStream);
-                        }
-                    }
+                    continue;
                 }
+
+                using var sourceEntryStream = sourceEntry.Open();
+                yield return (fileTransfer.Destination, sourceEntry.Length, sourceEntryStream);
             }
         }
     }

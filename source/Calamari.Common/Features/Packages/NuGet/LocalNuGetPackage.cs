@@ -1,8 +1,4 @@
-﻿#if USE_NUGET_V3_LIBS
-using NuGet.Packaging;
-#else
-using NuGet;
-#endif
+﻿using NuGet.Packaging;
 using System;
 using System.IO;
 using Calamari.Common.Plumbing;
@@ -39,7 +35,7 @@ namespace Calamari.Common.Features.Packages.NuGet
         static ManifestMetadata ReadMetadata(string filePath)
         {
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            using (var archive = ZipArchive.Open(fileStream))
+            using (var archive = ZipArchive.OpenArchive(fileStream))
             {
                 foreach (var entry in archive.Entries)
                 {

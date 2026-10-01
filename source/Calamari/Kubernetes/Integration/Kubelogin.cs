@@ -4,13 +4,14 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Kubernetes.Integration
 {
     public class KubeLogin : CommandLineTool
     {
-        public KubeLogin(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+        public KubeLogin(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars, IVariables variables)
+            : base(log, commandLineRunner, workingDirectory, environmentVars, variables)
         {
         }
 

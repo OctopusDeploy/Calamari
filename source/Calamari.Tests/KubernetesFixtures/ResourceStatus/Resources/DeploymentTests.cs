@@ -37,7 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
 
         [Test]
-        public void ShouldNotBeSuccessfulIfSomeChildrenPodsAreStillRunning()
+        public void WhenUsingLegacyChecks_ShouldNotBeSuccessfulIfSomeChildrenPodsAreStillRunning()
         {
             var input = new DeploymentResponseBuilder()
                         .WithDesiredReplicas(3)
@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                         .WithReadyReplicas(3)
                         .WithUpdatedReplicas(3)
                         .Build();
-            var deployment = ResourceFactory.FromJson(input, new Options());
+            var deployment = ResourceFactory.FromJson(input, new Options { EnableLegacyResourceStatusChecks = true });
 
             var pod = new PodResponseBuilder().Build();
             // More pods remaining than desired
@@ -62,7 +62,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
 
         [Test]
-        public void ShouldBeSuccessfulIfOnlyDesiredPodsAreRunning()
+        public void WhenUsingLegacyChecks_ShouldBeSuccessfulIfOnlyDesiredPodsAreRunning()
         {
             var input = new DeploymentResponseBuilder()
                         .WithDesiredReplicas(3)
@@ -71,7 +71,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                         .WithReadyReplicas(3)
                         .WithUpdatedReplicas(3)
                         .Build();
-            var deployment = ResourceFactory.FromJson(input, new Options());
+            var deployment = ResourceFactory.FromJson(input, new Options { EnableLegacyResourceStatusChecks = true });
 
             var pod = new PodResponseBuilder().Build();
             var children = Enumerable.Range(0, 3)
@@ -170,6 +170,47 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
 
             deployment.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress);
         }
+
+        [Test]
+        public void ShouldIgnoreChildPodCountWhenNotUsingLegacyChecks()
+        {
+            var input = new DeploymentResponseBuilder()
+                        .WithDesiredReplicas(3)
+                        .WithTotalReplicas(3)
+                        .WithAvailableReplicas(3)
+                        .WithReadyReplicas(3)
+                        .WithUpdatedReplicas(3)
+                        .Build();
+            var deployment = ResourceFactory.FromJson(input, new Options());
+
+            var pod = new PodResponseBuilder().Build();
+            // More pods present than desired, as can happen while an HPA is stabilising.
+            var children = Enumerable.Range(0, 5)
+                                     .Select(_ => ResourceFactory.FromJson(pod, new Options()));
+
+            var replicaSet = new Resource();
+            replicaSet.UpdateChildren(children);
+
+            deployment.UpdateChildren(new[] { replicaSet });
+
+            deployment.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
+        }
+
+        [Test]
+        public void ShouldBeSuccessfulWhenPaused()
+        {
+            var input = new DeploymentResponseBuilder()
+                        .WithDesiredReplicas(3)
+                        .WithTotalReplicas(1)
+                        .WithAvailableReplicas(1)
+                        .WithReadyReplicas(1)
+                        .WithUpdatedReplicas(1)
+                        .WithPaused()
+                        .Build();
+            var deployment = ResourceFactory.FromJson(input, new Options());
+
+            deployment.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
+        }
     }
 
     class DeploymentResponseBuilder
@@ -184,7 +225,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 ""generation"": {5}
             }},
             ""spec"": {{
-                ""replicas"": {0}
+                ""replicas"": {0}{8}
             }},
             ""status"": {{
                 ""replicas"": {1},
@@ -203,6 +244,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         int Generation { get; set; } = 1;
         int ObservedGeneration { get; set; } = 1;
         string Conditions { get; set; } = "";
+        bool Paused { get; set; }
 
         public DeploymentResponseBuilder WithDesiredReplicas(int replicas)
         {
@@ -246,6 +288,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             return this;
         }
 
+        public DeploymentResponseBuilder WithPaused()
+        {
+            Paused = true;
+            return this;
+        }
+
         public DeploymentResponseBuilder WithProgressDeadlineExceeded()
         {
             Conditions = @",
@@ -271,7 +319,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                                  UpdatedReplicas,
                                  Generation,
                                  ObservedGeneration,
-                                 Conditions);
+                                 Conditions,
+                                 Paused ? @",
+                ""paused"": true" : "");
         }
     }
 }

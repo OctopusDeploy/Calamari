@@ -92,7 +92,7 @@ namespace Calamari.Testing.Helpers
                     var pdvRemotePath =
                         message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
                     DeltaError = message.GetValue(ServiceMessageNames.PackageDeltaVerification.Error);
-                    if (pdvRemotePath != null && pdvHash != null)
+                    if (pdvRemotePath != null && pdvHash != null && pdvSize != null)
                     {
                         DeltaVerification = new DeltaPackage(pdvRemotePath, pdvHash, long.Parse(pdvSize));
                     }

@@ -9,6 +9,7 @@ using Calamari.AzureServiceFabric.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.LogParser;
+using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
@@ -17,6 +18,7 @@ namespace Calamari.AzureServiceFabric.Tests
 {
     [TestFixture]
     [WindowsTest]
+    [Category(TestCategory.ExternalCloudIntegration)]
     public class DeployAzureServiceFabricAppCommandFixture
     {
         string clientCertThumbprint;

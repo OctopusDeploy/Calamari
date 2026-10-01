@@ -22,9 +22,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
         static SubstitutionsFixture()
         {
-#if NETCORE
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
-#endif
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            
             AnsiEncoding = Encoding.GetEncoding("windows-1252", EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
         }
 
@@ -49,7 +48,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
         {
             var variables = new CalamariVariables
             {
-                ["var"] = "=:'\"\\\r\n\t <>\uFFE6"
+                ["var"] = "=:'\"\\\r\n\t <>\uFFE6",
+                ["dateVar"] = "2030-05-22 09:05:00"
             };
 
             var textAfterReplacement = PerformTest(GetFixtureResource("Samples", "Filters.txt"), variables).text;

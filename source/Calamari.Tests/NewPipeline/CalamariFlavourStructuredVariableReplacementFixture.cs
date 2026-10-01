@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -127,15 +129,14 @@ namespace Calamari.Tests.NewPipeline
             }
         }
 
-        class SyncFlavourProgram : CalamariFlavourProgram
+        class SyncFlavourProgram : Program
         {
             public SyncFlavourProgram(ILog log) : base(log)
-            {
-            }
+            { }
         }
         
         [Command("no-op-command")]
-        class NoOpTraditionalCommandWithStructuredVariableReplacementConvention : Command, ICommand
+        class NoOpTraditionalCommandWithStructuredVariableReplacementConvention : Command
         {
             readonly IStructuredConfigVariablesService structuredConfigVariablesService;
             readonly ILog log;

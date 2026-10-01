@@ -30,11 +30,12 @@ namespace Calamari.Terraform.Behaviours
                                                       deployment,
                                                       environmentVariables))
             {
-                cli.ExecuteCommand("destroy",
-                                   "-auto-approve",
-                                   "-no-color",
-                                   cli.TerraformVariableFiles,
-                                   cli.ActionParams)
+                var args = new List<string>();
+                args.Add("destroy");
+                args.Add("-auto-approve");
+                args.Add(cli.TerraformVariableFiles);
+                args.Add(cli.ActionParams);
+                cli.ExecuteCommand(args.ToArray())
                    .VerifySuccess();
             }
 

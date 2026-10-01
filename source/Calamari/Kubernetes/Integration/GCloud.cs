@@ -6,15 +6,16 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Kubernetes.Integration
 {
     public class GCloud : CommandLineTool
     {
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
 
-        public GCloud(ILog log, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+        public GCloud(ILog log, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, string workingDirectory, Dictionary<string, string> environmentVars, IVariables variables)
+            : base(log, commandLineRunner, workingDirectory, environmentVars, variables)
         {
             this.fileSystem = fileSystem;
         }

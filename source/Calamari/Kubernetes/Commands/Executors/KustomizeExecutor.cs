@@ -6,21 +6,21 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
-using Newtonsoft.Json.Linq;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
     public interface IKustomizeKubernetesApplyExecutor : IKubernetesApplyExecutor
     {
     }
-    
+
     class KustomizeExecutor : BaseKubernetesApplyExecutor, IKustomizeKubernetesApplyExecutor
     {
         public const string HydratedKustomizeManifestFilename = "hydrated-kustomize-manifest.yaml";
-        const int MinimumKubectlVersionMajor = 1;
-        const int MinimumKubectlVersionMinor = 24;
+        static readonly SemanticVersion MinimumKubectlVersion = new SemanticVersion("1.24.0");
         readonly ILog log;
         readonly Kubectl kubectl;
         readonly IManifestReporter manifestReporter;
@@ -45,19 +45,31 @@ namespace Calamari.Kubernetes.Commands.Executors
                 throw new KubectlException("Kustomization directory not specified");
             }
 
-            ValidateKubectlVersion(deployment.CurrentDirectory);
+            log.Verbose("Validating kubectl version");
+            var versionOutput = ValidateKubectlVersion();
             
-            BuildKustomization(deployment.CurrentDirectory, overlayPath);
-            
+            log.Info("Building kustomization");
+            BuildKustomization(deployment.CurrentDirectory, overlayPath, variables, versionOutput);
+
+            log.Verbose("Reporting manifest");
             manifestReporter.ReportManifestFileApplied(HydratedManifestFilepath(deployment.CurrentDirectory));
+
+            log.Info("Applying kustomization");
+            var resourceIdentifiers = await ApplyKustomization(deployment, appliedResourcesCallback, overlayPath);
             
-            string[] executeArgs = {"apply", "-f", $@"""{HydratedManifestFilepath(deployment.CurrentDirectory)}""", "-o", "json"};
+            AppliedResourcesOutputHelper.SetAppliedResourcesOutputVariable(log, deployment, resourceIdentifiers);
+            
+            return resourceIdentifiers;
+        }
+
+        async Task<ResourceIdentifier[]> ApplyKustomization(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback, string overlayPath)
+        {
+            string[] executeArgs = ["apply", "-f", $"\"{HydratedManifestFilepath(deployment.CurrentDirectory)}\"", "-o", "json"];
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
-            
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
-            
+
             var resourceIdentifiers = ProcessKubectlCommandOutput(deployment, result, KustomizationDirectory(deployment.CurrentDirectory, overlayPath)).ToArray();
-            
+
             if (appliedResourcesCallback != null)
             {
                 await appliedResourcesCallback(resourceIdentifiers);
@@ -66,10 +78,12 @@ namespace Calamari.Kubernetes.Commands.Executors
             return resourceIdentifiers;
         }
 
-        void BuildKustomization(string currentDirectory, string overlayPath)
+        void BuildKustomization(string currentDirectory, string overlayPath, IVariables variables, KubectlVersionOutput versionOutput)
         {
-            string[] executeArgs = {"kustomize", $@"""{KustomizationDirectory(currentDirectory, overlayPath)}""", "-o", $@"""{HydratedManifestFilepath(currentDirectory)}"""};
-            
+            string[] executeArgs = ["kustomize", $"\"{KustomizationDirectory(currentDirectory, overlayPath)}\"", "-o", $"\"{HydratedManifestFilepath(currentDirectory)}\""];
+
+            executeArgs = ConditionallySetLoadRestrictorArg(variables, versionOutput, executeArgs);
+
             var commandResult = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
             commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
             if (commandResult.Result.ExitCode != 0)
@@ -78,49 +92,36 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
 
-        void ValidateKubectlVersion(string currentDirectory)
+        string[] ConditionallySetLoadRestrictorArg(IVariables variables, KubectlVersionOutput versionOutput, string[] executeArgs)
         {
-            var commandResult = kubectl.ExecuteCommandAndReturnOutput("version", "--client", "-o", "json");
-            commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
-            if (commandResult.Result.ExitCode != 0)
-            {
-                throw new KubectlException("Failed to check kubectl version");
-            }
-            
-            var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);
+            if (!variables.GetFlag(SpecialVariables.KustomizeLoadRestrictorNone))
+                return executeArgs;
 
-            if (!TryParseVersion(outputJson, out var major, out var minor))
+            // Prefer the bundled kustomize version when available, because the load restrictor
+            // flag syntax is defined by kustomize rather than kubectl. Fall back to the existing
+            // kubectl-based heuristic if the bundled kustomize version is unavailable.
+            var usesKustomizeV5Syntax = versionOutput.KustomizeVersion?.Major >= 5
+                                        || (versionOutput.KustomizeVersion == null && versionOutput.KubectlVersion.Minor >= 27);
+            var loadRestrictorArg = usesKustomizeV5Syntax
+                ? "--load-restrictor=LoadRestrictionsNone"
+                : "--load_restrictor=none";
+            log.Verbose($"Adding load restrictor flag: {loadRestrictorArg}");
+            executeArgs = executeArgs.Concat([loadRestrictorArg]).ToArray();
+
+            return executeArgs;
+        }
+
+        KubectlVersionOutput ValidateKubectlVersion()
+        {
+            var versionOutput = kubectl.GetVersion();
+            if (versionOutput == null)
                 throw new KubectlException("Could not determine the kubectl version.");
 
-            if (major < MinimumKubectlVersionMajor || minor < MinimumKubectlVersionMinor)
-                throw new KubectlException($"kubectl is on version v{major}.{minor}, it needs to be v{MinimumKubectlVersionMajor}.{MinimumKubectlVersionMinor} or higher to run Kustomize.");
-        }
+            if (versionOutput.KubectlVersion < MinimumKubectlVersion)
+                throw new KubectlException($"kubectl is on version {versionOutput.KubectlVersion}, it needs to be v{MinimumKubectlVersion} or higher to run Kustomize.");
 
-        bool TryParseVersion(string kubectlClientVersionJson, out int major, out int minor)
-        {
-            try
-            {
-                var outer = JToken.Parse(kubectlClientVersionJson);
-                major = GetVersion(outer, "clientVersion.major");
-                minor = GetVersion(outer, "clientVersion.minor");
-                return true;
-            }
-            catch
-            {
-                major = -1;
-                minor = -1;
-                return false;
-            }
-        }
-
-        static int GetVersion(JToken root, string jsonPathToVersion)
-        {
-            var clientVersionToken = root.SelectToken($"{jsonPathToVersion}");
-
-            if (clientVersionToken != null && int.TryParse(clientVersionToken.ToString(), out var version))
-                return version;
-
-            return -1;
+            log.Verbose($"kubectl version: {versionOutput.KubectlVersion}");
+            return versionOutput;
         }
     }
 }

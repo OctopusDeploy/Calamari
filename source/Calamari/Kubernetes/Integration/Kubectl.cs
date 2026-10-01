@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.Integration
                        ILog log,
                        ICommandLineRunner commandLineRunner,
                        string workingDirectory,
-                       Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
+                       Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables, variables)
         {
             customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
         }
@@ -119,17 +119,21 @@ namespace Calamari.Kubernetes.Integration
         public CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments) =>
             base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments);
 
-        public Maybe<SemanticVersion> GetVersion()
+        public KubectlVersionOutput? GetVersion()
         {
             var kubectlVersionOutput = ExecuteCommandAndReturnOutput("version", "--client", "--output=json").Output.InfoLogs;
             var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
             try
             {
-                var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "1.0.0" } });
-                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion;
+                var versionInfo = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "" }, kustomizeVersion = "" });
+                var kubectlVersionString = versionInfo?.clientVersion?.gitVersion;
                 if (kubectlVersionString != null)
                 {
-                    return Maybe<SemanticVersion>.Some(SemVerFactory.CreateVersion(kubectlVersionString));
+                    var kubectlVersion = SemVerFactory.CreateVersion(kubectlVersionString);
+                    var kustomizeVersion = versionInfo?.kustomizeVersion != null
+                        ? SemVerFactory.CreateVersion(versionInfo.kustomizeVersion)
+                        : null;
+                    return new KubectlVersionOutput(kubectlVersion, kustomizeVersion);
                 }
             }
             catch (Exception e)
@@ -137,7 +141,7 @@ namespace Calamari.Kubernetes.Integration
                 log.Verbose($"Unable to determine kubectl version. Failed with error message: {e.Message}");
             }
 
-            return Maybe<SemanticVersion>.None;
+            return null;
         }
 
         public void DisableRequestTimeoutArgument()
@@ -156,8 +160,10 @@ namespace Calamari.Kubernetes.Integration
         CommandResult ExecuteCommandWithVerboseLoggingOnly(params string[] arguments);
         void ExecuteCommandAndAssertSuccess(params string[] arguments);
         CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments);
-        Maybe<SemanticVersion> GetVersion();
+        KubectlVersionOutput? GetVersion();
         string ExecutableLocation { get; }
         void DisableRequestTimeoutArgument();
     }
+
+    public record KubectlVersionOutput(SemanticVersion KubectlVersion, SemanticVersion? KustomizeVersion);
 }

@@ -1,10 +1,8 @@
-#if NET
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -12,6 +10,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 
 namespace Calamari.ArgoCD.Commands
 {
@@ -24,22 +23,21 @@ namespace Calamari.ArgoCD.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly DeploymentConfigFactory configFactory;
-        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
-        readonly ICommitMessageGenerator commitMessageGenerator;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         string customPropertiesFile;
         string customPropertiesPassword;
 
-        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, 
-                                            ICommitMessageGenerator commitMessageGenerator,
+        public UpdateArgoCDAppImagesCommand(ILog log,
+                                            IVariables variables,
+                                            ICalamariFileSystem fileSystem,
                                             DeploymentConfigFactory configFactory,
-                                            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+                                            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.commitMessageGenerator = commitMessageGenerator;
             this.configFactory = configFactory;
-            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             Options.Add("customPropertiesFile=",
                         "Name of the custom properties file",
                         v => customPropertiesFile = Path.GetFullPath(v));
@@ -51,11 +49,20 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
+            var clock = new SystemClock();
             var runningDeployment = new RunningDeployment(null, variables);
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory),
+                new UpdateArgoCDAppImagesInstallConvention(log,
+                                                           fileSystem,
+                                                           configFactory,
+                                                           new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword, new IGitCredentialDtoJsonConverter()),
+                                                           new ArgoCdApplicationManifestParser(),
+                                                           gitVendorPullRequestClientResolver,
+                                                           clock,
+                                                           new ArgoCDFilesUpdatedReporter(log),
+                                                           new ArgoCDOutputVariablesWriter(log)),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
@@ -66,4 +73,3 @@ namespace Calamari.ArgoCD.Commands
     }
 }
 
-#endif

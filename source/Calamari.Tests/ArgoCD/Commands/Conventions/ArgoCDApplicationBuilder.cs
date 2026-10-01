@@ -7,12 +7,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     class ArgoCDApplicationBuilder
     {
         string name = "My App";
+        string @namespace = "argocd";
         Dictionary<string, string> annotations = new Dictionary<string, string>();
-        readonly List<SourceBase> applicationSources = new List<SourceBase>();
+        readonly List<ApplicationSource> applicationSources = new List<ApplicationSource>();
+        readonly List<string> applicationSourceTypes = new List<string>();
 
         public ArgoCDApplicationBuilder WithName(string value)
         {
             name = value;
+            return this;
+        }
+
+        public ArgoCDApplicationBuilder WithNamespace(string value)
+        {
+            @namespace = value;
             return this;
         }
 
@@ -22,15 +30,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSource<T>(T source) where T : SourceBase
+        public ArgoCDApplicationBuilder WithSource(ApplicationSource source, string sourceType)
         {
             applicationSources.Add(source);
+            if (sourceType != null)
+            {
+                applicationSourceTypes.Add(sourceType);
+            }
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSources<T>(IEnumerable<T> sources) where T : SourceBase
+        public ArgoCDApplicationBuilder WithSources(IEnumerable<ApplicationSource> sources, IEnumerable<string> sourceTypes)
         {
             applicationSources.AddRange(sources);
+            applicationSourceTypes.AddRange(sourceTypes);
             return this;
         }
 
@@ -41,11 +54,16 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 Metadata = new Metadata()
                 {
                     Name = name,
+                    Namespace = @namespace,
                     Annotations = annotations
                 },
                 Spec = new ApplicationSpec()
                 {
                     Sources = applicationSources
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = applicationSourceTypes
                 }
             };
         }

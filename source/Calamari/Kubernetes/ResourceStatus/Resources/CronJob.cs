@@ -9,8 +9,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public CronJob(JObject json, Options options) : base(json, options)
         {
-            Schedule = Field("$.spec.schedule");
-            Suspend = FieldOrDefault("$.spec.suspend", false);
+            Schedule = Field(json, "$.spec.schedule");
+            Suspend = FieldOrDefault(json, "$.spec.suspend", false);
         }
 
         public override bool HasUpdate(Resource lastStatus)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -8,7 +8,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Testing.Requirements;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -16,12 +16,14 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Bash
 {
     [TestFixture]
+    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
     public class BashFixture : CalamariFixture
     {
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldPrintEncodedVariable()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldPrintEncodedVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("print-encoded-variable.sh", new Dictionary<string, string>());
+            var (output, _) = RunScript("print-encoded-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -30,10 +32,11 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldPrintSensitiveVariable()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldPrintSensitiveVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("print-sensitive-variable.sh");
+            var (output, _) = RunScript("print-sensitive-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -42,10 +45,51 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldCreateArtifact()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldSetEnvironmentState(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("create-artifact.sh");
+            var (output, _) = RunScript("set-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[set-environmentstate key='TXlLZXk=' value='TXlWYWx1ZQ==' type='U3RhdGU=']");
+                            });
+        }
+
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldSetSensitiveEnvironmentState(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("set-sensitive-environment-state.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[set-environmentstate key='U2VjcmV0S2V5' value='U2VjcmV0IFZhbHVl' sensitive='VHJ1ZQ==' type='U3RhdGU=']");
+                            });
+        }
+
+
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldSetEnvironmentUrl(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("set-environment-url.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[set-environmentstate key='TXlFbnZpcm9ubWVudA==' value='aHR0cHM6Ly9teS1lbnZpcm9ubWVudC5leGFtcGxlLmNvbQ==' type='VXJs']");
+                            });
+        }
+
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCreateArtifact(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             const string regexPattern = @"##octopus\[createArtifact path='([\S]+)' name='bXlmaWxl' length='MA==']";
     
@@ -69,10 +113,11 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldUpdateProgress()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldUpdateProgress(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("update-progress.sh");
+            var (output, _) = RunScript("update-progress.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
@@ -81,23 +126,25 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
         
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldReportKubernetesManifest()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldReportKubernetesManifest(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("report-kubernetes-manifest.sh");
+            var (output, _) = RunScript("report-kubernetes-manifest.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{featureToggle}));
 
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==' ns='bXk=']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK' ns='bXk=']");
                             });
         }
         
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldReportKubernetesManifestFile()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldReportKubernetesManifestFile(FeatureToggle? featureToggle)
         {
             var tempPath = Path.GetTempPath();
             var manifest = @"""apiVersion"": ""v1""
@@ -139,7 +186,7 @@ namespace Calamari.Tests.Fixtures.Bash
             var additionalVariables = new Dictionary<string, string>
             {
                 { "ManifestFilePath", updatedFilePath }
-            };
+            }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle });
 
             try
             {
@@ -149,10 +196,10 @@ namespace Calamari.Tests.Fixtures.Bash
                 Assert.Multiple(() =>
                                 {
                                     output.AssertSuccess();
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==']");
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu']");
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==' ns='bXk=']");
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu' ns='bXk=']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==' ns='bXk=']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK' ns='bXk=']");
                                 });
             }
             finally
@@ -161,12 +208,13 @@ namespace Calamari.Tests.Fixtures.Bash
             }
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldConsumeParametersWithQuotes()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldConsumeParametersWithQuotes(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("parameters.sh",
-                                        new Dictionary<string, string>()
-                                            { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" });
+                                        new Dictionary<string, string>
+                                            { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -175,10 +223,11 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldNotReceiveParametersIfNoneProvided()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldNotReceiveParametersIfNoneProvided(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>(), sensitiveVariablesPassword:
+            var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }), sensitiveVariablesPassword:
             "5XETGOgqYR2bRhlfhDruEg==");
 
             Assert.Multiple(() =>
@@ -188,8 +237,9 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHello()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCallHello(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
@@ -199,7 +249,7 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["Variable3"] = "GHI",
                                             ["Foo_bar"] = "Hello",
                                             ["Host"] = "Never",
-                                        });
+                                        }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -208,12 +258,13 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHelloWithSensitiveVariable()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCallHelloWithSensitiveVariable(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                            { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword:
+                                            { ["Name"] = "NameToEncrypt" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }), sensitiveVariablesPassword:
             "5XETGOgqYR2bRhlfhDruEg==");
 
             Assert.Multiple(() =>
@@ -223,12 +274,13 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHelloWithNullVariable()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCallHelloWithNullVariable(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                            { ["Name"] = null });
+                                            { ["Name"] = null }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -237,8 +289,9 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHelloWithNullSensitiveVariable()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCallHelloWithNullSensitiveVariable(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
@@ -252,11 +305,12 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldNotFailOnStdErr()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldNotFailOnStdErr(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("stderr.sh",
-                                        new Dictionary<string, string>());
+                                        new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -265,12 +319,13 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("stderr.sh",
                                         new Dictionary<string, string>()
-                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" });
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -279,20 +334,22 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldNotFailOnStdErrFromServiceMessagesWithTreatScriptWarningsAsErrors()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldNotFailOnStdErrFromServiceMessagesWithTreatScriptWarningsAsErrors(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" });
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             output.AssertSuccess();
         }
 
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldSupportStrictVariableUnset()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldSupportStrictVariableUnset(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("strict-mode.sh", new Dictionary<string, string>());
+            var (output, _) = RunScript("strict-mode.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
             Assert.Multiple(() =>
                             {
@@ -303,7 +360,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
         static string specialCharacters => "! \" # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~  \n\u00b1 \u00d7 \u00f7 \u2211 \u220f \u2202 \u221e \u222b \u2248 \u2260 \u2264 \u2265 \u221a \u221b \u2206 \u2207 \u221d  \n$ \u00a2 \u00a3 \u00a5 \u20ac \u20b9 \u20a9 \u20b1 \u20aa \u20bf  \n• ‣ … ′ ″ ‘ ’ “ ” ‽ ¡ ¿ – — ―  \n( ) [ ] { } ⟨ ⟩ « » ‘ ’ “ ”  \n\u2190 \u2191 \u2192 \u2193 \u2194 \u2195 \u2196 \u2197 \u2198 \u2199 \u2b05 \u2b06 \u2b07 \u27a1 \u27f3  \nα β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω  \n\u00a9 \u00ae \u2122 § ¶ † ‡ µ #";
 
-        [RequiresBashDotExeIfOnWindows]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
         public void ShouldBeAbleToEnumerateVariableValues(FeatureToggle? featureToggle)
         {
             var (output, _) = RunScript("enumerate-variables.sh",
@@ -322,8 +379,30 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["VariableName \n 11"] = "Value \n 11",
                                             ["VariableName.prop.anotherprop 12"] = "Value.prop.12",
                                             ["VariableName`prop`anotherprop` 13"] = "Value`prop`13",
-                                            [specialCharacters] = specialCharacters
-                                        });
+                                            [specialCharacters] = specialCharacters,
+                                            // Emoji / 4-byte UTF-8 codepoints
+                                            ["EmojiKey 🎉💡🔥"] = "EmojiValue 😀🌍🚀",
+                                            // CJK (Chinese / Japanese / Korean)
+                                            ["CJK 中文 日本語 한국어"] = "中文值 你好世界",
+                                            // Arabic RTL text
+                                            ["Arabic مفتاح"] = "قيمة عربية",
+                                            // Bash command-injection attempts in both key and value
+                                            ["InjectionAttempt $(echo injected)"] = "$(echo injected) `echo injected` ${HOME}",
+                                            // Empty value
+                                            ["EmptyValueKey"] = "",
+                                            // Leading and trailing whitespace in value
+                                            ["LeadingTrailingSpaces"] = "  value padded with spaces  ",
+                                            // Multiple '=' signs in value (parsers that split on '=' can mis-handle this)
+                                            ["MultipleEquals"] = "a=b=c=d",
+                                            // Zero-width space (U+200B) – invisible but load-bearing
+                                            ["ZeroWidth\u200bKey"] = "zero\u200bwidth\u200bvalue",
+                                            // ANSI escape sequence – terminal control injection attempt
+                                            ["AnsiEscapeKey"] = "\x1b[31mRed\x1b[0m",
+                                            // Supplementary-plane Unicode (mathematical script + musical symbols)
+                                            ["SupplementaryPlane 𝒜𝄞"] = "value 𝐀𝁆",
+                                            // Combining diacritical mark (NFD 'é' vs NFC U+00E9)
+                                            ["CombiningDiacritical Caf\u0301"] = "Caf\u00e9",
+                                        }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { FeatureToggle.BashParametersArrayFeatureToggle }));
 
             output.AssertSuccess();
             var fullOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
@@ -351,6 +430,18 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
             output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
             output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
+
+            output.AssertOutput("Key: EmojiKey 🎉💡🔥, Value: EmojiValue 😀🌍🚀");
+            output.AssertOutput("Key: CJK 中文 日本語 한국어, Value: 中文值 你好世界");
+            output.AssertOutput("Key: Arabic مفتاح, Value: قيمة عربية");
+            output.AssertOutput("Key: InjectionAttempt $(echo injected), Value: $(echo injected) `echo injected` ${HOME}");
+            output.AssertOutput("Key: EmptyValueKey, Value: ");
+            output.AssertOutput("Key: LeadingTrailingSpaces, Value:   value padded with spaces  ");
+            output.AssertOutput("Key: MultipleEquals, Value: a=b=c=d");
+            output.AssertOutput($"Key: ZeroWidth\u200bKey, Value: zero\u200bwidth\u200bvalue");
+            output.AssertOutput($"Key: AnsiEscapeKey, Value: \x1b[31mRed\x1b[0m");
+            output.AssertOutput($"Key: SupplementaryPlane 𝒜𝄞, Value: value 𝐀𝁆");
+            output.AssertOutput($"Key: CombiningDiacritical Caf\u0301, Value: Caf\u00e9");
         }
     }
 

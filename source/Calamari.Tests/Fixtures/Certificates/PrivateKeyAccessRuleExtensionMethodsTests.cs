@@ -1,4 +1,5 @@
-﻿using System.Security.Principal;
+﻿using System.Runtime.Versioning;
+using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -6,9 +7,9 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
-#pragma warning disable CA1416
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [SupportedOSPlatform("windows")]
     public class PrivateKeyAccessRuleExtensionMethodsTests
     {
         [Test]
@@ -37,5 +38,4 @@ namespace Calamari.Tests.Fixtures.Certificates
                 
         }
     }
-#pragma warning restore CA1416
 }

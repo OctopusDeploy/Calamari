@@ -5,7 +5,6 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Calamari.Aws.Deployment;
@@ -24,7 +23,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
 using Newtonsoft.Json;
-using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Commands
 {
@@ -74,18 +72,16 @@ namespace Calamari.Aws.Commands
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
             var templateResolver = new TemplateResolver(fileSystem);
 
-            IAmazonCloudFormation ClientFactory() => ClientHelpers.CreateCloudFormationClient(environment);
-            StackArn StackProvider(RunningDeployment x) => new StackArn(stackName);
-            ChangeSetArn ChangesetProvider(RunningDeployment x) => new ChangeSetArn(x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
-            string RoleArnProvider(RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
             var iamCapabilities = JsonConvert.DeserializeObject<List<string>>(variables.Get(AwsSpecialVariables.IamCapabilities, "[]"));
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags, "[]"));
+            var parameterOverrides = JsonConvert.DeserializeObject<List<Parameter>>(variables.Get(AwsSpecialVariables.CloudFormation.TemplateParameterOverrides, "[]"));
             var deployment = new RunningDeployment(pathToPackage, variables);
 
             ICloudFormationRequestBuilder TemplateFactory() => string.IsNullOrWhiteSpace(templateS3Url)
                 ? CloudFormationTemplate.Create(templateResolver,
                                                 templateFile,
                                                 templateParameterFile,
+                                                parameterOverrides,
                                                 filesInPackage,
                                                 fileSystem,
                                                 variables,
@@ -98,6 +94,7 @@ namespace Calamari.Aws.Commands
                                                 ClientFactory)
                 : CloudFormationS3Template.Create(templateS3Url,
                                                   templateParameterS3Url,
+                                                  parameterOverrides,
                                                   fileSystem,
                                                   variables,
                                                   log,
@@ -148,7 +145,6 @@ namespace Calamari.Aws.Commands
                                                                                           TemplateFactory,
                                                                                           stackEventLogger,
                                                                                           StackProvider,
-                                                                                          RoleArnProvider,
                                                                                           waitForComplete,
                                                                                           stackName,
                                                                                           environment,
@@ -162,6 +158,11 @@ namespace Calamari.Aws.Commands
 
             conventionRunner.RunConventions();
             return 0;
+
+            string RoleArnProvider(RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
+            ChangeSetArn ChangesetProvider(RunningDeployment x) => new (x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
+            IAmazonCloudFormation ClientFactory() => ClientHelpers.CreateCloudFormationClient(environment);
+            StackArn StackProvider(RunningDeployment x) => new (stackName);
         }
 
         bool ChangesetsDeferred(RunningDeployment deployment)

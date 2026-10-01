@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Commands.Discovery;
 using Newtonsoft.Json;
+using Octopus.Calamari.Contracts.TargetDiscovery;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -17,7 +18,7 @@ namespace Calamari.Kubernetes.Commands
     {
         public const string Name = "kubernetes-target-discovery";
         public const string CreateKubernetesTargetServiceMessageName = "create-kubernetestarget";
-        public const string ContextVariableName = "Octopus.TargetDiscovery.Context";
+        public const string ContextVariableName = TargetDiscoverySpecialVariables.TargetDiscoveryContext;
 
         readonly ILog log;
         readonly IVariables variables;
@@ -175,6 +176,8 @@ namespace Calamari.Kubernetes.Commands
         class AuthenticationType : ITargetDiscoveryAuthenticationDetails
         {
             public string Type { get; set; }
+
+            public string AuthenticationMethod { get; set; }
         }
     }
 }

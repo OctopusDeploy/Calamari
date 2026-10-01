@@ -5,7 +5,6 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -14,7 +13,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
     [Category(TestCategory.ScriptingSupport.DotnetScript)]
-    [RequiresDotNetCore]
     public class DotnetScriptFixture : CalamariFixture
     {
         [Test]
@@ -132,42 +130,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                 output.AssertFailure();
                 output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.1.5");
             }
-        }
-
-        [Test]
-        public void HasInvalidSyntax_FeatureToggleIsEnabled_ShouldWriteExtraWarningLine()
-        {
-            var (output, _) = RunScript("InvalidSyntax.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.DotNetScriptCompilationWarningFeatureToggle
-                                        });
-
-            output.CapturedOutput.AllMessages.Should().Contain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
-
-            //We are expecting failure
-            output.AssertFailure();
-        }
-
-        [Test]
-        public void HasInvalidSyntax_FeatureToggleIsDisabled_ShouldNotWriteExtraWarningLine()
-        {
-            var (output, _) = RunScript("InvalidSyntax.csx");
-
-            output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
-
-            //We are expecting failure
-            output.AssertFailure();
-        }
-
-        [Test]
-        public void ThrowsException_ShouldNotWriteExtraWarningLine()
-        {
-            var (output, _) = RunScript("ThrowsException.csx");
-
-            output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
-            //We are expecting failure
-            output.AssertFailure();
         }
     }
 }

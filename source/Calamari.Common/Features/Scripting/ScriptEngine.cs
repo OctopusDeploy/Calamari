@@ -7,7 +7,6 @@ using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -18,24 +17,26 @@ namespace Calamari.Common.Features.Scripting
     {
         ScriptSyntax[] GetSupportedTypes();
 
+        CommandResult Execute(Script script,
+                              IVariables variables,
+                              ICommandLineRunner commandLineRunner);
+        
         CommandResult Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string>? environmentVars = null);
+            Dictionary<string, string> environmentVars);
     }
 
     public class ScriptEngine : IScriptEngine
     {
         readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
         readonly ILog log;
-        readonly DotnetScriptCompilationWarningOutputSink dotnetScriptCompilationWarningOutputSink;
 
-        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, ILog log, DotnetScriptCompilationWarningOutputSink dotnetScriptCompilationWarningOutputSink)
+        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, ILog log)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
             this.log = log;
-            this.dotnetScriptCompilationWarningOutputSink = dotnetScriptCompilationWarningOutputSink;
         }
 
         public ScriptSyntax[] GetSupportedTypes()
@@ -43,11 +44,13 @@ namespace Calamari.Common.Features.Scripting
             return ScriptSyntaxHelper.GetPreferenceOrderedScriptSyntaxesForEnvironment();
         }
 
+        public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner) => Execute(script, variables, commandLineRunner, []);
+        
         public CommandResult Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string>? environmentVars = null)
+            Dictionary<string, string> environmentVars)
         {
             var syntax = script.File.ToScriptType();
             return BuildWrapperChain(syntax, variables, commandLineRunner)
@@ -103,16 +106,7 @@ namespace Calamari.Common.Features.Scripting
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
-                    var isDotNetScriptCompileWarningFeatureToggleEnabled = OctopusFeatureToggles.DotNetScriptCompilationWarningFeatureToggle.IsEnabled(variables);
-
-                    //if this feature toggle is NOT enabled, then we want to suppress this warning
-                    //We will be targeting specific customers with this warning (specifically those we are force migrating from ScriptCS to dotnet-script
-                    if (!isDotNetScriptCompileWarningFeatureToggleEnabled)
-                    {
-                        dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
-                    }
-
-                    return new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink);
+                    return new DotnetScriptExecutor(commandLineRunner, log);
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor(log);
                 case ScriptSyntax.Python:

@@ -2,7 +2,7 @@
 
 namespace Calamari.AzureResourceGroup
 {
-    interface IResourceGroupTemplateNormalizer
+    public interface IResourceGroupTemplateNormalizer
     {
         string Normalize(string json);
     }

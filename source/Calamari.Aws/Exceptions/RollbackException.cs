@@ -1,5 +1,4 @@
 ﻿using System;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 
 namespace Calamari.Aws.Exceptions

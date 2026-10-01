@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -12,6 +13,7 @@ using Calamari.Integration.Certificates;
 namespace Calamari.Commands
 {
     [Command("import-certificate", Description = "Imports a X.509 certificate into a Windows certificate store")]
+    [SupportedOSPlatform("windows")]
     public class ImportCertificateCommand : Command
     {
         readonly IVariables variables;

@@ -11,7 +11,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.Decorators;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
@@ -78,8 +78,8 @@ namespace Calamari.Commands.Java
 
             log.Info("Deploying:    " + archiveFile);
 
-            var semaphore = new SystemSemaphoreManager();
-            var journal = new DeploymentJournal(fileSystem, semaphore, variables, log);
+            var namedLockManager = new MutexBasedNamedLockManager();
+            var journal = new DeploymentJournal(fileSystem, namedLockManager, variables, log);
             var jarTools = new JarTool(commandLineRunner, log, fileSystem, variables);
             var packageExtractor = new JarPackageExtractor(jarTools).WithExtractionLimits(log, variables);
             var embeddedResources = new AssemblyEmbeddedResources();

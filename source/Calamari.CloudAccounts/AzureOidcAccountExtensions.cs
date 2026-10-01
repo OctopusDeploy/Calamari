@@ -1,25 +1,12 @@
-﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Identity.Client;
-using Microsoft.Rest;
 
 namespace Calamari.CloudAccounts
 {
     public static class AzureOidcAccountExtensions
     {
-        public static async Task<ServiceClientCredentials> Credentials(this AzureOidcAccount account, CancellationToken cancellationToken)
-        {
-            return new TokenCredentials(await GetAuthorizationToken(account, cancellationToken));
-        }
-        
-        public static Task<string> GetAuthorizationToken(this AzureOidcAccount account, CancellationToken cancellationToken)
-        {
-            return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
-                                                   account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri, account.AzureEnvironment, cancellationToken);
-        }
-
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, CancellationToken cancellationToken)
         {
             var authClientFactory = new AuthHttpClientFactory();
@@ -28,7 +15,7 @@ namespace Calamari.CloudAccounts
             Log.Verbose($"Authentication Context: {authContext}");
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
-                                                          .WithClientAssertion(token)
+                                                          .WithClientAssertion((AssertionRequestOptions _) => Task.FromResult(token))
                                                           .WithAuthority(authContext)
                                                           .WithHttpClientFactory(authClientFactory)
                                                           .Build();

@@ -95,12 +95,13 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             throw new CommandException(string.Format("dotnet-script was not found at '{0}'", executable));
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
+        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters, string? nugetSource = null)
         {
             var (scriptCommandArguments, scriptArguments) = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
+            var source = string.IsNullOrWhiteSpace(nugetSource) ? "https://api.nuget.org/v3/index.json" : nugetSource;
             var commandArguments = new StringBuilder();
-            commandArguments.Append("-s https://api.nuget.org/v3/index.json ");
+            commandArguments.Append($"-s {source} ");
             if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
             commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptArguments, encryptionKey);
             return commandArguments.ToString();

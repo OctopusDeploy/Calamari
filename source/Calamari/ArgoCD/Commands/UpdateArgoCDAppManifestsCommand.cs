@@ -1,10 +1,9 @@
-#if NET
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -17,6 +16,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 
 namespace Calamari.ArgoCD.Commands
 {
@@ -35,7 +35,7 @@ namespace Calamari.ArgoCD.Commands
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
-        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -49,7 +49,7 @@ namespace Calamari.ArgoCD.Commands
             INonSensitiveSubstituteInFiles substituteInFiles,
             DeploymentConfigFactory configFactory,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
         {
             this.log = log;
             this.variables = variables;
@@ -58,7 +58,7 @@ namespace Calamari.ArgoCD.Commands
             this.substituteInFiles = substituteInFiles;
             this.configFactory = configFactory;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
-            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -75,7 +75,7 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
+            var clock = new SystemClock();
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d =>
@@ -95,10 +95,13 @@ namespace Calamari.ArgoCD.Commands
                                                                       PackageDirectoryName,
                                                                       log,
                                                                       configFactory,
-                                                                      new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
+                                                                      new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword, new IGitCredentialDtoJsonConverter()),
                                                                       new ArgoCdApplicationManifestParser(),
                                                                       argoCDManifestsFileMatcher,
-                                                                      gitVendorAgnosticApiAdapterFactory),
+                                                                      gitVendorPullRequestClientResolver,
+                                                                      clock,
+                                                                      new ArgoCDFilesUpdatedReporter(log),
+                                                                      new ArgoCDOutputVariablesWriter(log)),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
@@ -110,4 +113,3 @@ namespace Calamari.ArgoCD.Commands
         }
     }
 }
-#endif

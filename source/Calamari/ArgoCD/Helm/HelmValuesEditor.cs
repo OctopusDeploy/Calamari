@@ -1,4 +1,3 @@
-#if NET
 using System;
 using Octostache;
 
@@ -36,4 +35,3 @@ namespace Calamari.ArgoCD.Helm
     }
 }
 
-#endif

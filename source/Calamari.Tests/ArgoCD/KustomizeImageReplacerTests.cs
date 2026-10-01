@@ -1,8 +1,8 @@
-﻿#if NET
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
@@ -13,11 +13,11 @@ namespace Calamari.Tests.ArgoCD
 {
     public class KustomizeImageReplacerTests
     {
-        readonly List<ContainerImageReference> imagesToUpdate = new List<ContainerImageReference>()
+        readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate = new List<ContainerImageReferenceAndHelmReference>()
         {
             // We know this won't be null after parse
-            ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry),
-            ContainerImageReference.FromReferenceString("busybox:stable", "my-registry.com"),
+            new (ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry)),
+            new (ContainerImageReference.FromReferenceString("my-registry.com/busybox:stable", ArgoCDConstants.DefaultContainerRegistry)),
         };
 
         ILog log = new InMemoryLog();
@@ -43,7 +43,7 @@ images:
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedContents.Should().Be(expectedYaml);
             result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "docker.io/nginx:1.25");
         }
 
         [Test]
@@ -240,7 +240,7 @@ images:
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedContents.Should().Be(expectedYaml);
             result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -266,7 +266,7 @@ images:
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedContents.Should().Be(expectedYaml);
             result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-registry.com/busybox:stable");
         }
 
         [Test]
@@ -300,8 +300,127 @@ images:
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedContents.Should().Be(expectedYaml);
             result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "my-registry.com/busybox:stable");
             result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+        }
+
+        [Theory]
+        [TestCase("docker.io/nginx", "1.28.0")]
+        [TestCase("nginx", "1.28.0")]
+        [TestCase("us-docker.pkg.dev/shared-gke-dev-gqtrxy/argo-test/helloworld", "v2")]
+        public void ReturnsSameImageBaseAsInYaml(string originalName, string newTag)
+        {
+            var inputYaml = $@"
+images:
+- name: {originalName}
+";
+            var expectedYaml = $@"
+images:
+- name: {originalName}
+  newTag: ""{newTag}""
+";
+
+            var imageReplacer = new KustomizeImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+
+            var update = new List<ContainerImageReferenceAndHelmReference>
+            {
+                new(ContainerImageReference.FromReferenceString($"{originalName}:{newTag}", ArgoCDConstants.DefaultContainerRegistry))
+            };
+
+            var result = imageReplacer.UpdateImages(update);
+
+            result.UpdatedContents.Should().Be(expectedYaml);
+            result.UpdatedImageReferences.Should().ContainSingle().Which.Should().Be($"{originalName}:{newTag}");
+        }
+
+        [Test]
+        public void UpdateImages_EmptyYamlContent_LogsAppropriateWarning()
+        {
+            var inMemoryLog = new InMemoryLog();
+            var imageReplacer = new KustomizeImageReplacer("", ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be("");
+            result.UpdatedImageReferences.Count.Should().Be(0);
+            inMemoryLog.StandardOut.Should().Contain("Kustomization file content is empty or whitespace only.");
+        }
+
+        [Test]
+        public void UpdateImages_WhitespaceOnlyYamlContent_LogsAppropriateWarning()
+        {
+            const string whitespaceYaml = "   \n  \t  \n  ";
+            var inMemoryLog = new InMemoryLog();
+            var imageReplacer = new KustomizeImageReplacer(whitespaceYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(whitespaceYaml);
+            result.UpdatedImageReferences.Count.Should().Be(0);
+            inMemoryLog.StandardOut.Should().Contain("Kustomization file content is empty or whitespace only.");
+        }
+
+        [Test]
+        public void UpdateImages_MultipleYamlDocuments_LogsAppropriateWarning()
+        {
+            const string multiDocumentYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: nginx
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-config
+";
+            var inMemoryLog = new InMemoryLog();
+            var imageReplacer = new KustomizeImageReplacer(multiDocumentYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(multiDocumentYaml);
+            result.UpdatedImageReferences.Count.Should().Be(0);
+            inMemoryLog.StandardOut.Should().Contain("Kustomization file must contain exactly one YAML document with a mapping root node.");
+        }
+
+        [Test]
+        public void UpdateImages_YamlSequenceAtRoot_LogsAppropriateWarning()
+        {
+            const string sequenceRootYaml = @"
+- name: nginx
+  newTag: '1.25'
+- name: busybox
+  newTag: 'stable'
+";
+            var inMemoryLog = new InMemoryLog();
+            var imageReplacer = new KustomizeImageReplacer(sequenceRootYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(sequenceRootYaml);
+            result.UpdatedImageReferences.Count.Should().Be(0);
+            inMemoryLog.StandardOut.Should().Contain("Kustomization file must contain exactly one YAML document with a mapping root node.");
+        }
+
+        [Test]
+        public void UpdateImages_NoImagesKey_LogsAppropriateWarning()
+        {
+            const string noImagesKeyYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment.yaml
+- service.yaml
+";
+            var inMemoryLog = new InMemoryLog();
+            var imageReplacer = new KustomizeImageReplacer(noImagesKeyYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(noImagesKeyYaml);
+            result.UpdatedImageReferences.Count.Should().Be(0);
+            inMemoryLog.StandardOut.Should().Contain("No 'images' sequence found in kustomization file.");
         }
 
         [Test]
@@ -358,14 +477,13 @@ resources:
 
             var imageReplacer = new KustomizeImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate.Append(ContainerImageReference.FromReferenceString("monopole:100")).ToList());
+            var result = imageReplacer.UpdateImages(imagesToUpdate.Append(new(ContainerImageReference.FromReferenceString("monopole:100"))).ToList());
 
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedContents.Should().Be(expectedYaml);
             result.UpdatedImageReferences.Count.Should().Be(2);
             result.UpdatedImageReferences.Should().ContainSingle(r => r == "monopole:100");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+            result.UpdatedImageReferences.Should().ContainSingle(r => r == "docker.io/nginx:1.25");
         }
     }
 }
-#endif

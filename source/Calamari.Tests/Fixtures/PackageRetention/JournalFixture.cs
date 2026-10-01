@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                 Substitute.For<ILog>(),
                                                 Substitute.For<ICalamariFileSystem>(),
                                                 Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
-                                                Substitute.For<ISemaphoreFactory>()
+                                                Substitute.For<INamedLockManager>()
                                                );
         }
 
@@ -169,7 +169,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
                                                  new []{ retentionAlgorithm },
-                                                 Substitute.For<ISemaphoreFactory>());
+                                                 Substitute.For<INamedLockManager>());
 
             thisJournal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"), 1000);
             thisJournal.ApplyRetention();
@@ -200,7 +200,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
                                                  new []{ retentionAlgorithm },
-                                                 Substitute.For<ISemaphoreFactory>());
+                                                 Substitute.For<INamedLockManager>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
             thisJournal.ApplyRetention();
@@ -231,7 +231,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
                                                  new []{ retentionAlgorithm },
-                                                 Substitute.For<ISemaphoreFactory>());
+                                                 Substitute.For<INamedLockManager>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
             thisJournal.ApplyRetention();
@@ -265,7 +265,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  Substitute.For<ICalamariFileSystem>(),
                                                  Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
-                                                 Substitute.For<ISemaphoreFactory>());
+                                                 Substitute.For<INamedLockManager>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
             Assert.IsFalse(testJournalRepository.HasLock(thePackage));
@@ -301,7 +301,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  Substitute.For<ICalamariFileSystem>(),
                                                  Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
-                                                 Substitute.For<ISemaphoreFactory>());
+                                                 Substitute.For<INamedLockManager>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
             Assert.IsFalse(testJournalRepository.HasLock(packageOne));

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using Calamari.Integration.Certificates.WindowsNative;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
@@ -14,7 +14,6 @@ using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 
 namespace Calamari.Integration.Certificates
 {
-    #if !NETFX
        [Flags]
     public enum CryptoKeyRights
     {
@@ -36,6 +35,7 @@ namespace Calamari.Integration.Certificates
         GenericRead = -2147483648, // 0x80000000
     }
     
+    [SupportedOSPlatform("windows")]
     public sealed class CryptoKeyAccessRule : AccessRule
     {
         public CryptoKeyAccessRule(
@@ -98,6 +98,7 @@ namespace Calamari.Integration.Certificates
         }
     }
     
+    [SupportedOSPlatform("windows")]
     public sealed class CryptoKeySecurity : NativeObjectSecurity
   {
     private const ResourceType s_ResourceType = ResourceType.FileObject;
@@ -182,10 +183,8 @@ namespace Calamari.Integration.Certificates
       {
         AccessControlSections accessControlSections = AccessControlSections.None;
         bool flag = false;
-        RuntimeHelpers.PrepareConstrainedRegions();
         try
         {
-          RuntimeHelpers.PrepareConstrainedRegions();
           try
           {
           }
@@ -213,6 +212,7 @@ namespace Calamari.Integration.Certificates
     }
   }
     
+    [SupportedOSPlatform("windows")]
     public sealed class CryptoKeyAuditRule : AuditRule
     {
         public CryptoKeyAuditRule(
@@ -254,7 +254,8 @@ namespace Calamari.Integration.Certificates
             return (CryptoKeyRights) accessMask;
         }
     }
-#endif
+    
+    [SupportedOSPlatform("windows")]
     public static class CryptoKeySecurityAccessRules
     {
 
@@ -280,6 +281,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
+        [SupportedOSPlatform("windows")]
         static void SetCngPrivateKeySecurity(SafeCertContextHandle certificate, ICollection<PrivateKeyAccessRule> accessRules)
         {
             using (var key = CertificatePal.GetCngPrivateKey(certificate))

@@ -3,7 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml.Linq;
 using Calamari.Common.Features.Deployment.Journal;
-using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.Processes.NamedLocks;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             variables = new VariablesFactory(fileSystem, new SilentLog()).Create(new CommonOptions("test"));
 
-            deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables, new SilentLog());
+            deploymentJournal = new DeploymentJournal(fileSystem, new MutexBasedNamedLockManager(), variables, new SilentLog());
 
             packagesDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
             fileSystem.EnsureDirectoryExists(packagesDirectory);

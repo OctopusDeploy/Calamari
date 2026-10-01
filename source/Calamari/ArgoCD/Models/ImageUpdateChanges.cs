@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.Collections.Generic;
 
@@ -16,4 +15,3 @@ namespace Calamari.ArgoCD.Models
         public IReadOnlySet<string> UpdatedImageReferences { get; }
     }
 }
-#endif
