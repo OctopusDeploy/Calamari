@@ -20,6 +20,7 @@ namespace Calamari.AzureWebApp
     public class NetCoreWebDeploymentExecutor : IWebDeploymentExecutor
     {
         const string ToolName = "Calamari.AzureWebApp.NetCoreShim.exe";
+        static readonly string[] LevelPrefixes = { "VRB|", "DBG|", "INF|", "WRN|", "ERR|", "FTL|" };
 
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
@@ -92,7 +93,7 @@ namespace Calamari.AzureWebApp
                     //if there was an error, we just blow up here as we will have written the errors in the above file
                     if (commandResult.ExitCode != 0)
                     {
-                        throw new Exception(commandResult.ErrorOutput);
+                        throw new Exception(FailureMessage(commandResult.ExitCode, commandResult.ErrorOutput));
                     }
 
                     if (resultMessage == null)
@@ -137,9 +138,37 @@ namespace Calamari.AzureWebApp
             }
         }
 
-        void LogOutputMessage(string msg)
+        // The shim writes its errors to stderr, each line prefixed with its level
+        internal static string FailureMessage(int exitCode, string errorOutput)
+        {
+            var errors = (errorOutput ?? string.Empty)
+                         .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                         .Select(StripLevelPrefix)
+                         .Where(line => !string.IsNullOrWhiteSpace(line))
+                         .Distinct()
+                         .ToArray();
+
+            return errors.Length > 0
+                ? string.Join(Environment.NewLine, errors)
+                : $"{ToolName} exited with code {exitCode} without reporting an error. Check the verbose log for details.";
+        }
+
+        static string StripLevelPrefix(string line)
+        {
+            var prefix = LevelPrefixes.FirstOrDefault(p => line.StartsWith(p, StringComparison.Ordinal));
+            return prefix == null ? line : line[prefix.Length..];
+        }
+
+        internal void LogOutputMessage(string msg)
         {
             var firstIndex = msg.IndexOf("|", StringComparison.Ordinal);
+            if (firstIndex < 0)
+            {
+                // Not written by the shim's logger (e.g. a runtime error), so there is no level to go by
+                log.Verbose(msg);
+                return;
+            }
+
             var level = msg[..firstIndex];
             var message = msg[(firstIndex + 1)..];
 
@@ -164,6 +193,9 @@ namespace Calamari.AzureWebApp
                 case "ERR":
                 case "FTL":
                     log.Error(message);
+                    break;
+                default:
+                    log.Verbose(msg);
                     break;
             }
         }
