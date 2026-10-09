@@ -5,6 +5,7 @@ namespace Calamari.Common.Plumbing.Variables
     public static class ActionVariables
     {
         public const string Name = "Octopus.Action.Name";
+        public const string Slug = "Octopus.Action.Slug";
         public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
 
         public static readonly string StructuredConfigurationVariablesTargets = "Octopus.Action.Package.JsonConfigurationVariablesTargets";
