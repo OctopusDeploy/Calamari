@@ -74,7 +74,7 @@ public class PromptInjectionGuard
 
     void ReportUsage(InjectionCheckResult result)
     {
-        log.Info($"Prompt-injection check used {result.InputTokens?.ToString() ?? "unknown"} input tokens and {result.OutputTokens?.ToString() ?? "unknown"} output tokens (model '{result.Model}').");
+        log.Verbose($"Prompt-injection check used {result.InputTokens?.ToString() ?? "unknown"} input tokens and {result.OutputTokens?.ToString() ?? "unknown"} output tokens (model '{result.Model}').");
         usageReporter.AddModelUsage(new[]
         {
             new ClaudeCodeModelUsage
