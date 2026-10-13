@@ -63,6 +63,9 @@ public class AnthropicInjectionCheckClient
         if (string.Equals(message.StopReason, "refusal", StringComparison.OrdinalIgnoreCase))
             throw new InjectionCheckException("The injection-check model refused the request.");
 
+        if (string.Equals(message.StopReason, "max_tokens", StringComparison.OrdinalIgnoreCase))
+            throw new InjectionCheckException($"The injection-check model ran out of output tokens after {message.Usage?.OutputTokens?.ToString() ?? "unknown"} tokens (max tokens is {options.MaxTokens}).");
+
         var verdictJson = message.Content?.FirstOrDefault(b => b.Type == "text")?.Text;
         if (string.IsNullOrWhiteSpace(verdictJson))
             throw new InjectionCheckException("The injection-check model returned no verdict content.");
