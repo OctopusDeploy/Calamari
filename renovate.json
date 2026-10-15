@@ -1,3 +1,109 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "timezone": "Australia/Brisbane",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "minimumReleaseAge": "3 days",
+  "ignorePaths": [
+    "source/Calamari.Tests/Fixtures/**",
+    "publish/**",
+    "**/bin/**",
+    "**/obj/**"
+  ],
+  "vulnerabilityAlerts": {
+    "description": "Advisories jump the weekly queue and carry their own label",
+    "enabled": true,
+    "labels": [
+      "dependencies",
+      "security"
+    ],
+    "schedule": [
+      "at any time"
+    ],
+    "minimumReleaseAge": null
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Majors wait for a tick on the dependency dashboard",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "One PR for the AWS SDK, which versions its packages in lockstep",
+      "matchPackageNames": [
+        "AWSSDK.**"
+      ],
+      "groupName": "AWS SDK"
+    },
+    {
+      "description": "One PR for the Azure SDK and the identity library it depends on",
+      "matchPackageNames": [
+        "Azure.**",
+        "Microsoft.Identity.Client"
+      ],
+      "groupName": "Azure SDK"
+    },
+    {
+      "description": "One PR for the NuGet client libraries",
+      "matchPackageNames": [
+        "NuGet.**"
+      ],
+      "groupName": "NuGet client"
+    },
+    {
+      "description": "One PR for test-only dependencies",
+      "matchPackageNames": [
+        "Assent",
+        "FluentAssertions",
+        "Microsoft.Extensions.TimeProvider.Testing",
+        "Microsoft.NET.Test.Sdk",
+        "NSubstitute",
+        "NUnit",
+        "NUnit3TestAdapter",
+        "TeamCity.VSTest.TestAdapter",
+        "TestStack.BDDfy",
+        "WireMock.Net",
+        "nunit"
+      ],
+      "groupName": "test dependencies"
+    },
+    {
+      "description": "One PR for Serilog and its sinks",
+      "matchPackageNames": [
+        "Serilog",
+        "Serilog.**"
+      ],
+      "groupName": "Serilog"
+    },
+    {
+      "description": "One PR for Octopus packages. Most resolve from feedz.io, so they stay quiet until the runner has credentials for that feed",
+      "matchPackageNames": [
+        "Octopus.**",
+        "Octostache"
+      ],
+      "groupName": "Octopus packages"
+    },
+    {
+      "description": "Workflow actions move slowly and are pinned by digest to match the existing pin on renovatebot/github-action",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions",
+      "pinDigests": true,
+      "schedule": [
+        "before 6am on the first day of the month"
+      ]
+    }
+  ]
 }
