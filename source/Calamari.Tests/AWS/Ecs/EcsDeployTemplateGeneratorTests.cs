@@ -166,6 +166,56 @@ public class EcsDeployTemplateGeneratorTests
         var resultJson = GenerateTemplateFromVariables(variables);
         JToken.DeepEquals(resultJson, expectedJson).Should().BeTrue();
     }
+
+    [Test]
+    public void WithExplicitServiceName_SetsServiceNameFromParameter()
+    {
+        var variables = MinimalVariables();
+        variables.Add(AwsSpecialVariables.Ecs.Deploy.ServiceName, "my-explicit-service");
+
+        var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeEcsImageResolver, fakeLog);
+        var template = new EcsDeployTemplateGenerator(inputs).Generate();
+        var resultJson = JObject.Parse(template.Body);
+
+        resultJson["Parameters"]![EcsTemplateParameterNames.ServiceName]!["Default"]!.Value<string>().Should().Be("my-explicit-service");
+        resultJson["Resources"]![inputs.ServiceName]!["Properties"]!["ServiceName"]!["Ref"]!.Value<string>().Should().Be(EcsTemplateParameterNames.ServiceName);
+        template.Parameters.Should().ContainSingle(p => p.ParameterKey == EcsTemplateParameterNames.ServiceName && p.ParameterValue == "my-explicit-service");
+    }
+
+    [Test]
+    public void WithoutExplicitServiceName_LeavesServiceNameForCloudFormationToGenerate()
+    {
+        var inputs = new DeployEcsCommandInputs(MinimalVariables(), fakeStackNameGenerator, fakeEcsImageResolver, fakeLog);
+        var resultJson = JObject.Parse(new EcsDeployTemplateGenerator(inputs).Generate().Body);
+
+        resultJson["Parameters"]![EcsTemplateParameterNames.ServiceName].Should().BeNull();
+        resultJson["Resources"]![inputs.ServiceName]!["Properties"]!["ServiceName"].Should().BeNull();
+    }
+
+    static CalamariVariables MinimalVariables() => new()
+    {
+        { AwsSpecialVariables.Ecs.Deploy.StackName, "test-stack" },
+        { AwsSpecialVariables.Ecs.ClusterName, "TestCluster" },
+        { DeploymentEnvironment.Id, "Environment-1" },
+        { AwsSpecialVariables.Ecs.Deploy.ServiceTaskName, "my-task" },
+        { AwsSpecialVariables.Ecs.Deploy.Cpu, "256" },
+        { AwsSpecialVariables.Ecs.Deploy.Memory, "512" },
+        { AwsSpecialVariables.Ecs.Deploy.RuntimeArchitecturePlatform, "X86_64" },
+        { AwsSpecialVariables.Ecs.Deploy.DesiredCount, "1" },
+        { AwsSpecialVariables.Ecs.Deploy.MinimumHealthPercent, "100" },
+        { AwsSpecialVariables.Ecs.Deploy.MaximumHealthPercent, "200" },
+        { AwsSpecialVariables.Ecs.Deploy.AutoAssignPublicIp, "False" },
+        { AwsSpecialVariables.Ecs.Deploy.EnableEcsManagedTags, "False" },
+        { AwsSpecialVariables.Ecs.WaitOption, """{ "type": "DontWait" }""" },
+        { AwsSpecialVariables.Ecs.Deploy.SecurityGroupIds, """["sg-1"]""" },
+        { AwsSpecialVariables.Ecs.Deploy.SubnetIds, """["subnet-1"]""" },
+        { AwsSpecialVariables.Ecs.Deploy.TaskExecutionRole, "arn:aws:iam::123456789012:role/ecsTaskExecutionRole" },
+        { AwsSpecialVariables.Ecs.Tags, "[]" },
+        { AwsSpecialVariables.Ecs.Deploy.LoadBalancerMappings, "[]" },
+        { AwsSpecialVariables.Ecs.Deploy.Volumes, "[]" },
+        { AwsSpecialVariables.Ecs.Deploy.Containers, """[{"containerName":"web","containerImageReference":{"referenceId":"ref-1","imageName":"nginx","feedId":"Feeds-1"},"repositoryAuthentication":{"type":"Default"},"containerPortMappings":[],"essential":"True","environmentFiles":[],"environmentVariables":[],"networkSettings":{"disableNetworking":"False","dnsServers":[],"dnsSearchDomains":[],"extraHosts":[]},"containerStorage":{"readOnlyRootFileSystem":"False","mountPoints":[],"volumeFrom":[]},"containerLogging":{"type":"Manual","logDriver":"None","logOptions":[]},"firelensConfiguration":{"type":"Disabled","enableEcsLogMetadata":""},"dockerLabels":[],"healthCheck":{"command":[]},"dependencies":[],"ulimits":[]}]""" },
+    };
+
     JObject GenerateTemplateFromVariables(CalamariVariables variables)
     {
         var inputs = new DeployEcsCommandInputs(variables, fakeStackNameGenerator, fakeEcsImageResolver, fakeLog);
