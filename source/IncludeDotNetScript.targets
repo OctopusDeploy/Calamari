@@ -3,6 +3,15 @@
     <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
         <ItemGroup>
             <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
+            <!--
+                Overwrites the runtimeconfig.json extracted from the zip. The upstream file requests
+                Microsoft.NETCore.App 8.0.0 with no rollForward, so the default Minor policy binds to
+                an 8.x runtime and nothing else: dotnet-script fails to launch (exit 150) on a target
+                that only has a newer runtime, and stays on .NET 8 on a target that has both.
+                Ours adds "rollForward": "LatestMajor". Keep it in sync with the zip when the
+                bundled dotnet-script version changes - the rest of the file is upstream's.
+            -->
+            <DotnetScriptRuntimeConfig Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.runtimeconfig.json"/>
         </ItemGroup>
     </Target>
     <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
@@ -10,6 +19,7 @@
             <DotnetScriptFilesExe Include="$(OutputPath)/dotnet-script/*.sh;$(OutputPath)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
+        <Copy SourceFiles="@(DotnetScriptRuntimeConfig)" DestinationFolder="$(OutputPath)/dotnet-script/" />
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 
@@ -18,6 +28,7 @@
             <DotnetScriptFilesExe Include="$(PublishDir)/dotnet-script/*.sh;$(PublishDir)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
+        <Copy SourceFiles="@(DotnetScriptRuntimeConfig)" DestinationFolder="$(PublishDir)/dotnet-script/" />
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 </Project>
