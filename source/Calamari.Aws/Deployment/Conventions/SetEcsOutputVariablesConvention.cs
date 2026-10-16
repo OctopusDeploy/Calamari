@@ -43,9 +43,13 @@ public class SetEcsOutputVariablesConvention(
                 StackName = stackName
             });
 
-            return response.StackResources
-                           ?.FirstOrDefault(r => r.ResourceType == "AWS::ECS::Service")
-                           ?.LogicalResourceId;
+            var service = response.StackResources?.FirstOrDefault(r => r.ResourceType == "AWS::ECS::Service");
+            if (service != null)
+            {
+                log.Info($"ECS service \"{service.PhysicalResourceId}\" deployed as resource \"{service.LogicalResourceId}\" in stack \"{stackName}\".");
+            }
+
+            return service?.LogicalResourceId;
         }
         catch (Exception ex)
         {
