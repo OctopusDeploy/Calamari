@@ -95,16 +95,61 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             throw new CommandException(string.Format("dotnet-script was not found at '{0}'", executable));
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters, string? nugetSource = null)
+        // dotnet-script 2.0 makes the isolated assembly load context the default and replaces the
+        // opt-in flag with an opt-out. Isolation is what makes native NuGet assets work (SQLite,
+        // SkiaSharp, Microsoft.Data.SqlClient - dotnet-script #763), and it also gives a script the
+        // package version it asked for rather than whichever version dotnet-script itself carries.
+        // The cost is that a type loaded via Assembly.LoadFrom is no longer reference-equal to the
+        // same type in the script's own closure. This flag restores the pre-2.0 behaviour.
+        // 1.6.0 does not recognise the flag, so it must not be passed to a customer's own
+        // locally-installed copy blindly - see RemoveLegacyIsolatedLoadContextFlag.
+        internal const string DisableIsolatedLoadContextArgument = "--disable-isolated-load-context";
+
+        // The 1.6.0 opt-in flag. 2.0 no longer recognises it, and dotnet-script forwards
+        // unrecognised options into the *script's* argument list rather than rejecting them
+        // (measured on both 1.6.0 and 2.0.1, silently and with exit 0). Left in place it would push
+        // every script argument along by one, so Env.ScriptArgs[0] becomes "--isolated-load-context".
+        internal const string LegacyIsolatedLoadContextArgument = "--isolated-load-context";
+
+        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters, string? nugetSource = null, bool disableIsolatedLoadContext = false)
         {
             var (scriptCommandArguments, scriptArguments) = RetrieveParameterValues(scriptParameters);
+            scriptCommandArguments = RemoveLegacyIsolatedLoadContextFlag(scriptCommandArguments);
             var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var source = string.IsNullOrWhiteSpace(nugetSource) ? "https://api.nuget.org/v3/index.json" : nugetSource;
             var commandArguments = new StringBuilder();
             commandArguments.Append($"-s {source} ");
+            if (disableIsolatedLoadContext) commandArguments.Append($"{DisableIsolatedLoadContextArgument} ");
             if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
             commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptArguments, encryptionKey);
             return commandArguments.ToString();
+        }
+
+        /// <summary>
+        /// Drops the 1.6.0 --isolated-load-context flag from a step's script parameters. Isolation is
+        /// the default from 2.0 on, so removing the flag preserves exactly what the customer asked
+        /// for; leaving it in would instead inject the literal string as their script's first
+        /// argument. Compares whole tokens so --disable-isolated-load-context is left alone.
+        /// </summary>
+        internal static string? RemoveLegacyIsolatedLoadContextFlag(string? scriptCommandArguments)
+        {
+            if (string.IsNullOrWhiteSpace(scriptCommandArguments)
+                || scriptCommandArguments!.IndexOf(LegacyIsolatedLoadContextArgument, StringComparison.OrdinalIgnoreCase) < 0)
+                return scriptCommandArguments;
+
+            var kept = scriptCommandArguments.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                                             .Where(token => !token.Equals(LegacyIsolatedLoadContextArgument, StringComparison.OrdinalIgnoreCase));
+
+            return string.Join(" ", kept);
+        }
+
+        public static bool HasLegacyIsolatedLoadContextFlag(string? scriptParameters)
+        {
+            var (scriptCommandArguments, _) = RetrieveParameterValues(scriptParameters);
+
+            return !string.IsNullOrWhiteSpace(scriptCommandArguments)
+                   && scriptCommandArguments!.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                                             .Any(token => token.Equals(LegacyIsolatedLoadContextArgument, StringComparison.OrdinalIgnoreCase));
         }
 
         [return: NotNullIfNotNull("scriptParameters")]
