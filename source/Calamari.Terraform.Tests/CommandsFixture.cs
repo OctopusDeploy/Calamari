@@ -493,6 +493,58 @@ namespace Calamari.Terraform.Tests
         }
 
         [Test]
+        public async Task GoogleCloudIntegrationWithGcsBackend()
+        {
+            var bucketName = $"e2e-tf-state-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+
+            var environmentJsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
+            var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
+
+            void PopulateAccountVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add("Octopus.Action.Terraform.GoogleCloudAccount", bool.TrueString);
+                _.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", jsonKey);
+            }
+
+            // The state bucket is created with local state, then used as the backend for a second template
+            using var bucketFolder = TemporaryDirectory.Create();
+            CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloudBackendBucket"), bucketFolder.DirectoryPath);
+
+            void PopulateBucketVariables(CommandTestBuilderContext _)
+            {
+                PopulateAccountVariables(_);
+                _.Variables.Add("bucket_name", bucketName);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, bucketFolder.DirectoryPath);
+            }
+
+            await ExecuteAndReturnResult(applyCommand, PopulateBucketVariables, bucketFolder.DirectoryPath);
+
+            try
+            {
+                using var backendFolder = TemporaryDirectory.Create();
+                CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloudBackend"), backendFolder.DirectoryPath);
+
+                void PopulateBackendVariables(CommandTestBuilderContext _)
+                {
+                    PopulateAccountVariables(_);
+                    _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, $"-backend-config=bucket={bucketName} -backend-config=prefix=calamari-test");
+                    _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, backendFolder.DirectoryPath);
+                }
+
+                // Only succeeds if the step's Google Cloud account credentials reach the gcs backend
+                var output = await ExecuteAndReturnResult(applyCommand, PopulateBackendVariables, backendFolder.DirectoryPath);
+                output.OutputVariables["TerraformValueOutputs[message]"].Value.Should().Be("Hello from a gcs backend");
+
+                await ExecuteAndReturnResult(destroyCommand, PopulateBackendVariables, backendFolder.DirectoryPath);
+            }
+            finally
+            {
+                await ExecuteAndReturnResult(destroyCommand, PopulateBucketVariables, bucketFolder.DirectoryPath);
+            }
+        }
+
+        [Test]
         public async Task AzureIntegration()
         {
             var resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
