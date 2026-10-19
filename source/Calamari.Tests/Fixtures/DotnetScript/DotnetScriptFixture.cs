@@ -112,7 +112,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 
         [TestCase(true)]
         [TestCase(false)]
-        public void UsingDisablingIsolatedAssemblyLoadContext(bool disableIsolatedLoadContext)
+        public void IsolatedLoadContext(bool disableIsolatedLoadContext)
         {
             var (output, _) = RunScript("IsolatedLoadContext.csx",
                                         new Dictionary<string, string>()
@@ -120,17 +120,30 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                                             [SpecialVariables.Action.Script.CSharp.BypassIsolation] = disableIsolatedLoadContext.ToString(),
                                             [SpecialVariables.Action.Script.ScriptParameters] = "-- Parameter0 Parameter1",
                                         });
-            if (disableIsolatedLoadContext)
-            {
-                output.AssertFailure();
-                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.1.5");
-            }
-            else
-            {
-                output.AssertSuccess();
-                output.AssertOutput("NuGet.Commands version: 6.10.1.5");
-                output.AssertOutput("Parameters Parameter0Parameter1");
-            }
+            output.AssertSuccess();
+            output.AssertOutput("Parameters Parameter0Parameter1");
+
+            //when isolated load context is disabled, the `NuGet.Commands` version will
+            //be the version bundled with dotnet-script, not the version we defined in our script
+            var expectedVersion = disableIsolatedLoadContext
+                ? "6.14.3.1"
+                : "6.10.1.5";
+            
+            output.AssertOutput($"NuGet.Commands version: {expectedVersion}");
+        }
+        
+        [Test]
+        public void LegacyIsolatedLoadContextFlag_IsStrippedAndDoesNotReachTheScriptsArguments()
+        {
+            var (output, _) = RunScript("IsolatedLoadContext.csx",
+                new Dictionary<string, string>()
+                {
+                    [SpecialVariables.Action.Script.ScriptParameters] = "--isolated-load-context -- Parameter0 Parameter1",
+                });
+
+            output.AssertSuccess();
+            output.AssertOutput("NuGet.Commands version: 6.10.1.5");
+            output.AssertOutput("Parameters Parameter0Parameter1");
         }
     }
 }
