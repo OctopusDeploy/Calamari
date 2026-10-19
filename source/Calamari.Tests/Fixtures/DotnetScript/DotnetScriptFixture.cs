@@ -112,23 +112,24 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 
         [TestCase(true)]
         [TestCase(false)]
-        public void UsingIsolatedAssemblyLoadContext(bool enableIsolatedLoadContext)
+        public void UsingDisablingIsolatedAssemblyLoadContext(bool disableIsolatedLoadContext)
         {
             var (output, _) = RunScript("IsolatedLoadContext.csx",
                                         new Dictionary<string, string>()
                                         {
-                                            [SpecialVariables.Action.Script.ScriptParameters] = $"{(enableIsolatedLoadContext ? "--isolated-load-context " : "")}-- Parameter0 Parameter1",
+                                            [SpecialVariables.Action.Script.CSharp.BypassIsolation] = disableIsolatedLoadContext.ToString(),
+                                            [SpecialVariables.Action.Script.ScriptParameters] = "-- Parameter0 Parameter1",
                                         });
-            if (enableIsolatedLoadContext)
+            if (disableIsolatedLoadContext)
+            {
+                output.AssertFailure();
+                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.1.5");
+            }
+            else
             {
                 output.AssertSuccess();
                 output.AssertOutput("NuGet.Commands version: 6.10.1.5");
                 output.AssertOutput("Parameters Parameter0Parameter1");
-            }
-            else
-            {
-                output.AssertFailure();
-                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.1.5");
             }
         }
     }
