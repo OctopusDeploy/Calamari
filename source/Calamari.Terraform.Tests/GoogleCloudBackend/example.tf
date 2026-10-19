@@ -1,8 +1,16 @@
 terraform {
-  # Configured with -backend-config so the bucket can be created by the test
-  backend "gcs" {}
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "5.35.0"
+    }
+  }
 }
 
-output "message" {
-  value = "Hello from a gcs backend"
+resource "google_storage_bucket" "state" {
+  name                        = "#{bucket_name}"
+  project                     = "octopus-api-tester"
+  location                    = "AUSTRALIA-SOUTHEAST1"
+  force_destroy               = true
+  uniform_bucket_level_access = true
 }
