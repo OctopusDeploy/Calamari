@@ -539,6 +539,27 @@ namespace Calamari.Terraform.Tests
             }
         }
 
+        [TestCase(null, "Set GOOGLE_BACKEND_CREDENTIALS with JSON key for test@example.com")]
+        [TestCase("{}", "Did not set GOOGLE_BACKEND_CREDENTIALS because GOOGLE_CREDENTIALS is set")]
+        public void GoogleCredentialsMappingTakesPriorityForGcsBackend(string? mappedGoogleCredentials, string expectedLog)
+        {
+            var log = ExecuteAndReturnLogOutput(applyCommand,
+                                                _ =>
+                                                {
+                                                    _.Variables.Add("Octopus.Action.Terraform.GoogleCloudAccount", bool.TrueString);
+                                                    _.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(@"{""client_email"": ""test@example.com""}")));
+                                                    if (mappedGoogleCredentials != null)
+                                                        _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
+                                                                        JsonConvert.SerializeObject(new Dictionary<string, string> { { "GOOGLE_CREDENTIALS", mappedGoogleCredentials } }));
+                                                    _.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
+                                                    _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "");
+                                                    _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, "");
+                                                },
+                                                String.Empty);
+
+            log.Should().Contain(expectedLog);
+        }
+
         [Test]
         public async Task AzureIntegration()
         {

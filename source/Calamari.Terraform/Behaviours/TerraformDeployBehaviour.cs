@@ -38,6 +38,7 @@ namespace Calamari.Terraform.Behaviours
             var useAWSAccount = variables.Get(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "None") == "AWS";
             var useAzureAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount);
             var useGoogleCloudAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.GoogleCloudAccount);
+            var stepEnvironmentVariables = GetEnvironmentVariableArgs(variables);
 
             if (useAWSAccount)
             {
@@ -53,10 +54,12 @@ namespace Calamari.Terraform.Behaviours
             if (useGoogleCloudAccount)
             {
                 var oauthFileConfiguration = new GcloudOAuthFileConfiguration(context.CurrentDirectory);
-                environmentVariables.AddRange(GoogleCloudEnvironmentVariables(variables, oauthFileConfiguration));
+                stepEnvironmentVariables.TryGetValue("GOOGLE_CREDENTIALS", out var mappedGoogleCredentials);
+                var googleCredentialsSet = !string.IsNullOrEmpty(mappedGoogleCredentials) || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GOOGLE_CREDENTIALS"));
+                environmentVariables.AddRange(GoogleCloudEnvironmentVariables(variables, oauthFileConfiguration, googleCredentialsSet));
             }
 
-            environmentVariables.AddRange(GetEnvironmentVariableArgs(variables));
+            environmentVariables.AddRange(stepEnvironmentVariables);
 
             await Execute(context, environmentVariables);
         }
@@ -72,7 +75,7 @@ namespace Calamari.Terraform.Behaviours
 
         protected abstract Task Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables);
 
-        Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables, GcloudOAuthFileConfiguration oauthFileConfiguration)
+        Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables, GcloudOAuthFileConfiguration oauthFileConfiguration, bool googleCredentialsSet)
         {
             // See https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/provider_reference#full-reference
             var googleCloudEnvironmentVariables = new Dictionary<string, string>();
@@ -95,7 +98,14 @@ namespace Calamari.Terraform.Behaviours
                 log.Verbose($"Set GOOGLE_CLOUD_KEYFILE_JSON with {description}");
 
                 // The gcs backend doesn't read GOOGLE_CLOUD_KEYFILE_JSON, only its own variable or GOOGLE_CREDENTIALS.
+                // GOOGLE_CREDENTIALS already wins over the account for the provider, so leave the backend reading it too.
                 // See https://developer.hashicorp.com/terraform/language/backend/gcs
+                if (googleCredentialsSet)
+                {
+                    log.Verbose("Did not set GOOGLE_BACKEND_CREDENTIALS because GOOGLE_CREDENTIALS is set");
+                    return;
+                }
+
                 googleCloudEnvironmentVariables.Add("GOOGLE_BACKEND_CREDENTIALS", json);
                 log.Verbose($"Set GOOGLE_BACKEND_CREDENTIALS with {description}");
             }
