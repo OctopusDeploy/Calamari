@@ -514,9 +514,10 @@ namespace Calamari.Terraform.Tests
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, bucketFolder.DirectoryPath);
             }
 
-            await ExecuteAndReturnResult(applyCommand, PopulateBucketVariables, bucketFolder.DirectoryPath);
             try
             {
+                await ExecuteAndReturnResult(applyCommand, PopulateBucketVariables, bucketFolder.DirectoryPath);
+
                 // Fails at terraform init unless the account's credentials reach the gcs backend
                 await ExecuteAndReturnResult(applyCommand,
                                              _ =>
