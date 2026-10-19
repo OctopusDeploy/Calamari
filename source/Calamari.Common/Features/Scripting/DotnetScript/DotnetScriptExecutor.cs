@@ -33,15 +33,21 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var nugetSource = variables.Get("Octopus.Action.Script.CSharp.NuGetSource");
-            var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters, nugetSource);
-            bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.BypassIsolation", "false"), out var bypassDotnetScriptIsolation);
+            var bypassIsolation = bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.BypassIsolation", "false"), out var bypass) && bypass;
 
+            if (DotnetScriptBootstrapper.HasLegacyIsolatedLoadContextFlag(script.Parameters))
+                Log.Verbose($"Ignoring '{DotnetScriptBootstrapper.LegacyIsolatedLoadContextArgument}' in the script parameters: "
+                            + "the isolated assembly load context is the default from dotnet-script 2.0 on, so the flag is "
+                            + $"redundant. Set Octopus.Action.Script.CSharp.BypassIsolation to true to turn isolation off instead.");
+            
+            var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters, nugetSource, bypassIsolation);
+            
             var cli = CreateCommandLineInvocation(executable, arguments, !string.IsNullOrWhiteSpace(localDotnetScriptPath));
             cli.EnvironmentVars = environmentVars;
             cli.WorkingDirectory = workingDirectory;
-            cli.Isolate = !bypassDotnetScriptIsolation;
+            cli.Isolate = !bypassIsolation;
 
-            yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
+            yield return new ScriptExecution(cli, otherTemporaryFiles.Concat([bootstrapFile, configurationFile]));
         }
         
         private string GetExecutable(string? localDotnetScriptPath, string bundledExecutable)
