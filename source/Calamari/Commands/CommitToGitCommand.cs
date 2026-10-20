@@ -253,6 +253,7 @@ public class CommitToGitCommand : Command
         foreach (var (sourceFile, destRelativePath) in filesToTarget)
         {
             var destFile = Path.Combine(depDestBase, destRelativePath);
+            log.Verbose($"Copying '{Path.GetRelativePath(deployment.CurrentDirectory, sourceFile)}' -> '{Path.GetRelativePath(clonedRepository.WorkingDirectory, destFile)}'");
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(destFile)!);
             fileSystem.CopyFile(sourceFile, destFile);
         }
