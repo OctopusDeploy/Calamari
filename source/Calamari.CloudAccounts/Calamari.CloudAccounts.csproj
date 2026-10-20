@@ -22,7 +22,7 @@
       <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.20" />
       <PackageReference Include="AWSSDK.ECR" Version="4.0.100.7" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-      <PackageReference Include="Microsoft.Identity.Client" Version="4.90.0" />
+      <PackageReference Include="Microsoft.Identity.Client" Version="4.91.1" />
     </ItemGroup>
 
 </Project>
