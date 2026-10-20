@@ -24,6 +24,15 @@ public class DeployEcsServiceConvention(DeployEcsCommandInputs commandInputs, Aw
     
     public void Install(RunningDeployment deployment)
     {
+        if (string.IsNullOrEmpty(commandInputs.ExplicitServiceName))
+        {
+            log.Verbose("No ECS service name supplied; CloudFormation will generate one.");
+        }
+        else
+        {
+            log.Info($"Using ECS service name \"{commandInputs.ExplicitServiceName}\".");
+        }
+
         var generated = templateGenerator.Generate();
         var stackEventLogger = new StackEventLogger(log);
 

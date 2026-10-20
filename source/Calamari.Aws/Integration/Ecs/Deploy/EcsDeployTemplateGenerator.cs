@@ -42,6 +42,11 @@ public class EcsDeployTemplateGenerator(DeployEcsCommandInputs commandInputs)
         // differs from the default — matching SPF, which keeps the template lean
         // when defaults are in use and parameterises only what's been customised.
 
+        if (!string.IsNullOrEmpty(commandInputs.ExplicitServiceName))
+        {
+            list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.ServiceName, commandInputs.ExplicitServiceName));
+        }
+
         if (!string.IsNullOrEmpty(commandInputs.TaskRole))
         {
             list.Add(EcsTemplateParameter.Of(EcsTemplateParameterNames.TaskRole, commandInputs.TaskRole));

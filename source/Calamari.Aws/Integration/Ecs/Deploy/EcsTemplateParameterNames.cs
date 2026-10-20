@@ -8,6 +8,7 @@ namespace Calamari.Aws.Integration.Ecs.Deploy;
 public static class EcsTemplateParameterNames
 {
     public const string ClusterName = "ClusterName";
+    public const string ServiceName = "ServiceName";
     public const string TaskDefinitionName = "TaskDefinitionName";
     public const string TaskDefinitionCpu = "TaskDefinitionCPU";
     public const string TaskDefinitionMemory = "TaskDefinitionMemory";
