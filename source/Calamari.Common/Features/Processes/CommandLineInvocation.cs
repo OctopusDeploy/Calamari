@@ -44,6 +44,11 @@ namespace Calamari.Common.Features.Processes
         public bool OutputAsVerbose { get; set; }
 
         /// <summary>
+        /// Use UTF-8 encoding for standard output and error streams.
+        /// </summary>
+        public bool UseUTF8 { get; set; }
+
+        /// <summary>
         /// Add a non-standard output destination for the execution output
         /// </summary>
         public ICommandInvocationOutputSink? AdditionalInvocationOutputSink { get; set; }
