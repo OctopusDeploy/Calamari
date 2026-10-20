@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git log *)",
+      "mcp__linear__list_comments",
+      "mcp__linear__get_issue",
+      "Bash(grep -E \"\\\\.\\(cs|ps1\\)$\")"
+    ]
+  }
+}

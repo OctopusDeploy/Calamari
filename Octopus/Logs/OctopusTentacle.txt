@@ -1,0 +1,83 @@
+2026-08-10 22:57:34.7259   2618      1  INFO  Tentacle version 9.2.4243 (9.2.4243) instance Default
+2026-08-10 22:57:34.7315   2618      1  INFO  Environment Information:
+  OperatingSystem: Ubuntu 24.04.4 LTS
+  OsBitVersion: x64
+  Is64BitProcess: True
+  CurrentUser: root
+  MachineName: c10poll
+  ProcessorCount: 15
+  CurrentDirectory: /Users/nickj/dev/Calamari.2
+  TempDirectory: /tmp/
+  HostProcessName: Tentacle
+  PID: 2618
+2026-08-10 22:57:34.7647   2618      1  INFO  ==== VersionCommand ====
+2026-08-10 22:57:34.7651   2618      1  INFO  CommandLine: /opt/octopus/tentacle/Tentacle.dll version
+2026-08-10 22:57:34.8634   2630      1  INFO  Tentacle version 9.2.4243 (9.2.4243) instance c10poll
+2026-08-10 22:57:34.8684   2630      1  INFO  Environment Information:
+  OperatingSystem: Ubuntu 24.04.4 LTS
+  OsBitVersion: x64
+  Is64BitProcess: True
+  CurrentUser: root
+  MachineName: c10poll
+  ProcessorCount: 15
+  CurrentDirectory: /Users/nickj/dev/Calamari.2
+  TempDirectory: /tmp/
+  HostProcessName: Tentacle
+  PID: 2630
+2026-08-10 22:57:34.8997   2630      1  INFO  ==== CreateInstanceCommand ====
+2026-08-10 22:57:34.8997   2630      1  INFO  CommandLine: /opt/octopus/tentacle/Tentacle.dll create-instance --instance c10poll --config /etc/octopus/c10poll/tentacle.config
+2026-08-10 22:57:34.8997   2630      1  INFO  Creating empty configuration file: /etc/octopus/c10poll/tentacle.config
+2026-08-10 22:57:34.9209   2630      1  INFO  Saving instance: c10poll
+2026-08-10 22:57:34.9209   2630      1  INFO  Setting home directory to: /etc/octopus/c10poll
+2026-08-10 22:57:35.0385   2643      1  INFO  Tentacle version 9.2.4243 (9.2.4243) instance c10poll
+2026-08-10 22:57:35.0438   2643      1  INFO  Environment Information:
+  OperatingSystem: Ubuntu 24.04.4 LTS
+  OsBitVersion: x64
+  Is64BitProcess: True
+  CurrentUser: root
+  MachineName: c10poll
+  ProcessorCount: 15
+  CurrentDirectory: /Users/nickj/dev/Calamari.2
+  TempDirectory: /tmp/
+  HostProcessName: Tentacle
+  PID: 2643
+2026-08-10 22:57:35.0966   2643      1  INFO  Changing log folder from Octopus/Logs to /etc/octopus/c10poll/Logs
+2026-08-10 22:57:35.8522   2659      1  INFO  Tentacle version 9.2.4243 (9.2.4243) instance c10poll
+2026-08-10 22:57:35.8575   2659      1  INFO  Environment Information:
+  OperatingSystem: Ubuntu 24.04.4 LTS
+  OsBitVersion: x64
+  Is64BitProcess: True
+  CurrentUser: root
+  MachineName: c10poll
+  ProcessorCount: 15
+  CurrentDirectory: /Users/nickj/dev/Calamari.2
+  TempDirectory: /tmp/
+  HostProcessName: Tentacle
+  PID: 2659
+2026-08-10 22:57:35.9130   2659      1  INFO  Changing log folder from Octopus/Logs to /etc/octopus/c10poll/Logs
+2026-08-10 22:57:55.7115   2681      1  INFO  Tentacle version 9.2.4243 (9.2.4243) instance c10poll
+2026-08-10 22:57:55.7174   2681      1  INFO  Environment Information:
+  OperatingSystem: Ubuntu 24.04.4 LTS
+  OsBitVersion: x64
+  Is64BitProcess: True
+  CurrentUser: root
+  MachineName: c10poll
+  ProcessorCount: 15
+  CurrentDirectory: /Users/nickj/dev/Calamari.2
+  TempDirectory: /tmp/
+  HostProcessName: Tentacle
+  PID: 2681
+2026-08-10 22:57:55.7769   2681      1  INFO  Changing log folder from Octopus/Logs to /etc/octopus/c10poll/Logs
+2026-08-10 22:58:27.8821   2704      1  INFO  Tentacle version 9.2.4243 (9.2.4243) instance c10poll
+2026-08-10 22:58:27.8879   2704      1  INFO  Environment Information:
+  OperatingSystem: Ubuntu 24.04.4 LTS
+  OsBitVersion: x64
+  Is64BitProcess: True
+  CurrentUser: root
+  MachineName: c10poll
+  ProcessorCount: 15
+  CurrentDirectory: /Users/nickj/dev/Calamari.2
+  TempDirectory: /tmp/
+  HostProcessName: Tentacle
+  PID: 2704
+2026-08-10 22:58:27.9536   2704      1  INFO  Changing log folder from Octopus/Logs to /etc/octopus/c10poll/Logs

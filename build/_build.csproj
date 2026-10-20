@@ -27,9 +27,9 @@
         <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
         <!-- Pinned to remediate vulnerable versions pulled in transitively via Octopus.Nuke.Common.
              The .NET 10 SDK audits transitive packages during restore, so these surface as NU1902/NU1903. -->
-        <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.10" />
+        <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
-        <PackageReference Include="RestSharp" Version="112.1.0" />
+        <PackageReference Include="RestSharp" Version="114.0.0" />
         <PackageReference Include="NuGet.CommandLine" Version="7.0.3">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
