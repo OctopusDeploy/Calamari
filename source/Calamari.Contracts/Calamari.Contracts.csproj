@@ -16,6 +16,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
+      <PackageReference Include="Octopus.TinyTypes" Version="3.1.1" />
     </ItemGroup>
 </Project>
