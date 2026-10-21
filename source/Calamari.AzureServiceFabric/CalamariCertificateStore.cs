@@ -160,7 +160,7 @@ namespace Calamari.AzureServiceFabric
         {
             try
             {
-                var cert = new X509Certificate2(file, password, flags);
+                var cert = X509CertificateLoader.LoadPkcs12FromFile(file, password, flags);
 
                 // ReSharper disable once InvertIf
                 if (!HasPrivateKey(cert) && requirePrivateKey)
