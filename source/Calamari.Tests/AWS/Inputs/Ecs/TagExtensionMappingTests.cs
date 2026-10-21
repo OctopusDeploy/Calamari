@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.AWS.Inputs.Ecs;
 
@@ -8,6 +9,6 @@ public class TagExtensionMappingTests
     [Test]
     public void ToCloudFormationTags()
     {
-            Assert.IsFalse(false);
+            ClassicAssert.IsFalse(false);
     }
 }

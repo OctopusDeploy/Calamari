@@ -17,6 +17,7 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
@@ -369,7 +370,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, variables) = RunPowerShellScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
-            Assert.AreEqual("World!", variables.Get("TestA"));
+            ClassicAssert.AreEqual("World!", variables.Get("TestA"));
             AssertPowerShellEdition(output);
         }
 
@@ -379,7 +380,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, variables) = RunPowerShellScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
-            Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
+            ClassicAssert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
             AssertPowerShellEdition(output);
         }
 
@@ -417,7 +418,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             {
                 [ActionVariables.Name] = "run-script"
             });
-            Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
+            ClassicAssert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
             AssertPowerShellEdition(output);
         }
 
@@ -430,7 +431,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 [MachineVariables.Name] = "App01"
             });
 
-            Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
+            ClassicAssert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
             AssertPowerShellEdition(output);
         }
 

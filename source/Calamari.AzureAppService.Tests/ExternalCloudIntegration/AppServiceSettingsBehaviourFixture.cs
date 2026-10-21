@@ -14,6 +14,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
 {
@@ -211,8 +212,8 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
             {
                 var existingItem = existingConnectionStrings.Properties[item.Key];
 
-                Assert.AreEqual(existingItem.Value, item.Value.Value);
-                Assert.AreEqual(existingItem.ConnectionStringType, item.Value.ConnectionStringType);
+                ClassicAssert.AreEqual(existingItem.Value, item.Value.Value);
+                ClassicAssert.AreEqual(existingItem.ConnectionStringType, item.Value.ConnectionStringType);
             }
             //CollectionAssert.AreEquivalent(existingConnectionStrings.Properties, connStrings.Properties);
         }

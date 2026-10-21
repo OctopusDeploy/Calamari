@@ -18,6 +18,7 @@ using FluentAssertions;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Tests.Fixtures.Nginx
@@ -245,16 +246,16 @@ namespace Calamari.Tests.Fixtures.Nginx
             Assert.That(nginxTempDirectory, Is.Not.Empty);
             
             var tempConfPath = Path.Combine(nginxTempDirectory, confDirectory);
-            Assert.IsTrue(Directory.Exists(tempConfPath));
+            ClassicAssert.IsTrue(Directory.Exists(tempConfPath));
             
             var exactRootConf = Path.Combine(tempConfPath, $"{packageId}.conf");
-            Assert.IsTrue(File.Exists(exactRootConf));
+            ClassicAssert.IsTrue(File.Exists(exactRootConf));
 
             var rootConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", "location.0.conf");
-            Assert.IsTrue(File.Exists(rootConf));
+            ClassicAssert.IsTrue(File.Exists(rootConf));
 
             var apiConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", "location.1api.conf");
-            Assert.IsTrue(File.Exists(apiConf));
+            ClassicAssert.IsTrue(File.Exists(apiConf));
             
             this.Assent(File.ReadAllText(exactRootConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.rootLocation");
             this.Assent(File.ReadAllText(rootConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.0");
@@ -292,12 +293,12 @@ namespace Calamari.Tests.Fixtures.Nginx
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{nginxServer.VirtualServerName}.conf.d");
             
             // The two additional locations must be files in the conf.d directory 
-            Assert.IsTrue(Directory.GetFiles(nginxConfigFilePath).Length == 2);
+            ClassicAssert.IsTrue(Directory.GetFiles(nginxConfigFilePath).Length == 2);
             // Ensure there is a single file and a single directory in the nginx conf directory. This ensures that there are no unexpected subdirectories.
-            Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf")).Length == 1);
-            Assert.IsTrue(Directory.GetDirectories(Path.Combine(tempDirectory, "conf")).Length == 1);
+            ClassicAssert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf")).Length == 1);
+            ClassicAssert.IsTrue(Directory.GetDirectories(Path.Combine(tempDirectory, "conf")).Length == 1);
             // Ensure the filename matches the expected format.
-            Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf"))[0].EndsWith($"{nginxServer.VirtualServerName}.conf"));
+            ClassicAssert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf"))[0].EndsWith($"{nginxServer.VirtualServerName}.conf"));
         }
 
         (string, string, string) GetCertificateDetails()

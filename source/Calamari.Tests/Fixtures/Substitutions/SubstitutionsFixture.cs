@@ -11,6 +11,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Substitutions
 {
@@ -67,7 +68,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var text = PerformTest(GetFixtureResource("Samples", "ParserErrors.txt"), variables).text;
 
             // Environment.Newline returning \r\n when running tests on mono, but \n on dotnet core, just replace
-            Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\nthe quick brown replaced fox jumps over the lazy #{dog #{", text.Replace("\r\n", "\n"));
+            ClassicAssert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\nthe quick brown replaced fox jumps over the lazy #{dog #{", text.Replace("\r\n", "\n"));
         }
 
         [Test]
@@ -82,9 +83,9 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var result = PerformTest(filePath, variables);
 
             var input = FileSystem.ReadFile(filePath, out var inputEncoding);
-            Assert.AreEqual("utf-16", inputEncoding.WebName);
-            Assert.AreEqual("utf-16", result.encoding.WebName);
-            Assert.AreEqual(2, result.encoding.GetPreamble().Length); // BOM detected
+            ClassicAssert.AreEqual("utf-16", inputEncoding.WebName);
+            ClassicAssert.AreEqual("utf-16", result.encoding.WebName);
+            ClassicAssert.AreEqual(2, result.encoding.GetPreamble().Length); // BOM detected
             result.text.Should().Contain("banknames.ora");
             result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "SpongeBob"));
@@ -103,9 +104,9 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var result = PerformTest(filePath, variables);
 
             var input = FileSystem.ReadFile(filePath, out var inputEncoding);
-            Assert.AreEqual("utf-16", inputEncoding.WebName);
-            Assert.AreEqual("utf-8", result.encoding.WebName);
-            Assert.AreEqual(3, result.encoding.GetPreamble().Length); // BOM detected
+            ClassicAssert.AreEqual("utf-16", inputEncoding.WebName);
+            ClassicAssert.AreEqual("utf-8", result.encoding.WebName);
+            ClassicAssert.AreEqual(3, result.encoding.GetPreamble().Length); // BOM detected
             result.text.Should().Contain("banknames.ora");
             result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "SpongeBob"));
@@ -123,8 +124,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var result = PerformTest(filePath, variables);
 
             FileSystem.ReadFile(filePath, out var inputEncoding);
-            Assert.AreEqual("utf-16", inputEncoding.WebName);
-            Assert.AreEqual("utf-16", result.encoding.WebName);
+            ClassicAssert.AreEqual("utf-16", inputEncoding.WebName);
+            ClassicAssert.AreEqual("utf-16", result.encoding.WebName);
             result.text.Should().MatchRegex(@"\bFile1=banknames.ora\b");
         }
 
@@ -134,8 +135,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var filePath = GetFixtureResource("Samples", "UTF8.txt");
 
             var text = FileSystem.ReadFile(filePath, out var encoding);
-            Assert.AreEqual(0, encoding.GetPreamble().Length); // No BOM detected
-            Assert.AreEqual("utf-8", encoding.WebName);
+            ClassicAssert.AreEqual(0, encoding.GetPreamble().Length); // No BOM detected
+            ClassicAssert.AreEqual("utf-8", encoding.WebName);
             text.Should().Contain("\u03C0"); // Pi
         }
 
@@ -145,8 +146,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var filePath = GetFixtureResource("Samples", "UTF8BOM.txt");
 
             var text = FileSystem.ReadFile(filePath, out var encoding);
-            Assert.AreEqual(3, encoding.GetPreamble().Length); // BOM detected
-            Assert.AreEqual("utf-8", encoding.WebName);
+            ClassicAssert.AreEqual(3, encoding.GetPreamble().Length); // BOM detected
+            ClassicAssert.AreEqual("utf-8", encoding.WebName);
             text.Should().Contain("\u03C0"); // Pi
         }
 
@@ -196,8 +197,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var result = PerformTest(filePath, variables);
 
             var input = File.ReadAllText(filePath, Encoding.UTF8);
-            Assert.AreEqual(0, result.encoding.GetPreamble().Length); // No BOM detected
-            Assert.AreEqual("utf-8", result.encoding.WebName);
+            ClassicAssert.AreEqual(0, result.encoding.GetPreamble().Length); // No BOM detected
+            ClassicAssert.AreEqual("utf-8", result.encoding.WebName);
             result.text.Should().Contain("\u03C0"); // Pi
             result.text.Should().MatchRegex(@"[^\r]\n"); // Unix LF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "SpongeBob"));
@@ -215,8 +216,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var result = PerformTest(filePath, variables);
 
             var input = File.ReadAllText(filePath, Encoding.UTF8);
-            Assert.AreEqual(3, result.encoding.GetPreamble().Length); // BOM detected
-            Assert.AreEqual("utf-8", result.encoding.WebName);
+            ClassicAssert.AreEqual(3, result.encoding.GetPreamble().Length); // BOM detected
+            ClassicAssert.AreEqual("utf-8", result.encoding.WebName);
             result.text.Should().Contain("\u03C0"); // Pi
             result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "SpongeBob"));
@@ -234,8 +235,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var result = PerformTest(filePath, variables);
 
             var input = File.ReadAllText(filePath, Encoding.ASCII);
-            Assert.AreEqual(0, result.encoding.GetPreamble().Length); // No BOM detected
-            Assert.AreEqual("utf-8", result.encoding.WebName);
+            ClassicAssert.AreEqual(0, result.encoding.GetPreamble().Length); // No BOM detected
+            ClassicAssert.AreEqual("utf-8", result.encoding.WebName);
             result.text.Should().Contain(@"plain old ASCII");
             result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "Sp\u00F6ngeB\u00F6b"));
@@ -253,8 +254,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var result = PerformTest(filePath, variables);
 
             var input = File.ReadAllText(filePath, AnsiEncoding);
-            Assert.AreEqual(0, result.encoding.GetPreamble().Length); // No BOM detected
-            Assert.AreEqual("utf-8", result.encoding.WebName);
+            ClassicAssert.AreEqual(0, result.encoding.GetPreamble().Length); // No BOM detected
+            ClassicAssert.AreEqual("utf-8", result.encoding.WebName);
             result.text.Should().Contain("\u00F7"); // Division sign
             result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "Sp\u0151ngeB\u0151b"));
