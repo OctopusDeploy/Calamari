@@ -5,6 +5,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -25,7 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
             result.AssertOutput("Using custom helm executable at " + HelmExePath);
 
-            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+            ClassicAssert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
 
         [Test]
@@ -54,7 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
             result.AssertOutput("Using custom helm executable at " + HelmExePath);
 
-            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+            ClassicAssert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
             result.AssertOutputMatches("Resource Status Check: Performing resource status checks on the following resources:");
             result.AssertOutputMatches($"- v1/ConfigMap/mychart-configmap-{ReleaseName}");
@@ -92,7 +93,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 result.AssertOutputMatches("STATUS: deployed");
                 result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
 
-                Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+                ClassicAssert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
                 result.AssertOutputMatches("Octopus needs Helm v3.13 or later to display object status and manifests.");
 
@@ -119,7 +120,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches("STATUS: deployed");
             result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
 
-            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+            ClassicAssert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
             result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");
             result.AssertOutputMatches($"Retrieved an empty manifest for {ReleaseName}");
@@ -147,7 +148,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches("STATUS: deployed");
             result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
 
-            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+            ClassicAssert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
             result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");
             result.AssertOutputMatches($"Retrieved an empty manifest for {ReleaseName}");

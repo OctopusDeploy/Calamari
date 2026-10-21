@@ -2,6 +2,7 @@
 using Calamari.Azure;
 using Calamari.CloudAccounts;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Azure
 {
@@ -23,7 +24,7 @@ namespace Calamari.Tests.Azure
             var (_, tokenCredentialOptions) = servicePrincipalAccount.GetArmClientOptions();
 
             // Assert
-            Assert.AreEqual(new Uri(expectedAuthorityHost), tokenCredentialOptions.AuthorityHost);
+            ClassicAssert.AreEqual(new Uri(expectedAuthorityHost), tokenCredentialOptions.AuthorityHost);
         }
 
         [Test]
@@ -42,7 +43,7 @@ namespace Calamari.Tests.Azure
             var (armClientOptions, _) = servicePrincipalAccount.GetArmClientOptions();
 
             // Assert
-            Assert.AreEqual(new Uri(expectedManagementEndpoint), armClientOptions.Environment.Value.Endpoint);
+            ClassicAssert.AreEqual(new Uri(expectedManagementEndpoint), armClientOptions.Environment.Value.Endpoint);
         }
 
         private AzureServicePrincipalAccount GetAccountFor(string azureCloud)

@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             ResetProxyEnvironmentVariables();
         }
 
-        [Test, Order(1)]
+        [Test]
         public virtual void Initialize_NoSystemProxy_NoProxy()
         {
             var result = RunWith(false, "", 80, "", "");
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             AssertProxyBypassed(result);
         }
 
-        [Test, Order(2)]
+        [Test]
         public virtual void Initialize_NoSystemProxy_UseSystemProxy()
         {
             var result = RunWith(true, "", 80, "", "");
@@ -49,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             AssertNoProxyChanges(result);
         }
 
-        [Test, Order(3)]
+        [Test]
         public virtual void Initialize_NoSystemProxy_UseSystemProxyWithCredentials()
         {
             var result = RunWith(true, "", 80, ProxyUserName, ProxyPassword);
@@ -57,7 +57,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             AssertNoProxyChanges(result);
         }
 
-        [Test, Order(4)]
+        [Test]
         public virtual void Initialize_NoSystemProxy_CustomProxy()
         {
             var result = RunWith(false, proxyHost, proxyPort, "", "");
@@ -65,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             AssertUnauthenticatedProxyUsed(result);
         }
 
-        [Test, Order(5)]
+        [Test]
         public virtual void Initialize_NoSystemProxy_CustomProxyWithCredentials()
         {
             var result = RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword);

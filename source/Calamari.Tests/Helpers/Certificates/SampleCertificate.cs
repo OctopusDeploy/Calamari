@@ -5,6 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Linq;
 using System.Runtime.Versioning;
 using Calamari.Testing.Helpers;
@@ -109,7 +110,7 @@ namespace Calamari.Tests.Helpers.Certificates
 
         public void AssertCertificateIsInStore(string storeName, StoreLocation storeLocation)
         {
-            Assert.NotNull(GetCertificateFromStore(storeName, storeLocation),
+            ClassicAssert.NotNull(GetCertificateFromStore(storeName, storeLocation),
                 $"Could not find certificate with thumbprint {Thumbprint} in store {storeLocation}\\{storeName}");
         }
 
@@ -133,7 +134,7 @@ namespace Calamari.Tests.Helpers.Certificates
             var found = accessRules.Cast<CryptoKeyAccessRule>()
                                    .Any(x => x.IdentityReference.Value == identifier.Value && x.CryptoKeyRights.HasFlag(right));
 
-            Assert.True(found, $"Identity '{identifier}' does not have access right '{right}' to private-key");
+            ClassicAssert.True(found, $"Identity '{identifier}' does not have access right '{right}' to private-key");
         }
         
 

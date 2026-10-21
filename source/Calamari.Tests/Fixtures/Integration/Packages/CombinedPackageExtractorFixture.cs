@@ -9,6 +9,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using TestCommandLineRunner = Calamari.Testing.Helpers.TestCommandLineRunner;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
@@ -23,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var combinedExtractor = CreateCombinedPackageExtractor();
             var specificExtractor = combinedExtractor.GetExtractor(filename);
 
-            Assert.AreEqual(expectedType, specificExtractor.GetType());
+            ClassicAssert.AreEqual(expectedType, specificExtractor.GetType());
         }
 
         static IEnumerable<object> PackageNameTestCases()

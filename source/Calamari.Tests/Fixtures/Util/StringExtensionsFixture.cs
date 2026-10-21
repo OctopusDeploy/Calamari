@@ -5,6 +5,7 @@ using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Util
 {
@@ -21,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Util
         [Test]
         public void ShouldContainString(string originalString, string value, bool expected)
         {
-            Assert.AreEqual(expected, originalString.ContainsIgnoreCase(value));
+            ClassicAssert.AreEqual(expected, originalString.ContainsIgnoreCase(value));
         }
 
         [Test]
@@ -41,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Util
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void AsRelativePathFrom(string source, string baseDirectory, string expected)
         {
-            Assert.AreEqual(expected, source.AsRelativePathFrom(baseDirectory));
+            ClassicAssert.AreEqual(expected, source.AsRelativePathFrom(baseDirectory));
         }
 
         [TestCase("a\n", true)]

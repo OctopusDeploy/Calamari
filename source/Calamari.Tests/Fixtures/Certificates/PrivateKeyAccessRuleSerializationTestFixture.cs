@@ -5,6 +5,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
@@ -21,11 +22,11 @@ namespace Calamari.Tests.Fixtures.Certificates
             ]";
             var result = PrivateKeyAccessRule.FromJson(json).ToList();
 
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("BUILTIN\\Administrators", result[0].Identity);
-            Assert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
-            Assert.AreEqual("BUILTIN\\Users", result[1].Identity);
-            Assert.AreEqual(PrivateKeyAccess.ReadOnly, result[1].Access);
+            ClassicAssert.AreEqual(2, result.Count);
+            ClassicAssert.AreEqual("BUILTIN\\Administrators", result[0].Identity);
+            ClassicAssert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
+            ClassicAssert.AreEqual("BUILTIN\\Users", result[1].Identity);
+            ClassicAssert.AreEqual(PrivateKeyAccess.ReadOnly, result[1].Access);
         }
 
         [Test]
@@ -40,9 +41,9 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             var result = ImportCertificateCommand.GetPrivateKeyAccessRules(variables).ToList();
 
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("AmericanEagles\\RogerRamjet", result[0].Identity);
-            Assert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
+            ClassicAssert.AreEqual(1, result.Count);
+            ClassicAssert.AreEqual("AmericanEagles\\RogerRamjet", result[0].Identity);
+            ClassicAssert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
         }
     }
 }

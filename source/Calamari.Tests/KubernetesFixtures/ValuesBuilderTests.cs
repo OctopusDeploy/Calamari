@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Kubernetes.Helm;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -29,7 +30,7 @@ namespace Calamari.Tests.KubernetesFixtures
     mat: true
 size: 21
 ".Replace("\r\n", "\n").Replace("\n", Environment.NewLine);;
-            Assert.AreEqual(expect, yaml);
+            ClassicAssert.AreEqual(expect, yaml);
         }
     }
 }

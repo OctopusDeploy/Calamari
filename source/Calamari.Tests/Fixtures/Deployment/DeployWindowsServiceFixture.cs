@@ -16,6 +16,7 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.Win32;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -41,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             RunDeployment();
 
-            Assert.IsTrue(File.Exists(Path.Combine(installDir, $"{ServiceName}.exe")), "Installed in the right location");
+            ClassicAssert.IsTrue(File.Exists(Path.Combine(installDir, $"{ServiceName}.exe")), "Installed in the right location");
         }
 
         [Test]
@@ -54,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             RunDeployment();
 
-            Assert.IsTrue(File.Exists(Path.Combine(installDir, $"{ServiceName}.exe")), "Installed in the right location");
+            ClassicAssert.IsTrue(File.Exists(Path.Combine(installDir, $"{ServiceName}.exe")), "Installed in the right location");
         }
 
         [Test]

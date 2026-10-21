@@ -8,6 +8,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.ConfigurationVariables
 {
@@ -46,9 +47,9 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
 
             var contents = XDocument.Parse(text);
 
-            Assert.AreEqual("Hello world", contents.XPathSelectElement("//*[local-name()='appSettings']/*[local-name()='add'][@key='WelcomeMessage']").Attribute("value").Value);
-            Assert.AreEqual("C:\\Log.txt", contents.XPathSelectElement("//*[local-name()='appSettings']/*[local-name()='add'][@key='LogFile']").Attribute("value").Value);
-            Assert.AreEqual("", contents.XPathSelectElement("//*[local-name()='appSettings']/*[local-name()='add'][@key='DatabaseConnection']").Attribute("value").Value);
+            ClassicAssert.AreEqual("Hello world", contents.XPathSelectElement("//*[local-name()='appSettings']/*[local-name()='add'][@key='WelcomeMessage']").Attribute("value").Value);
+            ClassicAssert.AreEqual("C:\\Log.txt", contents.XPathSelectElement("//*[local-name()='appSettings']/*[local-name()='add'][@key='LogFile']").Attribute("value").Value);
+            ClassicAssert.AreEqual("", contents.XPathSelectElement("//*[local-name()='appSettings']/*[local-name()='add'][@key='DatabaseConnection']").Attribute("value").Value);
         }
 
         [Test]
@@ -62,9 +63,9 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
 
             var contents = XDocument.Parse(text);
 
-            Assert.AreEqual("Hello world", contents.XPathSelectElement("//appSettings/add[@key='WelcomeMessage']").Attribute("value").Value);
-            Assert.AreEqual("C:\\Log.txt", contents.XPathSelectElement("//appSettings/add[@key='LogFile']").Attribute("value").Value);
-            Assert.AreEqual("", contents.XPathSelectElement("//appSettings/add[@key='DatabaseConnection']").Attribute("value").Value);
+            ClassicAssert.AreEqual("Hello world", contents.XPathSelectElement("//appSettings/add[@key='WelcomeMessage']").Attribute("value").Value);
+            ClassicAssert.AreEqual("C:\\Log.txt", contents.XPathSelectElement("//appSettings/add[@key='LogFile']").Attribute("value").Value);
+            ClassicAssert.AreEqual("", contents.XPathSelectElement("//appSettings/add[@key='DatabaseConnection']").Attribute("value").Value);
         }
 
         [Test]
@@ -78,7 +79,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
 
             var contents = XDocument.Parse(text);
 
-            Assert.AreEqual("Hello world", contents.XPathSelectElement("//AppSettings.Properties.Settings/setting[@name='WelcomeMessage']/value").Value);
+            ClassicAssert.AreEqual("Hello world", contents.XPathSelectElement("//AppSettings.Properties.Settings/setting[@name='WelcomeMessage']/value").Value);
         }
 
         [Test]
@@ -91,8 +92,8 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
 
             var contents = XDocument.Parse(text);
 
-            Assert.AreEqual("Server=foo", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb1']").Attribute("connectionString").Value);
-            Assert.AreEqual("Server=bar&bar=123", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb2']").Attribute("connectionString").Value);
+            ClassicAssert.AreEqual("Server=foo", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb1']").Attribute("connectionString").Value);
+            ClassicAssert.AreEqual("Server=bar&bar=123", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb2']").Attribute("connectionString").Value);
         }
 
         [Test]
