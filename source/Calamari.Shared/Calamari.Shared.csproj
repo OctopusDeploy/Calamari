@@ -32,9 +32,9 @@
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
-    <PackageReference Include="Octopus.Octodiff" Version="2.0.547" />
-    <PackageReference Include="Octopus.Versioning" Version="5.1.884" />
-    <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
+    <PackageReference Include="Octopus.Octodiff" Version="2.0.550" />
+    <PackageReference Include="Octopus.Versioning" Version="5.1.885" />
+    <PackageReference Include="Octopus.CoreUtilities" Version="2.1.564" />
     <PackageReference Include="Octostache" Version="3.9.4" />
     <PackageReference Include="SharpCompress" Version="0.49.1" />
     <PackageReference Include="Sprache" Version="2.3.1" />
