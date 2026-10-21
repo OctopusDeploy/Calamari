@@ -56,14 +56,14 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("Hello.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            ["Name"] = "Paul",
-                                            ["Variable2"] = "DEF",
-                                            ["Variable3"] = "GHI",
-                                            ["Foo_bar"] = "Hello",
-                                            ["Host"] = "Never",
-                                        });
+                new Dictionary<string, string>()
+                {
+                    ["Name"] = "Paul",
+                    ["Variable2"] = "DEF",
+                    ["Variable3"] = "GHI",
+                    ["Foo_bar"] = "Hello",
+                    ["Host"] = "Never",
+                });
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
@@ -74,11 +74,11 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("Hello.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            ["Name"] = "NameToEncrypt",
-                                        },
-                                        sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+                new Dictionary<string, string>()
+                {
+                    ["Name"] = "NameToEncrypt",
+                },
+                sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
@@ -88,10 +88,10 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("Parameters.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
-                                        });
+                new Dictionary<string, string>()
+                {
+                    [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
+                });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Parameter1");
@@ -101,10 +101,10 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         public void ShouldConsumeParametersWithoutParametersPrefix()
         {
             var (output, _) = RunScript("Parameters.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
-                                        });
+                new Dictionary<string, string>()
+                {
+                    [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
+                });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
@@ -115,11 +115,11 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         public void IsolatedLoadContext(bool disableIsolatedLoadContext)
         {
             var (output, _) = RunScript("IsolatedLoadContext.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            [SpecialVariables.Action.Script.CSharp.BypassIsolation] = disableIsolatedLoadContext.ToString(),
-                                            [SpecialVariables.Action.Script.ScriptParameters] = "-- Parameter0 Parameter1",
-                                        });
+                new Dictionary<string, string>()
+                {
+                    [SpecialVariables.Action.Script.CSharp.BypassIsolation] = disableIsolatedLoadContext.ToString(),
+                    [SpecialVariables.Action.Script.ScriptParameters] = "-- Parameter0 Parameter1",
+                });
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
 
@@ -128,10 +128,10 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             var expectedVersion = disableIsolatedLoadContext
                 ? "6.14.3.1"
                 : "6.10.1.5";
-            
+
             output.AssertOutput($"NuGet.Commands version: {expectedVersion}");
         }
-        
+
         [Test]
         public void LegacyIsolatedLoadContextFlag_IsStrippedAndDoesNotReachTheScriptsArguments()
         {
@@ -142,6 +142,23 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                 });
 
             output.AssertSuccess();
+            output.AssertOutput("the isolated assembly load context is the default from dotnet-script 2.0 on, so the flag is redundant");
+            output.AssertOutput("NuGet.Commands version: 6.10.1.5");
+            output.AssertOutput("Parameters Parameter0Parameter1");
+        }
+
+        [Test]
+        public void LegacyIsolatedLoadContextFlag_LogsVerboseMessageWhenBypassIsolationAlsoSet()
+        {
+            var (output, _) = RunScript("IsolatedLoadContext.csx",
+                new Dictionary<string, string>()
+                {
+                    [SpecialVariables.Action.Script.CSharp.BypassIsolation] = bool.TrueString,
+                    [SpecialVariables.Action.Script.ScriptParameters] = "--isolated-load-context -- Parameter0 Parameter1",
+                });
+
+            output.AssertSuccess();
+            output.AssertOutput("also turns off the isolated assembly load context");
             output.AssertOutput("NuGet.Commands version: 6.10.1.5");
             output.AssertOutput("Parameters Parameter0Parameter1");
         }

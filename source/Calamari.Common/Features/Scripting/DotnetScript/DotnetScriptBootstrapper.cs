@@ -142,7 +142,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             }
 
             var remaining = commandArguments.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries)
-                                            .Where(x => !x.Equals(LegacyIsolatedLoadContextArgument, StringComparison.OrdinalIgnoreCase));
+                                            .Where(x => !x.Equals(flag, StringComparison.OrdinalIgnoreCase));
 
             return string.Join(' ', remaining);
         }

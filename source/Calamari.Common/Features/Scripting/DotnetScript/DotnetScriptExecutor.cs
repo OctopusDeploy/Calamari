@@ -35,10 +35,19 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var nugetSource = variables.Get("Octopus.Action.Script.CSharp.NuGetSource");
             var bypassIsolation = bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.BypassIsolation", "false"), out var bypass) && bypass;
 
-            if (DotnetScriptBootstrapper.HasLegacyIsolatedLoadContextFlag(script.Parameters))
+            var hasLegacyIsolatedLoadContextFlag = DotnetScriptBootstrapper.HasLegacyIsolatedLoadContextFlag(script.Parameters);
+
+            // Before dotnet-script 2.0 these two settings were independent, so a step could bypass the script lock and still ask for
+            // the isolated load context. BypassIsolation now turns both off, so warn rather than silently dropping the isolation request.
+            if (hasLegacyIsolatedLoadContextFlag && bypassIsolation)
+                Log.Warn($"Ignoring '{DotnetScriptBootstrapper.LegacyIsolatedLoadContextArgument}' in the script parameters: "
+                         + "Octopus.Action.Script.CSharp.BypassIsolation is set to true, which from dotnet-script 2.0 on also turns off the "
+                         + "isolated assembly load context. If this script needs isolation, remove Octopus.Action.Script.CSharp.BypassIsolation; "
+                         + "isolation is the default without it.");
+            else if (hasLegacyIsolatedLoadContextFlag)
                 Log.Verbose($"Ignoring '{DotnetScriptBootstrapper.LegacyIsolatedLoadContextArgument}' in the script parameters: "
                             + "the isolated assembly load context is the default from dotnet-script 2.0 on, so the flag is "
-                            + $"redundant. Set Octopus.Action.Script.CSharp.BypassIsolation to true to turn isolation off instead.");
+                            + "redundant. Set Octopus.Action.Script.CSharp.BypassIsolation to true to turn isolation off instead.");
             
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters, nugetSource, bypassIsolation);
             
