@@ -12,7 +12,7 @@
         <PackageReference Include="FluentAssertions" Version="7.2.0" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
         <PackageReference Include="NUnit" Version="3.14.0" />
-        <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+        <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
         <PackageReference Include="Octopus.1Password.Sdk" Version="0.0.127"/>
         <!-- Pinned to remediate the vulnerable RestSharp 110.2.0 pulled in transitively via
              Octopus.1Password.Sdk (GHSA-4rr6-2v9v-wcpc). -->
