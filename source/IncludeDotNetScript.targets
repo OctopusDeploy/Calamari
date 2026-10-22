@@ -3,6 +3,11 @@
     <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
         <ItemGroup>
             <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
+            <!--
+                Overrides the bundled runtimeconfig to set the rollForward policy
+                When updating dotnet-script, we should verify that the other parts of the config still match
+            -->
+            <DotnetScriptRuntimeConfig Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.runtimeconfig.json"/>
         </ItemGroup>
     </Target>
     <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
@@ -10,6 +15,7 @@
             <DotnetScriptFilesExe Include="$(OutputPath)/dotnet-script/*.sh;$(OutputPath)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
+        <Copy SourceFiles="@(DotnetScriptRuntimeConfig)" DestinationFolder="$(OutputPath)/dotnet-script/" OverwriteReadOnlyFiles="true" />
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 
@@ -18,6 +24,7 @@
             <DotnetScriptFilesExe Include="$(PublishDir)/dotnet-script/*.sh;$(PublishDir)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
+        <Copy SourceFiles="@(DotnetScriptRuntimeConfig)" DestinationFolder="$(PublishDir)/dotnet-script/" OverwriteReadOnlyFiles="true" />
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 </Project>

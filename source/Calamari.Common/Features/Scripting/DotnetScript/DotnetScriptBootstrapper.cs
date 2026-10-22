@@ -25,6 +25,13 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         static readonly Regex ScriptParameterArgumentsRegex = new Regex(@"^(?<scriptCommandArgs>.*)\s*--\s(?<scriptArgs>.*)$", RegexOptions.Compiled);
+
+        // dotnet-script 2.0 makes the isolated assembly load context the default and replaces the opt-in flag with an opt-out flag.
+        public const string DisableIsolatedLoadContextArgument = "--disable-isolated-load-context";
+
+        // The 1.6.0 opt-in flag that 2.0 no longer recognises
+        public const string LegacyIsolatedLoadContextArgument = "--isolated-load-context";
+
         static DotnetScriptBootstrapper()
         {
             BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".Bootstrap.csx");
@@ -47,14 +54,13 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             foreach (var executableName in executableNames)
             {
                 var (_, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
-                                                                       environmentVars,
-                                                                       CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
-                                                                       executableName);
-                
+                    environmentVars,
+                    CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
+                    executableName);
+
                 var hasDotnetScriptMessage = commandOutput.Messages
                                                           .Where(m => m.Level == Level.Verbose)
-                                                          .FirstOrDefault(m => m.Text.Contains("dotnet-script") && 
-                                                                               (bundledPath == null || !m.Text.Contains(bundledPath)));
+                                                          .FirstOrDefault(m => m.Text.Contains("dotnet-script") && (bundledPath == null || !m.Text.Contains(bundledPath)));
 
                 if (hasDotnetScriptMessage != null)
                 {
@@ -92,19 +98,53 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             if (File.Exists(executable))
                 return executable;
 
-            throw new CommandException(string.Format("dotnet-script was not found at '{0}'", executable));
+            throw new CommandException($"dotnet-script was not found at '{executable}'");
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters, string? nugetSource = null)
+        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters, string? nugetSource = null, bool disableIsolatedLoadContext = false)
         {
             var (scriptCommandArguments, scriptArguments) = RetrieveParameterValues(scriptParameters);
+
+            //remove the legacy flag because it does NOTHING!
+            scriptCommandArguments = RemoveFlag(scriptCommandArguments, LegacyIsolatedLoadContextArgument);
+
             var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var source = string.IsNullOrWhiteSpace(nugetSource) ? "https://api.nuget.org/v3/index.json" : nugetSource;
             var commandArguments = new StringBuilder();
             commandArguments.Append($"-s {source} ");
-            if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
-            commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptArguments, encryptionKey);
+
+            if (disableIsolatedLoadContext)
+            {
+                commandArguments.Append($"{DisableIsolatedLoadContextArgument} ");
+            }
+            
+            if (!string.IsNullOrWhiteSpace(scriptCommandArguments))
+            {
+                commandArguments.Append($"{scriptCommandArguments} ");
+            }
+
+            commandArguments.Append($"\"{bootstrapFile}\" -- {scriptArguments} \"{encryptionKey}\"");
             return commandArguments.ToString();
+        }
+
+        public static bool HasLegacyIsolatedLoadContextFlag(string? parameters)
+        {
+            var (commandArguments, _) = RetrieveParameterValues(parameters);
+
+            return !string.IsNullOrWhiteSpace(commandArguments) && commandArguments.Contains(LegacyIsolatedLoadContextArgument, StringComparison.OrdinalIgnoreCase);
+        }
+
+        static string? RemoveFlag(string? commandArguments, string flag)
+        {
+            if (string.IsNullOrWhiteSpace(commandArguments) || !commandArguments.Contains(LegacyIsolatedLoadContextArgument, StringComparison.OrdinalIgnoreCase))
+            {
+                return commandArguments;
+            }
+
+            var remaining = commandArguments.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries)
+                                            .Where(x => !x.Equals(flag, StringComparison.OrdinalIgnoreCase));
+
+            return string.Join(' ', remaining);
         }
 
         [return: NotNullIfNotNull("scriptParameters")]
@@ -148,7 +188,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName); 
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName);
                     var moduleFileName = $"{name}.csx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load \"{1}\"`.", libraryScriptModuleName, moduleFileName, name);
