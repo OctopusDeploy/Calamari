@@ -306,8 +306,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             {
                 var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles",
                     "3-cert-chain.pfx");
-                var certificateCollection = new X509Certificate2Collection();
-                certificateCollection.Import(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
+                var certificateCollection = X509CertificateLoader.LoadPkcs12CollectionFromFile(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
 
                 var certificate = certificateCollection.First();
                 var certificatePem = new string(PemEncoding.Write("CERTIFICATE", certificate.RawData));
