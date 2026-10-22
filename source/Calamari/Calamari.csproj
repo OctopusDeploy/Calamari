@@ -39,7 +39,6 @@
     <PackageReference Include="Octopus.TinyTypes" Version="3.1.1" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.564" />
     <PackageReference Include="SharpCompress" Version="0.49.1" />
-    <PackageReference Include="System.Text.Json" Version="10.0.13" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="Autofac" Version="9.3.4" />
     <PackageReference Include="KubernetesClient" Version="17.0.14" />
