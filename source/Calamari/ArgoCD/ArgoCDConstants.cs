@@ -38,6 +38,13 @@ namespace Calamari.ArgoCD
                 ? OctopusTenantAnnotationKeyPrefix 
                 : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
             
+            // The public "step" annotation contains an action slug, called a step slug in the UI.
+            // See https://confluence.hq.octopus.com/wiki/spaces/RND/pages/4714235203/ADR+028+Use+action+slugs+for+step+scoping for more details
+            static readonly string OctopusStepAnnotationKeyPrefix = $"{Prefix}/step";
+            public static string OctopusStepAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusStepAnnotationKeyPrefix 
+                : $"{OctopusStepAnnotationKeyPrefix}.{sourceName}";
+
             static readonly string OctopusPathAnnotationKeyPrefix = $"{Prefix}/path";
             public static string OctopusPathAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusPathAnnotationKeyPrefix 
@@ -49,7 +56,8 @@ namespace Calamari.ArgoCD
                 {
                     OctopusProjectAnnotationKey(null),
                     OctopusEnvironmentAnnotationKey(null),
-                    OctopusTenantAnnotationKey(null)
+                    OctopusTenantAnnotationKey(null),
+                    OctopusStepAnnotationKey(null)
                 };
             }
             
@@ -60,9 +68,6 @@ namespace Calamari.ArgoCD
             public static string OctopusImageReplacementPathsKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusImageReplacementPathsKeyPrefix 
                 : $"{OctopusImageReplacementPathsKeyPrefix}.{sourceName}";
-
-            // TODO: Verify that we need this. Here as a placeholder/reminder for now.
-            // public const string OctopusStepIdAnnotationKey = "argo.octopus.com/step-id";
 
         }
 
