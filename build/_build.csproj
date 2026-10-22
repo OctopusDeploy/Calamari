@@ -29,8 +29,8 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Octopus.Nuke.Common" Version="10.1.318" />
-        <PackageReference Include="Octopus.1Password.Sdk" Version="0.0.127" />
+        <PackageReference Include="Octopus.Nuke.Common" Version="10.1.320" />
+        <PackageReference Include="Octopus.1Password.Sdk" Version="0.0.594" />
         <PackageReference Include="AzureSignTool" Version="6.0.1" ExcludeAssets="all" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
     </ItemGroup>
