@@ -21,7 +21,7 @@ namespace Calamari.Common.Plumbing.Extensions
             return envVars.ToArray();
         }
 
-        public static void SetEnvironmentVariable(string name, string value)
+        public static void SetEnvironmentVariable(string name, string? value)
         {
             Environment.SetEnvironmentVariable(name, value, EnvironmentVariableTarget.Process);
         }
