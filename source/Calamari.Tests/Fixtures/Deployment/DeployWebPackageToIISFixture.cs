@@ -14,6 +14,7 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers.Certificates;
 using Microsoft.Web.Administration;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Polly;
 using FluentAssertions;
 using CryptoKeyRights = Calamari.Integration.Certificates.CryptoKeyRights;
@@ -92,19 +93,19 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var website = GetWebSite(uniqueValue);
 
-            Assert.AreEqual(uniqueValue, website.Name);
-            Assert.AreEqual(ObjectState.Started, website.State);
-            Assert.AreEqual(1082, website.Bindings.Single().EndPoint.Port);
+            ClassicAssert.AreEqual(uniqueValue, website.Name);
+            ClassicAssert.AreEqual(ObjectState.Started, website.State);
+            ClassicAssert.AreEqual(1082, website.Bindings.Single().EndPoint.Port);
             var application = website.Applications.First();
-            Assert.AreEqual(uniqueValue, application.ApplicationPoolName);
-            Assert.IsTrue(application.VirtualDirectories.Single().PhysicalPath.Contains("1.0.0"));
+            ClassicAssert.AreEqual(uniqueValue, application.ApplicationPoolName);
+            ClassicAssert.IsTrue(application.VirtualDirectories.Single().PhysicalPath.Contains("1.0.0"));
 
             var applicationPool = GetApplicationPool(uniqueValue);
 
-            Assert.AreEqual(uniqueValue, applicationPool.Name);
-            Assert.AreEqual(ObjectState.Started, applicationPool.State);
-            Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
-            Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
+            ClassicAssert.AreEqual(uniqueValue, applicationPool.Name);
+            ClassicAssert.AreEqual(ObjectState.Started, applicationPool.State);
+            ClassicAssert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
+            ClassicAssert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
         }
 
         [Test]
@@ -127,12 +128,12 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var applicationPoolExists = ApplicationPoolExists(uniqueValue);
 
-            Assert.IsFalse(applicationPoolExists);
+            ClassicAssert.IsFalse(applicationPoolExists);
 
             var virtualDirectory = FindVirtualDirectory(uniqueValue, ToFirstLevelPath(uniqueValue));
 
-            Assert.AreEqual(ToFirstLevelPath(uniqueValue), virtualDirectory.Path);
-            Assert.IsTrue(virtualDirectory.PhysicalPath.Contains("1.0.0"));
+            ClassicAssert.AreEqual(ToFirstLevelPath(uniqueValue), virtualDirectory.Path);
+            ClassicAssert.IsTrue(virtualDirectory.PhysicalPath.Contains("1.0.0"));
         }
 
 
@@ -254,7 +255,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var virtualDirectory = FindVirtualDirectory(uniqueValue, ToFirstLevelPath(uniqueValue));
 
-            Assert.IsTrue(virtualDirectory.PhysicalPath.Contains("2.0.0"));
+            ClassicAssert.IsTrue(virtualDirectory.PhysicalPath.Contains("2.0.0"));
         }
 
         [Test]
@@ -322,16 +323,16 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var applicationPool = GetApplicationPool(uniqueValue);
 
-            Assert.AreEqual(uniqueValue, applicationPool.Name);
-            Assert.AreEqual(ObjectState.Started, applicationPool.State);
-            Assert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
-            Assert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
+            ClassicAssert.AreEqual(uniqueValue, applicationPool.Name);
+            ClassicAssert.AreEqual(ObjectState.Started, applicationPool.State);
+            ClassicAssert.AreEqual("v4.0", applicationPool.ManagedRuntimeVersion);
+            ClassicAssert.AreEqual(ProcessModelIdentityType.ApplicationPoolIdentity, applicationPool.ProcessModel.IdentityType);
 
             var webApplication = FindWebApplication(uniqueValue, ToFirstLevelPath(uniqueValue));
 
-            Assert.AreEqual(ToFirstLevelPath(uniqueValue), webApplication.Path);
-            Assert.AreEqual(uniqueValue, webApplication.ApplicationPoolName);
-            Assert.IsTrue(webApplication.VirtualDirectories.Single().PhysicalPath.Contains("1.0.0"));
+            ClassicAssert.AreEqual(ToFirstLevelPath(uniqueValue), webApplication.Path);
+            ClassicAssert.AreEqual(uniqueValue, webApplication.ApplicationPoolName);
+            ClassicAssert.IsTrue(webApplication.VirtualDirectories.Single().PhysicalPath.Contains("1.0.0"));
         }
 
         [Test]
@@ -419,17 +420,17 @@ namespace Calamari.Tests.Fixtures.Deployment
             var website = GetWebSite(uniqueValue);
             var binding = website.Bindings.Single();
 
-            Assert.AreEqual(1083, binding.EndPoint.Port);
-            Assert.AreEqual("https", binding.Protocol);
-            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
+            ClassicAssert.AreEqual(1083, binding.EndPoint.Port);
+            ClassicAssert.AreEqual("https", binding.Protocol);
+            ClassicAssert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            ClassicAssert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
 
             // Assert the application-pool account was granted access to the certificate private-key
             var certificate = SampleCertificate.CapiWithPrivateKey.GetCertificateFromStore("MY", StoreLocation.LocalMachine);
             var keysec = CryptoKeySecurityAccessRules.GetPrivateKeySecurity(certificate.Thumbprint, StoreLocation.LocalMachine, "My");
             SampleCertificate.AssertHasPrivateKeyRights(keysec, new NTAccount("IIS APPPOOL\\" + uniqueValue), CryptoKeyRights.GenericAll);
 
-            Assert.AreEqual(ObjectState.Started, website.State);
+            ClassicAssert.AreEqual(ObjectState.Started, website.State);
         }
 
         [Test]
@@ -465,12 +466,12 @@ namespace Calamari.Tests.Fixtures.Deployment
             var website = GetWebSite(uniqueValue);
             var binding = website.Bindings.Single();
 
-            Assert.AreEqual(1084, binding.EndPoint.Port);
-            Assert.AreEqual("https", binding.Protocol);
-            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.AreEqual(StoreName.My.ToString(), binding.CertificateStoreName);
+            ClassicAssert.AreEqual(1084, binding.EndPoint.Port);
+            ClassicAssert.AreEqual("https", binding.Protocol);
+            ClassicAssert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            ClassicAssert.AreEqual(StoreName.My.ToString(), binding.CertificateStoreName);
 
-            Assert.AreEqual(ObjectState.Started, website.State);
+            ClassicAssert.AreEqual(ObjectState.Started, website.State);
 
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
         }
@@ -504,12 +505,12 @@ namespace Calamari.Tests.Fixtures.Deployment
             var website = GetWebSite(uniqueValue);
             var binding = website.Bindings.Single();
 
-            Assert.AreEqual(1083, binding.EndPoint.Port);
-            Assert.AreEqual("https", binding.Protocol);
-            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
-            Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
+            ClassicAssert.AreEqual(1083, binding.EndPoint.Port);
+            ClassicAssert.AreEqual("https", binding.Protocol);
+            ClassicAssert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
+            ClassicAssert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
 
-            Assert.AreEqual(ObjectState.Started, website.State);
+            ClassicAssert.AreEqual(ObjectState.Started, website.State);
         }
 
         [Test]
@@ -547,19 +548,19 @@ namespace Calamari.Tests.Fixtures.Deployment
             var capiBinding = binding.First();
             var cngBinding = binding.Skip(1).First();
 
-            Assert.AreEqual(1083, capiBinding.EndPoint.Port);
-            Assert.AreEqual(1084, cngBinding.EndPoint.Port);
+            ClassicAssert.AreEqual(1083, capiBinding.EndPoint.Port);
+            ClassicAssert.AreEqual(1084, cngBinding.EndPoint.Port);
 
-            Assert.AreEqual("https", capiBinding.Protocol);
-            Assert.AreEqual("https", cngBinding.Protocol);
+            ClassicAssert.AreEqual("https", capiBinding.Protocol);
+            ClassicAssert.AreEqual("https", cngBinding.Protocol);
             
-            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(capiBinding.CertificateHash).Replace("-", ""));
-            Assert.AreEqual(SampleCertificate.CngWithPrivateKey.Thumbprint, BitConverter.ToString(cngBinding.CertificateHash).Replace("-", ""));
+            ClassicAssert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(capiBinding.CertificateHash).Replace("-", ""));
+            ClassicAssert.AreEqual(SampleCertificate.CngWithPrivateKey.Thumbprint, BitConverter.ToString(cngBinding.CertificateHash).Replace("-", ""));
 
-            Assert.IsTrue(capiBinding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{capiBinding.CertificateStoreName}'");
-            Assert.IsTrue(cngBinding.CertificateStoreName.Equals("CA", StringComparison.OrdinalIgnoreCase), $"Expected: 'CA'. Received: '{cngBinding.CertificateStoreName}'");
+            ClassicAssert.IsTrue(capiBinding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{capiBinding.CertificateStoreName}'");
+            ClassicAssert.IsTrue(cngBinding.CertificateStoreName.Equals("CA", StringComparison.OrdinalIgnoreCase), $"Expected: 'CA'. Received: '{cngBinding.CertificateStoreName}'");
 
-            Assert.AreEqual(ObjectState.Started, website.State);
+            ClassicAssert.AreEqual(ObjectState.Started, website.State);
         }
 
         [Test] // https://github.com/OctopusDeploy/Issues/issues/3378

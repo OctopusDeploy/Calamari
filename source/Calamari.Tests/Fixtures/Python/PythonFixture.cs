@@ -4,6 +4,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Python
 {
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Python
             var (output, variables) = RunScript("setvariable.py");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
-            Assert.AreEqual("World!", variables.Get("TestA"));
+            ClassicAssert.AreEqual("World!", variables.Get("TestA"));
         }
         
         [Test, RequiresMinimumPython3Version(4)]

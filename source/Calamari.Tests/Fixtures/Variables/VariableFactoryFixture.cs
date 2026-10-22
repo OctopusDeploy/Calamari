@@ -15,6 +15,7 @@ using Calamari.Util;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octostache;
 
 namespace Calamari.Tests.Fixtures.Variables
@@ -71,9 +72,9 @@ namespace Calamari.Tests.Fixtures.Variables
         {
             var result = new VariablesFactory(fileSystem, new SilentLog()).Create(options);
 
-            Assert.AreEqual("firstVariableValue", result.Get("firstVariableName"));
-            Assert.AreEqual("secondVariableValue", result.Get("secondVariableName"));
-            Assert.AreEqual("thirdVariableValue", result.Get("thirdVariableName"));
+            ClassicAssert.AreEqual("firstVariableValue", result.Get("firstVariableName"));
+            ClassicAssert.AreEqual("secondVariableValue", result.Get("secondVariableName"));
+            ClassicAssert.AreEqual("thirdVariableValue", result.Get("thirdVariableName"));
         }
 
         [Test]
