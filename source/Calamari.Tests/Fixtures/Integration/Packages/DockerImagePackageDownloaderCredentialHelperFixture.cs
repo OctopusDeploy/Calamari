@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
@@ -88,7 +88,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
@@ -135,7 +135,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
@@ -192,7 +192,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
@@ -219,7 +219,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             // Act - Download from Docker Hub first
             var pkg1 = downloader.DownloadPackage("octopusdeploy/alpine",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
             
