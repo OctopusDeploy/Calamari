@@ -17,4 +17,4 @@ spring:
   - name: console
   - name: file
     pattern: '%n.log'
-environment: development
+environment: null
