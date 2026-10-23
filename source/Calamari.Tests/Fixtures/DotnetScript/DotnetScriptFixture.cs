@@ -16,11 +16,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            var allEnvVars = Environment.GetEnvironmentVariables();
-
-            //debugging
-            var envVarOutput = (from DictionaryEntry entry in allEnvVars select $"{entry.Key}={entry.Value}").ToList();
-            Console.WriteLine(string.Join(Environment.NewLine, envVarOutput));
+            OutputEnvVars();
         }
 
         [Test]
@@ -122,6 +118,8 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         [TestCase(false)]
         public void IsolatedLoadContext(bool disableIsolatedLoadContext)
         {
+            OutputEnvVars();
+            
             var (output, _) = RunScript("IsolatedLoadContext.csx",
                 new Dictionary<string, string>()
                 {
@@ -169,6 +167,15 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("also turns off the isolated assembly load context");
             output.AssertOutput("NuGet.Commands version: 6.14.3.1");
             output.AssertOutput("Parameters Parameter0Parameter1");
+        }
+
+        static void OutputEnvVars()
+        {
+            var allEnvVars = Environment.GetEnvironmentVariables();
+
+            //debugging
+            var envVarOutput = (from DictionaryEntry entry in allEnvVars select $"{entry.Key}={entry.Value}").ToList();
+            TestContext.WriteLine(string.Join(Environment.NewLine, envVarOutput));
         }
     }
 }
