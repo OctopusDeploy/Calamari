@@ -1,13 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using Calamari.Common.Features.Scripting.DotnetScript;
-using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
-using FluentAssertions;
 using NUnit.Framework;
+using System.Linq;
 
 namespace Calamari.Tests.Fixtures.DotnetScript
 {
@@ -15,6 +13,16 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     [Category(TestCategory.ScriptingSupport.DotnetScript)]
     public class DotnetScriptFixture : CalamariFixture
     {
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            var allEnvVars = Environment.GetEnvironmentVariables();
+
+            //debugging
+            var envVarOutput = (from DictionaryEntry entry in allEnvVars select $"{entry.Key}={entry.Value}").ToList();
+            Console.WriteLine(string.Join(Environment.NewLine, envVarOutput));
+        }
+
         [Test]
         public void ShouldPrintEncodedVariable()
         {
