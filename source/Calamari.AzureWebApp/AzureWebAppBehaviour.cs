@@ -62,6 +62,9 @@ namespace Calamari.AzureWebApp
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
             try
             {
+                // This is unnecessary code since we now do all this work in the shim.
+                // We should remove this after the framework upgrade
+#pragma warning disable SYSLIB0014
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
 
@@ -70,6 +73,7 @@ namespace Calamari.AzureWebApp
             finally
             {
                 ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
+#pragma warning restore SYSLIB0014
             }
         }
 
