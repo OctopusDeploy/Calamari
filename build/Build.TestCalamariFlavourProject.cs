@@ -13,6 +13,7 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
+                          DotNetPath = dotnetPath;
 
                           // Exclude tests that hit real external cloud services (e.g. real Azure) - these run as a
                           // separate smoke suite, not as part of the main flavour test run. Combine with any

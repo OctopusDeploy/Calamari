@@ -10,7 +10,8 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
-
+                          DotNetPath = dotnetPath;
+                          
                           // Run only the tests that hit real external cloud services (e.g. real Azure) - the
                           // credential-requiring smoke suite kept out of the main flavour run. Combine with any
                           // caller-supplied VSTest_TestCaseFilter rather than overwriting it (WithFilter is last-wins).
