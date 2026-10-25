@@ -54,14 +54,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = GetDownloader(log, variables);
 
             // Act
-            var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+            var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
             pkg.Should().NotBeNull();
-            pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
+            pkg.PackageId.Should().Be("octopusdeploy/alpine");
             
             // Verify credential helper was configured
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
@@ -87,14 +87,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = GetDownloader(log, variables);
 
             // Act
-            var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+            var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
             pkg.Should().NotBeNull();
-            pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
+            pkg.PackageId.Should().Be("octopusdeploy/alpine");
 
             // The package variable opts out of the helper: plain login instead.
             log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
@@ -134,8 +134,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = GetDownloader(log, variables);
             
             // Act
-            var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+            var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
@@ -147,7 +147,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("index.docker.io"));
             
             pkg.Should().NotBeNull();
-            pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
+            pkg.PackageId.Should().Be("octopusdeploy/alpine");
         }
 
         [Test]
@@ -191,14 +191,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = GetDownloader(log, variables);
             
             // Act
-            var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+            var pkg = downloader.DownloadPackage("octopusdeploy/alpine",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
             pkg.Should().NotBeNull();
-            pkg.PackageId.Should().Be("octopusdeploy/octo-prerelease");
+            pkg.PackageId.Should().Be("octopusdeploy/alpine");
             
             // Should either succeed with credential helper or fall back gracefully
             var hasCredentialHelperMessage = log.Messages.Any(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
@@ -218,8 +218,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             
             // Act - Download from Docker Hub first
-            var pkg1 = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
-                new SemanticVersion("7.3.7-alpine"), "docker-feed",
+            var pkg1 = downloader.DownloadPackage("octopusdeploy/alpine",
+                new SemanticVersion("3"), "docker-feed",
                 new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
             
@@ -237,7 +237,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
             
             // Both downloads should succeed
-            pkg1.PackageId.Should().Be("octopusdeploy/octo-prerelease");
+            pkg1.PackageId.Should().Be("octopusdeploy/alpine");
             pkg2.PackageId.Should().Be("alpine");
         }
 
