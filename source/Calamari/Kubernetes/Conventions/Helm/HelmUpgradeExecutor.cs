@@ -47,9 +47,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                        CancellationTokenSource installCompletedCts,
                                        CancellationTokenSource installErrorCts)
         {
-            var packagePath = GetChartLocation(deployment);
-
-            var args = GetUpgradeCommandArgs(deployment);
+            string packagePath;
+            List<string> args;
+            try
+            {
+                packagePath = GetChartLocation(deployment);
+                args = GetUpgradeCommandArgs(deployment);
+            }
+            catch
+            {
+                //if there is any exception, throw the error cancel
+                installErrorCts.Cancel();
+                throw;
+            }
 
             var result = helmCli.Upgrade(releaseName, packagePath, args);
 
