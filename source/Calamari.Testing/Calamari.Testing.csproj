@@ -4,7 +4,7 @@
         <Nullable>enable</Nullable>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <PackageId>Octopus.Calamari.Testing</PackageId>
     </PropertyGroup>

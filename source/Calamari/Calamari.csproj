@@ -18,7 +18,7 @@
     <Product>Calamari</Product>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
     <NoWarn>CS8632</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
