@@ -10,7 +10,7 @@
         <ApplicationIcon/>
         <StartupObject/>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <EmitLegacyAssetsFileItems>true</EmitLegacyAssetsFileItems>
     </PropertyGroup>
@@ -23,7 +23,6 @@
         <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0"/>
         <PackageReference Include="System.Text.Json" Version="9.0.16" />
         <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.10"/>
-        <PackageReference Include="System.Text.Json" Version="10.0.13" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41"/>
         <PackageReference Include="WireMock.Net" Version="1.6.9"/>
         <PackageReference Include="XPath2" Version="1.1.5"/>

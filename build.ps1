@@ -72,7 +72,7 @@ else {
     # the 8.0 channel, regardless of what's in the global.json.
 
     Remove-Variable DotNetVersion
-    $DotNetChannel = "8.0"
+    $DotNetChannel = "10.0"
     # ----- End Octopus Deploy Modification -----
 
     # Install by channel or version

@@ -139,7 +139,7 @@ namespace Calamari.Tests.Helpers.Certificates
 
         X509Certificate2 LoadAsX509Certificate2()
         {
-            return new X509Certificate2(FilePath, Password,
+            return X509CertificateLoader.LoadPkcs12FromFile(FilePath, Password,
                 X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
         }
 
