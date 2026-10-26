@@ -237,6 +237,43 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        public void ShouldNotUseOutputVariableInLaterStagesByDefault()
+        {
+            SetScriptsThatSetAndReadOutputVariable();
+
+            var result = DeployPackage();
+
+            result.AssertOutput("Foo=[]");
+        }
+
+        [Test]
+        public void ShouldUseOutputVariableInLaterStagesWhenAllowed()
+        {
+            SetScriptsThatSetAndReadOutputVariable();
+            Variables.Set(KnownVariables.Calamari.AllowOutputVariableOverwrite, "Foo");
+
+            var result = DeployPackage();
+
+            result.AssertOutput("Foo=[Bar]");
+        }
+
+        void SetScriptsThatSetAndReadOutputVariable()
+        {
+            Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
+
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+            {
+                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.PreDeploy, ScriptSyntax.Bash), "set_octopusvariable \"Foo\" \"Bar\"");
+                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.PostDeploy, ScriptSyntax.Bash), "echo \"Foo=[$(get_octopusvariable \"Foo\")]\"");
+            }
+            else
+            {
+                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.PreDeploy, ScriptSyntax.PowerShell), "Set-OctopusVariable -name 'Foo' -value 'Bar'");
+                Variables.Set(ConfiguredScriptConvention.GetScriptName(DeploymentStages.PostDeploy, ScriptSyntax.PowerShell), "Write-Host \"Foo=[$($OctopusParameters['Foo'])]\"");
+            }
+        }
+
+        [Test]
         public void ShouldAddJournalEntry()
         {
             var result = DeployPackage();

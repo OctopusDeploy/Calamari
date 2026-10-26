@@ -56,10 +56,10 @@ namespace Calamari.Tests.Fixtures.Python
         [Test, RequiresMinimumPython3Version(4)]
         public void ShouldSetVariables()
         {
-            var (output, variables) = RunScript("setvariable.py");
+            var (output, _) = RunScript("setvariable.py");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
-            Assert.AreEqual("World!", variables.Get("TestA"));
+            Assert.AreEqual("World!", output.CapturedOutput.OutputVariables.Get("TestA"));
         }
         
         [Test, RequiresMinimumPython3Version(4)]

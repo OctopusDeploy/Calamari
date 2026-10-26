@@ -13,11 +13,13 @@ namespace Calamari.Common.Features.Processes
     {
         readonly ILog log;
         readonly IVariables variables;
+        readonly Func<string, bool>? isTrustedOutputVariable;
 
-        public CommandLineRunner(ILog log, IVariables variables)
+        public CommandLineRunner(ILog log, IVariables variables, Func<string, bool>? isTrustedOutputVariable = null)
         {
             this.log = log;
             this.variables = variables;
+            this.isTrustedOutputVariable = isTrustedOutputVariable;
         }
 
         public CommandResult Execute(CommandLineInvocation invocation)
@@ -94,7 +96,7 @@ namespace Calamari.Common.Features.Processes
         {
             var outputs = new List<ICommandInvocationOutputSink>
             {
-                new ServiceMessageCommandInvocationOutputSink(variables)
+                new ServiceMessageCommandInvocationOutputSink(variables, isTrustedOutputVariable)
             };
 
             if (invocation.OutputToLog)

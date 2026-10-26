@@ -366,20 +366,20 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldSetVariables()
         {
-            var (output, variables) = RunPowerShellScript("CanSetVariable.ps1");
+            var (output, _) = RunPowerShellScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='VGVzdEE=' value='V29ybGQh']");
-            Assert.AreEqual("World!", variables.Get("TestA"));
+            Assert.AreEqual("World!", output.CapturedOutput.OutputVariables.Get("TestA"));
             AssertPowerShellEdition(output);
         }
 
         [Test]
         public void ShouldSetSensitiveVariables()
         {
-            var (output, variables) = RunPowerShellScript("CanSetVariable.ps1");
+            var (output, _) = RunPowerShellScript("CanSetVariable.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[setVariable name='U2VjcmV0U3F1aXJyZWw=' value='WCBtYXJrcyB0aGUgc3BvdA==' sensitive='VHJ1ZQ==']");
-            Assert.AreEqual("X marks the spot", variables.Get("SecretSquirrel"));
+            Assert.AreEqual("X marks the spot", output.CapturedOutput.OutputVariables.Get("SecretSquirrel"));
             AssertPowerShellEdition(output);
         }
 

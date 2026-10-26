@@ -101,6 +101,8 @@ namespace Calamari.Commands
                 featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem, log));
             }
 
+            var featureScriptRunner = new CommandLineRunner(log, variables, IsFeatureScriptOutputVariable);
+
             var semaphore = new SystemSemaphoreManager();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables, log);
 
@@ -108,26 +110,26 @@ namespace Calamari.Commands
             {
                 new AlreadyInstalledConvention(log, journal),
                 new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(pathToPackage)),
-                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, featureScriptRunner, embeddedResources, log),
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new PackagedScriptConvention(new PreDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, featureScriptRunner, embeddedResources, log),
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem, log),
-                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, featureScriptRunner, embeddedResources, log),
                 new PackagedScriptConvention(new DeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, featureScriptRunner, embeddedResources, log),
                 new LegacyIisWebSiteConvention(fileSystem, iis, log),
-                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, featureScriptRunner, embeddedResources, log),
                 new PackagedScriptConvention(new PostDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour( log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, featureScriptRunner, embeddedResources, log),
                 new RollbackScriptConvention(log, DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log)
+                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, featureScriptRunner, embeddedResources, log)
             };
 
             var deployment = new RunningDeployment(pathToPackage, variables);
@@ -146,5 +148,12 @@ namespace Calamari.Commands
 
             return 0;
         }
+
+        // Variables the Windows Service and VHD feature scripts pass to later stages
+        static bool IsFeatureScriptOutputVariable(string name)
+            => name.Equals("Octopus.Action.WindowsService.Status", StringComparison.OrdinalIgnoreCase)
+               || name.Equals(ActionVariables.AdditionalPaths, StringComparison.OrdinalIgnoreCase)
+               || name.Equals("OctopusVhdMountPoint", StringComparison.OrdinalIgnoreCase)
+               || name.StartsWith("OctopusVhdMountPoint_", StringComparison.OrdinalIgnoreCase);
     }
 }

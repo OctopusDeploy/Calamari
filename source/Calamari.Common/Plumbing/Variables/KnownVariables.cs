@@ -47,6 +47,7 @@ namespace Calamari.Common.Plumbing.Variables
             public const string EnablePackageRetention = "Octopus.Calamari.EnablePackageRetention";
             public const string PackageRetentionJournalPath = "env:CalamariPackageRetentionJournalPath";
             public const string PackageRetentionLockExpiration = "Octopus.Calamari.PackageRetentionLockExpiration";
+            public const string AllowOutputVariableOverwrite = "Octopus.Calamari.AllowOutputVariableOverwrite";
         }
 
         public static class Release
