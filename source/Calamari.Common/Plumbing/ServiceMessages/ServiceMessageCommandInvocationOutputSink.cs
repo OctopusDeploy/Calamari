@@ -2,7 +2,6 @@
 using System.Linq;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing.ServiceMessages
@@ -44,15 +43,9 @@ namespace Calamari.Common.Plumbing.ServiceMessages
                         break;
 
                     if (CanSetStepVariable(variableName))
-                    {
                         variables.SetOutputVariable(variableName, variableValue);
-                    }
                     else
-                    {
                         variables.SetActionScopedOutputVariable(variableName, variableValue);
-                        Log.Verbose($"Output variable '{variableName}' is available to later steps as Octopus.Action[<step name>].Output.{variableName}. To also use it as '{variableName}' later in this step, add it to {KnownVariables.Calamari.AllowOutputVariableOverwrite}.");
-                    }
-
                     break;
             }
         }
