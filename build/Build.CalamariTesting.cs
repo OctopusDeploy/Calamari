@@ -11,7 +11,6 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
-                          DotNetPath = dotnetPath;
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
@@ -25,7 +24,6 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
-                          DotNetPath = dotnetPath;
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
@@ -44,7 +42,6 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
-                          DotNetPath = dotnetPath;
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
@@ -58,7 +55,6 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
-                          DotNetPath = dotnetPath;
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
@@ -72,7 +68,6 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
-                          DotNetPath = dotnetPath;
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
@@ -86,7 +81,6 @@ partial class Build
             .Executes(async () =>
                       {
                           var dotnetPath = await LocateOrInstallDotNetSdk();
-                          DotNetPath = dotnetPath;
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)

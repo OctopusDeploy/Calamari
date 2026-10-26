@@ -22,7 +22,6 @@ public partial class Build
                                                   .SetVersion(NugetVersion.Value)
                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                   .SetVerbosity(BuildVerbosity)
-                                                  .EnablePublishSingleFile()
                                                   .EnableSelfContained());
 
                                Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, KnownPaths.ArtifactsDirectory / $"nukebuild.{runtime}.zip");

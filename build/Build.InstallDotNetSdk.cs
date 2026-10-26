@@ -56,7 +56,7 @@ public partial class Build
         }
         else
         {
-            var assemblyLocation = AppContext.BaseDirectory;
+            var assemblyLocation = Assembly.GetExecutingAssembly().Location;
             var directory = Path.GetDirectoryName(assemblyLocation) ?? throw new InvalidOperationException("can't determine directory for executing assembly");
 
             var globalJsonFile = GlobalJson.Find(directory, Log.Logger);
@@ -64,7 +64,7 @@ public partial class Build
 
             var parsed = GlobalJson.Parse(globalJsonFile);
             Log.Information("Request to install .NET SDK using {GlobalJsonPath} with Version {Version} and RollForward {RollForward}",
-                globalJsonFile, parsed.Version, parsed.RollForward);
+                            globalJsonFile, parsed.Version, parsed.RollForward);
 
             strategy = GlobalJson.DetermineDownloadStrategy(parsed.Version, parsed.RollForward);
         }
@@ -96,7 +96,7 @@ public partial class Build
         if (Directory.Exists(temporaryDotNetDirectory))
         {
             Log.Information(".NET {DotNetVersion} is not known to `dotnet --list-sdks` but {temporaryDotNetDirectory} exists, assuming it is there",
-                targetSdkVersion, temporaryDotNetDirectory);
+                            targetSdkVersion, temporaryDotNetDirectory);
 
             // as above, assume if it already exists we don't need to chmod
             return temporaryDotNetDirectory / (OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet");
@@ -151,35 +151,22 @@ public partial class Build
     {
         // Format:
         // 6.0.414 [/usr/local/share/dotnet/sdk]
-        try
-        {
-            var versions = DotNet("--list-sdks").Select(o => o.Text.Split(" ").First());
-            return versions.Contains(version);
-        }
-        catch (ArgumentException e)
-        {
-            if (!e.Message.Contains("Could not find 'dotnet'"))
-            {
-                throw;
-            }
-
-            Log.Information("The 'dotnet' shim is not installed or could not be located");
-            return false;
-        }
+        var versions = DotNetTasks.DotNet("--list-sdks").Select(o => o.Text.Split(" ").First());
+        return versions.Contains(version);
     }
 
     // possible values for architecture are [amd64, x64, x86, arm64, arm]
     // refer to Get-Machine-Architecture in build.ps1
     static string ResolveDotNetArchitectureString(Architecture architecture) => architecture switch
-    {
-        Architecture.Arm or Architecture.Armv6 => "arm",
-        Architecture.Arm64 or Architecture.LoongArch64 => "arm64",
-        Architecture.X86 => "x86",
-        Architecture.X64 => "x64",
-        // explicitly reference known architectures so the compiler can tell us about new unknown ones when they are added.
-        Architecture.Wasm or Architecture.S390x => throw new NotSupportedException($"Unsupported OS architecture {architecture}"),
-        _ => throw new NotSupportedException($"Unknown OS architecture {architecture}"),
-    };
+                                                                                {
+                                                                                    Architecture.Arm or Architecture.Armv6 => "arm",
+                                                                                    Architecture.Arm64 or Architecture.LoongArch64 => "arm64",
+                                                                                    Architecture.X86 => "x86",
+                                                                                    Architecture.X64 => "x64",
+                                                                                    // explicitly reference known architectures so the compiler can tell us about new unknown ones when they are added.
+                                                                                    Architecture.Wasm or Architecture.S390x => throw new NotSupportedException($"Unsupported OS architecture {architecture}"),
+                                                                                    _ => throw new NotSupportedException($"Unknown OS architecture {architecture}"),
+                                                                                };
 
     static async Task<string> DetermineLatestVersion(Lazy<HttpClient> httpClient, string requestedFuzzyVersion)
     {
