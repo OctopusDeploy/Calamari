@@ -98,7 +98,7 @@ else
     # the 8.0 channel, regardless of what's in the global.json.
 
     unset DOTNET_VERSION
-    DOTNET_CHANNEL="8.0"
+    DOTNET_CHANNEL="10.0"
     # ----- End Octopus Deploy Modification -----
 
     # Install by channel or version
