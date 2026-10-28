@@ -3,4 +3,13 @@
     <IsWindowsNetCoreBuild Condition="'$([MSBuild]::IsOSPlatform(`Windows`))' == 'true' AND ('$(TargetFramework)' == 'net10.0' OR '$(TargetFramework)' == 'net10.0-windows')">true</IsWindowsNetCoreBuild>
     <IsWindowsNetCoreBuild Condition="'$(IsWindowsNetCoreBuild)' == ''">false</IsWindowsNetCoreBuild>
   </PropertyGroup>
+  <ItemGroup>
+    <!--
+      From .NET 8.0.32 named mutexes on Unix are scoped to the current user by default. Creating one fails with
+      "The system cannot open the device or file specified" when the uid has no passwd entry (e.g. Kubernetes
+      agent script pods running as a non-root uid), and locks are no longer shared between users.
+      Our named locks must be machine-wide, so opt back into the previous behaviour.
+    -->
+    <RuntimeHostConfigurationOption Include="System.Threading.Mutex.UnsafeDefaultMutexScopeGlobal" Value="true" />
+  </ItemGroup>
 </Project>
