@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Octopus.Calamari.Contracts.ArgoCD;
 
@@ -26,39 +27,28 @@ public class AuthenticatingRepositoryFactory
         this.log = log;
     }
 
-    public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision)
+    public RepositoryWrapper CloneRepository(string requestedUrl, string targetRevision, bool requiresPullRequest)
     {
         var gitCredential = gitCredentials.GetValueOrDefault(requestedUrl);
-        switch (gitCredential)
+        var cloneUrl = gitCredential is SshKeyGitCredentialDto ? requestedUrl : GitCloneSafeUrl.ConvertToUriString(requestedUrl);
+        var gitConnection = GitConnectionFactory.Create(gitCredential, cloneUrl, GitReference.CreateFromString(targetRevision));
+
+        if (requiresPullRequest)
         {
-            case GitCredentialDto passwordCredential:
+            switch (gitConnection)
             {
-                var gitConnection = new HttpsGitConnection(passwordCredential.Username, passwordCredential.Password, GitCloneSafeUrl.ConvertToUriString(requestedUrl), GitReference.CreateFromString(targetRevision));
-                return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-            }
-            case SshKeyGitCredentialDto sshCredential:
-            {
-                var sshConnection = new SshKeyGitConnection(
-                    sshCredential.Username,
-                    sshCredential.PrivateKey,
-                    requestedUrl,
-                    GitReference.CreateFromString(targetRevision),
-                    sshCredential.KnownHosts.Select(kh => new SshKnownHost(kh.Host, kh.PublicKey)).ToArray());
-                return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), sshConnection);
-            }
-            case null:
-            {
-                log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
-                break;
-            }
-            default:
-            {
-                log.Warn($"An unrecognised credential type '{gitCredential.GetType().Name}' was found for '{requestedUrl}'. Ignoring the credentials and attempting an anonymous clone.");
-                break;
+                case SshKeyGitConnection:
+                    throw new CommandException("Creating PRs is not possible when using SSH key authentication, please use a username and password instead");
+                case AnonymousGitConnection:
+                    throw new CommandException("Creating a pull request requires Git repository credentials, but none were provided. Please configure a username and password.");
             }
         }
 
-        var anonGitConnection = new HttpsGitConnection(null, null, GitCloneSafeUrl.ConvertToUriString(requestedUrl), GitReference.CreateFromString(targetRevision));
-        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), anonGitConnection);
+        if (gitConnection is AnonymousGitConnection)
+        {
+            log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
+        }
+
+        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
     }
 }
