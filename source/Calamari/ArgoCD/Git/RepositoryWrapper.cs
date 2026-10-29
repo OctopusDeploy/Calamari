@@ -201,7 +201,7 @@ namespace Calamari.ArgoCD.Git
             PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
             {
-                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(log),
                 OnPushStatusError = errors => errorsDetected = errors,
                 CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
             };
@@ -219,7 +219,7 @@ namespace Calamari.ArgoCD.Git
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
             var fetchOptions = new FetchOptions
             {
-                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(),
+                CredentialsProvider = connection.ToLibGit2SharpCredentialHandler(log),
                 CertificateCheck = connection.ToLibGit2SharpCertificateCheckHandler(log)
             };
 
