@@ -1,6 +1,7 @@
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -19,7 +20,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             result.AssertNoOutput("Using custom helm executable at");
 
-            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+            ClassicAssert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
 
         protected override string ExplicitExeVersion => null;

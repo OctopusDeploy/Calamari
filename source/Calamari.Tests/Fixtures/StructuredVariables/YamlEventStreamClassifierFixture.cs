@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.StructuredVariables;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 

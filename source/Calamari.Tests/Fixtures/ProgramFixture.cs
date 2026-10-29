@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Deployment;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures
 {
@@ -17,7 +18,7 @@ namespace Calamari.Tests.Fixtures
         {
             var retCode = RunProgram();
             // Expected because we don't pass the required variables
-            Assert.AreEqual(1, retCode);
+            ClassicAssert.AreEqual(1, retCode);
         }
 
         static int RunProgram()

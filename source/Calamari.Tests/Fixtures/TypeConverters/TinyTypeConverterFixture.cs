@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.TinyTypes;
 
 namespace Calamari.Tests.Fixtures.TypeConverters
@@ -29,7 +30,7 @@ namespace Calamari.Tests.Fixtures.TypeConverters
             var tc = new TinyTypeTypeConverter<ServerTaskId>();
             var result = tc.ConvertFrom(validString) as ServerTaskId;
             var expectedResult = CaseInsensitiveStringTinyType.Create<ServerTaskId>(validString);
-            Assert.AreEqual(expectedResult, result);
+            ClassicAssert.AreEqual(expectedResult, result);
         }
     }
 }
