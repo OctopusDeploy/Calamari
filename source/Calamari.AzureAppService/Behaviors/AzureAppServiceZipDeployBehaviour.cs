@@ -149,6 +149,12 @@ namespace Calamari.AzureAppService.Behaviors
                 using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
                 var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
 
+                if (!string.IsNullOrEmpty(publishingProfile.ZipDeployPublishUrl) && await IsWebDeployScmDisabled(armClient, targetSite))
+                {
+                    Log.Verbose($"WEBSITE_WEBDEPLOY_USE_SCM is false, so using the ZipDeploy endpoint instead of the MSDeploy endpoint '{publishingProfile.PublishUrl}'.");
+                    publishingProfile.PublishUrl = publishingProfile.ZipDeployPublishUrl;
+                }
+
                 Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
                 Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
@@ -195,6 +201,22 @@ namespace Calamari.AzureAppService.Behaviors
             catch (Exception ex)
             {
                 Log.Warn($"Could not determine the App Service Plan tier ({ex.Message}). Treating as non-Flex Consumption and using the ZipDeploy endpoint. If this is a Flex Consumption plan, grant the account 'Microsoft.Web/serverfarms/read' on the plan.");
+                return false;
+            }
+        }
+
+        // Unreadable app settings keep the MSDeploy endpoint
+        async Task<bool> IsWebDeployScmDisabled(ArmClient armClient, AzureTargetSite targetSite)
+        {
+            try
+            {
+                var appSettings = await armClient.GetAppSettingsAsync(targetSite);
+                return appSettings.Properties.TryGetValue("WEBSITE_WEBDEPLOY_USE_SCM", out var useScm)
+                       && string.Equals(useScm, "false", StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                Log.Verbose($"Could not read app settings ({ex.Message}). Using the MSDeploy endpoint from the publishing profile.");
                 return false;
             }
         }

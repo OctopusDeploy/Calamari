@@ -343,6 +343,50 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                                     secondsBetweenRetries: 10);
             }
 
+            [Test]
+            public async Task CanDeployZip_ToLinuxFunctionApp_WithWebDeployUseScmDisabled()
+            {
+                // Arrange
+                AppServiceConfigurationDictionary settings = await WebSiteResource.GetApplicationSettingsAsync();
+                settings.Properties["WEBSITE_WEBDEPLOY_USE_SCM"] = "false";
+                await WebSiteResource.UpdateApplicationSettingsAsync(settings);
+
+                try
+                {
+                    // Azure moves the MSDeploy endpoint off the ZipDeploy endpoint
+                    var profileXml = await WebSiteResource.GetPublishingProfileXmlWithSecretsAsync(new CsmPublishingProfile { Format = PublishingProfileFormat.WebDeploy });
+                    var profile = await PublishingProfile.ParseXml(profileXml);
+                    profile.PublishUrl.Should().NotBe(profile.ZipDeployPublishUrl);
+
+                    var packageInfo = PrepareZipPackage();
+
+                    // Act
+                    var result = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                                         .WithArrange(context =>
+                                                                      {
+                                                                          context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                                          AddVariables(context);
+                                                                      })
+                                                         .Execute();
+
+                    // Assert
+                    result.FullLog.Should().Contain("WEBSITE_WEBDEPLOY_USE_SCM is false, so using the ZipDeploy endpoint");
+                    await DoWithRetries(2,
+                                        async () =>
+                                        {
+                                            await AssertContent(WebSiteResource.Data.DefaultHostName,
+                                                                rootPath: $"api/HttpExample?name={greeting}",
+                                                                actualText: $"Hello, {greeting}");
+                                        },
+                                        secondsBetweenRetries: 10);
+                }
+                finally
+                {
+                    settings.Properties.Remove("WEBSITE_WEBDEPLOY_USE_SCM");
+                    await WebSiteResource.UpdateApplicationSettingsAsync(settings);
+                }
+            }
+
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
             {
                 // Looks like there's some file locking issues if multiple tests try to copy from the same file when running in parallel.
