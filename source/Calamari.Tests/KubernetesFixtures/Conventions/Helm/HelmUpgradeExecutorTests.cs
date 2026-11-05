@@ -118,6 +118,40 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             
             commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get manifest")));
         }
+        
+        [TestCase("--wait", true)]
+        [TestCase("--atomic", false)]
+        [TestCase("--rollback-on-failure", false)]
+        [TestCase("--timeout", true)]
+        [TestCase(null, true)]
+        public void WhenAdditionalArgsHaveSpecificArg_AndKOSEnabled_ShouldAddWaitOrRespectArg(string arg, bool shouldHaveWaitFlagInCommandArgs)
+        {
+            // Arrange
+            var variables = CreateVariables();
+            variables.Set(SpecialVariables.Helm.AdditionalArguments, $"--fake-arg {arg}");
+            variables.Set(SpecialVariables.ResourceStatusCheck, bool.TrueString);
+
+            SetupHelmUpgradeMock();
+            SetupHelmGetManifestMock(GetSampleManifest());
+
+            var deployment = CreateRunningDeployment(variables);
+            var executor = CreateExecutor(deployment);
+
+            // Act
+            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
+
+            // Assert
+            if (shouldHaveWaitFlagInCommandArgs)
+            {
+                commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("--wait")));
+            }
+            else
+            {
+                commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains(arg)));
+                // we don't add --wait when we have the wait-equivalent flag
+                commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => !i.Arguments.Contains("--wait")));
+            }
+        }
 
         [Test]
         public void LogsWarningAndContinues_WhenGetManifestFails()
