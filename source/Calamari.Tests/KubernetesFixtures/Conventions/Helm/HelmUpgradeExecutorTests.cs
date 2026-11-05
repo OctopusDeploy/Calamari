@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -76,22 +77,25 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             var executor = CreateExecutor(deployment);
 
             // Act
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
+            executor.ExecuteHelmUpgrade(deployment,
+                ReleaseName,
+                RevisionNumber,
+                installCompletedCts,
+                installErrorCts);
 
             // Assert
-            commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => 
-                i.Arguments.Contains("get") && 
-                i.Arguments.Contains("manifest") && 
-                i.Arguments.Contains(ReleaseName) &&
-                i.Arguments.Contains($"--revision {RevisionNumber}")));
+            commandLineRunner.Received()
+                             .Execute(Arg.Is<CommandLineInvocation>(i =>
+                                                                        i.Arguments.Contains("get") && i.Arguments.Contains("manifest") && i.Arguments.Contains(ReleaseName) && i.Arguments.Contains($"--revision {RevisionNumber}")));
 
             var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
             appliedResourcesJson.Should().NotBeNullOrEmpty();
 
-            var deserializedResources = JsonConvert.DeserializeAnonymousType(appliedResourcesJson, new[]
-            {
-                new { Group = "", Version = "", Kind = "", Name = "", Namespace = "" }
-            });
+            var deserializedResources = JsonConvert.DeserializeAnonymousType(appliedResourcesJson,
+                new[]
+                {
+                    new { Group = "", Version = "", Kind = "", Name = "", Namespace = "" }
+                });
             deserializedResources.Should().HaveCount(2);
             deserializedResources.Should().Contain(r => r.Kind == "Deployment" && r.Name == "my-app");
             deserializedResources.Should().Contain(r => r.Kind == "Service" && r.Name == "my-app-service");
@@ -110,15 +114,19 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             var executor = CreateExecutor(deployment);
 
             // Act
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
+            executor.ExecuteHelmUpgrade(deployment,
+                ReleaseName,
+                RevisionNumber,
+                installCompletedCts,
+                installErrorCts);
 
             // Assert
             var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
             appliedResourcesJson.Should().BeNull();
-            
+
             commandLineRunner.DidNotReceive().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get manifest")));
         }
-        
+
         [TestCase("--wait", true)]
         [TestCase("--atomic", false)]
         [TestCase("--rollback-on-failure", false)]
@@ -138,12 +146,16 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             var executor = CreateExecutor(deployment);
 
             // Act
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
+            executor.ExecuteHelmUpgrade(deployment,
+                ReleaseName,
+                RevisionNumber,
+                installCompletedCts,
+                installErrorCts);
 
             // Assert
             if (shouldHaveWaitFlagInCommandArgs)
             {
-                commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("--wait")));
+                commandLineRunner.Received().Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("--wait") && i.Arguments.Split(' ').Count(a => a == "--wait") == 1));
             }
             else
             {
@@ -167,7 +179,11 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             var executor = CreateExecutor(deployment);
 
             // Act - should not throw
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
+            executor.ExecuteHelmUpgrade(deployment,
+                ReleaseName,
+                RevisionNumber,
+                installCompletedCts,
+                installErrorCts);
 
             // Assert
             log.MessagesWarnFormatted.Should().Contain(msg => msg.Contains($"Failed to get manifest for {ReleaseName} revision {RevisionNumber}"));
@@ -189,7 +205,11 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             var executor = CreateExecutor(deployment);
 
             // Act
-            executor.ExecuteHelmUpgrade(deployment, ReleaseName, RevisionNumber, installCompletedCts, installErrorCts);
+            executor.ExecuteHelmUpgrade(deployment,
+                ReleaseName,
+                RevisionNumber,
+                installCompletedCts,
+                installErrorCts);
 
             // Assert
             var appliedResourcesJson = variables.Get(SpecialVariables.AppliedResources);
@@ -313,22 +333,22 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             //(and its output) reflects a Helm 4 client to prove the executor still works with it.
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.StartsWith("version") && i.Arguments.Contains("--short")))
                              .Returns(info =>
-                             {
-                                 var invocation = (CommandLineInvocation)info[0];
-                                 invocation.AdditionalInvocationOutputSink?.WriteInfo("v4.2.0");
-                                 return new CommandResult("helm version", 0);
-                             });
+                                      {
+                                          var invocation = (CommandLineInvocation)info[0];
+                                          invocation.AdditionalInvocationOutputSink?.WriteInfo("v4.2.0");
+                                          return new CommandResult("helm version", 0);
+                                      });
         }
 
         void SetupHelmGetMetadataMock(int revision, string status)
         {
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get") && i.Arguments.Contains("metadata")))
                              .Returns(info =>
-                             {
-                                 var invocation = (CommandLineInvocation)info[0];
-                                 invocation.AdditionalInvocationOutputSink?.WriteInfo($"{{\"revision\":{revision},\"status\":\"{status}\"}}");
-                                 return new CommandResult("helm get metadata", 0);
-                             });
+                                      {
+                                          var invocation = (CommandLineInvocation)info[0];
+                                          invocation.AdditionalInvocationOutputSink?.WriteInfo($"{{\"revision\":{revision},\"status\":\"{status}\"}}");
+                                          return new CommandResult("helm get metadata", 0);
+                                      });
         }
 
         void SetupHelmRollbackMock(int exitCode = 0)
@@ -359,14 +379,15 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
         {
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(i => i.Arguments.Contains("get") && i.Arguments.Contains("manifest")))
                              .Returns(info =>
-                             {
-                                 var invocation = (CommandLineInvocation)info[0];
-                                 if (!string.IsNullOrEmpty(manifestContent))
-                                 {
-                                     invocation.AdditionalInvocationOutputSink?.WriteInfo(manifestContent);
-                                 }
-                                 return new CommandResult("helm get manifest", 0);
-                             });
+                                      {
+                                          var invocation = (CommandLineInvocation)info[0];
+                                          if (!string.IsNullOrEmpty(manifestContent))
+                                          {
+                                              invocation.AdditionalInvocationOutputSink?.WriteInfo(manifestContent);
+                                          }
+
+                                          return new CommandResult("helm get manifest", 0);
+                                      });
         }
 
         void SetupHelmGetManifestMockToFail()
@@ -398,10 +419,14 @@ namespace Calamari.Tests.KubernetesFixtures.Conventions.Helm
             var helmCli = new HelmCli(log, commandLineRunner, deployment, fileSystem);
             var templateValueSourcesParser = new HelmTemplateValueSourcesParser(fileSystem, log);
             var namespaceResolver = new KubernetesManifestNamespaceResolver(
-                new ApiResourcesScopeLookupBuilder().WithDefaults().Build(), 
+                new ApiResourcesScopeLookupBuilder().WithDefaults().Build(),
                 log);
 
-            return new HelmUpgradeExecutor(log, fileSystem, templateValueSourcesParser, helmCli, namespaceResolver);
+            return new HelmUpgradeExecutor(log,
+                fileSystem,
+                templateValueSourcesParser,
+                helmCli,
+                namespaceResolver);
         }
 
         static string GetSampleManifest()
