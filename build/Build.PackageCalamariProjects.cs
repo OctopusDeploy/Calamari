@@ -54,7 +54,6 @@ public partial class Build
     Target BuildCalamariProjects =>
         d =>
             d.DependsOn(GetCalamariFlavourProjectsToPublish)
-             .DependsOn(PublishAzureWebAppNetCoreShim)
              .Executes(() =>
                        {
                            // Build the solution once without a RID. Per-RID self-contained
