@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Calamari.Build.Utilities;
+using Nuke.Common.Execution;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.OctoVersion;
@@ -28,20 +30,6 @@ partial class Build : NukeBuild
     [Parameter] readonly bool AppendTimestamp;
 
     [Parameter("Set Calamari Version on OctopusServer")] readonly bool SetOctopusServerVersion;
-
-    [Parameter] readonly string? AzureKeyVaultUrl;
-
-    [Parameter] readonly string? AzureKeyVaultAppId;
-
-    [Parameter] [Secret] readonly string? AzureKeyVaultAppSecret;
-
-    [Parameter] [Secret] readonly string? AzureKeyVaultTenantId;
-
-    [Parameter] readonly string? AzureKeyVaultCertificateName;
-
-    [Parameter(Name = "signing_certificate_path")] readonly string SigningCertificatePath = KnownPaths.RootDirectory / "certificates" / "OctopusDevelopment.pfx";
-
-    [Parameter(Name = "signing_certificate_password")] [Secret] readonly string SigningCertificatePassword = "Password01!";
 
     [Parameter] readonly string? TargetRuntime;
 
@@ -147,18 +135,28 @@ partial class Build : NukeBuild
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
-    void SignDirectory(string directory)
+    async Task SignDirectory(AbsolutePath directory)
     {
         if (!WillSignBinaries)
             return;
 
         Log.Information("Signing directory: {Directory} and sub-directories", directory);
-        var binariesFolders = Directory.GetDirectories(directory, "*", new EnumerationOptions { RecurseSubdirectories = true });
+        var binariesFolders = directory.GetDirectories( "*", int.MaxValue);
         foreach (var subDirectory in binariesFolders.Append(directory))
         {
-            Signing.SignAndTimestampBinaries(subDirectory, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
-                SigningCertificatePath, SigningCertificatePassword);
+            var signing = new Signing(SigningCertificatePath, AzureKeyVaultSettings, JSignDockerImage);
+            
+            var filesToSign = subDirectory.GlobFiles(
+                                  "**/Calamari*.exe",
+                                  "**/Calamari*.dll",
+                                  "**/Octo*.exe",
+                                  "**/Octo*.dll",
+                                  "**/docker-credential-octopus*.exe",
+                                  "**/docker-credential-octopus*.dll")
+                              .Where(f => !Signing.HasAuthenticodeSignature(f))
+                              .ToList();
+            
+            await signing.Sign(subDirectory, filesToSign, SigningCertificatePassword);
         }
     }
 

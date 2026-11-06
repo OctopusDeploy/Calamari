@@ -128,7 +128,7 @@ public partial class Build
                            Log.Information("Signing published binaries...");
                            var signTasks = outputPaths
                                            .Where(output => output != null && !output.ToString().Contains("Tests"))
-                                           .Select(output => Task.Run(() => SignDirectory(output!)))
+                                           .Select(output => Task.Run(async () => await SignDirectory(output!)))
                                            .ToList();
 
                            await Task.WhenAll(signTasks);
