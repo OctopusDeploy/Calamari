@@ -7,7 +7,7 @@ using Nuke.Common.Utilities.Collections;
 
 namespace Calamari.Build
 {
-    public static class Signing
+    public static class SigningOld
     {
         static readonly string[] TimestampUrls =
         {
