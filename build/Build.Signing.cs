@@ -21,9 +21,10 @@ public partial class Build
     [Parameter] readonly string? AzureKeyVaultCertificateName;
 
     AzureKeyVaultSettings AzureKeyVaultSettings => new(
-        AzureKeyVaultAppId,AzureKeyVaultAppSecret,
-        AzureKeyVaultCertificateName,
         AzureKeyVaultUrl,
+        AzureKeyVaultAppSecret,
+        AzureKeyVaultAppId,
+        AzureKeyVaultCertificateName,
         AzureKeyVaultTenantId);
 
     [Parameter(Name = "signing_certificate_path")]

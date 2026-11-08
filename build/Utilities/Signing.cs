@@ -112,7 +112,7 @@ class Signing(
                                                                                                                                         .SetFileDigestAlgorithm("sha256")
                                                                                                                                         .SetRfc3161TimestampServerUrl(timestampUrl)
                                                                                                                                         .SetProcessToolPath(signingTool)
-                                                                                                                                        .SetDescription("Octopus Deploy Server")
+                                                                                                                                        .SetDescription("Octopus Deploy Calamari")
                                                                                                                                         .SetUrl("https://octopus.com")
                                                                                                                                         .SetFiles(filesToSign.Select(x => x.ToString())));
 
