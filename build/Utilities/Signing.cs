@@ -52,6 +52,12 @@ class Signing(
 
     public async Task Sign(AbsolutePath parentDirectory, IReadOnlyCollection<AbsolutePath> filesToSign, string signingCertificatePassword)
     {
+        //nothing to sign, move on
+        if (filesToSign.Count == 0)
+        {
+            return;
+        }
+        
         if (azureKeyVaultSettings.IsEmpty())
         {
             // The production certificate is not available, so we will use the self-signed development certificate.
