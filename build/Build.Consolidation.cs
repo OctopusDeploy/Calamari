@@ -128,9 +128,15 @@ public partial class Build
             d.DependsOn(PackConsolidationLibrariesNugetPackages)
              .Executes(() =>
                        {
-                           NuGetPack(s => s.SetTargetPath(KnownPaths.BuildDirectory / "Calamari.Consolidated.nuspec")
-                                           .SetBasePath(KnownPaths.BuildDirectory)
+                           DotNetPack(s => s
+                                           .SetProject(KnownPaths.BuildDirectory / "Calamari.Consolidated.nuspec")
                                            .SetVersion(NugetVersion.Value)
-                                           .SetOutputDirectory(KnownPaths.ArtifactsDirectory));
+                                           .SetOutputDirectory(KnownPaths.ArtifactsDirectory)
+                                           .SetProperty("NuspecBasePath", KnownPaths.BuildDirectory)
+                           );
+                           // NuGetPack(s => s.SetTargetPath(KnownPaths.BuildDirectory / "Calamari.Consolidated.nuspec")
+                           //                 .SetBasePath(KnownPaths.BuildDirectory)
+                           //                 .SetVersion(NugetVersion.Value)
+                           //                 .SetOutputDirectory(KnownPaths.ArtifactsDirectory));
                        });
 }
