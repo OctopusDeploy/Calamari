@@ -1,3 +1,4 @@
+using System;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
 

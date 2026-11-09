@@ -252,10 +252,16 @@ namespace Calamari.Deployment
                 public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
                 public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
                 public static readonly string ExitCode = "Octopus.Action.Script.ExitCode";
+                
 
                 public static string ScriptBodyBySyntax(ScriptSyntax syntax)
                 {
                     return $"Octopus.Action.Script.ScriptBody[{syntax.ToString()}]";
+                }
+
+                public static class CSharp
+                {
+                    public const string BypassIsolation = "Octopus.Action.Script.CSharp.BypassIsolation";
                 }
             }
 

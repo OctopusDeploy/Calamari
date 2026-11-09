@@ -135,6 +135,10 @@ sealed class EcsDeployTemplate
 
     Cfn.ServiceProperties BuildServiceProperties() => new()
     {
+        // Null when no explicit name is supplied, so CFN generates the service name.
+        ServiceName = registeredParameterNames.Contains(EcsTemplateParameterNames.ServiceName)
+            ? new Cfn.Ref(EcsTemplateParameterNames.ServiceName)
+            : (Cfn.Value<string>)null,
         Cluster = new Cfn.Ref(EcsTemplateParameterNames.ClusterName),
         LaunchType = FargateLaunchType,
         TaskDefinition = new Cfn.Ref(commandInputs.TaskName),

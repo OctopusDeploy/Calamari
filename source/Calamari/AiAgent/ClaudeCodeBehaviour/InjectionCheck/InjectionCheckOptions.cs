@@ -8,8 +8,8 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour.InjectionCheck;
 // promoted to step configuration later by setting the matching Octopus.Action.Claude.* variable.
 public class InjectionCheckOptions
 {
-    const string DefaultModel = "claude-haiku-4-5";
-    const int DefaultMaxTokens = 1024;
+    const string DefaultModel = "claude-haiku-5-5";
+    const int DefaultMaxTokens = 2048;
     const int DefaultMaxInputCharacters = 200_000;
 
     public bool Enabled { get; init; }

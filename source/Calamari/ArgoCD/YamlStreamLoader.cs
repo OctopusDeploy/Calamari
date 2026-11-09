@@ -109,27 +109,23 @@ namespace Calamari.ArgoCD
                 return string.Empty;
 
             var newLine = originalContent?.DetectLineEnding() ?? "\n";
-            var serializedDocs = new List<string>();
+            var serializedDocs = documentList.Select(doc => SerializeDocument(doc, newLine));
 
-            foreach (var doc in documentList)
-            {
-                using var writer = new StringWriter();
-                var tempStream = new YamlStream(doc);
-                tempStream.Save(writer, false);
-                var serialized = writer.ToString();
+            var joined = string.Join($"{newLine}---{newLine}", serializedDocs);
+            return originalContent.HasTrailingNewLine() ? joined + newLine : joined;
+        }
 
-                serialized = serialized.TrimEnd();
-                if (serialized.EndsWith("..."))
-                {
-                    serialized = serialized.Substring(0, serialized.Length - 3).TrimEnd();
-                }
+        static string SerializeDocument(YamlDocument document, string newLine)
+        {
+            // The emitter always writes '\n' regardless of the writer's NewLine, so the document's
+            // own line ending has to be reapplied afterwards.
+            using var writer = new StringWriter();
+            new YamlStream(document).Save(writer, false);
 
-                serializedDocs.Add(serialized);
-            }
-
-            return documentList.Count == 1
-                ? serializedDocs[0]
-                : string.Join($"{newLine}---{newLine}", serializedDocs);
+            var serialized = writer.ToString().TrimEnd().ReplaceLineEndings(newLine);
+            return serialized.EndsWith("...")
+                ? serialized.Substring(0, serialized.Length - 3).TrimEnd()
+                : serialized;
         }
     }
 }

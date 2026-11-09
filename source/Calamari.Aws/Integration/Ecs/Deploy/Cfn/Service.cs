@@ -4,6 +4,7 @@ namespace Calamari.Aws.Integration.Ecs.Deploy.Cfn;
 
 public sealed record ServiceProperties
 {
+    public Value<string> ServiceName { get; init; }
     public Value<string> Cluster { get; init; }
     public string LaunchType { get; init; }
     public Value<string> TaskDefinition { get; init; }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
 using Serilog;
+using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Calamari.AzureWebApp.NetCoreShim
@@ -53,7 +55,10 @@ namespace Calamari.AzureWebApp.NetCoreShim
         {
             var logger = new LoggerConfiguration()
                          .MinimumLevel.Verbose()
-                         .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}", theme: ConsoleTheme.None)
+                         // Errors go to stderr so that Calamari can report them as the reason the deployment failed
+                         .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}",
+                                          theme: ConsoleTheme.None,
+                                          standardErrorFromLevel: LogEventLevel.Error)
                          .CreateLogger();
 
             return await Parser.Default.ParseArguments<SyncOptions>(args)
@@ -67,11 +72,39 @@ namespace Calamari.AzureWebApp.NetCoreShim
                                               }
                                               catch (Exception e)
                                               {
-                                                  logger.Error(e, e.Message);
+                                                  LogException(logger, e);
                                                   return 1;
                                               }
                                           },
                                           err => Task.FromResult(1));
+        }
+
+        // Calamari reads our output one line at a time and only understands lines that start with a level prefix,
+        // so the exception is written line by line rather than through the output template's {Exception} token.
+        // Web Deploy puts the real cause in the inner exceptions, so each one's message is logged as an error.
+        static void LogException(ILogger logger, Exception exception)
+        {
+            string previous = null;
+            for (var ex = exception; ex != null; ex = ex.InnerException)
+            {
+                var firstLine = SplitLines(ex.Message).FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(firstLine) && firstLine != previous)
+                {
+                    logger.Error("{Line:l}", firstLine);
+                }
+
+                previous = firstLine;
+            }
+
+            foreach (var line in SplitLines(exception.ToString()))
+            {
+                logger.Verbose("{Line:l}", line);
+            }
+        }
+
+        static IEnumerable<string> SplitLines(string text)
+        {
+            return (text ?? string.Empty).Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
         }
     }
 }

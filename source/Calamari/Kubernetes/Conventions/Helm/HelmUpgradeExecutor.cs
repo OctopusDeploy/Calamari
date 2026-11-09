@@ -47,9 +47,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                        CancellationTokenSource installCompletedCts,
                                        CancellationTokenSource installErrorCts)
         {
-            var packagePath = GetChartLocation(deployment);
-
-            var args = GetUpgradeCommandArgs(deployment);
+            string packagePath;
+            List<string> args;
+            try
+            {
+                packagePath = GetChartLocation(deployment);
+                args = GetUpgradeCommandArgs(deployment);
+            }
+            catch
+            {
+                //if there is any exception, throw the error cancel
+                installErrorCts.Cancel();
+                throw;
+            }
 
             var result = helmCli.Upgrade(releaseName, packagePath, args);
 
@@ -167,7 +177,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
             //if wait or atomic is not set, we need it for KOS, so just set wait
             //atomic is a superset of wait
-            if (!additionalArgs.Contains("--wait") || !additionalArgs.Contains("--atomic"))
+            if (!additionalArgs.Contains("--wait") && !additionalArgs.Contains("--atomic") && !additionalArgs.Contains("--rollback-on-failure"))
             {
                 additionalArgs = $"{additionalArgs} --wait";
             }
@@ -175,7 +185,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
             //update or add the additional args
             if (hasAdditionalArgs)
             {
-                args[args.Count - 1] = additionalArgs;
+                args[^1] = additionalArgs;
             }
             else
             {

@@ -3,7 +3,7 @@
     <PropertyGroup>
         <RootNamespace>Octopus.Calamari.Contracts</RootNamespace>
         <AssemblyName>Octopus.Calamari.Contracts</AssemblyName>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Octopus Deploy</Authors>
@@ -16,6 +16,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
+      <PackageReference Include="Octopus.TinyTypes" Version="3.1.1" />
     </ItemGroup>
 </Project>

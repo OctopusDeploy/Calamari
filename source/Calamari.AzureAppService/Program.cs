@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
 using Calamari.AzureAppService.Azure;
+using Calamari.AzureScripting;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -13,6 +16,12 @@ namespace Calamari.AzureAppService
     {
         public Program(ILog log) : base(log)
         {
+        }
+
+        protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
+        {
+            yield return typeof(AzureContextScriptWrapper).Assembly;
+            yield return typeof(Program).Assembly;
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)

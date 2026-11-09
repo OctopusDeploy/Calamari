@@ -37,6 +37,7 @@
                 public const string AutoAssignPublicIp =  "Octopus.Action.Aws.Ecs.Deploy.AutoAssignPublicIp";
                 public const string EnableEcsManagedTags =  "Octopus.Action.Aws.Ecs.Deploy.EnableEcsManagedTags";
                 public const string ServiceTaskName =  "Octopus.Action.Aws.Ecs.Deploy.ServiceTaskName";
+                public const string ServiceName =  "Octopus.Action.Aws.Ecs.Deploy.ServiceName";
                 public const string TaskRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskRole";
                 public const string TaskExecutionRole =  "Octopus.Action.Aws.Ecs.Deploy.TaskExecutionRole";
                 public const string SecurityGroupIds =  "Octopus.Action.Aws.Ecs.Deploy.SecurityGroupIds";

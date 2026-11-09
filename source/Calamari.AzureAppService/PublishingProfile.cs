@@ -17,6 +17,8 @@ namespace Calamari.AzureAppService
 
         public string PublishUrl { get; set; }
         
+        public string ZipDeployPublishUrl { get; set; }
+
         public string GetBasicAuthCredentials()
             => Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
         
@@ -39,6 +41,16 @@ namespace Calamari.AzureAppService
                            }).FirstOrDefault();
 
             if (profile == null) throw new Exception("Failed to retrieve publishing profile.");
+
+            var zipDeployUrl = (from el in document.Descendants("publishProfile")
+                                where string.Compare(el.Attribute("publishMethod")?.Value,
+                                                     "ZipDeploy",
+                                                     StringComparison.OrdinalIgnoreCase)
+                                      == 0
+                                select el.Attribute("publishUrl")?.Value).FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(zipDeployUrl))
+                profile.ZipDeployPublishUrl = $"https://{zipDeployUrl}";
 
             return profile;
         }

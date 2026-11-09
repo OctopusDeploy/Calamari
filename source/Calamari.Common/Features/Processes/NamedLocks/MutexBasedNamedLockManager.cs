@@ -13,6 +13,11 @@ namespace Calamari.Common.Features.Processes.NamedLocks
 {
     public class MutexBasedNamedLockManager : INamedLockManager
     {
+        // .NET 10 scopes named mutexes on Unix to the current user by default. Creating one fails when the uid has
+        // no passwd entry (e.g. Kubernetes agent script pods running as a non-root uid), and the lock would no longer
+        // be shared with Calamari processes running as other users, so we explicitly ask for a machine-wide mutex.
+        internal static readonly NamedWaitHandleOptions MachineWide = new() { CurrentUserOnly = false, CurrentSessionOnly = false };
+
         readonly ILog log;
         readonly int initialWaitBeforeShowingLogMessage;
         readonly ResiliencePipeline mutexCreationPipeline;
@@ -53,7 +58,7 @@ namespace Calamari.Common.Features.Processes.NamedLocks
                     {
                         // Create/acquire the global mutex with some retry, to (hopefully) avoid two instances of
                         // Calamari racing to create it (e.g. parallel steps on the same machine)
-                        mutex = mutexCreationPipeline.Execute(() => new Mutex(false, globalName));
+                        mutex = mutexCreationPipeline.Execute(() => new Mutex(false, globalName, MachineWide, out _));
                         
 
                         // Assign full control for all users, so that a lock taken by (say) a Tentacle running as a service
