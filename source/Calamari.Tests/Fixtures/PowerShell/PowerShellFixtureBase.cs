@@ -268,12 +268,13 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForKubernetesManifest()
         {
+            //This file specifically has unix line endings to ensure this tests work cross platform (as the line endings are encoded into the service message)
             var (output, _) = RunPowerShellScript("ReportKubernetesManifest.ps1");
             output.AssertSuccess();
-            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
-            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K']");
-            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==' ns='bXk=']");
-            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K' ns='bXk=']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==' ns='bXk=']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK' ns='bXk=']");
             AssertPowerShellEdition(output);
         }
         
@@ -281,19 +282,21 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldWriteServiceMessageForKubernetesManifestFile()
         {
             var tempPath = Path.GetTempPath();
-            const string manifest = @"""apiVersion"": ""v1""
-""kind"": ""Namespace""
-""metadata"":
-  ""name"": ""example""
-""labels"":
-    ""name"": ""example""
----    
-""apiVersion"": ""v1""
-""kind"": ""Namespace""
-""metadata"":
-  ""name"": ""diffs""
-""labels"":
-    ""name"": ""diffs""";
+            var manifest = """
+                           "apiVersion": "v1"
+                           "kind": "Namespace"
+                           "metadata":
+                             "name": "example"
+                           "labels":
+                               "name": "example"
+                           ---    
+                           "apiVersion": "v1"
+                           "kind": "Namespace"
+                           "metadata":
+                             "name": "diffs"
+                           "labels":
+                               "name": "diffs"
+                           """.ReplaceLineEndings("\n"); //we ensure the line endings are consistent on all test platforms
 
             var filePath = Path.Combine(tempPath, "ShouldWriteServiceMessageForKubernetesManifestFile.manifest.yaml");
             File.WriteAllText(filePath, manifest);
@@ -302,10 +305,10 @@ namespace Calamari.Tests.Fixtures.PowerShell
             {
                 var (output, _) = RunPowerShellScript("ReportKubernetesManifestFile.ps1", new Dictionary<string, string> {{"ManifestFilePath", filePath}});
                 output.AssertSuccess();
-                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
-                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==']");
-                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==' ns='bXk=']");
-                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==' ns='bXk=']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyI=']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==' ns='bXk=']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyI=' ns='bXk=']");
                 AssertPowerShellEdition(output);
             }
             finally
