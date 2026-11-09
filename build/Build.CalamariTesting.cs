@@ -27,7 +27,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux")
+                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux & TestCategory!=ExternalCloudIntegration")
                               .Execute();
                       });
 
@@ -45,7 +45,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != RequiresOpenSsl1_1OrOpenSsl3")
+                              .WithFilter("TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != RequiresOpenSsl1_1OrOpenSsl3 & TestCategory!=ExternalCloudIntegration")
                               .Execute();
                       });
 
@@ -58,7 +58,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("(TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux")
+                              .WithFilter("(TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux & TestCategory!=ExternalCloudIntegration")
                               .Execute();
                       });
 
@@ -71,7 +71,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory != macOs & TestCategory != Nix & TestCategory != PlatformAgnostic & TestCategory != nixMacOS & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ModifiesSystemProxy")
+                              .WithFilter("TestCategory != macOs & TestCategory != Nix & TestCategory != PlatformAgnostic & TestCategory != nixMacOS & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ModifiesSystemProxy & TestCategory!=ExternalCloudIntegration")
                               .Execute();
                       });
 

@@ -19,7 +19,7 @@ using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
+    [Category(TestCategory.ExternalCloudIntegration)]
     public class KubernetesContextScriptWrapperLiveFixtureAks : KubernetesContextScriptWrapperLiveFixture
     {
         string aksClusterHost;
