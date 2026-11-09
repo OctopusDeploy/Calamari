@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.Docker;
+using Octopus.Calamari.ConsolidatedPackage;
 
 namespace Calamari.Build;
 
@@ -21,7 +22,7 @@ public partial class Build
                                return;
                            }
 
-                           var flavours = GetCalamariFlavours();
+                           var flavours = BuildableCalamariProjects.GetCalamariProjectsForDockerImages;
                            string[] supportedPlatforms = ["linux/amd64", "linux/arm64", "linux/arm"];
                            var dockerBuildPlatform = string.Join(",", supportedPlatforms);
 
