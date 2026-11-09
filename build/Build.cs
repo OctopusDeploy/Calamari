@@ -191,6 +191,8 @@ partial class Build : NukeBuild
     // This is here purely to make the local build experience on non-Windows devices (with testing) workable
     static string[] GetCalamariFlavours()
     {
-        return BuildableCalamariProjects.GetCalamariProjectsToBuild(IsLocalBuild && OperatingSystem.IsWindows());
+        return IsLocalBuild
+            ? BuildableCalamariProjects.GetCalamariProjectsToBuild(OperatingSystem.IsWindows())
+            : BuildableCalamariProjects.GetAllCalamariProjects();
     }
 }

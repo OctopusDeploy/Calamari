@@ -4,6 +4,8 @@ namespace Octopus.Calamari.ConsolidatedPackage
 {
     public static class BuildableCalamariProjects
     {
+        public static string[] GetAllCalamariProjects() => GetCalamariProjectsToBuild(true);
+        
         public static string[] GetCalamariProjectsToBuild(bool isWindows)
         {
             return isWindows
