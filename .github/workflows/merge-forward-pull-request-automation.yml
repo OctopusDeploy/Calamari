@@ -21,7 +21,7 @@ env:
 jobs:
   approve-pr:
     runs-on: ubuntu-latest
-    if: ${{ (github.actor == 'Octobob') && (contains(github.head_ref, 'mergebot')) }}
+    if: ${{ (github.actor == 'team-modern-deployments-bot') && (contains(github.head_ref, 'mergebot')) }}
     steps:
       - name: Approve a merge forward PR
         run: gh pr review --approve "$PR_URL"

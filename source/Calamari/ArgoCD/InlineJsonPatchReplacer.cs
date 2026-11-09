@@ -91,9 +91,7 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
-            using var writer = new StringWriter();
-            stream.Save(writer, false);
-            var modifiedYaml = writer.ToString().TrimEnd();
+            var modifiedYaml = YamlStreamLoader.SerializeDocuments(stream.Documents, yamlContent);
             return new ImageReplacementResult(modifiedYaml, replacementsMade, new HashSet<string>());
         }
 

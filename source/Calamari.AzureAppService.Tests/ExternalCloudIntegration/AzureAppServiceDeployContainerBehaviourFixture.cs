@@ -53,7 +53,7 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                                                                            Kind = "app,linux,container",
                                                                            SiteConfig = new SiteConfigProperties
                                                                            {
-                                                                               LinuxFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp-nanoserver-ltsc2022",
+                                                                               LinuxFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp",
                                                                                IsAlwaysOn = true,
                                                                                AppSettings = new List<AppServiceNameValuePair>
                                                                                {

@@ -56,6 +56,10 @@ public class DeployEcsCommandInputs
 
     public string ServiceTaskName => variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceTaskName);
 
+    // Optional physical ECS service name. When empty, CloudFormation generates one
+    // from the stack name and the service's logical ID.
+    public string ExplicitServiceName => variables.Get(AwsSpecialVariables.Ecs.Deploy.ServiceName, "");
+
     public string CfStackName
     {
         get

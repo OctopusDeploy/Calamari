@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
@@ -12,6 +13,7 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.GoogleCloudAccounts;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Calamari.Terraform.Behaviours
 {
@@ -36,6 +38,7 @@ namespace Calamari.Terraform.Behaviours
             var useAWSAccount = variables.Get(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "None") == "AWS";
             var useAzureAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount);
             var useGoogleCloudAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.GoogleCloudAccount);
+            var stepEnvironmentVariables = GetEnvironmentVariableArgs(variables);
 
             if (useAWSAccount)
             {
@@ -51,10 +54,12 @@ namespace Calamari.Terraform.Behaviours
             if (useGoogleCloudAccount)
             {
                 var oauthFileConfiguration = new GcloudOAuthFileConfiguration(context.CurrentDirectory);
-                environmentVariables.AddRange(GoogleCloudEnvironmentVariables(variables, oauthFileConfiguration));
+                stepEnvironmentVariables.TryGetValue("GOOGLE_CREDENTIALS", out var mappedGoogleCredentials);
+                var googleCredentialsSet = !string.IsNullOrEmpty(mappedGoogleCredentials) || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GOOGLE_CREDENTIALS"));
+                environmentVariables.AddRange(GoogleCloudEnvironmentVariables(variables, oauthFileConfiguration, googleCredentialsSet));
             }
 
-            environmentVariables.AddRange(GetEnvironmentVariableArgs(variables));
+            environmentVariables.AddRange(stepEnvironmentVariables);
 
             await Execute(context, environmentVariables);
         }
@@ -70,7 +75,7 @@ namespace Calamari.Terraform.Behaviours
 
         protected abstract Task Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables);
 
-        Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables, GcloudOAuthFileConfiguration oauthFileConfiguration)
+        Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables, GcloudOAuthFileConfiguration oauthFileConfiguration, bool googleCredentialsSet)
         {
             // See https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/provider_reference#full-reference
             var googleCloudEnvironmentVariables = new Dictionary<string, string>();
@@ -87,14 +92,32 @@ namespace Calamari.Terraform.Behaviours
                 log.Verbose($"{serviceAccountEmails} has been set to GOOGLE_IMPERSONATE_SERVICE_ACCOUNT environment variable");
             }
 
+            void AddCredentials(string json, string description)
+            {
+                googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", json);
+                log.Verbose($"Set GOOGLE_CLOUD_KEYFILE_JSON with {description}");
+
+                // The gcs backend doesn't read GOOGLE_CLOUD_KEYFILE_JSON, only its own variable or GOOGLE_CREDENTIALS.
+                // GOOGLE_CREDENTIALS already wins over the account for the provider, so leave the backend reading it too.
+                // See https://developer.hashicorp.com/terraform/language/backend/gcs
+                if (googleCredentialsSet)
+                {
+                    log.Verbose("Did not set GOOGLE_BACKEND_CREDENTIALS because GOOGLE_CREDENTIALS is set");
+                    return;
+                }
+
+                googleCloudEnvironmentVariables.Add("GOOGLE_BACKEND_CREDENTIALS", json);
+                log.Verbose($"Set GOOGLE_BACKEND_CREDENTIALS with {description}");
+            }
+
             if (!useVmServiceAccount)
             {
                 if (!string.IsNullOrWhiteSpace(keyFile))
                 {
                     var bytes = Convert.FromBase64String(keyFile);
                     var json = Encoding.UTF8.GetString(bytes);
-                    googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", json);
-                    log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
+                    var clientEmail = ReadJsonField(json, "client_email") ?? "an unknown service account";
+                    AddCredentials(json, $"JSON key for {clientEmail} from account variable {account}");
                 }
                 else if (!string.IsNullOrWhiteSpace(jwtToken))
                 {
@@ -113,8 +136,9 @@ namespace Calamari.Terraform.Behaviours
                     }
 
                     var jsonAuthContent = File.ReadAllText(oauthFileConfiguration.JsonAuthFile.FilePath);
-                    googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", jsonAuthContent);
-                    log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
+                    var serviceAccount = ServiceAccountFromImpersonationUrl(ReadJsonField(jsonAuthContent, "service_account_impersonation_url")) ?? "an unknown service account";
+                    var audience = ReadJsonField(jsonAuthContent, "audience") ?? "an unknown audience";
+                    AddCredentials(jsonAuthContent, $"OIDC credential configuration for {serviceAccount} from account variable {account} (audience {audience})");
                 }
             }
 
@@ -141,6 +165,25 @@ namespace Calamari.Terraform.Behaviours
             }
             
             return googleCloudEnvironmentVariables;
+        }
+
+        static string ReadJsonField(string json, string field)
+        {
+            try
+            {
+                return JObject.Parse(json).Value<string>(field);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        // e.g. https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/deployer@project.iam.gserviceaccount.com:generateAccessToken
+        static string ServiceAccountFromImpersonationUrl(string url)
+        {
+            var match = Regex.Match(url ?? string.Empty, "serviceAccounts/([^/:]+)");
+            return match.Success ? match.Groups[1].Value : null;
         }
 
         static Dictionary<string, string> AzureEnvironmentVariables(IVariables variables)

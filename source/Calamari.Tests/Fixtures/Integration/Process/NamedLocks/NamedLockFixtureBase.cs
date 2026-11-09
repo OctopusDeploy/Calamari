@@ -45,7 +45,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.NamedLocks
             // Simulate the lock being abandoned by some other process entirely
             var holder = new Thread(() =>
                                      {
-                                         abandonedMutex = new Mutex(false, globalName);
+                                         abandonedMutex = new Mutex(false, globalName, MutexBasedNamedLockManager.MachineWide, out _);
                                          abandonedMutex.WaitOne();
                                      });
             holder.Start();
@@ -59,6 +59,42 @@ namespace Calamari.Tests.Fixtures.Integration.Process.NamedLocks
                                    });
 
             Assert.That(acquire.Wait(RecoveryAllowance), Is.True, "Acquire() never returned after the holder was abandoned.");
+        }
+
+        // On Unix a user-scoped mutex is distinct from a machine-wide one with the same name, so a lock held
+        // machine-wide (as any other Calamari process would hold it) must block Acquire()
+        [Test]
+        public void AcquireWaitsForAMachineWideHolder()
+        {
+            var name = $"Octopus.Calamari.MachineWideHolder.{Guid.NewGuid():N}";
+            var sut = new MutexBasedNamedLockManager();
+            var held = new ManualResetEventSlim(false);
+            var release = new ManualResetEventSlim(false);
+
+            var holder = new Thread(() =>
+                                    {
+                                        using var mutex = new Mutex(false, $@"Global\{name}", MutexBasedNamedLockManager.MachineWide, out _);
+                                        mutex.WaitOne();
+                                        held.Set();
+                                        release.Wait();
+                                        mutex.ReleaseMutex();
+                                    });
+            holder.Start();
+            held.Wait();
+
+            var acquire = Task.Run(() =>
+                                   {
+                                       using (sut.Acquire(name, "Another process is using the package journal"))
+                                       {
+                                       }
+                                   });
+
+            Assert.That(acquire.Wait(TimeSpan.FromSeconds(1)), Is.False, "Acquire() did not wait for the machine-wide holder.");
+
+            release.Set();
+            holder.Join();
+
+            Assert.That(acquire.Wait(RecoveryAllowance), Is.True, "Acquire() never returned after the holder released.");
         }
 
         [Test]

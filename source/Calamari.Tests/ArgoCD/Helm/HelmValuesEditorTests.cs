@@ -98,29 +98,34 @@ service:
             result.Should().BeEquivalentTo(expected);
         }
 
-        [Test]
-        public void UpdateNodeValue_ReturnsModifiedYaml()
+        [TestCase("\n")]
+        [TestCase("\r\n")]
+        public void UpdateNodeValue_ReturnsModifiedYaml(string newLine)
         {
-            const string yamlContent = @"root:
-  node1: ""node1value""
-  node2:
-     node2Nest:
-         node2nestedValue: ""banana""
-     node2Child1: ""node2child1value""
-     node2Child2: 42
-";
+            var yamlContent = """
+                              root:
+                                node1: "node1value"
+                                node2:
+                                   node2Nest:
+                                       node2nestedValue: "banana"
+                                   node2Child1: "node2child1value"
+                                   node2Child2: 42
+
+                              """.ReplaceLineEndings(newLine);
+
             var result = HelmValuesEditor.UpdateNodeValue(yamlContent, "root.node1", "awesome new value");
 
-            const string expected = @"root:
-  node1: ""awesome new value""
-  node2:
-     node2Nest:
-         node2nestedValue: ""banana""
-     node2Child1: ""node2child1value""
-     node2Child2: 42
-";
-            //ensure platform-agnostic multiline comparison
-            result.ReplaceLineEndings().Should().Be(expected.ReplaceLineEndings());
+            var expected = """
+                           root:
+                             node1: "awesome new value"
+                             node2:
+                                node2Nest:
+                                    node2nestedValue: "banana"
+                                node2Child1: "node2child1value"
+                                node2Child2: 42
+
+                           """.ReplaceLineEndings(newLine);
+            result.Should().Be(expected);
         }
     }
 }
