@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Calamari.Build.Utilities;
 using Nuke.Common.ProjectModel;
 
 namespace Calamari.Build;
@@ -140,27 +141,32 @@ public partial class Build
 
     async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPackageMetadata)
     {
-        Log.Information("Publishing {ProjectName} for framework '{Framework}' and arch '{Architecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+        return await Logging.InBlock(
+            $"Publishing {calamariPackageMetadata.Project.Name} for framework {calamariPackageMetadata.Framework} and arch {calamariPackageMetadata.Architecture}"
+            , async () =>
+              {
+                  Log.Information("Publishing {ProjectName} for framework '{Framework}' and arch '{Architecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
 
-        var project = calamariPackageMetadata.Project;
-        var outputDirectory = KnownPaths.PublishDirectory / project.Name / calamariPackageMetadata.Architecture;
+                  var project = calamariPackageMetadata.Project;
+                  var outputDirectory = KnownPaths.PublishDirectory / project.Name / calamariPackageMetadata.Architecture;
 
-        await Task.Run(() =>
-                           DotNetPublish(s =>
-                                             s.SetConfiguration(Configuration)
-                                              .SetProject(project)
-                                              .SetFramework(calamariPackageMetadata.Framework)
-                                              .SetRuntime(calamariPackageMetadata.Architecture)
-                                              .SetVersion(NugetVersion.Value)
-                                              .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
-                                              .SetVerbosity(BuildVerbosity)
-                                              .EnableNoRestore()
-                                              .EnableSelfContained()
-                                              .SetOutput(outputDirectory)));
+                  await Task.Run(() =>
+                                     DotNetPublish(s =>
+                                                       s.SetConfiguration(Configuration)
+                                                        .SetProject(project)
+                                                        .SetFramework(calamariPackageMetadata.Framework)
+                                                        .SetRuntime(calamariPackageMetadata.Architecture)
+                                                        .SetVersion(NugetVersion.Value)
+                                                        .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                                        .SetVerbosity(BuildVerbosity)
+                                                        .EnableNoRestore()
+                                                        .EnableSelfContained()
+                                                        .SetOutput(outputDirectory)));
 
-        File.Copy(KnownPaths.RootDirectory / "global.json", outputDirectory / "global.json");
+                  File.Copy(KnownPaths.RootDirectory / "global.json", outputDirectory / "global.json");
 
-        return outputDirectory;
+                  return outputDirectory;
+              });
     }
 
     async Task CompressCalamariProject(Project project)

@@ -8,6 +8,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.OctoVersion;
 using Nuke.Common.Utilities.Collections;
 using Octopus.Calamari.ConsolidatedPackage;
+using Logging = Calamari.Build.Utilities.Logging;
 
 namespace Calamari.Build;
 
@@ -140,24 +141,27 @@ partial class Build : NukeBuild
         if (!WillSignBinaries)
             return;
 
-        Log.Information("Signing directory: {Directory} and sub-directories", directory);
-        var binariesFolders = directory.GetDirectories( "*", int.MaxValue);
-        foreach (var subDirectory in binariesFolders.Append(directory))
-        {
-            var signing = new Signing(SigningCertificatePath, AzureKeyVaultSettings, JSignDockerImage);
-            
-            var filesToSign = subDirectory.GlobFiles(
-                                  "**/Calamari*.exe",
-                                  "**/Calamari*.dll",
-                                  "**/Octo*.exe",
-                                  "**/Octo*.dll",
-                                  "**/docker-credential-octopus*.exe",
-                                  "**/docker-credential-octopus*.dll")
-                              .Where(f => !Signing.HasAuthenticodeSignature(f))
-                              .ToList();
-            
-            await signing.Sign(subDirectory, filesToSign, SigningCertificatePassword);
-        }
+        await Logging.InBlock($"Signing and timestamping {directory} and sub-directories",
+            async () =>
+            {
+                var binariesFolders = directory.GetDirectories("*", int.MaxValue);
+                foreach (var subDirectory in binariesFolders.Append(directory))
+                {
+                    var signing = new Signing(SigningCertificatePath, AzureKeyVaultSettings, JSignDockerImage);
+
+                    var filesToSign = subDirectory.GlobFiles(
+                                                      "**/Calamari*.exe",
+                                                      "**/Calamari*.dll",
+                                                      "**/Octo*.exe",
+                                                      "**/Octo*.dll",
+                                                      "**/docker-credential-octopus*.exe",
+                                                      "**/docker-credential-octopus*.dll")
+                                                  .Where(f => !Signing.HasAuthenticodeSignature(f))
+                                                  .ToList();
+
+                    await signing.Sign(subDirectory, filesToSign, SigningCertificatePassword);
+                }
+            });
     }
 
     // Sets the Octopus.Server.csproj Calamari.Consolidated package version
@@ -187,6 +191,6 @@ partial class Build : NukeBuild
     // This is here purely to make the local build experience on non-Windows devices (with testing) workable
     static string[] GetCalamariFlavours()
     {
-        return BuildableCalamariProjects.GetCalamariProjectsToBuild(OperatingSystem.IsWindows());
+        return BuildableCalamariProjects.GetCalamariProjectsToBuild(IsLocalBuild && OperatingSystem.IsWindows());
     }
 }
