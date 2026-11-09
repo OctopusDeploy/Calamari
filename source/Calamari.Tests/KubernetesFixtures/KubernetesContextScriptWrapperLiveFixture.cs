@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -15,6 +16,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
+    [Category(TestCategory.ExternalCloudIntegration)]
     public abstract class KubernetesContextScriptWrapperLiveFixture: KubernetesContextScriptWrapperLiveFixtureBase
     {
         protected const string KubeCtlExecutableVariableName = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
