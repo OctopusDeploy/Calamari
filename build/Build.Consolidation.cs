@@ -129,12 +129,12 @@ public partial class Build
              .Executes(() =>
                        {
                            DotNetPack(s => s
-                                           .SetProject(KnownPaths.BuildDirectory / "Calamari.Consolidated.nuspec")
+                                           .SetProject(KnownPaths.BuildDirectory / "Octopus.Calamari.Consolidated.nuspec")
                                            .SetVersion(NugetVersion.Value)
                                            .SetOutputDirectory(KnownPaths.ArtifactsDirectory)
                                            .SetProperty("NuspecBasePath", KnownPaths.BuildDirectory)
                            );
-                           // NuGetPack(s => s.SetTargetPath(KnownPaths.BuildDirectory / "Calamari.Consolidated.nuspec")
+                           // NuGetPack(s => s.SetTargetPath(KnownPaths.BuildDirectory / "Octopus.Calamari.Consolidated.nuspec")
                            //                 .SetBasePath(KnownPaths.BuildDirectory)
                            //                 .SetVersion(NugetVersion.Value)
                            //                 .SetOutputDirectory(KnownPaths.ArtifactsDirectory));
