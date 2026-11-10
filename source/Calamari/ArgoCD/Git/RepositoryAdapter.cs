@@ -19,7 +19,7 @@ public class RepositoryAdapter
 
     public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
     {
-        using var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision);
+        using var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision, repositoryUpdater.RequiresPr);
         var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
         
         if (filesUpdated.HasChanges())

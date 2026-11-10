@@ -114,7 +114,7 @@ namespace Calamari.ArgoCD.Git
             }
 
             //TODO(tmm): Make this function (and all callers async).
-            var gitVendorApiAdapter = gitConnection is HttpsGitConnection httpsGitConnection
+            var gitVendorApiAdapter = gitConnection is UsernamePasswordGitConnection httpsGitConnection
                 ? gitVendorPullRequestClientResolver.TryResolve(httpsGitConnection, log, CancellationToken.None).Result
                 : null;
 
