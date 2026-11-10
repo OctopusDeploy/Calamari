@@ -17,7 +17,7 @@ using Octopus.Calamari.Contracts.TargetDiscovery;
 namespace Calamari.Tests.KubernetesFixtures;
 
 [TestFixture]
-[Category(TestCategory.RunOnceOnWindowsAndLinux)]
+[Category(TestCategory.ExternalCloudIntegration)]
 public class KubernetesContextScriptWrapperLiveFixtureAksLocalAccessDisabled : KubernetesContextScriptWrapperLiveFixture
 {
     string aksClusterName;

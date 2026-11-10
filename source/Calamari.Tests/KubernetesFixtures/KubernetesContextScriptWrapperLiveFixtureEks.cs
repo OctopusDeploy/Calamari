@@ -30,7 +30,7 @@ using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
+    [Category(TestCategory.ExternalCloudIntegration)]
     public class KubernetesContextScriptWrapperLiveFixtureEks: KubernetesContextScriptWrapperLiveFixture
     {
         private const string ResourcePackageFileName = "package.1.0.0.zip";
