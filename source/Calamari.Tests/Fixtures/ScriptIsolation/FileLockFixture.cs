@@ -115,5 +115,42 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             acquireAfterDispose.Should().NotThrow();
         }
+        [Test]
+        public void Throw_IncludesLockFilePathAndCause_WhenFailureIsNotContention()
+        {
+            var missingDirectory = new LockDirectory(new DirectoryInfo(Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}")),
+                                                     LockCapability.Supported);
+            var lockFile = missingDirectory.GetLockFile("ScriptIsolation.RunningScript.lock");
+            var cause = new DirectoryNotFoundException($"Could not find a part of the path '{lockFile.File.FullName}'.");
+
+            var act = () => LockRejectedException.Throw(cause, lockFile);
+
+            act.Should().Throw<LockRejectedException>()
+               .Where(e => e.Message.StartsWith("Lock acquisition failed")
+                           && e.Message.Contains(lockFile.File.FullName)
+                           && e.Message.Contains(cause.Message))
+               .And.InnerException.Should().BeSameAs(cause);
+        }
+
+        [Test]
+        public void Throw_IncludesCause_WhenNoLockFileIsProvided()
+        {
+            var cause = new UnauthorizedAccessException("Access to the path '/tmp/octopus.target' is denied.");
+
+            var act = () => LockRejectedException.Throw(cause);
+
+            act.Should().Throw<LockRejectedException>()
+               .WithMessage($"Lock acquisition failed: {cause.Message}");
+        }
+
+        [Test]
+        public void Throw_RethrowsLockRejectedExceptionUnchanged()
+        {
+            var original = new LockRejectedException("exclusive lock is already held");
+
+            var act = () => LockRejectedException.Throw(original, lockFilePath);
+
+            act.Should().Throw<LockRejectedException>().Which.Should().BeSameAs(original);
+        }
     }
 }
