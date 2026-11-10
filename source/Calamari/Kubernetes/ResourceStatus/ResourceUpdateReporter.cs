@@ -97,6 +97,12 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {ResourceStatusAttributes.CheckCount, checkCount.ToString()}
             };
 
+            // Absent rather than empty: the server reads this optionally, and a blank value would read as an owner with no uid.
+            if (!string.IsNullOrEmpty(resource.ControllerOwnerUid))
+            {
+                parameters.Add(ResourceStatusAttributes.OwnerUuid, resource.ControllerOwnerUid);
+            }
+
             var message = new ServiceMessage(SpecialVariables.ServiceMessages.ResourceStatus.Name, parameters);
             log.WriteServiceMessage(message);
         }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.ResourceStatus;
@@ -154,6 +155,53 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new KeyValuePair<string, string>("kind", "Namespace"),
                 new KeyValuePair<string, string>("namespace", null),
             }).Count() == 6);
+        }
+
+        [Test]
+        public void ReportsTheUidOfTheControllingOwnerReference()
+        {
+            var serviceMessage = ReportSingleResourceFrom("one-replicaset-with-controlling-owner.json");
+
+            serviceMessage.Properties.Should().Contain("ownerUuid", "42c67fbc-486c-4091-a4df-3827d32b23c7");
+        }
+
+        [Test]
+        public void OmitsOwnerUuidWhenNoOwnerReferenceIsTheController()
+        {
+            var serviceMessage = ReportSingleResourceFrom("one-replicaset-with-non-controlling-owners.json");
+
+            serviceMessage.Properties.Should().NotContainKey("ownerUuid");
+        }
+
+        [Test]
+        public void OmitsOwnerUuidWhenThereAreNoOwnerReferences()
+        {
+            var serviceMessage = ReportSingleResourceFrom("one-deployment.json");
+
+            serviceMessage.Properties.Should().NotContainKey("ownerUuid");
+        }
+
+        [Test]
+        public void ReportsTheFirstControllingOwnerWhenMoreThanOneIsMarkedAsController()
+        {
+            var serviceMessage = ReportSingleResourceFrom("one-replicaset-with-multiple-controlling-owners.json");
+
+            serviceMessage.Properties.Should().Contain("ownerUuid", "42c67fbc-486c-4091-a4df-3827d32b23c7");
+        }
+
+        static ServiceMessage ReportSingleResourceFrom(string assetFileName)
+        {
+            var log = new InMemoryLog();
+            var reporter = new ResourceUpdateReporter(new CalamariVariables(), log);
+
+            var newStatuses = ResourceFactory
+                .FromListJson(TestFileLoader.Load(assetFileName), new Options())
+                .ToDictionary(resource => resource.Uid, resource => resource);
+
+            reporter.ReportUpdatedResources(new Dictionary<string, Resource>(), newStatuses, 1);
+
+            return log.ServiceMessages
+                .Single(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name);
         }
     }
 }

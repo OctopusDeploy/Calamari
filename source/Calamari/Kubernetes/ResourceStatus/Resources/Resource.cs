@@ -13,6 +13,10 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         [JsonIgnore] public IEnumerable<string> OwnerUids { get; }
 
+        // Kubernetes permits at most one owner reference with controller: true, so this is the single parent
+        // an object hangs off in an ownership tree. Null for objects Octopus applies directly, which are roots.
+        [JsonIgnore] public string ControllerOwnerUid { get; }
+
         [JsonIgnore] public string Uid { get; protected set; }
 
         [JsonIgnore] public ResourceGroupVersionKind GroupVersionKind { get; protected set; }
@@ -34,6 +38,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         {
             // force enumeration to prevent memory growth
             OwnerUids = json.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>().ToList();
+            ControllerOwnerUid = json.SelectTokens("$.metadata.ownerReferences[*]")
+                                     .FirstOrDefault(owner => owner["controller"]?.Value<bool?>() == true)
+                                     ?["uid"]?.Value<string>();
             Uid = Field(json, "$.metadata.uid");
             GroupVersionKind = json.ToResourceGroupVersionKind();
             Name = Field(json, "$.metadata.name");
