@@ -150,7 +150,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 AwsCliExecutable = await DownloadCli("aws",
                                                      () =>
                                                      {
-                                                         var version = "2.11.22";
+                                                         var version = "2.39.6";
                                                          return Task.FromResult((version, GetAwsCliDownloadLink(version)));
                                                      },
                                                      async (destinationDirectoryName, tuple) =>
@@ -195,7 +195,7 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var client = CreateHttpClient())
             {
                 GcloudExecutable = await DownloadCli("gcloud",
-                                                     () => Task.FromResult<(string, string)>(("436.0.0", string.Empty)),
+                                                     () => Task.FromResult<(string, string)>(("592.0.0", string.Empty)),
                                                      async (destinationDirectoryName, tuple) =>
                                                      {
                                                          var downloadUrl = GetGcloudDownloadLink(tuple.version);
@@ -411,7 +411,7 @@ namespace Calamari.Tests.KubernetesFixtures
             if (CalamariEnvironment.IsRunningOnNix)
                 return $"google-cloud-sdk-{currentVersion}-linux-x86_64.tar.gz";
             if (CalamariEnvironment.IsRunningOnMac)
-                return $"google-cloud-sdk-{currentVersion}-darwin-x86_64-bundled-python.tar.gz";
+                return $"google-cloud-sdk-{currentVersion}-darwin-x86_64.tar.gz";
 
             return $"google-cloud-sdk-{currentVersion}-windows-x86_64-bundled-python.zip";
         }

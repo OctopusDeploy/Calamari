@@ -30,6 +30,7 @@ namespace Calamari.GoogleCloudScripting.Tests
 
         private class DownloadCli: IEnumerable
         {
+            private const string GcloudVersion = "592.0.0";
             private readonly string postfix = "";
 
             public DownloadCli()
@@ -44,32 +45,20 @@ namespace Calamari.GoogleCloudScripting.Tests
                 }
                 else if (OperatingSystem.IsMacOs())
                 {
-                    postfix = "-darwin-x86_64-bundled-python.tar.gz";
+                    postfix = "-darwin-x86_64.tar.gz";
                 }
             }
             
             private GoogleStorageObject RetrieveFileFromGoogleCloudStorage(StorageClient client)
             {
-                var results = client.ListObjects("cloud-sdk-release", "google-cloud-sdk-");
-                var listOfFilesSortedByCreatedDate = new SortedList<DateTimeOffset, GoogleStorageObject>(Comparer<DateTimeOffset>.Create((a, b) => b.CompareTo(a)));
+                // Pinned to match the gcloud version in the worker tools images.
+                // Every platform archive now bundles its own Python, so the agent's Python version no longer matters.
+                var objectName = $"google-cloud-sdk-{GcloudVersion}{postfix}";
+                var results = client.ListObjects("cloud-sdk-release", objectName);
 
-                // Checking date time less than to fetch gcloud versions earlier than 448.
-                // 448 requires python 3.8 and up, currently 3.5 is available on Teamcity agents
-                // This is intended as a temporary workaround
-                // https://build.octopushq.com/test/-1383742321497021969?currentProjectId=OctopusDeploy_Calamari_CalamariGoogleCloudScriptingTests_NetcoreTesting&expandTestHistoryChartSection=true
-                var dateBeforeGcloud448 = new DateTime(2023, 09, 20);
-
-                foreach (var result in results)
+                foreach (var result in results.Where(r => r.Name == objectName))
                 {
-                    if (result.TimeCreatedDateTimeOffset.HasValue && result.TimeCreatedDateTimeOffset.Value.CompareTo(dateBeforeGcloud448) == -1)
-                    {
-                        listOfFilesSortedByCreatedDate.Add(result.TimeCreatedDateTimeOffset.Value, result);
-                    }
-                }
-
-                foreach (var file in listOfFilesSortedByCreatedDate.Where(file => file.Value.Name.EndsWith(postfix)))
-                {
-                    return file.Value;
+                    return result;
                 }
 
                 throw new Exception(
