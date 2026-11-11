@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages.Java;
@@ -38,7 +39,15 @@ namespace Calamari.Commands.Java
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            JavaRuntime.VerifyExists();
+
+            // The native BouncyCastle-based keystore step doesn't need a JVM at all. Every other
+            // action type this command dispatches to (Tomcat/WildFly state and certificate steps)
+            // still shells out to calamari.jar, so the check only skips for that one action type.
+            var isNativeKeystoreStep = actionType == SpecialVariables.Action.Java.JavaKeystore.CertificateActionTypeName
+                                       && OctopusFeatureToggles.JavaKeystoreNativeBouncyCastleFeatureToggle.IsEnabled(variables);
+
+            if (!isNativeKeystoreStep)
+                JavaRuntime.VerifyExists();
 
             var embeddedResources = new AssemblyEmbeddedResources();
 
