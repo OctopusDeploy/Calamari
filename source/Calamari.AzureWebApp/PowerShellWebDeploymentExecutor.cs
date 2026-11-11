@@ -9,32 +9,54 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureWebApp
 {
-    public class PowerShellWebDeploymentExecutor :IWebDeploymentExecutor
+    public class PowerShellWebDeploymentExecutor : IWebDeploymentExecutor
     {
         const string ScriptFileName = "ExecuteWebDeploy.ps1";
-        
+
+        readonly ICalamariFileSystem fileSystem;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PowerShellWebDeploymentExecutor(IScriptEngine scriptEngine,
+        public PowerShellWebDeploymentExecutor(ICalamariFileSystem fileSystem,
+                                               IScriptEngine scriptEngine,
                                                ICommandLineRunner commandLineRunner)
         {
+            this.fileSystem = fileSystem;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
         }
-        
+
         public async Task ExecuteDeployment(RunningDeployment deployment, AzureTargetSite targetSite, IVariables variables, WebDeployPublishSettings publishSettings)
         {
-            var scriptBody = await GetScriptBody();
-            var script = new Script(scriptBody);
+            var scriptFilePath = await WriteScriptToWorkingDirectory();
 
             AddVariablesForScript(variables, deployment, targetSite, publishSettings);
-            
-            var result = scriptEngine.Execute(script, variables, commandLineRunner);
+
+            var result = scriptEngine.Execute(new Script(scriptFilePath), variables, commandLineRunner);
+
+            fileSystem.DeleteFile(scriptFilePath, FailureOptions.IgnoreFailure);
+
+            if (result.ExitCode != 0)
+            {
+                throw new CommandException($"Script '{scriptFilePath}' returned non-zero exit code: {result.ExitCode}");
+            }
+        }
+
+        async Task<string> WriteScriptToWorkingDirectory()
+        {
+            var scriptBody = await GetScriptBody();
+
+            var tempDir = fileSystem.CreateTemporaryDirectory();
+            var scriptFilePath = Path.Combine(tempDir, ScriptFileName);
+
+            fileSystem.OverwriteFile(scriptFilePath, scriptBody);
+
+            return scriptFilePath;
         }
 
         void AddVariablesForScript(IVariables variables, RunningDeployment deployment, AzureTargetSite targetSite, WebDeployPublishSettings publishSettings)
@@ -45,23 +67,25 @@ namespace Calamari.AzureWebApp
             variables.Add("Octopus.Action.Azure.PowerShellExecution.DestinationPassword", publishSettings.PublishProfile.Password);
             variables.Add("Octopus.Action.Azure.PowerShellExecution.DestinationUri", publishSettings.PublishProfile.Uri.ToString());
             variables.Add("Octopus.Action.Azure.PowerShellExecution.DestinationDeploymentSite", publishSettings.DeploymentSite);
-            
-            var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
-            if (preservePaths.Count > 0)
-            {
-                var pipedPaths = string.Join("|", preservePaths.Select(s => $"\"{s}\""));
-                variables.Add("Octopus.Action.Azure.PowerShellExecution.PreservePathsPiped", pipedPaths);
-            }
+
+            variables.AddFlag("Octopus.Action.Azure.PowerShellExecution.DoNotDelete", !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles));
+            variables.AddFlag("Octopus.Action.Azure.PowerShellExecution.UseAppOffline", variables.GetFlag(SpecialVariables.Action.Azure.AppOffline));
+            variables.AddFlag("Octopus.Action.Azure.PowerShellExecution.PreserveAppData", variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData));
 
             // if these feature toggles are set, clear out these variable values
-            if (OctopusFeatureToggles.AzureWebAppIgnorePreservePathsFeatureToggle.IsEnabled(variables))
+            if (!OctopusFeatureToggles.AzureWebAppIgnorePreservePathsFeatureToggle.IsEnabled(variables))
             {
-                variables.Set(SpecialVariables.Action.Azure.PreservePaths, null);
+                var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+                if (preservePaths.Count > 0)
+                {
+                    var pipedPaths = string.Join("|", preservePaths.Select(s => s));
+                    variables.Add("Octopus.Action.Azure.PowerShellExecution.PreservePathsPiped", pipedPaths);
+                }
             }
 
-            if (OctopusFeatureToggles.AzureWebAppIgnoreChecksumFeatureToggle.IsEnabled(variables))
+            if (!OctopusFeatureToggles.AzureWebAppIgnoreChecksumFeatureToggle.IsEnabled(variables))
             {
-                variables.Set(SpecialVariables.Action.Azure.UseChecksum, null);
+                variables.AddFlag("Octopus.Action.Azure.PowerShellExecution.UseChecksum", variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum));
             }
         }
 
@@ -75,7 +99,7 @@ namespace Calamari.AzureWebApp
             {
                 throw new InvalidOperationException("Failed to load script from assembly manifest resources.");
             }
-            
+
             using var streamReader = new StreamReader(stream);
             return await streamReader.ReadToEndAsync();
         }

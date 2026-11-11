@@ -1,17 +1,22 @@
 ﻿
-$SourcePath = '#{Octopus.Action.Azure.PowerShellExecution.SourcePath}'
-$DestinationPath = '#{Octopus.Action.Azure.PowerShellExecution.DestinationPath}'
-$DestinationUserName = '#{Octopus.Action.Azure.PowerShellExecution.DestinationUserName}'
-$DestinationPassword = '#{Octopus.Action.Azure.PowerShellExecution.DestinationPassword}'
-$DestinationUri = '#{Octopus.Action.Azure.PowerShellExecution.DestinationUri}'
-$DestinationDeploymentSite = '#{Octopus.Action.Azure.PowerShellExecution.DestinationDeploymentSite}'
-$UseChecksum = [bool]::Parse('#{if Octopus.Action.Azure.UseChecksum == "True"}true#{/if}#{unless Octopus.Action.Azure.UseChecksum == "True"}false#{/unless}')
-$DoNotDelete = [bool]::Parse('#{unless Octopus.Action.Azure.RemoveAdditionalFiles == "True"}true#{/unless}#{if Octopus.Action.Azure.RemoveAdditionalFiles == "True"}false#{/if}')
-$UseAppOffline = [bool]::Parse('#{if Octopus.Action.Azure.AppOffline == "True"}true#{/if}#{unless Octopus.Action.Azure.AppOffline == "True"}false#{/unless}')
-$PreserveAppData = [bool]::Parse('#{if Octopus.Action.Azure.PreserveAppData == "True"}true#{/if}#{unless Octopus.Action.Azure.PreserveAppData == "True"}false#{/unless}')
-$PreservePathsPiped ='#{Octopus.Action.Azure.PowerShellExecution.PreservePathsPiped}'
+function Get-ExecutionVariable([string]$name)
+{
+    return $OctopusParameters["Octopus.Action.Azure.PowerShellExecution.$name"]
+}
 
-$PreservePaths = $PreservePathsPiped -split '|'
+$SourcePath = Get-ExecutionVariable 'SourcePath'
+$DestinationPath = Get-ExecutionVariable 'DestinationPath'
+$DestinationUserName = Get-ExecutionVariable 'DestinationUserName'
+$DestinationPassword = Get-ExecutionVariable 'DestinationPassword'
+$DestinationUri = Get-ExecutionVariable 'DestinationUri'
+$DestinationDeploymentSite = Get-ExecutionVariable 'DestinationDeploymentSite'
+$UseChecksum = (Get-ExecutionVariable 'UseChecksum') -eq 'True'
+$DoNotDelete = (Get-ExecutionVariable 'DoNotDelete') -eq 'True'
+$UseAppOffline = (Get-ExecutionVariable 'UseAppOffline') -eq 'True'
+$PreserveAppData = (Get-ExecutionVariable 'PreserveAppData') -eq 'True'
+$PreservePathsPiped = Get-ExecutionVariable 'PreservePathsPiped'
+
+$PreservePaths = $PreservePathsPiped.Split('|')
 
 $ErrorActionPreference = 'Stop'
 $WebDeploymentPackageVersion = '4.0.5' # matches the version Calamari.AzureWebApp.NetCoreShim references
