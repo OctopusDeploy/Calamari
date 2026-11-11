@@ -10,6 +10,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureWebApp
@@ -18,14 +19,17 @@ namespace Calamari.AzureWebApp
     {
         const string ScriptFileName = "ExecuteWebDeploy.ps1";
 
+        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PowerShellWebDeploymentExecutor(ICalamariFileSystem fileSystem,
+        public PowerShellWebDeploymentExecutor(ILog log,
+                                               ICalamariFileSystem fileSystem,
                                                IScriptEngine scriptEngine,
                                                ICommandLineRunner commandLineRunner)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
@@ -41,6 +45,8 @@ namespace Calamari.AzureWebApp
             {
                 //this forces the desktop (.NET Framework-based) PowerShell
                 variables.Set(PowerShellVariables.Edition, null);
+                
+                log.Verbose("Executing Azure WebApp deployment via PowerShell");
                 
                 var result = scriptEngine.Execute(new Script(scriptFilePath), variables, commandLineRunner);
 
@@ -113,7 +119,7 @@ namespace Calamari.AzureWebApp
 
         static string BuildPath(AzureTargetSite site, IVariables variables)
         {
-            var relativePath = variables.Get(SpecialVariables.Action.Azure.PhysicalPath, string.Empty)?.TrimStart('\\');
+            var relativePath = variables.Get(SpecialVariables.Action.Azure.PhysicalPath, string.Empty).TrimStart('\\');
             return !string.IsNullOrWhiteSpace(relativePath)
                 ? site.Site + "\\" + relativePath
                 : site.Site;
