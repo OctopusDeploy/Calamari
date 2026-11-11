@@ -1,4 +1,5 @@
-﻿
+﻿$ErrorActionPreference = 'Stop'
+
 function Get-ExecutionVariable([string]$name)
 {
     return $OctopusParameters["Octopus.Action.Azure.PowerShellExecution.$name"]
@@ -16,9 +17,8 @@ $UseAppOffline = (Get-ExecutionVariable 'UseAppOffline') -eq 'True'
 $PreserveAppData = (Get-ExecutionVariable 'PreserveAppData') -eq 'True'
 $PreservePathsPiped = Get-ExecutionVariable 'PreservePathsPiped'
 
-$PreservePaths = $PreservePathsPiped.Split('|')
+$PreservePaths = if ($PreservePathsPiped) { $PreservePathsPiped.Split('|') } else { @() }
 
-$ErrorActionPreference = 'Stop'
 $WebDeploymentPackageVersion = '4.0.5' # matches the version Calamari.AzureWebApp.NetCoreShim references
 
 function Get-DownloadedWebDeploymentDllPath

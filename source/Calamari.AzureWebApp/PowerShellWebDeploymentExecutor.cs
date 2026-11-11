@@ -37,13 +37,18 @@ namespace Calamari.AzureWebApp
 
             AddVariablesForScript(variables, deployment, targetSite, publishSettings);
 
-            var result = scriptEngine.Execute(new Script(scriptFilePath), variables, commandLineRunner);
-
-            fileSystem.DeleteFile(scriptFilePath, FailureOptions.IgnoreFailure);
-
-            if (result.ExitCode != 0)
+            try
             {
-                throw new CommandException($"Script '{scriptFilePath}' returned non-zero exit code: {result.ExitCode}");
+                var result = scriptEngine.Execute(new Script(scriptFilePath), variables, commandLineRunner);
+
+                if (result.ExitCode != 0)
+                {
+                    throw new CommandException($"Script '{scriptFilePath}' returned non-zero exit code: {result.ExitCode}");
+                }
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(Path.GetDirectoryName(scriptFilePath)!, FailureOptions.IgnoreFailure);
             }
         }
 
@@ -72,13 +77,12 @@ namespace Calamari.AzureWebApp
             variables.AddFlag("Octopus.Action.Azure.PowerShellExecution.UseAppOffline", variables.GetFlag(SpecialVariables.Action.Azure.AppOffline));
             variables.AddFlag("Octopus.Action.Azure.PowerShellExecution.PreserveAppData", variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData));
 
-            // if these feature toggles are set, clear out these variable values
             if (!OctopusFeatureToggles.AzureWebAppIgnorePreservePathsFeatureToggle.IsEnabled(variables))
             {
                 var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
                 if (preservePaths.Count > 0)
                 {
-                    var pipedPaths = string.Join("|", preservePaths.Select(s => s));
+                    var pipedPaths = string.Join("|", preservePaths);
                     variables.Add("Octopus.Action.Azure.PowerShellExecution.PreservePathsPiped", pipedPaths);
                 }
             }
