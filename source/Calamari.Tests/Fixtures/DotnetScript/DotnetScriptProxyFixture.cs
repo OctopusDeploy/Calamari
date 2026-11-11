@@ -8,7 +8,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
-    [Category(TestCategory.ScriptingSupport.DotnetScript)]
     public class DotnetScriptProxyFixture : WindowsScriptProxyFixtureBase
     {
         protected override CalamariResult RunScript()

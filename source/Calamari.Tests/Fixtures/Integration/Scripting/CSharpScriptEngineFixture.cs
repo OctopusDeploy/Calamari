@@ -13,7 +13,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     [TestFixture]
     public class CSharpScriptEngineFixture : ScriptEngineFixtureBase
     {
-        [Category(TestCategory.ScriptingSupport.DotnetScript)]
         [Test]
         public void DotnetScript_CSharpDecryptsVariables()
         {

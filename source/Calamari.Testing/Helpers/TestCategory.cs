@@ -4,11 +4,6 @@ namespace Calamari.Testing.Helpers
 {
     public static class TestCategory
     {
-        public static class ScriptingSupport
-        {
-            public const string DotnetScript = "dotnet-script";
-        }
-
         public static class CompatibleOS
         {
             public const string OnlyNix = "Nix";
