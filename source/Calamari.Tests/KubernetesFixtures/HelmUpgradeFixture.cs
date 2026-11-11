@@ -318,7 +318,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonMac]
+        [TestPlatforms(TestPlatforms.Windows | TestPlatforms.Linux)]
         public void WhenTheChartDirectoryVariableIsSet_TheChartAtThatLocationIsUsed()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");

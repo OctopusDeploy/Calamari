@@ -49,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
+        [TestPlatforms(TestPlatforms.Windows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHub()
         {
             var downloader = GetDownloader();
@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
+        [TestPlatforms(TestPlatforms.Windows)] //Keeps rate limit low
         public void WillReUseFileIfItExists()
         {
             var downloader = GetDownloader();
@@ -85,7 +85,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
+        [TestPlatforms(TestPlatforms.Windows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHubWithDifferentVersionFormat()
         {
             var downloader = GetDownloader();

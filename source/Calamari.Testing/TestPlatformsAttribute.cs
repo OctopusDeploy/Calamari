@@ -6,7 +6,7 @@ using NUnit.Framework.Internal;
 namespace Calamari.Testing;
 
 /// <summary>
-/// Restricts a test to one or more specific platforms and emits xUnit traits (e.g. <c>TestPlatforms=PlatformWindows</c>) used by CI to
+/// Restricts a test to one or more specific platforms and emits NUnit Categories (e.g. <c>Category=PlatformWindows</c>) used by CI to
 /// filter which tests are collected.
 /// </summary>
 /// <remarks>
@@ -18,9 +18,6 @@ public class TestPlatformsAttribute(TestPlatforms supportedPlatforms) : NUnitAtt
 {
     public void ApplyToTest(Test test)
     {
-        if (test.RunState is RunState.NotRunnable or RunState.Ignored)
-            return;
-
         var currentPlatform = TestPlatformsHelpers.GetCurrentPlatform();
 
         //if this platform isn't in the supported platforms value

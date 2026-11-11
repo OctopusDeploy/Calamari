@@ -3,6 +3,7 @@ using System.Runtime.Versioning;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -12,7 +13,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class DeployVhdFixture : DeployPackageFixture
     {
         private const string ServiceName = "Acme.Vhd";

@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Kubernetes;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
@@ -142,7 +143,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        [RequiresNonMac]
+        [TestPlatforms(TestPlatforms.Windows | TestPlatforms.Linux)]
         public void TargetingANamespaceThatDoesNotExistAbortsTheManifestSearchingLoop()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);

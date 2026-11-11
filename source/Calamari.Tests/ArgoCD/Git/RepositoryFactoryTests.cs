@@ -7,6 +7,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -101,7 +102,7 @@ namespace Calamari.Tests.ArgoCD.Git
 
         [Test]
         // SSH not currently functional on Windows
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void CloningSshKeyGitConnectionDoesNotResolveAPullRequestClientAndLogsVerboseMessage()
         {
             var filename = "sshTest.txt";

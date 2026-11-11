@@ -14,7 +14,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory != Windows & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ExternalCloudIntegration")
+                              .WithFilter("(TestCategory = PlatformLinux | (TestCategory != PlatformWindows & TestCategory != PlatformMacOs)) & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ExternalCloudIntegration")
                               .Execute();
                       });
 
@@ -27,7 +27,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("(TestCategory != Windows | TestCategory = RunOnceOnWindowsAndLinux) & TestCategory != ExternalCloudIntegration")
+                              .WithFilter("((TestCategory = PlatformLinux | (TestCategory != PlatformWindows & TestCategory != PlatformMacOs)) | TestCategory = RunOnceOnWindowsAndLinux) & TestCategory != ExternalCloudIntegration")
                               .Execute();
                       });
 
@@ -40,7 +40,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory != macOs & TestCategory != Nix & TestCategory != nixMacOS & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ModifiesSystemProxy & TestCategory != ExternalCloudIntegration")
+                              .WithFilter("(TestCategory = PlatformWindows | (TestCategory != PlatformLinux & TestCategory != PlatformMacOs)) & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ModifiesSystemProxy & TestCategory != ExternalCloudIntegration")
                               .Execute();
                       });
 
@@ -53,7 +53,7 @@ partial class Build
 
                           CreateTestRun("Binaries/Calamari.Tests.dll")
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory = Windows & TestCategory = ModifiesSystemProxy")
+                              .WithFilter("TestCategory = PlatformWindows & TestCategory = ModifiesSystemProxy")
                               .Execute();
                       });
 }

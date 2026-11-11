@@ -1,12 +1,13 @@
 ﻿using System;
 using Calamari.Integration.Iis;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Iis
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class IisFixture
     {
         readonly WebServerSupport webServer = new WebServerSevenSupport();

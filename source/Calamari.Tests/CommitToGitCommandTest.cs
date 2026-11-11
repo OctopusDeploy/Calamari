@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.CommitToGit;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -22,7 +23,7 @@ using Octopus.Calamari.Contracts.Git;
 namespace Calamari.Tests;
 
 [TestFixture]
-[Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+[TestPlatforms(TestPlatforms.Unix)]
 public class CommitToGitCommandTest
 {
     readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -452,7 +453,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     [TestCase("C:\\Windows\\System32\\config", TestName = "Package_RejectsInputPath_WindowsAbsolutePath")]
     [TestCase("\\\\server\\share\\secret", TestName = "Package_RejectsInputPath_UncPath")]
     public void RejectsPackageInputFilePathsThatEscapeSourceDirectory_Windows(string maliciousInputPath)
@@ -496,7 +497,7 @@ public class CommitToGitCommandTest
     }
 
     [Test]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     [TestCase("C:\\Windows\\System32\\config", TestName = "GitDep_RejectsInputPath_WindowsAbsolutePath")]
     [TestCase("\\\\server\\share\\secret", TestName = "GitDep_RejectsInputPath_UncPath")]
     public void RejectsGitDependencyInputFilePathsThatEscapeSourceDirectory_Windows(string maliciousInputPath)
