@@ -44,6 +44,8 @@
 
   <ItemGroup>
     <EmbeddedResource Remove="netcoreshim\**" />
+    <None Remove="ExecuteWebDeploy.ps1" />
+    <EmbeddedResource Include="ExecuteWebDeploy.ps1" />
   </ItemGroup>
 
   <ItemGroup>
