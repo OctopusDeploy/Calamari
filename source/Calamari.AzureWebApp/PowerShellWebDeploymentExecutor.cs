@@ -39,6 +39,9 @@ namespace Calamari.AzureWebApp
 
             try
             {
+                //this forces the desktop (.NET Framework-based) PowerShell
+                variables.Set(PowerShellVariables.Edition, null);
+                
                 var result = scriptEngine.Execute(new Script(scriptFilePath), variables, commandLineRunner);
 
                 if (result.ExitCode != 0)
