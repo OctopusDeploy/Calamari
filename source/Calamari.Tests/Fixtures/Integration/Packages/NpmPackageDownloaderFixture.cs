@@ -7,6 +7,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using NSubstitute;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
@@ -36,8 +37,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var pkg = downloader.DownloadPackage("express", VersionFactory.CreateSemanticVersion("4.18.2"), "feed-npm",
                 new Uri("https://registry.npmjs.org"), "", "", true, 3, TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("express", pkg.PackageId);
-            Assert.AreEqual(".tgz", pkg.Extension);
+            ClassicAssert.AreEqual("express", pkg.PackageId);
+            ClassicAssert.AreEqual(".tgz", pkg.Extension);
         }
 
         [Test]
@@ -48,8 +49,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var pkg = downloader.DownloadPackage("@types/node", VersionFactory.CreateSemanticVersion("20.0.0"), "feed-npm",
                 new Uri("https://registry.npmjs.org"), "", "", true, 3, TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("@types/node", pkg.PackageId);
-            Assert.AreEqual(".tgz", pkg.Extension);
+            ClassicAssert.AreEqual("@types/node", pkg.PackageId);
+            ClassicAssert.AreEqual(".tgz", pkg.Extension);
         }
 
         [Test]
@@ -62,17 +63,17 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var pkg1 = downloader.DownloadPackage("lodash", VersionFactory.CreateSemanticVersion("4.17.21"), "feed-npm",
                 new Uri("https://registry.npmjs.org"), "", "", true, 3, TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("lodash", pkg1.PackageId);
-            Assert.AreEqual(".tgz", pkg1.Extension);
+            ClassicAssert.AreEqual("lodash", pkg1.PackageId);
+            ClassicAssert.AreEqual(".tgz", pkg1.Extension);
 
             // Second download with force=false should use cache
             var pkg2 = downloader.DownloadPackage("lodash", VersionFactory.CreateSemanticVersion("4.17.21"), "feed-npm",
                 new Uri("https://registry.npmjs.org"), "", "", false, 3, TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("lodash", pkg2.PackageId);
-            Assert.AreEqual(".tgz", pkg2.Extension);
+            ClassicAssert.AreEqual("lodash", pkg2.PackageId);
+            ClassicAssert.AreEqual(".tgz", pkg2.Extension);
             // Verify it's the same file (comparing directory, package ID, version - not the random cache buster)
-            Assert.AreEqual(Path.GetDirectoryName(pkg1.FullFilePath), Path.GetDirectoryName(pkg2.FullFilePath));
+            ClassicAssert.AreEqual(Path.GetDirectoryName(pkg1.FullFilePath), Path.GetDirectoryName(pkg2.FullFilePath));
         }
 
         static NpmPackageDownloader GetDownloader()

@@ -69,7 +69,7 @@ namespace Calamari.Testing.Helpers
         
         public void AssertCalamariFoundPackageServiceMessage(IResolveConstraint resolveConstraint, string message = "", params object[] args)
         {
-            Assert.That(captured.CalamariFoundPackage, resolveConstraint, message, args);
+            Assert.That(captured.CalamariFoundPackage, resolveConstraint, args.Length > 0 ? string.Format(message, args) : message);
         }
         
         public void AssertFoundPackageServiceMessage()
@@ -82,8 +82,7 @@ namespace Calamari.Testing.Helpers
             Assert.That(actual, Is.Not.Null);
             Assert.That(actual, Is.Not.Empty);
             Assert.That(actual.Equals(expected), resolveConstraint,
-                "Expected property '{0}' to have value '{1}' but was actually '{2}'", property,
-                expected, actual);
+                $"Expected property '{property}' to have value '{expected}' but was actually '{actual}'");
         }
 
         public void AssertNoOutput(string expectedOutput)

@@ -9,6 +9,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using SharpCompress.Common;
 using SharpCompress.Writers;
 
@@ -41,11 +42,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             if (preservesTimestamp)
             {
-                Assert.Less(fileInfo.LastWriteTime, timeBeforeExtraction);
+                ClassicAssert.Less(fileInfo.LastWriteTime, timeBeforeExtraction);
             }
 
-            Assert.AreEqual(9, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 5 here.
-            Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
+            ClassicAssert.AreEqual(9, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 5 here.
+            ClassicAssert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
         }
         
         
@@ -68,8 +69,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var textFileName = Path.Combine(targetDir, "á_ó_í_çø.txt");
             var text = File.ReadAllText(textFileName);
 
-            Assert.AreEqual(1, filesExtracted, "Mismatch in the number of files extracted");
-            Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extracted file do not match the expected value");
+            ClassicAssert.AreEqual(1, filesExtracted, "Mismatch in the number of files extracted");
+            ClassicAssert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extracted file do not match the expected value");
         }
         
 

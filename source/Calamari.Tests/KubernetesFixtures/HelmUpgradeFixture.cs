@@ -21,6 +21,7 @@ using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -143,7 +144,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             result.AssertSuccess();
 
-            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test(Description = "Test the case where the package ID does not match the directory inside the helm archive.")]
@@ -160,7 +161,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             result.AssertSuccess();
 
-            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -174,7 +175,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -194,7 +195,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -208,7 +209,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -222,7 +223,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello octostache is working", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello octostache is working", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -236,7 +237,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -260,7 +261,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -273,7 +274,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         protected async Task TestCustomHelmExeInPackage_RelativePath(string version)
@@ -320,7 +321,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result = DeployPackage();
             result.AssertSuccess();
-            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
+            ClassicAssert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]

@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
@@ -42,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         public void WindowsUsesWindowsFileSystem()
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            Assert.IsInstanceOf<WindowsPhysicalFileSystem>(fileSystem);
+            ClassicAssert.IsInstanceOf<WindowsPhysicalFileSystem>(fileSystem);
         }
 
         [Test]
@@ -50,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         public void NonWindowsUsesWindowsFileSystem()
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            Assert.IsInstanceOf<NixCalamariPhysicalFileSystem>(fileSystem);
+            ClassicAssert.IsInstanceOf<NixCalamariPhysicalFileSystem>(fileSystem);
         }
 
         [Test]
@@ -75,8 +76,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             fileSystem.PurgeDirectory(PurgeTestDirectory, (fsi) => fsi.Name.StartsWith("Important"), FailureOptions.IgnoreFailure);
 
-            Assert.IsTrue(File.Exists(importantFile), $"Expected file `{importantFile}` to be preserved.");
-            Assert.IsFalse(File.Exists(purgableFile), $"Expected file `{purgableFile}` to be removed.");
+            ClassicAssert.IsTrue(File.Exists(importantFile), $"Expected file `{importantFile}` to be preserved.");
+            ClassicAssert.IsFalse(File.Exists(purgableFile), $"Expected file `{purgableFile}` to be removed.");
         }
 
         [Test]
@@ -388,8 +389,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             File.WriteAllText(path, "hi there");
             File.SetAttributes(path, FileAttributes.Hidden);
             fileSystem.WriteAllText(path, "hi");
-            Assert.AreEqual("hi", File.ReadAllText(path));
-            Assert.AreNotEqual(0, File.GetAttributes(path) & FileAttributes.Hidden);
+            ClassicAssert.AreEqual("hi", File.ReadAllText(path));
+            ClassicAssert.AreNotEqual(0, File.GetAttributes(path) & FileAttributes.Hidden);
         }
 
         [Test]
@@ -399,8 +400,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             File.WriteAllText(path, "hi there");
             File.SetAttributes(path, FileAttributes.Hidden);
             fileSystem.WriteAllBytes(path, Encoding.ASCII.GetBytes("hi"));
-            Assert.AreEqual("hi", File.ReadAllText(path));
-            Assert.AreNotEqual(0, File.GetAttributes(path) & FileAttributes.Hidden);
+            ClassicAssert.AreEqual("hi", File.ReadAllText(path));
+            ClassicAssert.AreNotEqual(0, File.GetAttributes(path) & FileAttributes.Hidden);
         }
     }
 }

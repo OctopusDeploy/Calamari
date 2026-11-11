@@ -11,6 +11,7 @@ using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Deployment.Conventions
 {
@@ -91,7 +92,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         {
             variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             CreateConvention().Install(deployment);
-            Assert.AreEqual(variables.Get(PackageVariables.CustomInstallationDirectory), customInstallationDirectory);
+            ClassicAssert.AreEqual(variables.Get(PackageVariables.CustomInstallationDirectory), customInstallationDirectory);
         }
 
         [Test]

@@ -5,6 +5,7 @@ using System.Text;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Util;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Util
 {
@@ -40,19 +41,19 @@ namespace Calamari.Tests.Fixtures.Util
         [Test]
         public void ShouldReturnFalseIfHashingAlgorithmIsNotSupported()
         {
-            Assert.IsFalse(HashCalculator.IsAvailableHashingAlgorithm(CreateHashFipsFailure<MD5>()));
+            ClassicAssert.IsFalse(HashCalculator.IsAvailableHashingAlgorithm(CreateHashFipsFailure<MD5>()));
         }
 
         [Test]
         public void ShouldReturnTrueIfHashingAlgorithmIsSupported()
         {
-            Assert.IsTrue(HashCalculator.IsAvailableHashingAlgorithm(() => new MockHashingAlgorithm()));
+            ClassicAssert.IsTrue(HashCalculator.IsAvailableHashingAlgorithm(() => new MockHashingAlgorithm()));
         }
 
         [Test]
         public void ShouldReturnFalseIfHashingAlgorithmFactoryReturnsNull()
         {
-            Assert.IsFalse(HashCalculator.IsAvailableHashingAlgorithm(CreateNullHashFactory<MD5>()));
+            ClassicAssert.IsFalse(HashCalculator.IsAvailableHashingAlgorithm(CreateNullHashFactory<MD5>()));
         }
     }
 }

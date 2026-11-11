@@ -8,6 +8,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Util
 {
@@ -32,10 +33,10 @@ namespace Calamari.Tests.Fixtures.Util
         {
             // This usage of Environment.GetEnvironmentVariable is fine as it's not accessing a test dependency variable
             var home = Environment.GetEnvironmentVariable("HOME");
-            Assert.IsNotNull(home, "Expected $HOME environment variable to be set.");
+            ClassicAssert.IsNotNull(home, "Expected $HOME environment variable to be set.");
 
             var value = CrossPlatform.ExpandPathEnvironmentVariables("~/blah");
-            Assert.AreEqual($"{home}/blah", value);
+            ClassicAssert.AreEqual($"{home}/blah", value);
         }
 
         [Test]
@@ -54,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Util
         public void NixEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
             var value = CrossPlatform.ExpandPathEnvironmentVariables(inputValue);
-            Assert.AreEqual(expectedResult, value);
+            ClassicAssert.AreEqual(expectedResult, value);
         }
 
         [Test]
@@ -64,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Util
         public void WindowsEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
             var value = CrossPlatform.ExpandPathEnvironmentVariables(inputValue);
-            Assert.AreEqual(expectedResult, value);
+            ClassicAssert.AreEqual(expectedResult, value);
         }
     }
 }

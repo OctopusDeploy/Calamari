@@ -7,6 +7,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octostache;
 
 namespace Calamari.Tests.Fixtures.Deployment
@@ -48,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = TransferPackage();
 
             result.AssertSuccess();
-            Assert.IsTrue(File.Exists(nupkgFile.FilePath));
+            ClassicAssert.IsTrue(File.Exists(nupkgFile.FilePath));
         }
 
         [Test]
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertSuccess();
 
             var outputResult = Path.Combine(CustomDirectory, Path.GetFileName(nupkgFile.FilePath));
-            Assert.IsTrue(File.Exists(outputResult));
+            ClassicAssert.IsTrue(File.Exists(outputResult));
         }
 
         [Test]
@@ -96,7 +97,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertSuccess();
 
                 var outputResult = Path.Combine(CustomDirectory, Path.GetFileName(packageFile.FilePath));
-                Assert.IsTrue(File.Exists(outputResult));
+                ClassicAssert.IsTrue(File.Exists(outputResult));
                 result.AssertOutputVariable(PackageVariables.Output.FilePath, Is.EqualTo(outputResult));
             }
         }

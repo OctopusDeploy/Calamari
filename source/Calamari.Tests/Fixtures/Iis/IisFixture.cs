@@ -2,6 +2,7 @@
 using Calamari.Integration.Iis;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Iis
 {
@@ -26,10 +27,10 @@ namespace Calamari.Tests.Fixtures.Iis
         {
             var server = new InternetInformationServer();
             var success = server.OverwriteHomeDirectory(siteName, "C:\\Windows\\system32", false);
-            Assert.IsTrue(success, "Home directory was not overwritten");
+            ClassicAssert.IsTrue(success, "Home directory was not overwritten");
 
             var path = webServer.GetHomeDirectory(siteName, "/");
-            Assert.AreEqual("C:\\Windows\\system32", path);
+            ClassicAssert.AreEqual("C:\\Windows\\system32", path);
         }
 
         [Test]
@@ -37,10 +38,10 @@ namespace Calamari.Tests.Fixtures.Iis
         {
             var server = new InternetInformationServer();
             var success = server.OverwriteHomeDirectory(siteName + "/Foo", "C:\\Windows\\Microsoft.NET", false);
-            Assert.IsTrue(success, "Home directory was not overwritten");
+            ClassicAssert.IsTrue(success, "Home directory was not overwritten");
 
             var path = webServer.GetHomeDirectory(siteName, "/Foo");
-            Assert.AreEqual("C:\\Windows\\Microsoft.NET", path);
+            ClassicAssert.AreEqual("C:\\Windows\\Microsoft.NET", path);
         }
 
         [Test]
@@ -48,10 +49,10 @@ namespace Calamari.Tests.Fixtures.Iis
         {
             var server = new InternetInformationServer();
             var success = server.OverwriteHomeDirectory(siteName + "/Foo/Bar/Baz", "C:\\Windows\\Microsoft.NET\\Framework", false);
-            Assert.IsTrue(success, "Home directory was not overwritten");
+            ClassicAssert.IsTrue(success, "Home directory was not overwritten");
 
             var path = webServer.GetHomeDirectory(siteName, "/Foo/Bar/Baz");
-            Assert.AreEqual("C:\\Windows\\Microsoft.NET\\Framework", path);
+            ClassicAssert.AreEqual("C:\\Windows\\Microsoft.NET\\Framework", path);
         }
 
         [TearDown]

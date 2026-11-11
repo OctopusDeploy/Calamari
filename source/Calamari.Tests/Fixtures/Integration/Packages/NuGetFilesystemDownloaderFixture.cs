@@ -11,6 +11,7 @@ using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
@@ -44,7 +45,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloadPath = Path.Combine(rootDir, "DummyFile.nupkg");
 
             NuGetFileSystemDownloader.DownloadPackage("Acme.Core", new SemanticVersion("1.0.0.0-bugfix"), new Uri(rootDir), downloadPath);
-            Assert.AreEqual(HashCalculator.Hash(originalPath), HashCalculator.Hash(downloadPath), "Expected source file to have been copied");
+            ClassicAssert.AreEqual(HashCalculator.Hash(originalPath), HashCalculator.Hash(downloadPath), "Expected source file to have been copied");
         }
 
         [Test]

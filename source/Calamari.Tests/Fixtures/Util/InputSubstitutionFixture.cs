@@ -1,5 +1,6 @@
 ﻿using Calamari.Util;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -47,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Util
             string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variableDictionary, log);
 
             string expectedEvaluatedInputs = "{\"testValue\":\"" + expectedResult + "\"}";
-            Assert.AreEqual(expectedEvaluatedInputs, evaluatedInputs);
+            ClassicAssert.AreEqual(expectedEvaluatedInputs, evaluatedInputs);
             log.DidNotReceive().Warn(Arg.Any<string>());
         }
         
@@ -76,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Util
             string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, Substitute.For<ILog>());
 
             string expectedEvaluatedInputs = "{\"containerNameOverride\":\"payload\",\"package\":{\"extractedToPath\":\"C:\\\\OctopusTest\\\\Api Test\\\\1\\\\Octopus-Primary\\\\Work\\\\20210804020317-7-11\\\\package\"},\"target\":{\"files\":[{\"path\":\"azure-blob-container-target.0.0.0.zip\",\"fileName\":{\"type\":\"original file name\"}}]}}";
-            Assert.AreEqual(expectedEvaluatedInputs, evaluatedInputs);
+            ClassicAssert.AreEqual(expectedEvaluatedInputs, evaluatedInputs);
         }
             
         [Test]

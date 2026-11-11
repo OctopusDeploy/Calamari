@@ -19,6 +19,7 @@ using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -123,7 +124,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // The #{foo} variable in assets\README.txt should have been replaced by 'bar'
             string actual = FileSystem.ReadFile(Path.Combine(StagingDirectory, "Acme.Web", "1.0.0", "assets", "README.txt"));
-            Assert.AreEqual("bar", actual);
+            ClassicAssert.AreEqual("bar", actual);
         }
 
         [Test]
@@ -177,7 +178,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage(deploymentType);
 
             // Assert content was copied to custom-installation directory
-            Assert.IsTrue(FileSystem.FileExists(Path.Combine(customInstallDirectory, "assets", "styles.css")));
+            ClassicAssert.IsTrue(FileSystem.FileExists(Path.Combine(customInstallDirectory, "assets", "styles.css")));
         }
 
         [Test]
@@ -208,7 +209,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var result = DeployPackage();
 
-            Assert.AreEqual(
+            ClassicAssert.AreEqual(
                 Path.Combine(StagingDirectory, "Acme.Web\\1.0.0"),
                 webServer.GetHomeDirectory(siteName, "/"));
 
@@ -354,7 +355,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             configXml.LoadXml( FileSystem.ReadFile(xmlFile));
             var node = configXml.SelectSingleNode(nodeXPath);
 
-            Assert.AreEqual(value, node.Value);
+            ClassicAssert.AreEqual(value, node.Value);
         }
 
         public enum DeploymentType

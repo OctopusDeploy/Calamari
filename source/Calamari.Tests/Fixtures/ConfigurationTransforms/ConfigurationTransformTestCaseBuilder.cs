@@ -15,6 +15,7 @@ using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.Core;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
@@ -73,7 +74,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 
         public ConfigurationTransformTestCaseBuilder SourceFile(string sourceFile)
         {
-            Assert.IsTrue(fileSystem.FileExists(sourceFile), $"The sourceFile {sourceFile} should exist for this test");
+            ClassicAssert.IsTrue(fileSystem.FileExists(sourceFile), $"The sourceFile {sourceFile} should exist for this test");
             mostRecentResult = PerformTransform(sourceFile);
             allResults.Add(sourceFile, mostRecentResult);
             return this;

@@ -18,6 +18,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Java.Fixtures.Deployment
 {
@@ -61,7 +62,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void CanDeployJavaArchive()
         {
             DeployPackage(sourcePackage, GenerateVariables());
-            Assert.AreEqual(0, returnCode);
+            ClassicAssert.AreEqual(0, returnCode);
 
             //Archive is re-packed
             log.StandardOut.Should().Contain($"Re-packaging archive: '{Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar")}'");
@@ -72,7 +73,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void EnsureMetafileDataRepacked()
         {
             DeployPackage(sourcePackage, GenerateVariables());
-            Assert.AreEqual(0, returnCode);
+            ClassicAssert.AreEqual(0, returnCode);
 
             var targetFile = Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");
 
@@ -102,7 +103,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             variables.Set(PackageVariables.SubstituteInFilesTargets, configFile);
 
             DeployPackage(sourcePackage, variables);
-            Assert.AreEqual(0, returnCode);
+            ClassicAssert.AreEqual(0, returnCode);
             log.StandardOut.Should().Contain($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
         }
 
@@ -113,7 +114,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             variables.Set(PackageVariables.JavaArchiveCompression, false.ToString());
 
             DeployPackage(sourcePackage, variables);
-            Assert.AreEqual(0, returnCode);
+            ClassicAssert.AreEqual(0, returnCode);
 
             // Archive is re-packed
             var path = Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");

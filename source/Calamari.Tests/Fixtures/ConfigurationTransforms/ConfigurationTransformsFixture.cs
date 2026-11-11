@@ -13,6 +13,7 @@ using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
@@ -45,9 +46,9 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var text = PerformTest(GetFixtureResource("Samples", "Web.config"), GetFixtureResource("Samples", "Web.Release.config"));
             var contents = XDocument.Parse(text);
 
-            Assert.IsNull(GetDebugAttribute(contents));
-            Assert.AreEqual(GetAppSettingsValue(contents).Value, "Release!");
-            Assert.IsNull(GetCustomErrors(contents));
+            ClassicAssert.IsNull(GetDebugAttribute(contents));
+            ClassicAssert.AreEqual(GetAppSettingsValue(contents).Value, "Release!");
+            ClassicAssert.IsNull(GetCustomErrors(contents));
             log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error, "Should not log errors");
             log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Warn, "Should not log warnings");
         }

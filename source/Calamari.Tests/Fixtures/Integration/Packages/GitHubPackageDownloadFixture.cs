@@ -7,6 +7,7 @@ using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
@@ -59,8 +60,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 true, 3,
                 TimeSpan.FromSeconds(3));
 
-            Assert.Greater(file.Size, 0);
-            Assert.IsFalse(String.IsNullOrWhiteSpace(file.Hash));
+            ClassicAssert.Greater(file.Size, 0);
+            ClassicAssert.IsFalse(String.IsNullOrWhiteSpace(file.Hash));
         }
 
         [Test]
@@ -73,15 +74,15 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 3,
                 TimeSpan.FromSeconds(3));
 
-            Assert.Greater(file1.Size, 0);
+            ClassicAssert.Greater(file1.Size, 0);
 
             var file2 = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.7"), "feed-github",
                 new Uri("https://WillFailIfInvoked"), null, null, false, 3,
                 TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual(file1.FullFilePath, file1.FullFilePath);
-            Assert.AreEqual(file1.Hash, file2.Hash);
-            Assert.AreEqual(file1.Size, file1.Size);
+            ClassicAssert.AreEqual(file1.FullFilePath, file1.FullFilePath);
+            ClassicAssert.AreEqual(file1.Hash, file2.Hash);
+            ClassicAssert.AreEqual(file1.Size, file1.Size);
         }
 
         [Test]
@@ -94,8 +95,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 3,
                 TimeSpan.FromSeconds(3));
 
-            Assert.Greater(file.Size, 0);
-            Assert.IsFalse(String.IsNullOrWhiteSpace(file.Hash));
+            ClassicAssert.Greater(file.Size, 0);
+            ClassicAssert.IsFalse(String.IsNullOrWhiteSpace(file.Hash));
         }
 
         static GitHubPackageDownloader GetDownloader()

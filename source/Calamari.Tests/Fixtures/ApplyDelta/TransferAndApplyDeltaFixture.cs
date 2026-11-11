@@ -8,6 +8,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octostache;
 
 namespace Calamari.Tests.Fixtures.ApplyDelta
@@ -64,7 +65,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 transferResult.AssertSuccess();
 
                 var transferredBasisPath = Path.Combine(transferDirectory, Path.GetFileName(basisFile.FilePath));
-                Assert.IsTrue(File.Exists(transferredBasisPath), "Basis package was not transferred to the expected location.");
+                ClassicAssert.IsTrue(File.Exists(transferredBasisPath), "Basis package was not transferred to the expected location.");
 
                 using (var signatureFile = new TemporaryFile(transferredBasisPath + ".octosig"))
                 {
@@ -82,8 +83,8 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                         patchResult.AssertSuccess();
 
                         patchResult.AssertPackageDeltaVerificationServiceMessage();
-                        Assert.AreEqual(newFile.Hash, patchResult.CapturedOutput.DeltaVerification.Hash);
-                        Assert.AreEqual(newFile.Hash, HashCalculator.Hash(patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine));
+                        ClassicAssert.AreEqual(newFile.Hash, patchResult.CapturedOutput.DeltaVerification.Hash);
+                        ClassicAssert.AreEqual(newFile.Hash, HashCalculator.Hash(patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine));
                     }
                 }
             }

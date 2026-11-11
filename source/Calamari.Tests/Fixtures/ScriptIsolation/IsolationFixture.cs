@@ -210,7 +210,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         /// by another thread for the duration.  A timeout in the range (10ms, 1 day) should trigger
         /// the Polly timeout strategy; without it the call would retry forever and this test would hang.
         /// </summary>
-        [Test, Timeout(5000)]
+        [Test]
         public void Enforce_ThrowsLockRejectedException_AfterTimeoutExpires_WhenLockIsHeld()
         {
             // Use a timeout that is:
@@ -245,18 +245,18 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         /// <summary>
         /// Async counterpart of <see cref="Enforce_ThrowsLockRejectedException_AfterTimeoutExpires_WhenLockIsHeld"/>.
         /// </summary>
-        [Test, Timeout(5000)]
-        public async Task EnforceAsync_ThrowsLockRejectedException_AfterTimeoutExpires_WhenLockIsHeld()
+        [Test, CancelAfter(5000)]
+        public async Task EnforceAsync_ThrowsLockRejectedException_AfterTimeoutExpires_WhenLockIsHeld(CancellationToken cancellationToken)
         {
             const string lockTimeout = "00:00:00.200";
 
-            await using var firstHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
+            await using var firstHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), cancellationToken);
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             Func<Task> secondEnforce = async () =>
             {
-                await using var secondHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
+                await using var secondHandle = await ScriptIsolationEnforcer.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), cancellationToken);
             };
 
             await secondEnforce.Should().ThrowAsync<LockRejectedException>();

@@ -19,6 +19,7 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
@@ -62,9 +63,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new Uri(dockerHubFeedUri), null, null, true, 1,
                 TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("alpine", pkg.PackageId);
-            Assert.AreEqual(new SemanticVersion("3.6.5"), pkg.Version);
-            Assert.AreEqual(string.Empty, pkg.FullFilePath);
+            ClassicAssert.AreEqual("alpine", pkg.PackageId);
+            ClassicAssert.AreEqual(new SemanticVersion("3.6.5"), pkg.Version);
+            ClassicAssert.AreEqual(string.Empty, pkg.FullFilePath);
         }
 
         [Test]
@@ -85,9 +86,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 1,
                 TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual(privateImage, pkg.PackageId);
-            Assert.AreEqual(version, pkg.Version);
-            Assert.AreEqual(string.Empty, pkg.FullFilePath);
+            ClassicAssert.AreEqual(privateImage, pkg.PackageId);
+            ClassicAssert.AreEqual(version, pkg.Version);
+            ClassicAssert.AreEqual(string.Empty, pkg.FullFilePath);
         }
 
         [Test]
@@ -103,9 +104,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 true, 1,
                 TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("octopus-echo", pkg.PackageId);
-            Assert.AreEqual(new SemanticVersion("1.1"), pkg.Version);
-            Assert.AreEqual(string.Empty, pkg.FullFilePath);
+            ClassicAssert.AreEqual("octopus-echo", pkg.PackageId);
+            ClassicAssert.AreEqual(new SemanticVersion("1.1"), pkg.Version);
+            ClassicAssert.AreEqual(string.Empty, pkg.FullFilePath);
         }
 
         [Test]
@@ -152,7 +153,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                        1, 
                                        TimeSpan.FromSeconds(3));
 
-            Assert.False(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
+            ClassicAssert.False(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
         }
         
         [Test]
@@ -176,7 +177,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                        1, 
                                        TimeSpan.FromSeconds(3));
 
-            Assert.False(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
+            ClassicAssert.False(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
         }
         
         [Test]
@@ -200,7 +201,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                        1, 
                                        TimeSpan.FromSeconds(3));
 
-            Assert.True(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
+            ClassicAssert.True(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{image}:{tag}' may not be cached")));
         }
         
         [Test]
@@ -226,7 +227,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                        1, 
                                        TimeSpan.FromSeconds(3));
 
-            Assert.True(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{imageFullName}:{tag}' may not be cached")));
+            ClassicAssert.True(log.Messages.Any(m => m.FormattedMessage.Contains($"The docker image '{imageFullName}:{tag}' may not be cached")));
         }
 
         [Test]

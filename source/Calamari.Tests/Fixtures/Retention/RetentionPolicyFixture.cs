@@ -8,6 +8,7 @@ using Calamari.Deployment.Retention;
 using Calamari.Integration.Time;
 using NSubstitute;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Retention
 {
@@ -185,7 +186,7 @@ namespace Calamari.Tests.Fixtures.Retention
             retentionPolicy.ApplyRetentionPolicy(policySet1, days, null);
 
             // Ensure the directories are the same
-            Assert.AreEqual(twoDayOldSuccessfulDeployment.ExtractedTo, fourDayOldSameLocationDeployment.ExtractedTo);
+            ClassicAssert.AreEqual(twoDayOldSuccessfulDeployment.ExtractedTo, fourDayOldSameLocationDeployment.ExtractedTo);
 
             // The old directory was not removed...
             fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => s.Equals(fourDayOldSameLocationDeployment.ExtractedTo)));

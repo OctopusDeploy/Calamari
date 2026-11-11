@@ -9,6 +9,7 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.ApplyDelta
 {
@@ -84,8 +85,8 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     patchResult.AssertPackageDeltaVerificationServiceMessage();
                     patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
                         basisFile.Hash, patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine);
-                    Assert.AreEqual(newFile.Hash, patchResult.CapturedOutput.DeltaVerification.Hash);
-                    Assert.AreEqual(newFile.Hash, HashCalculator.Hash(patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine));
+                    ClassicAssert.AreEqual(newFile.Hash, patchResult.CapturedOutput.DeltaVerification.Hash);
+                    ClassicAssert.AreEqual(newFile.Hash, HashCalculator.Hash(patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine));
                 }
             }
         }

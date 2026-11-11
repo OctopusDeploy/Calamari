@@ -8,6 +8,7 @@ using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem

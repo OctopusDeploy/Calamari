@@ -2,6 +2,7 @@
 using Calamari.Common.Plumbing.Retry;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
@@ -43,8 +44,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 caught = ex;
             }
 
-            Assert.NotNull(caught);
-            Assert.AreEqual(retries, retried);
+            ClassicAssert.NotNull(caught);
+            ClassicAssert.AreEqual(retries, retried);
         }
 
         [Test]

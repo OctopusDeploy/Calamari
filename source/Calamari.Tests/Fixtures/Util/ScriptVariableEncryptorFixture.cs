@@ -1,6 +1,7 @@
 ﻿using Calamari.Common.Plumbing.Extensions;
 using Calamari.Util;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Util
 {
@@ -14,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Util
             var text = "Put It In H!";
 
             var encryptor = AesEncryption.ForScripts(passphrase);
-            Assert.AreEqual(text, encryptor.Decrypt(encryptor.Encrypt(text)));
+            ClassicAssert.AreEqual(text, encryptor.Decrypt(encryptor.Encrypt(text)));
         }
     }
 }

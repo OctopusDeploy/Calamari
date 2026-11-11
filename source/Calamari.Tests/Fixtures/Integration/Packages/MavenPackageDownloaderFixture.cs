@@ -5,6 +5,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
@@ -34,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var pkg = downloader.DownloadPackage("com.google.guava:guava", VersionFactory.CreateMavenVersion("22.0"), "feed-maven",
                 new Uri("https://repo.maven.apache.org/maven2/"), "", "", true, 3, TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("com.google.guava:guava", pkg.PackageId);
+            ClassicAssert.AreEqual("com.google.guava:guava", pkg.PackageId);
         }
         
         [Test]
@@ -45,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var pkg = downloader.DownloadPackage("com.google.guava:guava:jar:sources", VersionFactory.CreateMavenVersion("22.0"), "feed-maven",
                 new Uri("https://repo.maven.apache.org/maven2/"), "", "", true, 3, TimeSpan.FromSeconds(3));
 
-            Assert.AreEqual("com.google.guava:guava:jar:sources", pkg.PackageId);
+            ClassicAssert.AreEqual("com.google.guava:guava:jar:sources", pkg.PackageId);
         }
 
         static MavenPackageDownloader GetDownloader()

@@ -15,6 +15,7 @@ using Calamari.Tests.Helpers;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.FindPackage
@@ -215,11 +216,11 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
                     result.AssertFoundPackageServiceMessage();
                     var foundPackage = result.CapturedOutput.FoundPackage;
-                    Assert.AreEqual(VersionFactory.CreateSemanticVersion(packageVersion), foundPackage.Version);
-                    Assert.AreEqual(acmeWeb.Hash, foundPackage.Hash);
-                    Assert.AreEqual(destinationFilePath, foundPackage.RemotePath);
-                    Assert.AreEqual(".nupkg", foundPackage.FileExtension);
-                    Assert.AreEqual(packageId, foundPackage.PackageId);
+                    ClassicAssert.AreEqual(VersionFactory.CreateSemanticVersion(packageVersion), foundPackage.Version);
+                    ClassicAssert.AreEqual(acmeWeb.Hash, foundPackage.Hash);
+                    ClassicAssert.AreEqual(destinationFilePath, foundPackage.RemotePath);
+                    ClassicAssert.AreEqual(".nupkg", foundPackage.FileExtension);
+                    ClassicAssert.AreEqual(packageId, foundPackage.PackageId);
                 }
             }
         }
@@ -262,11 +263,11 @@ namespace Calamari.Tests.Fixtures.FindPackage
             result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
 
             var foundPackage = result.CapturedOutput.FoundPackage;
-            Assert.AreEqual(VersionFactory.CreateMavenVersion(packageVersion), foundPackage.Version);
-            Assert.AreEqual(mavenPackageHash, foundPackage.Hash);
-            Assert.AreEqual(destinationFilePath, foundPackage.RemotePath);
-            Assert.AreEqual(".jar", foundPackage.FileExtension);
-            Assert.AreEqual(mavenPackageId, foundPackage.PackageId);
+            ClassicAssert.AreEqual(VersionFactory.CreateMavenVersion(packageVersion), foundPackage.Version);
+            ClassicAssert.AreEqual(mavenPackageHash, foundPackage.Hash);
+            ClassicAssert.AreEqual(destinationFilePath, foundPackage.RemotePath);
+            ClassicAssert.AreEqual(".jar", foundPackage.FileExtension);
+            ClassicAssert.AreEqual(mavenPackageId, foundPackage.PackageId);
         }
 
         [Test]
@@ -296,11 +297,11 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
                     result.AssertFoundPackageServiceMessage();
                     var foundPackage = result.CapturedOutput.FoundPackage;
-                    Assert.AreEqual(VersionFactory.CreateSemanticVersion(packageVersion), foundPackage.Version);
-                    Assert.AreEqual(acmeWeb.Hash, foundPackage.Hash);
-                    Assert.AreEqual(destinationFilePath, foundPackage.RemotePath);
-                    Assert.AreEqual(".nupkg", foundPackage.FileExtension);
-                    Assert.AreEqual(packageId, foundPackage.PackageId);
+                    ClassicAssert.AreEqual(VersionFactory.CreateSemanticVersion(packageVersion), foundPackage.Version);
+                    ClassicAssert.AreEqual(acmeWeb.Hash, foundPackage.Hash);
+                    ClassicAssert.AreEqual(destinationFilePath, foundPackage.RemotePath);
+                    ClassicAssert.AreEqual(".nupkg", foundPackage.FileExtension);
+                    ClassicAssert.AreEqual(packageId, foundPackage.PackageId);
                 }
             }
         }
@@ -327,11 +328,11 @@ namespace Calamari.Tests.Fixtures.FindPackage
 
             result.AssertFoundPackageServiceMessage();
             var foundPackage = result.CapturedOutput.FoundPackage;
-            Assert.AreEqual(VersionFactory.CreateMavenVersion(packageVersion), foundPackage.Version);
-            Assert.AreEqual(mavenPackageHash, foundPackage.Hash);
-            Assert.AreEqual(destinationFilePath, foundPackage.RemotePath);
-            Assert.AreEqual(".jar", foundPackage.FileExtension);
-            Assert.AreEqual(mavenPackageId, foundPackage.PackageId);
+            ClassicAssert.AreEqual(VersionFactory.CreateMavenVersion(packageVersion), foundPackage.Version);
+            ClassicAssert.AreEqual(mavenPackageHash, foundPackage.Hash);
+            ClassicAssert.AreEqual(destinationFilePath, foundPackage.RemotePath);
+            ClassicAssert.AreEqual(".jar", foundPackage.FileExtension);
+            ClassicAssert.AreEqual(mavenPackageId, foundPackage.PackageId);
         }
 
         [Test]
@@ -354,11 +355,11 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 mavenPackageHash);
 
             var foundPackage = result.CapturedOutput.FoundPackage;
-            Assert.AreEqual(VersionFactory.CreateMavenVersion(packageVersion), foundPackage.Version);
-            Assert.AreEqual(mavenPackageHash, foundPackage.Hash);
-            Assert.AreEqual(destinationFilePath, foundPackage.RemotePath);
-            Assert.AreEqual(".jar", foundPackage.FileExtension);
-            Assert.AreEqual(mavenPackageId, foundPackage.PackageId);
+            ClassicAssert.AreEqual(VersionFactory.CreateMavenVersion(packageVersion), foundPackage.Version);
+            ClassicAssert.AreEqual(mavenPackageHash, foundPackage.Hash);
+            ClassicAssert.AreEqual(destinationFilePath, foundPackage.RemotePath);
+            ClassicAssert.AreEqual(".jar", foundPackage.FileExtension);
+            ClassicAssert.AreEqual(mavenPackageId, foundPackage.PackageId);
 
             // Verify package was registered with the journal
             result.AssertOutput("Registered package use/lock for {0} v{1} and task ServerTasks-12345", mavenPackageId, packageVersion);
@@ -443,7 +444,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 "--packageHash", "abc123"
             });
 
-            Assert.AreEqual(0, exitCode);
+            ClassicAssert.AreEqual(0, exitCode);
             journal.DidNotReceive().RegisterPackageUse(Arg.Any<PackageIdentity>(), Arg.Any<ServerTaskId>(), Arg.Any<ulong>());
         }
     }

@@ -12,6 +12,7 @@ using Calamari.Integration.Certificates;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
@@ -42,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             if (sampleCertificate.HasPrivateKey)
             {
                 var certificate = sampleCertificate.GetCertificateFromStore(storeName, storeLocation);
-                Assert.True(certificate.HasPrivateKey);
+                ClassicAssert.True(certificate.HasPrivateKey);
             }
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
@@ -258,7 +259,7 @@ namespace Calamari.Tests.Fixtures.Certificates
             AssertCertificateInStore(rootAuthorityStore, rootAuthorityThumbprint);
 
             var certificate = sampleCertificate.GetCertificateFromStore(storeName, storeLocation);
-            Assert.True(certificate.HasPrivateKey);
+            ClassicAssert.True(certificate.HasPrivateKey);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
 
@@ -277,7 +278,7 @@ namespace Calamari.Tests.Fixtures.Certificates
         {
             Thread.Sleep(TimeSpan.FromSeconds(2)); //Lets try this for the hell of it and see if the test gets less flakey
             var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-            Assert.AreEqual(1, found.Count);
+            ClassicAssert.AreEqual(1, found.Count);
         }
 
 

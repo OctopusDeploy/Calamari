@@ -14,6 +14,7 @@ using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             packageJournal.RegisterPackageUse(thePackage, theDeployment, 1);
 
-            Assert.IsTrue(journalRepository.HasLock(thePackage));
+            ClassicAssert.IsTrue(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -71,7 +72,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RegisterPackageUse(thePackage, theDeployment, 1);
             packageJournal.RemoveAllLocks(theDeployment);
 
-            Assert.IsFalse(journalRepository.HasLock(thePackage));
+            ClassicAssert.IsFalse(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -85,7 +86,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RegisterPackageUse(thePackage, deploymentTwo, 1);
             packageJournal.RemoveAllLocks(deploymentOne);
 
-            Assert.IsTrue(journalRepository.HasLock(thePackage));
+            ClassicAssert.IsTrue(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -100,7 +101,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RemoveAllLocks(deploymentOne);
             packageJournal.RemoveAllLocks(deploymentTwo);
 
-            Assert.IsFalse(journalRepository.HasLock(thePackage));
+            ClassicAssert.IsFalse(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -111,7 +112,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
 
-            Assert.AreEqual(1, journalRepository.GetUsage(thePackage).Count());
+            ClassicAssert.AreEqual(1, journalRepository.GetUsage(thePackage).Count());
         }
 
         [Test]
@@ -124,8 +125,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RegisterPackageUse(package1, theDeployment, 1);
             packageJournal.RegisterPackageUse(package2, theDeployment, 1);
 
-            Assert.AreEqual(1, journalRepository.GetUsage(package1).Count());
-            Assert.AreEqual(1, journalRepository.GetUsage(package2).Count());
+            ClassicAssert.AreEqual(1, journalRepository.GetUsage(package1).Count());
+            ClassicAssert.AreEqual(1, journalRepository.GetUsage(package2).Count());
         }
 
         [Test]
@@ -138,7 +139,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
             packageJournal.RegisterPackageUse(thePackage, deploymentTwo, 1);
 
-            Assert.AreEqual(2, journalRepository.GetUsage(thePackage).Count());
+            ClassicAssert.AreEqual(2, journalRepository.GetUsage(thePackage).Count());
         }
 
         [Test]
@@ -150,7 +151,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
             packageJournal.RemoveAllLocks(deploymentOne);
 
-            Assert.AreEqual(1, journalRepository.GetUsage(thePackage).Count());
+            ClassicAssert.AreEqual(1, journalRepository.GetUsage(thePackage).Count());
         }
 
         [Test]
@@ -268,7 +269,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<INamedLockManager>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
-            Assert.IsFalse(testJournalRepository.HasLock(thePackage));
+            ClassicAssert.IsFalse(testJournalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -304,8 +305,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<INamedLockManager>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
-            Assert.IsFalse(testJournalRepository.HasLock(packageOne));
-            Assert.IsTrue(testJournalRepository.HasLock(packageTwo));
+            ClassicAssert.IsFalse(testJournalRepository.HasLock(packageOne));
+            ClassicAssert.IsTrue(testJournalRepository.HasLock(packageTwo));
         }
     }
 }

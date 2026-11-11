@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
@@ -14,7 +15,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var packageA = CreatePackageIdentity("Package1", "1.0");
             var package1 = CreatePackageIdentity("Package1", "1.0");
 
-            Assert.AreEqual(package1,packageA);
+            ClassicAssert.AreEqual(package1,packageA);
         }
 
         [Test]
@@ -23,7 +24,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var package1v1 = CreatePackageIdentity("Package1", "1.0");
             var package1v2 = CreatePackageIdentity("Package1", "2.0");
 
-            Assert.AreNotEqual(package1v1,package1v2);
+            ClassicAssert.AreNotEqual(package1v1,package1v2);
         }
 
         [Test]
@@ -32,7 +33,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var package1 = CreatePackageIdentity("Package1", "1.0");
             var package2 = CreatePackageIdentity("Package2", "1.0");
 
-            Assert.AreNotEqual(package1,package2);
+            ClassicAssert.AreNotEqual(package1,package2);
         }
 
         static PackageIdentity CreatePackageIdentity(string packageId, string packageVersion)

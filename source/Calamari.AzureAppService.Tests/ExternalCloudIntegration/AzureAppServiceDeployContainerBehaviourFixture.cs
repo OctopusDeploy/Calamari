@@ -17,6 +17,7 @@ using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using Octostache;
 using Polly;
 
@@ -152,10 +153,10 @@ namespace Calamari.AzureAppService.Tests.ExternalCloudIntegration
                 var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
 
                 var config = await WebSiteResource.GetWebSiteConfig().GetAsync();
-                Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.LinuxFxVersion);
+                ClassicAssert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.LinuxFxVersion);
 
                 var appSettings = await ArmClient.GetAppSettingsListAsync(targetSite);
-                Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
+                ClassicAssert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
             }
 
             void AddVariables(VariableDictionary vars)

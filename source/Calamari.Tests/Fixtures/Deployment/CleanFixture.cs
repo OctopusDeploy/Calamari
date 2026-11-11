@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -68,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertSuccess();
 
-            Assert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
+            ClassicAssert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
         }
 
         [Test]
@@ -78,7 +79,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertSuccess();
 
-            Assert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
+            ClassicAssert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
         }
 
         private void CreateDeployment(string extractedFrom, string extractedTo, DateTimeOffset date, string retentionPolicySet)

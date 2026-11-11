@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.ServiceMessages;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.ServiceMessages
 {
@@ -22,7 +23,7 @@ namespace Calamari.Tests.Fixtures.ServiceMessages
         public void ShouldLeaveNonMessageText()
         {
             parser.Parse("Hello World!");
-            Assert.IsEmpty(messages);
+            ClassicAssert.IsEmpty(messages);
         }
 
         [Test]

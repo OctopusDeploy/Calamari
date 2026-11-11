@@ -4,6 +4,7 @@ using System.Linq;
 using Calamari.Common.Features.Packages;
 using Calamari.Integration.Packages;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
@@ -19,7 +20,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("1.0.1+beta", "1.0.1+beta", Description = "Standard version name unchanged")]
         public void Encode(string input, string expected)
         {
-            Assert.AreEqual(expected, FileNameEscaper.Escape(input));
+            ClassicAssert.AreEqual(expected, FileNameEscaper.Escape(input));
         }
 
         [Test]
@@ -31,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var encodedCharacters = FileNameEscaper.EscapedCharacters.ToList();
             encodedCharacters.Remove('%'); //Since they are encoded with a %
 
-            Assert.IsFalse(encoded.Any(encodedCharacters.Contains));
+            ClassicAssert.IsFalse(encoded.Any(encodedCharacters.Contains));
         }
 
         [Test]
@@ -43,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("1.0.1+beta", "1.0.1+beta", Description = "Standard version name unchanged")]
         public void Decode(string input, string expected)
         {
-            Assert.AreEqual(expected, FileNameEscaper.Unescape(input));
+            ClassicAssert.AreEqual(expected, FileNameEscaper.Unescape(input));
         }
     }
 }
