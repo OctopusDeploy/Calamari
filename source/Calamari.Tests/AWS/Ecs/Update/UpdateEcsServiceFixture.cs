@@ -22,7 +22,6 @@ using Task = System.Threading.Tasks.Task;
 namespace Calamari.Tests.AWS.Ecs.Update;
 
 [TestFixture]
-[Category(TestCategory.PlatformAgnostic)]
 public class UpdateEcsServiceFixture
 {
     // Fixed infrastructure in account 017645897735 (us-east-1)
