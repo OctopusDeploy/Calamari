@@ -93,7 +93,7 @@ class Signing(
     void SignWithDevelopmentSelfSignedCertOnWindows(IReadOnlyCollection<AbsolutePath> filesToSign, string signingCertificatePassword)
     {
         Log.Information("Signing files using SignTool and the self-signed development code signing certificate");
-        var signingTool = KnownPaths.RootDirectory / "signtool.exe";
+        var signingTool = KnownPaths.CertificatesDirectory / "signtool.exe";
 
         if (!File.Exists(signingTool))
         {

@@ -20,7 +20,7 @@ public partial class Build
                            // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
                            // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
                            //We put this at the front of the list so they build in the correct order?
-                           projectNames = [..projectNames, "Calamari.Scripting"];
+                           projectNames = [.. projectNames, "Calamari.Scripting"];
 
                            //its assumed each project has a corresponding test project
                            var testProjectNames = projectNames.Select(f => $"{f}.Tests");
@@ -141,32 +141,27 @@ public partial class Build
 
     async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPackageMetadata)
     {
-        return await Logging.InBlock(
-            $"Publishing {calamariPackageMetadata.Project.Name} for framework {calamariPackageMetadata.Framework} and arch {calamariPackageMetadata.Architecture}"
-            , async () =>
-              {
-                  Log.Information("Publishing {ProjectName} for framework '{Framework}' and arch '{Architecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+        Log.Information("Publishing {ProjectName} for framework '{Framework}' and arch '{Architecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
 
-                  var project = calamariPackageMetadata.Project;
-                  var outputDirectory = KnownPaths.PublishDirectory / project.Name / calamariPackageMetadata.Architecture;
+        var project = calamariPackageMetadata.Project;
+        var outputDirectory = KnownPaths.PublishDirectory / project.Name / calamariPackageMetadata.Architecture;
 
-                  await Task.Run(() =>
-                                     DotNetPublish(s =>
-                                                       s.SetConfiguration(Configuration)
-                                                        .SetProject(project)
-                                                        .SetFramework(calamariPackageMetadata.Framework)
-                                                        .SetRuntime(calamariPackageMetadata.Architecture)
-                                                        .SetVersion(NugetVersion.Value)
-                                                        .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
-                                                        .SetVerbosity(BuildVerbosity)
-                                                        .EnableNoRestore()
-                                                        .EnableSelfContained()
-                                                        .SetOutput(outputDirectory)));
+        await Task.Run(() =>
+                           DotNetPublish(s =>
+                                             s.SetConfiguration(Configuration)
+                                              .SetProject(project)
+                                              .SetFramework(calamariPackageMetadata.Framework)
+                                              .SetRuntime(calamariPackageMetadata.Architecture)
+                                              .SetVersion(NugetVersion.Value)
+                                              .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                              .SetVerbosity(BuildVerbosity)
+                                              .EnableNoRestore()
+                                              .EnableSelfContained()
+                                              .SetOutput(outputDirectory)));
 
-                  File.Copy(KnownPaths.RootDirectory / "global.json", outputDirectory / "global.json");
+        File.Copy(KnownPaths.RootDirectory / "global.json", outputDirectory / "global.json");
 
-                  return outputDirectory;
-              });
+        return outputDirectory;
     }
 
     async Task CompressCalamariProject(Project project)

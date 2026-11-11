@@ -134,9 +134,5 @@ public partial class Build
                                            .SetOutputDirectory(KnownPaths.ArtifactsDirectory)
                                            .SetProperty("NuspecBasePath", KnownPaths.BuildDirectory)
                            );
-                           // NuGetPack(s => s.SetTargetPath(KnownPaths.BuildDirectory / "Octopus.Calamari.Consolidated.nuspec")
-                           //                 .SetBasePath(KnownPaths.BuildDirectory)
-                           //                 .SetVersion(NugetVersion.Value)
-                           //                 .SetOutputDirectory(KnownPaths.ArtifactsDirectory));
                        });
 }
