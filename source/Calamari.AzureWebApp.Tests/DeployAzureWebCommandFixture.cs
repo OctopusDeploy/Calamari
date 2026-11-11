@@ -423,6 +423,8 @@ namespace Calamari.AzureWebApp.Tests
 
         void AddDefaults(CommandTestBuilderContext context)
         {
+            context.Variables.Add(SpecialVariables.Action.Azure.Environment, "AzureCloud");
+            context.Variables.Add(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
             context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
             context.Variables.Add(AzureAccountVariables.ClientId, clientId);
