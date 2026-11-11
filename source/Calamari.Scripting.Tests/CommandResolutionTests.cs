@@ -10,7 +10,6 @@ namespace Calamari.Scripting.Tests;
 public class CommandResolutionTests
 {
     [Test]
-    [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
         var program = TestablePipelineProgram.For<Calamari.Scripting.Program>();

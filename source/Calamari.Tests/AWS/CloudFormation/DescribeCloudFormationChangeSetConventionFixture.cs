@@ -15,7 +15,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.AWS.CloudFormation
 {
     [TestFixture]
-    [Category(TestCategory.PlatformAgnostic)]
     public class DescribeCloudFormationChangeSetConventionFixture
     {
         IAmazonCloudFormation client;

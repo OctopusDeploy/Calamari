@@ -108,7 +108,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadAndRegisterMavenPackage()
         {
             var result = DownloadAndRegisterPackage(
@@ -236,7 +235,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenPackageFromCacheAndStillRegister()
         {
             DownloadAndRegisterPackage(MavenPublicFeed.PackageId,
@@ -268,7 +266,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenSnapshotPackageFromCacheAndStillRegister()
         {
             DownloadAndRegisterPackage(MavenPublicFeed.PackageId,
@@ -325,7 +322,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadAndRegisterMavenPackage()
         {
             var firstDownload = DownloadAndRegisterPackage(

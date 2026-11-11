@@ -10,7 +10,6 @@ namespace Calamari.GoogleCloudScripting.Tests;
 public class CommandResolutionTests
 {
     [Test]
-    [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
         var program = TestablePipelineProgram.For<Calamari.GoogleCloudScripting.Program>();

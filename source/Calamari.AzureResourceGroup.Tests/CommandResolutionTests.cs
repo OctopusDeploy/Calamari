@@ -10,7 +10,6 @@ namespace Calamari.AzureResourceGroup.Tests;
 public class CommandResolutionTests
 {
     [Test]
-    [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
         var program = TestablePipelineProgram.For<Calamari.AzureResourceGroup.Program>();
