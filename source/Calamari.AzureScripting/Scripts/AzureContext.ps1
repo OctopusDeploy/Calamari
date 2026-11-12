@@ -186,12 +186,12 @@ Execute-WithRetry{
                     else {
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
                         $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
-                        $quotedProject = ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))
-                        $loginArgs += @("--password=$quotedProject");
+                        $quotedPassword = ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))
+                        $loginArgs += @("--password=$quotedPassword");
                         $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
 
                         $maskedLoginArgs = "$loginArgs"
-                        $maskedLoginArgs = $maskedLoginArgs.Replace($quotedProject, "********")                        
+                        $maskedLoginArgs = $maskedLoginArgs.Replace($quotedPassword, "********")                        
                         
                         Write-Host "az login --service-principal $maskedLoginArgs"
                         az login --service-principal $loginArgs
