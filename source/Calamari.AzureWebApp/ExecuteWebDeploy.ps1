@@ -5,6 +5,8 @@ function Get-ExecutionVariable([string]$name)
     return $OctopusParameters["Octopus.Action.Azure.PowerShellExecution.$name"]
 }
 
+$MicrosoftWebDeploymentDllPath = Get-ExecutionVariable 'BundledDllPath'
+
 $SourcePath = Get-ExecutionVariable 'SourcePath'
 $DestinationPath = Get-ExecutionVariable 'DestinationPath'
 $DestinationUserName = Get-ExecutionVariable 'DestinationUserName'
@@ -34,7 +36,7 @@ function Get-DownloadedWebDeploymentDllPath
     Write-Warning ("Microsoft.Web.Deployment.dll was not found locally (no override supplied, Web Deploy doesn't " +
             "appear to be installed on this machine). Downloading it from nuget.org instead - this is not " +
             "ideal for a repeatable deployment. Install Web Deploy, or set the " +
-            "Octopus.Action.Azure.MicrosoftWebDeploymentDllPath variable, to avoid this network dependency.")
+            "Octopus.Action.Azure.PowerShellExecution.BundledDllPath variable, to avoid this network dependency.")
 
     New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
     $nupkgPath = Join-Path $cacheDir "microsoft.web.deployment.$WebDeploymentPackageVersion.nupkg"
@@ -67,6 +69,7 @@ function Resolve-WebDeploymentDllPath
     #    falls through to the next option instead of failing outright.
     if ($MicrosoftWebDeploymentDllPath -and (Test-Path -LiteralPath $MicrosoftWebDeploymentDllPath))
     {
+        Write-Verbose 'Using bundled Microsoft.Web.Deployment.dll'
         return $MicrosoftWebDeploymentDllPath
     }
 
@@ -79,6 +82,7 @@ function Resolve-WebDeploymentDllPath
     {
         if (Test-Path -LiteralPath $path)
         {
+            Write-Verbose 'Using locally installled Microsoft.Web.Deployment.dll'
             return $path
         }
     }

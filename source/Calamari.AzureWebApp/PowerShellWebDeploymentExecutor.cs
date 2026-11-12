@@ -40,6 +40,7 @@ namespace Calamari.AzureWebApp
             var scriptFilePath = await WriteScriptToWorkingDirectory();
 
             AddVariablesForScript(variables, deployment, targetSite, publishSettings);
+            
 
             try
             {
@@ -75,6 +76,10 @@ namespace Calamari.AzureWebApp
 
         void AddVariablesForScript(IVariables variables, RunningDeployment deployment, AzureTargetSite targetSite, WebDeployPublishSettings publishSettings)
         {
+            var bundledDllPath = Path.Combine(AppContext.BaseDirectory, "webdeploy", "Microsoft.Web.Deployment.dll");
+            variables.Add("Octopus.Action.Azure.PowerShellExecution.BundledDllPath", bundledDllPath);
+            
+            
             variables.Add("Octopus.Action.Azure.PowerShellExecution.SourcePath", deployment.CurrentDirectory);
             variables.Add("Octopus.Action.Azure.PowerShellExecution.DestinationPath", BuildPath(targetSite, variables));
             variables.Add("Octopus.Action.Azure.PowerShellExecution.DestinationUserName", publishSettings.PublishProfile.UserName);
