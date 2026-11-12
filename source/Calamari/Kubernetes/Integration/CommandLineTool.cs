@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -36,18 +37,18 @@ namespace Calamari.Kubernetes.Integration
             return variables.GetFlag(SpecialVariables.LogCliOutputAsInfo);
         }
 
-        protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
-            => ExecuteCommandAndLogOutput(invocation, false);
+        protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, IEnumerable<string>? valuesToMask = null)
+            => ExecuteCommandAndLogOutput(invocation, false, valuesToMask);
 
         /// <summary>
         /// This is a special case for when the invocation results in an error
         /// 1) but is to be expected as a valid scenario; and
         /// 2) we don't want to inform this at an error level when this happens.
         /// </summary>
-        protected CommandResult ExecuteCommandAndLogOutputAsVerbose(CommandLineInvocation invocation)
-            => ExecuteCommandAndLogOutput(invocation, true);
+        protected CommandResult ExecuteCommandAndLogOutputAsVerbose(CommandLineInvocation invocation, IEnumerable<string>? valuesToMask = null)
+            => ExecuteCommandAndLogOutput(invocation, true, valuesToMask);
 
-        CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, bool logOutputAsVerbose)
+        CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, bool logOutputAsVerbose, IEnumerable<string>? valuesToMask = null)
         {
             invocation.EnvironmentVars = environmentVars;
             invocation.WorkingDirectory = workingDirectory;
@@ -57,7 +58,7 @@ namespace Calamari.Kubernetes.Integration
             var captureCommandOutput = new CaptureCommandOutput();
             invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
-            LogCommandText(invocation);
+            LogCommandText(invocation, valuesToMask ?? []);
 
             var result = commandLineRunner.Execute(invocation);
 
@@ -67,9 +68,12 @@ namespace Calamari.Kubernetes.Integration
             return result;
         }
 
-        void LogCommandText(CommandLineInvocation invocation)
+        void LogCommandText(CommandLineInvocation invocation, IEnumerable<string> valuesToMask)
         {
-            log.Verbose(invocation.ToString());
+            var commandText = invocation.ToString();
+            commandText = valuesToMask.Aggregate(commandText, (current, value) => current.Replace(value, "********"));
+
+            log.Verbose(commandText);
         }
 
         void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput, bool logOutputAsVerbose, bool logSuccessAsInfo)
