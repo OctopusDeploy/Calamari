@@ -50,9 +50,9 @@ function setup_context {
           loginArgs+=("--federated-token=$Octopus_Open_Id_Jwt")
           
           maskedLoginArgs="${loginArgs[@]}"
-          maskedLoginArgs=${maskedLoginArgs/$Octopus_Open_Id_Jwt/********}
+          maskedLoginArgs=${maskedLoginArgs/"$Octopus_Open_Id_Jwt"/********}
           
-          echo az login --service-principal $maskedLoginArgs
+          echo az login --service-principal "$maskedLoginArgs"
           az login --service-principal "${loginArgs[@]}"
         else
           echo "Azure CLI: Authenticating with Service Principal"
@@ -61,9 +61,9 @@ function setup_context {
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
           
           maskedLoginArgs="${loginArgs[@]}"
-          maskedLoginArgs=${maskedLoginArgs/$Octopus_Azure_ADPassword/********}
+          maskedLoginArgs=${maskedLoginArgs/"$Octopus_Azure_ADPassword"/********}
           
-          echo az login --service-principal $maskedLoginArgs
+          echo az login --service-principal "$maskedLoginArgs"
           
           # Note: Need to double quote the loginArgs here to ensure that spaces aren't treated as separate arguments
           #       It also seems like putting double quotes around each individual argument makes az cli include the "
