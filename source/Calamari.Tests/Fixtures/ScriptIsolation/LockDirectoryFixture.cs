@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Versioning;
 using System.Security;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Testing.Helpers;
@@ -171,12 +170,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             // The fake does not touch the real filesystem: it records which directories
             // were asked to be created, and can simulate directories that cannot be created
-            // (e.g. their parent isn't writable) and directories that already exist but in
-            // which no files can be created (e.g. a stale /tmp/octopus.<slug> owned by another
-            // user - creating an existing directory succeeds, so this only fails at lock time).
+            // (e.g. a /tmp/octopus.<slug> already owned by another user).
             public List<string> CreatedDirectories { get; } = new();
             public HashSet<string> DirectoriesThatCannotBeCreated { get; } = new();
-            public HashSet<string> DirectoriesThatAreNotWritable { get; } = new();
 
             public void CreateDirectory(DirectoryInfo directory)
             {
@@ -187,9 +183,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             public ILockHandle AcquireLock(LockOptions opts)
             {
-                if (opts.LockFile.File.DirectoryName is { } directory && DirectoriesThatAreNotWritable.Contains(directory))
-                    throw new UnauthorizedAccessException($"Access to the path '{opts.LockFile.File.FullName}' is denied.");
-
                 switch (opts.Type)
                 {
                     case LockType.Exclusive:
@@ -666,33 +659,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(new DirectoryInfo(secondTempPath).FullName,
                                                       because: "a fallback whose directory cannot be created is unusable, so the next candidate should be used");
-            result.DetectionResults.Should().Contain(r => r.FallbackType == LockDirectoryFallbackType.TempFixed
-                                                          && r.LockCapability == LockCapability.Unsupported);
-        }
-
-        [Test]
-        public void GetLockDirectory_SkipsTrustedFallback_WhenItsExistingDirectoryIsNotWritable()
-        {
-            // e.g. a stale /tmp/octopus.<slug> owned by another user. Creating it "succeeds" because
-            // it already exists, but no lock file can be created in it.
-            var secondTempRoot = OperatingSystem.IsWindows() ? @"E:\" : "/dev/shm";
-            var secondTempPath = OperatingSystem.IsWindows()
-                ? @"E:\tentacle"
-                : "/dev/shm/tentacle";
-
-            var drives = PassThroughDrives(
-                                           DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
-                                           DriveWithCapability(TempRoot, LockCapability.Supported),
-                                           DriveWithCapability(secondTempRoot, LockCapability.Supported));
-            var fs = FakeLockService.FullySupported();
-            fs.DirectoriesThatAreNotWritable.Add(new DirectoryInfo(TempPath).FullName);
-
-            var result = CreateFactory(drives, fs, TempPath, secondTempPath)
-                .Create(new DirectoryInfo(CandidatePath));
-
-            result.LockSupport.Should().Be(LockCapability.Supported);
-            result.DirectoryInfo.FullName.Should().Be(new DirectoryInfo(secondTempPath).FullName,
-                                                      because: "a fallback in which no lock file can be created is unusable, so the next candidate should be used");
             result.DetectionResults.Should().Contain(r => r.FallbackType == LockDirectoryFallbackType.TempFixed
                                                           && r.LockCapability == LockCapability.Unsupported);
         }
@@ -1546,48 +1512,11 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 var lockFile = lockDirectory.GetLockFile("ScriptIsolation.RunningScript.lock");
 
                 lockDirectory.DirectoryInfo.FullName.Should().Be(fallbackPath);
-                Directory.GetFiles(fallbackPath, "locktest-*").Should().BeEmpty(because: "the write probe file should be cleaned up");
                 using var handle = FileLock.Acquire(new LockOptions(LockType.Exclusive, "RunningScript", lockFile, TimeSpan.Zero));
                 lockFile.Exists.Should().BeTrue();
             }
             finally
             {
-                Directory.Delete(tempRoot, recursive: true);
-            }
-        }
-
-        [Test]
-        [UnsupportedOSPlatform("windows")]
-        public void Create_SkipsTrustedFallback_WhenItsExistingDirectoryIsNotWritable()
-        {
-            if (OperatingSystem.IsWindows())
-                Assert.Ignore("Uses Unix directory permissions");
-            if (Environment.UserName == "root")
-                Assert.Ignore("root can write to a directory regardless of its permissions");
-
-            var tempRoot = Path.Combine(Path.GetTempPath(), $"calamari-fd1047-{Guid.NewGuid():N}");
-            var notWritable = Path.Combine(tempRoot, "not-writable", "octopus.my-ssh-target");
-            var writable = Path.Combine(tempRoot, "writable", "octopus.my-ssh-target");
-            Directory.CreateDirectory(notWritable);
-            File.SetUnixFileMode(notWritable, UnixFileMode.UserRead | UnixFileMode.UserExecute);
-            try
-            {
-                var drives = PassThroughDrives(
-                                               DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
-                                               DriveWithCapability(tempRoot, LockCapability.Supported));
-                var factory = new LockDirectoryFactory(drives,
-                                                       FileLockService.Instance,
-                                                       new FakeTemporaryDirectoryFallbackProvider(notWritable, writable));
-
-                var lockDirectory = factory.Create(new DirectoryInfo(CandidatePath));
-
-                lockDirectory.DirectoryInfo.FullName.Should().Be(writable,
-                                                                 because: "the first fallback exists but no lock file can be created in it");
-                using var handle = FileLock.Acquire(new LockOptions(LockType.Exclusive, "RunningScript", lockDirectory.GetLockFile("ScriptIsolation.RunningScript.lock"), TimeSpan.Zero));
-            }
-            finally
-            {
-                File.SetUnixFileMode(notWritable, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
                 Directory.Delete(tempRoot, recursive: true);
             }
         }

@@ -123,38 +123,22 @@ sealed class LockDirectoryFactory(
             return LockCapability.Unsupported;
         }
 
-        // The filesystem is trusted to have correct lock semantics, so detection is skipped.
-        // That doesn't mean this location is usable: the directory may not exist yet (detection
-        // is what used to create it), or it may exist but not be writable by us (e.g. a stale
-        // /tmp/octopus.<slug> owned by another user). Either way, try another location.
-        return CanCreateLockFileIn(path) ? trustedSupport.Value : LockCapability.Unsupported;
+        // The filesystem is trusted without testing, so detection (which would have created
+        // the directory) is skipped. The directory must still exist before a lock file can be
+        // opened in it, and if we can't create it the location is unusable.
+        return TryCreateDirectory(path) ? trustedSupport.Value : LockCapability.Unsupported;
     }
 
-    bool CanCreateLockFileIn(DirectoryInfo path)
+    bool TryCreateDirectory(DirectoryInfo path)
     {
-        var testFile = new LockDirectory(path, LockCapability.Supported).GetLockFile($"locktest-{Guid.NewGuid():N}.tmp");
         try
         {
-            // Creating a directory that already exists succeeds even when it isn't writable,
-            // so also check we can create and lock a file in it.
             fileLockService.CreateDirectory(path);
-            using var probe = fileLockService.AcquireLock(new LockOptions(LockType.Exclusive, "WriteTest", testFile, TimeSpan.Zero));
             return true;
         }
         catch
         {
             return false;
-        }
-        finally
-        {
-            try
-            {
-                testFile.Delete();
-            }
-            catch
-            {
-                // ignored
-            }
         }
     }
 
