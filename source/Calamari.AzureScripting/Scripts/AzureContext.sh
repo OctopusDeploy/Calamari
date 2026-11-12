@@ -48,14 +48,23 @@ function setup_context {
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
           loginArgs+=("--federated-token=$Octopus_Open_Id_Jwt")
-          echo az login --service-principal "${loginArgs[@]}"
+          
+          maskedLoginArgs="${loginArgs[@]}"
+          maskedLoginArgs=${maskedLoginArgs/$Octopus_Open_Id_Jwt/********}
+          
+          echo az login --service-principal $maskedLoginArgs
           az login --service-principal "${loginArgs[@]}"
         else
           echo "Azure CLI: Authenticating with Service Principal"
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--password=$Octopus_Azure_ADPassword")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
-          echo az login --service-principal ${loginArgs[@]}
+          
+          maskedLoginArgs="${loginArgs[@]}"
+          maskedLoginArgs=${maskedLoginArgs/$Octopus_Azure_ADPassword/********}
+          
+          echo az login --service-principal $maskedLoginArgs
+          
           # Note: Need to double quote the loginArgs here to ensure that spaces aren't treated as separate arguments
           #       It also seems like putting double quotes around each individual argument makes az cli include the "
           #       character as part of the input causing issues...

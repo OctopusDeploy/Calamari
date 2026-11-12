@@ -176,7 +176,10 @@ Execute-WithRetry{
                         $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
                         $loginArgs += @("--federated-token=$(ConvertTo-QuotedString($OctopusOpenIdJwt))");
 
-                        Write-Host "az login --service-principal $loginArgs"
+                        $maskedLoginArgs = "$loginArgs"
+                        $maskedLoginArgs = $maskedLoginArgs.Replace($OctopusOpenIdJwt, "********")
+
+                        Write-Host "az login --service-principal $maskedLoginArgs"
                         az login --service-principal $loginArgs
                     }
                     else {
@@ -185,7 +188,10 @@ Execute-WithRetry{
                         $loginArgs += @("--password=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword)))");
                         $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
 
-                        Write-Host "az login --service-principal $loginArgs"
+                        $maskedLoginArgs = "$loginArgs"
+                        $maskedLoginArgs = $maskedLoginArgs.Replace($OctopusAzureADPassword, "********")                        
+                        
+                        Write-Host "az login --service-principal $maskedLoginArgs"
                         az login --service-principal $loginArgs
                     }
 
