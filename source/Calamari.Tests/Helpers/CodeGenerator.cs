@@ -26,11 +26,11 @@ namespace Calamari.Tests.Helpers
             File.WriteAllText(Path.Combine(projectPath.FullName, "global.json"),
                 @"{
     ""sdk"": {
-            ""version"": ""8.0.10"",
+            ""version"": ""10.0.302"",
             ""rollForward"": ""latestFeature""
         }
     }");
-            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f net8.0"));
+            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f net10.0"));
             result.VerifySuccess();
             var programCS = Path.Combine(projectPath.FullName, "Program.cs");
             var newProgram = $@"using System;

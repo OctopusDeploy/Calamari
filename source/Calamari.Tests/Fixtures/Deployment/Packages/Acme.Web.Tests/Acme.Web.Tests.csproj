@@ -4,7 +4,7 @@
     <Description>Test project for Calamari.</Description>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Authors>Octopus Deploy</Authors>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Acme.Web.Tests</AssemblyName>
     <PackageId>Acme.Web.Tests</PackageId>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
