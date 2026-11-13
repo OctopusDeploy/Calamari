@@ -19,7 +19,7 @@ sealed class LockDirectoryFactory(
 
         // Detect lock support on the preferred drive first. If it is fully supported,
         // return immediately - no need to fall back to temporary directories
-        var preferredCapability = preferredDrive?.LockSupport ?? DetectLockSupport(preferredLockDirectory);
+        var preferredCapability = GetLockSupport(preferredLockDirectory, preferredDrive);
         if (preferredCapability is LockCapability.Supported)
         {
             return new LockDirectory(preferredLockDirectory, LockCapability.Supported);
@@ -40,7 +40,7 @@ sealed class LockDirectoryFactory(
         {
             var tempDir = tempFallback.Directory;
             var tempDrive = GetDriveOrNull(tempDir);
-            var tempSupport = tempDrive?.LockSupport ?? DetectLockSupport(tempDir);
+            var tempSupport = GetLockSupport(tempDir, tempDrive);
             fallbackResults.Add(
                                 new LockSupportDetectionResult(
                                                                FallbackType: tempFallback.Type,
@@ -106,6 +106,39 @@ sealed class LockDirectoryFactory(
             {
                 return null;
             }
+        }
+    }
+
+    LockCapability GetLockSupport(DirectoryInfo path, CachedDriveInfo? drive)
+    {
+        var trustedSupport = drive?.LockSupport;
+        if (trustedSupport is null)
+        {
+            // Unknown filesystem: detection creates the directory and tests locking in it
+            return DetectLockSupport(path);
+        }
+
+        if (trustedSupport is LockCapability.Unsupported)
+        {
+            return LockCapability.Unsupported;
+        }
+
+        // The filesystem is trusted without testing, so detection (which would have created
+        // the directory) is skipped. The directory must still exist before a lock file can be
+        // opened in it, and if we can't create it the location is unusable.
+        return TryCreateDirectory(path) ? trustedSupport.Value : LockCapability.Unsupported;
+    }
+
+    bool TryCreateDirectory(DirectoryInfo path)
+    {
+        try
+        {
+            fileLockService.CreateDirectory(path);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 

@@ -12,7 +12,7 @@ public sealed class LockRejectedException(string message, Exception? innerExcept
     }
 
     [DoesNotReturn]
-    public static void Throw(Exception innerException)
+    public static void Throw(Exception innerException, LockFile? lockFile = null)
     {
         if (innerException is LockRejectedException lockRejectedException)
         {
@@ -25,6 +25,10 @@ public sealed class LockRejectedException(string message, Exception? innerExcept
             throw new LockRejectedException(message, timeoutRejectedException);
         }
 
-        throw new LockRejectedException("Lock acquisition failed", innerException);
+        // Not lock contention: something stopped us opening the lock file at all (e.g. a
+        // missing directory or a permissions problem). Surface the cause and the path so
+        // users can fix it without needing the inner exception.
+        var location = lockFile is null ? "" : $" for lock file '{lockFile.File.FullName}'";
+        throw new LockRejectedException($"Lock acquisition failed{location}: {innerException.Message}", innerException);
     }
 }
