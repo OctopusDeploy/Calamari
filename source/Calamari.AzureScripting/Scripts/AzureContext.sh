@@ -50,7 +50,7 @@ function setup_context {
           loginArgs+=("--federated-token=$Octopus_Open_Id_Jwt")
           
           maskedLoginArgs="${loginArgs[@]}"
-          maskedLoginArgs=${maskedLoginArgs/"$Octopus_Open_Id_Jwt"/********}
+          maskedLoginArgs=${maskedLoginArgs//"$Octopus_Open_Id_Jwt"/********}
           
           echo az login --service-principal "$maskedLoginArgs"
           az login --service-principal "${loginArgs[@]}"
@@ -61,7 +61,7 @@ function setup_context {
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
           
           maskedLoginArgs="${loginArgs[@]}"
-          maskedLoginArgs=${maskedLoginArgs/"$Octopus_Azure_ADPassword"/********}
+          maskedLoginArgs=${maskedLoginArgs//"$Octopus_Azure_ADPassword"/********}
           
           echo az login --service-principal "$maskedLoginArgs"
           

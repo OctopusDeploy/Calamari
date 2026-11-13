@@ -58,6 +58,7 @@ namespace Calamari.Kubernetes.Integration
             if (isOidc)
             {
                 log.Verbose("Azure CLI: Authenticating with OpenID Connect Access Token");
+                log.AddValueToRedact(credential, "<token>");
                 ExecuteCommandAndLogOutput(
                     new CommandLineInvocation(ExecutableLocation,
                         "login",
@@ -65,21 +66,20 @@ namespace Calamari.Kubernetes.Integration
                         "--federated-token",
                         $"\"{credential}\"",
                         $"--username=\"{clientId}\"",
-                        $"--tenant=\"{tenantId}\""),
-                    [credential]);
+                        $"--tenant=\"{tenantId}\""));
             }
             else
             {
                 // Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
                 log.Verbose("Azure CLI: Authenticating with Service Principal");
+                log.AddValueToRedact(credential, "<password>");
                 ExecuteCommandAndLogOutput(
                     new CommandLineInvocation(ExecutableLocation,
                         "login",
                         "--service-principal",
                         $"--username=\"{clientId}\"",
                         $"--password=\"{credential}\"",
-                        $"--tenant=\"{tenantId}\""),
-                    [credential]);
+                        $"--tenant=\"{tenantId}\""));
             }
 
             log.Verbose($"Azure CLI: Setting active subscription to {subscriptionId}");

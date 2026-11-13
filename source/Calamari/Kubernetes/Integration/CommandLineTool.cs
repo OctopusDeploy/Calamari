@@ -37,18 +37,18 @@ namespace Calamari.Kubernetes.Integration
             return variables.GetFlag(SpecialVariables.LogCliOutputAsInfo);
         }
 
-        protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, IEnumerable<string>? valuesToMask = null)
-            => ExecuteCommandAndLogOutput(invocation, false, valuesToMask);
+        protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
+            => ExecuteCommandAndLogOutput(invocation, false);
 
         /// <summary>
         /// This is a special case for when the invocation results in an error
         /// 1) but is to be expected as a valid scenario; and
         /// 2) we don't want to inform this at an error level when this happens.
         /// </summary>
-        protected CommandResult ExecuteCommandAndLogOutputAsVerbose(CommandLineInvocation invocation, IEnumerable<string>? valuesToMask = null)
-            => ExecuteCommandAndLogOutput(invocation, true, valuesToMask);
+        protected CommandResult ExecuteCommandAndLogOutputAsVerbose(CommandLineInvocation invocation)
+            => ExecuteCommandAndLogOutput(invocation, true);
 
-        CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, bool logOutputAsVerbose, IEnumerable<string>? valuesToMask = null)
+        CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, bool logOutputAsVerbose)
         {
             invocation.EnvironmentVars = environmentVars;
             invocation.WorkingDirectory = workingDirectory;
@@ -58,7 +58,7 @@ namespace Calamari.Kubernetes.Integration
             var captureCommandOutput = new CaptureCommandOutput();
             invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
-            LogCommandText(invocation, valuesToMask ?? []);
+            LogCommandText(invocation);
 
             var result = commandLineRunner.Execute(invocation);
 
@@ -68,12 +68,9 @@ namespace Calamari.Kubernetes.Integration
             return result;
         }
 
-        void LogCommandText(CommandLineInvocation invocation, IEnumerable<string> valuesToMask)
+        void LogCommandText(CommandLineInvocation invocation)
         {
-            var commandText = invocation.ToString();
-            commandText = valuesToMask.Aggregate(commandText, (current, value) => current.Replace(value, "********"));
-
-            log.Verbose(commandText);
+            log.Verbose(invocation.ToString());
         }
 
         void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput, bool logOutputAsVerbose, bool logSuccessAsInfo)
