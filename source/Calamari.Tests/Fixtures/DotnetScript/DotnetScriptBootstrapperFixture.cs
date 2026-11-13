@@ -12,9 +12,9 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         [TestCase(null, null, null)]
         [TestCase("-- \"Parameter 1\" \"Parameter 2\"", null, "\"Parameter 1\" \"Parameter 2\"")]
         [TestCase("\"Parameter 1\" \"Parameter 2\"", null, "\"Parameter 1\" \"Parameter 2\"")]
-        [TestCase("--isolated-load-context -- \"Parameter 1\" \"Parameter 2\"", "--isolated-load-context ", "\"Parameter 1\" \"Parameter 2\"")]
-        [TestCase("--isolated-load-context -d -- \"Parameter 1\" \"Parameter 2\"", "--isolated-load-context -d ", "\"Parameter 1\" \"Parameter 2\"")]
-        [TestCase("--isolated-load-context --verbosity debug -- \"Parameter 1\" \"Parameter 2\"", "--isolated-load-context --verbosity debug ", "\"Parameter 1\" \"Parameter 2\"")]
+        [TestCase("-- \"Parameter 1\" \"Parameter 2\"", "", "\"Parameter 1\" \"Parameter 2\"")]
+        [TestCase("-d -- \"Parameter 1\" \"Parameter 2\"", "-d ", "\"Parameter 1\" \"Parameter 2\"")]
+        [TestCase("--verbosity debug -- \"Parameter 1\" \"Parameter 2\"", "--verbosity debug ", "\"Parameter 1\" \"Parameter 2\"")]
         public void FormatCommandArgumentsTest([CanBeNull] string scriptParameters, [CanBeNull] string commandArguments, [CanBeNull] string scriptArguments)
         {
             var bootstrapFile = "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + "Script.csx";

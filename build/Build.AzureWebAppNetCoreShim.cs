@@ -28,7 +28,7 @@ public partial class Build
                             DotNetPublish(s => s
                                                .SetConfiguration(Configuration)
                                                .SetProject(project.Path)
-                                               .SetFramework("net462")
+                                               .SetFramework("net48")
                                                .SetVersion(NugetVersion.Value)
                                                .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                .SetVerbosity(BuildVerbosity)

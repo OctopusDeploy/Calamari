@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         [Test]
         public void Initialize_BypassProxy()
         {
-            SetEnvironmentVariables(false, "", 80, "", "");
+            SetEnvironmentVariables(false, "", 80, null, null);
 
             AssertBypassProxy(ProxySettingsInitializer.GetProxySettingsFromEnvironment());
         }
@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         [Test]
         public void Initialize_UseSystemProxy()
         {
-            SetEnvironmentVariables(true, "", 80, "", "");
+            SetEnvironmentVariables(true, "", 80, null, null);
 
             AssertSystemProxySettings(ProxySettingsInitializer.GetProxySettingsFromEnvironment(), false);
         }
@@ -48,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         [Test]
         public void Initialize_CustomProxy()
         {
-            SetEnvironmentVariables(false, proxyHost, proxyPort, "", "");
+            SetEnvironmentVariables(false, proxyHost, proxyPort, null, null);
 
             AssertCustomProxy(ProxySettingsInitializer.GetProxySettingsFromEnvironment(), false);
         }
@@ -79,11 +79,11 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         void ResetProxyEnvironmentVariables()
         {
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, string.Empty);
-            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, string.Empty);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, null);
+            Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, null);
         }
 
         void AssertCustomProxy(IProxySettings proxySettings, bool hasCredentials)

@@ -90,7 +90,10 @@ namespace Calamari.Build
         {
             try
             {
+                // The suggested replacements don't check the AuthenticodeSignature
+#pragma warning disable SYSLIB0057
                 X509Certificate.CreateFromSignedFile(filePath);
+#pragma warning restore SYSLIB0057
                 return true;
             }
             catch
