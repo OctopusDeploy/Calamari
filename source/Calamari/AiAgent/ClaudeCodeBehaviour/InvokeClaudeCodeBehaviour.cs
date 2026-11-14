@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
@@ -18,6 +19,9 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public class InvokeClaudeCodeBehaviour : IDeployBehaviour
 {
+    public const string ClaudeConfigDirName = ".claude";
+    public const string DeploymentVariablesFileName = "deployment-variables.json";
+
     readonly ILog log;
     readonly INonSensitiveVariables nonSensitiveVariables;
     readonly ClaudeSettingsWriter settingsWriter;
@@ -112,7 +116,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         }
 
         if (settingsWriter.HasSettings)
-            argsBuilder.WithSettingsPath(settingsWriter.Write(Path.Combine(workingDir, ".claude", "agent-settings.json")));
+            argsBuilder.WithSettingsPath(settingsWriter.Write(Path.Combine(workingDir, ClaudeConfigDirName, "agent-settings.json")));
 
         argsBuilder.WithSystemPromptFile(new SystemPromptWriter().WriteSystemPromptFile(workingDir));
         argsBuilder.WithMcpConfigPath(mcpConfig);
@@ -125,7 +129,7 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
             await new PromptInjectionGuard(log, InjectionCheckOptions.Resolve(variables), usageReporter)
                 .CheckAsync(workingDir, prompt, apiKey, cancellationToken.Token);
 
-            var claudeConfigDir = Path.Combine(workingDir, ".claude");
+            var claudeConfigDir = Path.Combine(workingDir, ClaudeConfigDirName);
 
             var environment = ClaudeCodeEnvironment.Build(
                 ClaudeCodeEnvironment.GetCurrentEnvironmentVariables(),
@@ -147,7 +151,8 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
                 context.CurrentDirectory,
                 cancellationToken.Token);
 
-            foreach (var artifact in new ArtifactManifestCollector(variables).Collect(workingDir, context.CurrentDirectory))
+            var secretValues = SensitiveValues(variables).Append(apiKey).ToList();
+            foreach (var artifact in new ArtifactManifestCollector(variables, secretValues).Collect(workingDir, context.CurrentDirectory))
                 log.NewOctopusArtifact(artifact.Path, artifact.Name, artifact.Length);
 
             Log.SetOutputVariable(SpecialVariables.Action.Claude.Response, response, variables);
@@ -177,10 +182,20 @@ public class InvokeClaudeCodeBehaviour : IDeployBehaviour
         return raw.Split([',', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
+    // Values Octopus marks as sensitive, so artifacts can be checked for leaked secrets
+    IEnumerable<string> SensitiveValues(IVariables variables)
+    {
+        var nonSensitiveNames = new HashSet<string>(nonSensitiveVariables.GetNames(), StringComparer.OrdinalIgnoreCase);
+        return variables.GetNames()
+                        .Where(name => !nonSensitiveNames.Contains(name))
+                        .Select(name => variables.Get(name))
+                        .OfType<string>();
+    }
+
     void SetupDeploymentVariables(string workingDir)
     {
         var json = JsonSerializer.Serialize(nonSensitiveVariables, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(Path.Combine(workingDir, "deployment-variables.json"), json);
+        File.WriteAllText(Path.Combine(workingDir, DeploymentVariablesFileName), json);
     }
 
     static SandboxMode ResolveSandboxMode(IVariables variables)

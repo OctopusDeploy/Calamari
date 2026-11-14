@@ -6,7 +6,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public static class SandboxSettingsWriter
 {
-    const string SandboxRuntimeSettingsFileName = ".srt-settings.json";
+    public const string SandboxRuntimeSettingsFileName = ".srt-settings.json";
 
     // Writes the sandbox-runtime settings to <workingDir>/.srt-settings.json and returns the path.
     public static string WriteSandboxRuntimeSettings(string workingDir, IVariables variables)
