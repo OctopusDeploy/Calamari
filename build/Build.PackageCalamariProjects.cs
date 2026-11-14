@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Calamari.Build.Utilities;
 using Nuke.Common.ProjectModel;
 
 namespace Calamari.Build;
@@ -19,7 +20,7 @@ public partial class Build
                            // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
                            // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
                            //We put this at the front of the list so they build in the correct order?
-                           projectNames = [..projectNames, "Calamari.Scripting"];
+                           projectNames = [.. projectNames, "Calamari.Scripting"];
 
                            //its assumed each project has a corresponding test project
                            var testProjectNames = projectNames.Select(f => $"{f}.Tests");
@@ -54,7 +55,6 @@ public partial class Build
     Target BuildCalamariProjects =>
         d =>
             d.DependsOn(GetCalamariFlavourProjectsToPublish)
-             .DependsOn(PublishAzureWebAppNetCoreShim)
              .Executes(() =>
                        {
                            // Build the solution once without a RID. Per-RID self-contained
@@ -129,7 +129,7 @@ public partial class Build
                            Log.Information("Signing published binaries...");
                            var signTasks = outputPaths
                                            .Where(output => output != null && !output.ToString().Contains("Tests"))
-                                           .Select(output => Task.Run(() => SignDirectory(output!)))
+                                           .Select(output => Task.Run(async () => await SignDirectory(output!)))
                                            .ToList();
 
                            await Task.WhenAll(signTasks);

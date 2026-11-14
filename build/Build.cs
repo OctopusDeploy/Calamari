@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Calamari.Build.Utilities;
+using Nuke.Common.Execution;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.OctoVersion;
 using Nuke.Common.Utilities.Collections;
 using Octopus.Calamari.ConsolidatedPackage;
+using Logging = Calamari.Build.Utilities.Logging;
 
 namespace Calamari.Build;
 
@@ -29,20 +32,6 @@ partial class Build : NukeBuild
 
     [Parameter("Set Calamari Version on OctopusServer")] readonly bool SetOctopusServerVersion;
 
-    [Parameter] readonly string? AzureKeyVaultUrl;
-
-    [Parameter] readonly string? AzureKeyVaultAppId;
-
-    [Parameter] [Secret] readonly string? AzureKeyVaultAppSecret;
-
-    [Parameter] [Secret] readonly string? AzureKeyVaultTenantId;
-
-    [Parameter] readonly string? AzureKeyVaultCertificateName;
-
-    [Parameter(Name = "signing_certificate_path")] readonly string SigningCertificatePath = KnownPaths.RootDirectory / "certificates" / "OctopusDevelopment.pfx";
-
-    [Parameter(Name = "signing_certificate_password")] [Secret] readonly string SigningCertificatePassword = "Password01!";
-
     [Parameter] readonly string? TargetRuntime;
 
     const string CiBranchNameEnvVariable = "OCTOVERSION_CurrentBranch";
@@ -60,7 +49,7 @@ partial class Build : NukeBuild
         // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
         OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
                                                      {
-                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = Frameworks.Net100};
+                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = Frameworks.Net100 };
 
                                                          // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
                                                          var version = attribute.GetValue(null!, this);
@@ -129,11 +118,11 @@ partial class Build : NukeBuild
                                          });
                        });
 
-
     Target SetTeamCityVersion => d => d.Executes(() => TeamCity.Instance?.SetBuildNumber(NugetVersion.Value));
 
     Target BuildLocal => d =>
-                             d.DependsOn(PublishCalamariProjects)
+                             d.DependsOn(PublishAzureWebAppNetCoreShim)
+                              .DependsOn(PublishCalamariProjects)
                               .DependsOn(PackCalamariConsolidatedNugetPackage)
                               .DependsOn(PackContractsProject)
                               .DependsOn(UpdateCalamariVersionOnOctopusServer);
@@ -144,26 +133,38 @@ partial class Build : NukeBuild
                            .DependsOn(PackCalamariConsolidatedNugetPackage)
                            .DependsOn(PackContractsProject)
                            .DependsOn(PublishNukeBuild);
-    
+
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
-    void SignDirectory(string directory)
+    async Task SignDirectory(AbsolutePath directory)
     {
         if (!WillSignBinaries)
             return;
 
-        Log.Information("Signing directory: {Directory} and sub-directories", directory);
-        var binariesFolders = Directory.GetDirectories(directory, "*", new EnumerationOptions { RecurseSubdirectories = true });
-        foreach (var subDirectory in binariesFolders.Append(directory))
-        {
-            Signing.SignAndTimestampBinaries(subDirectory, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                             AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
-                                             SigningCertificatePath, SigningCertificatePassword);
-        }
+        await Logging.InBlock($"Signing and timestamping {directory} and sub-directories",
+            async () =>
+            {
+                var binariesFolders = directory.GetDirectories("*", int.MaxValue);
+                foreach (var subDirectory in binariesFolders.Append(directory))
+                {
+                    var signing = new Signing(SigningCertificatePath, AzureKeyVaultSettings, JSignDockerImage);
+
+                    var filesToSign = subDirectory.GlobFiles(
+                                                      "**/Calamari*.exe",
+                                                      "**/Calamari*.dll",
+                                                      "**/Octo*.exe",
+                                                      "**/Octo*.dll",
+                                                      "**/docker-credential-octopus*.exe",
+                                                      "**/docker-credential-octopus*.dll")
+                                                  .Where(f => !Signing.HasAuthenticodeSignature(f))
+                                                  .ToList();
+
+                    await signing.Sign(subDirectory, filesToSign, SigningCertificatePassword);
+                }
+            });
     }
 
     // Sets the Octopus.Server.csproj Calamari.Consolidated package version
-
 
     string GetNugetVersion()
     {
@@ -190,7 +191,8 @@ partial class Build : NukeBuild
     // This is here purely to make the local build experience on non-Windows devices (with testing) workable
     static string[] GetCalamariFlavours()
     {
-        return BuildableCalamariProjects.GetCalamariProjectsToBuild(OperatingSystem.IsWindows());
+        return IsLocalBuild
+            ? BuildableCalamariProjects.GetCalamariProjectsToBuild(OperatingSystem.IsWindows())
+            : BuildableCalamariProjects.GetAllCalamariProjects();
     }
-
 }

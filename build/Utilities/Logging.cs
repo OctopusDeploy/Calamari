@@ -11,7 +11,8 @@ public class Logging
                            {
                                action.Invoke();
                                return Task.CompletedTask;
-                           }).GetAwaiter().GetResult();;
+                           }).GetAwaiter().GetResult();
+        
     }
     
     public static T InBlock<T>(string blockName, Func<T> action)
@@ -21,6 +22,15 @@ public class Logging
                                await Task.CompletedTask;
                                return action.Invoke();
                            }).GetAwaiter().GetResult();
+    }
+    
+    public static Task InBlock(string blockName, Func<Task> action)
+    {
+        return InBlock(blockName, async () =>
+                                  {
+                                      await action();
+                                      return true;
+                                  });
     }
 
     public static async Task<T> InBlock<T>(string blockName, Func<Task<T>> action)

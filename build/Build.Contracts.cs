@@ -5,7 +5,7 @@ public partial class Build
     Target PackContractsProject =>
         d =>
             d.DependsOn(RestoreSolution)
-             .Executes(() =>
+             .Executes(async () =>
                        {
                            var project = Solution.GetProject("Calamari.Contracts")!;
 
@@ -23,7 +23,7 @@ public partial class Build
                            File.Copy(KnownPaths.RootDirectory / "global.json", buildDirectory / "global.json");
 
                            //sign the built directory
-                           SignDirectory(buildDirectory);
+                           await SignDirectory(buildDirectory);
 
                            //pack the project
                            DotNetPack(s => s

@@ -4,10 +4,15 @@ namespace Octopus.Calamari.ConsolidatedPackage
 {
     public static class BuildableCalamariProjects
     {
+        public static string[] GetAllCalamariProjects() => [..NonWindows,..Windows];
+
+        // We don't build docker images for windows projects
+        public static string[] GetCalamariProjectsForDockerImages => NonWindows;
+        
         public static string[] GetCalamariProjectsToBuild(bool isWindows)
         {
             return isWindows
-                ? Windows
+                ? [..NonWindows,..Windows]
                 : NonWindows;
         }
         
@@ -21,6 +26,6 @@ namespace Octopus.Calamari.ConsolidatedPackage
             "Calamari.Terraform"
         ];
 
-        static string[] Windows => [..NonWindows, "Calamari.AzureWebApp", "Calamari.AzureServiceFabric"];
+        static string[] Windows => ["Calamari.AzureWebApp", "Calamari.AzureServiceFabric"];
     }
 }
