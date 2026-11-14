@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
@@ -63,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Python
         }
         
         [Test, RequiresMinimumPython3Version(4)]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldWriteServiceMessageForArtifactsOnWindows()
         {
             var (output, _) = RunScript("createartifactwin.py");
@@ -72,7 +73,7 @@ namespace Calamari.Tests.Fixtures.Python
         }
 
         [Test, RequiresMinimumPython3Version(4)]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void ShouldWriteServiceMessageForArtifactsOnNix()
         {
             var (output, _) = RunScript("createartifactnix.py");

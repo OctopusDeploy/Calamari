@@ -10,7 +10,6 @@ using System.Linq;
 namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
-    [Category(TestCategory.ScriptingSupport.DotnetScript)]
     public class DotnetScriptFixture : CalamariFixture
     {
         [OneTimeSetUp]

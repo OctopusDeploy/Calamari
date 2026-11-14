@@ -22,8 +22,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.FunctionCodeGen
 {
     [TestFixture]
-    [RequiresNonFreeBSDPlatform]
-    [Category(TestCategory.PlatformAgnostic)]
     public class DynamicFunctionFixture
     {
         [Test]

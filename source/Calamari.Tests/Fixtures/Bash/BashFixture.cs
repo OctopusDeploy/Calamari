@@ -8,6 +8,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -16,7 +17,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Bash
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+    [TestPlatforms(TestPlatforms.Unix)]
     public class BashFixture : CalamariFixture
     {
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]

@@ -25,7 +25,7 @@ namespace Calamari.Testing.Requirements
 
 		public void ApplyToTest(Test test)
 		{
-			if (test.RunState == RunState.NotRunnable || test.RunState == RunState.Ignored)
+			if (test.RunState is RunState.NotRunnable or RunState.Ignored)
 				return;
 
 			if (IsRunningOnWindows)

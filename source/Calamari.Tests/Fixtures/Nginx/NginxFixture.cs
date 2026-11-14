@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Features;
 using Calamari.Integration.Nginx;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -23,7 +24,7 @@ using Octopus.CoreUtilities.Extensions;
 namespace Calamari.Tests.Fixtures.Nginx
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+    [TestPlatforms(TestPlatforms.Unix)]
     public class NginxFixture : CalamariFixture
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -164,7 +165,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void SetupReverseProxyWithSslSite()
         {
             var locations =

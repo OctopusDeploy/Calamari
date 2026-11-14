@@ -14,7 +14,6 @@ namespace Calamari.Tests;
 public class CommandResolutionTests
 {
     [Test]
-    [Category("PlatformAgnostic")]
     public void AllCommandsCanBeConstructed()
     {
         using var container = TestableSyncProgram.For<Calamari.Program>().BuildTestContainer();
@@ -38,7 +37,6 @@ public class CommandResolutionTests
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
         var program = new TestablePipelineProgram(typeof(Calamari.Program).Assembly);

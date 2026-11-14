@@ -67,7 +67,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void GivesActionableErrorWhenV3FeedIsMissingTheRequestedVersion()
         {
             // FD-440: requesting a version that doesn't exist on a NuGet V3 feed used to throw a bare

@@ -13,7 +13,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+    [TestPlatforms(TestPlatforms.Unix)]
     public class PowerShellOnLinuxOrMacFixture : PowerShellFixtureBase
     {
         [SetUp]

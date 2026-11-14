@@ -4,6 +4,7 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Time;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -14,7 +15,6 @@ using Octopus.Calamari.Contracts.ArgoCD;
 
 namespace Calamari.Tests.ArgoCD.Git;
 
-[Category(TestCategory.RequiresOpenSsl1_1OrOpenSsl3)]
 public abstract class AuthenticatingRepositoryFactoryTestBase
 {
     protected readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -85,7 +85,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
     {
         [Test]
         // SSH not currently functional on Windows
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void SshCredentialBranch_IsSelectedAndDispatchesSshKeyGitConnection()
         {
             // Use an ssh:// URL so the new strict validation allows it, and mock the factory
@@ -114,7 +114,7 @@ public abstract class AuthenticatingRepositoryFactoryTestBase
 
         [Test]
         // SSH not currently functional on Windows
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void KnownHostsFromDtoAreCarriedOntoSshKeyGitConnection()
         {
             const string sshUrl = "ssh://git@github.com/org/repo.git";

@@ -34,7 +34,7 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
         }
 
         [Test]
-        [WindowsTest]
+        [TestPlatforms(TestPlatforms.Windows)]
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");

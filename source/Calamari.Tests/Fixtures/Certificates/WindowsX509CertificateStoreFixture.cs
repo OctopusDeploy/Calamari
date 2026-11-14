@@ -9,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Threading;
 using Calamari.Integration.Certificates;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
@@ -16,7 +17,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     [SupportedOSPlatform("windows")]
     public class WindowsX509CertificateStoreFixture
     {

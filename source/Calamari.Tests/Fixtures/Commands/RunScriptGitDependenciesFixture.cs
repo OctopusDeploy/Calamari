@@ -6,6 +6,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -15,7 +16,7 @@ using SpecialVariables = Calamari.Deployment.SpecialVariables;
 namespace Calamari.Tests.Fixtures.Commands;
 
 [TestFixture]
-[Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+[TestPlatforms(TestPlatforms.Unix)]
 public class RunScriptGitDependenciesFixture
 {
     const string GitDependencyName = "my-git-dep";

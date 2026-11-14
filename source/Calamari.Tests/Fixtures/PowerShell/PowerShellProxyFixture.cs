@@ -1,11 +1,12 @@
-﻿using Calamari.Testing.Helpers;
+﻿using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class PowerShellProxyFixture : WindowsScriptProxyFixtureBase
     {
         protected override CalamariResult RunScript()

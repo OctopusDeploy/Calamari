@@ -5,6 +5,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NSubstitute;
@@ -39,14 +40,14 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
         
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void DeterminesCorrectScriptTypePreferenceOrderWindows()
         {
             DeterminesCorrectScriptTypePreferenceOrder(ScriptPreferencesWindows);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void DeterminesCorrectScriptTypePreferencesOrderNonWindows()
         {
             DeterminesCorrectScriptTypePreferenceOrder(ScriptPreferencesNonWindows);

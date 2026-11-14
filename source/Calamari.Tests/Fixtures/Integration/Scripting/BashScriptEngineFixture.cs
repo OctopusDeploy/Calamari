@@ -3,6 +3,7 @@ using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NSubstitute;
@@ -14,7 +15,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class BashScriptEngineFixture : ScriptEngineFixtureBase
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void BashDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))

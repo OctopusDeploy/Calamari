@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using NUnit.Framework;
@@ -8,7 +9,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
-    [Category(TestCategory.ScriptingSupport.DotnetScript)]
     public class DotnetScriptProxyFixture : WindowsScriptProxyFixtureBase
     {
         protected override CalamariResult RunScript()
@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public override void Initialize_HasSystemProxy_UseSystemProxyWithExceptions()
         {
             // If the HTTP_PROXY environment variable have been set .NET Core will only take entries in the NO_PROXY environment variable into account,
@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public override void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
         {
             // .NET Core first unescapes the username and password, then splits the auth string on ':' and finally escapes the username and password again.

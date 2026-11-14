@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -16,7 +17,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.Scripting
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class PowerShellCoreBootstrapperFixture
     {
         [Test]
