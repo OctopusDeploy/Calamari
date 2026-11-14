@@ -66,7 +66,7 @@ namespace Calamari.Kubernetes.Conventions
             // If a release exists and is stuck in a pending state from a previous cancelled deployment,
             // recover before starting the upgrade so both tasks receive the correct revision number.
             var newRevisionNumber = currentMetadata != null
-                ? executor.RecoverFromPendingRelease(releaseName, currentMetadata.Value.Status, expectedRevisionNumber)
+                ? executor.RecoverFromPendingRelease(deployment, releaseName,currentMetadata.Value.Status, expectedRevisionNumber)
                 : expectedRevisionNumber;
 
             //When ArgoRollouts support is enabled, the parallel manifest + KOS reporter is replaced
