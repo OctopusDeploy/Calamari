@@ -28,7 +28,7 @@ public sealed class ScriptIsolationEnforcer(
         }
         catch (Exception exception)
         {
-            LockRejectedException.Throw(exception);
+            LockRejectedException.Throw(exception, lockOptions.LockFile);
             throw; // Satisfy the compiler
         }
     }
@@ -51,7 +51,7 @@ public sealed class ScriptIsolationEnforcer(
         }
         catch (Exception exception)
         {
-            LockRejectedException.Throw(exception);
+            LockRejectedException.Throw(exception, lockOptions.LockFile);
             throw; // Satisfy the compiler
         }
     }
