@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -15,6 +16,10 @@ public sealed class LockOptionsResolver(
     public LockOptions? Create(RequestedLockOptions requestedOptions)
     {
         var lockDirectory = lockDirectoryFactory.Create(requestedOptions.PreferredLockDirectory);
+        if (lockDirectory.IsFallback)
+        {
+            LogFallbackLockDirectoryUsed(requestedOptions.PreferredLockDirectory, lockDirectory);
+        }
 
         var lockFile = lockDirectory.GetLockFile($"ScriptIsolation.{requestedOptions.MutexName}.lock");
 
@@ -61,6 +66,15 @@ public sealed class LockOptionsResolver(
 
         LogUnableToSupportAnyScriptIsolation(lockOptions);
         return null;
+    }
+
+    void LogFallbackLockDirectoryUsed(DirectoryInfo preferredLockDirectory, LockDirectory lockDirectory)
+    {
+        // Verbose rather than Warn: the fallback works, and targets whose home directory is on
+        // e.g. NFS would otherwise warn on every step. This is here so that lock problems in the
+        // fallback location can be traced back to it.
+        var detectionResults = lockDirectory.DetectionResults.Select(r => r.ToString()).StringJoin(", ");
+        log.Verbose($"Script isolation lock directory '{preferredLockDirectory.FullName}' does not fully support file locking. Using fallback lock directory '{lockDirectory.DirectoryInfo.FullName}' instead. Detection results: {detectionResults}");
     }
 
     void LogUnableToSupportAnyScriptIsolation(LockOptions originalOptions)
