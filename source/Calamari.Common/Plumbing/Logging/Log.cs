@@ -110,11 +110,14 @@ namespace Calamari.Common.Plumbing.Logging
             stdOutMode = mode;
         }
 
-        public void AddValueToRedact(string value, string replacement)
+        public void AddValueToRedact(string? value, string replacement)
         {
             lock (sync)
             {
-                redactionMap[value] = replacement;
+                if (value is not null)
+                {
+                    redactionMap[value] = replacement;
+                }
             }
         }
 
