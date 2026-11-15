@@ -581,5 +581,47 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                                                 because: $"detection result '{result}' should be included in capability info");
             }
         }
+        sealed class FallbackLockDirectoryFactory(LockDirectory lockDirectory) : ILockDirectoryFactory
+        {
+            public LockDirectory Create(DirectoryInfo preferredLockDirectory) => lockDirectory;
+        }
+
+        static RequestedLockOptions MakeRequestedOptions(string preferredDirectory)
+            => new(LockType.Exclusive, "RunningScript", TimeSpan.FromMinutes(1), new DirectoryInfo(preferredDirectory));
+
+        [Test]
+        public void Create_LogsVerboseMessage_WhenFallbackLockDirectoryIsUsed()
+        {
+            var preferred = Path.Combine(Path.GetTempPath(), "home", "octopus", "my-ssh-target");
+            var fallback = Path.Combine(Path.GetTempPath(), "octopus.my-ssh-target");
+            var fallbackDirectory = new LockDirectory(
+                                                      DirectoryInfo: new DirectoryInfo(fallback),
+                                                      LockSupport: LockCapability.Supported,
+                                                      IsFallback: true,
+                                                      DetectionResults:
+                                                      [
+                                                          new LockSupportDetectionResult(null, "nfs4", LockCapability.Unsupported),
+                                                          new LockSupportDetectionResult(LockDirectoryFallbackType.TempFixed, "tmpfs", LockCapability.Supported)
+                                                      ]);
+            var log = new InMemoryLog();
+
+            var result = new LockOptionsResolver(new FallbackLockDirectoryFactory(fallbackDirectory), log)
+                .Create(MakeRequestedOptions(preferred));
+
+            result.Should().NotBeNull();
+            log.MessagesVerboseFormatted.Should().Contain(m => m.Contains(preferred) && m.Contains(fallback) && m.Contains("nfs4"));
+            log.MessagesWarnFormatted.Should().BeEmpty(because: "a working fallback should not warn on every step");
+        }
+
+        [Test]
+        public void Create_DoesNotLogFallbackMessage_WhenPreferredLockDirectoryIsUsed()
+        {
+            var preferred = Path.Combine(Path.GetTempPath(), "home", "octopus", "my-ssh-target");
+            var log = new InMemoryLog();
+
+            new LockOptionsResolver(new StubLockDirectoryFactory(), log).Create(MakeRequestedOptions(preferred));
+
+            log.MessagesVerboseFormatted.Should().NotContain(m => m.Contains("fallback lock directory"));
+        }
     }
 }

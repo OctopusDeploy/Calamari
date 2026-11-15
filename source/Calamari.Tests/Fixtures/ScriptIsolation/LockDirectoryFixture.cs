@@ -168,9 +168,18 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             // ---- IFileLockService implementation --------------------------------
 
-            // Directory creation is a no-op in the fake: the FakeLockService does not
-            // touch the real filesystem, so there is nothing to create.
-            public void CreateDirectory(DirectoryInfo directory) { }
+            // The fake does not touch the real filesystem: it records which directories
+            // were asked to be created, and can simulate directories that cannot be created
+            // (e.g. a /tmp/octopus.<slug> already owned by another user).
+            public List<string> CreatedDirectories { get; } = new();
+            public HashSet<string> DirectoriesThatCannotBeCreated { get; } = new();
+
+            public void CreateDirectory(DirectoryInfo directory)
+            {
+                if (DirectoriesThatCannotBeCreated.Contains(directory.FullName))
+                    throw new UnauthorizedAccessException($"Access to the path '{directory.FullName}' is denied.");
+                CreatedDirectories.Add(directory.FullName);
+            }
 
             public ILockHandle AcquireLock(LockOptions opts)
             {
@@ -595,6 +604,80 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().StartWith(secondTempRoot,
                                                              because: "the second temp candidate is on a Supported drive and should be chosen");
+        }
+
+        [Test]
+        public void GetLockDirectory_CreatesFallbackDirectory_WhenFallbackDriveIsTrustedWithoutDetection()
+        {
+            // Regression test for FD-1047 / FD-895: a fallback on a trusted filesystem (e.g. /tmp on
+            // tmpfs or ext4) skips detection, which was the only place the directory got created.
+            // The lock file was then opened in a directory that did not exist.
+            var drives = PassThroughDrives(
+                                           DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                                           DriveWithCapability(TempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DirectoryInfo.FullName.Should().Be(new DirectoryInfo(TempPath).FullName);
+            fs.CreatedDirectories.Should().Contain(result.DirectoryInfo.FullName,
+                                                   because: "the returned lock directory must exist before a lock file can be opened in it");
+        }
+
+        [Test]
+        public void GetLockDirectory_CreatesPreferredDirectory_WhenPreferredDriveIsTrustedWithoutDetection()
+        {
+            var drives = PassThroughDrives(DriveWithCapability(CandidateRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.DirectoryInfo.FullName.Should().Be(CandidatePath);
+            fs.CreatedDirectories.Should().Contain(CandidatePath);
+        }
+
+        [Test]
+        public void GetLockDirectory_SkipsTrustedFallback_WhenItsDirectoryCannotBeCreated()
+        {
+            var secondTempRoot = OperatingSystem.IsWindows() ? @"E:\" : "/dev/shm";
+            var secondTempPath = OperatingSystem.IsWindows()
+                ? @"E:\tentacle"
+                : "/dev/shm/tentacle";
+
+            var drives = PassThroughDrives(
+                                           DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                                           DriveWithCapability(TempRoot, LockCapability.Supported),
+                                           DriveWithCapability(secondTempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+            fs.DirectoriesThatCannotBeCreated.Add(new DirectoryInfo(TempPath).FullName);
+
+            var result = CreateFactory(drives, fs, TempPath, secondTempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.LockSupport.Should().Be(LockCapability.Supported);
+            result.DirectoryInfo.FullName.Should().Be(new DirectoryInfo(secondTempPath).FullName,
+                                                      because: "a fallback whose directory cannot be created is unusable, so the next candidate should be used");
+            result.DetectionResults.Should().Contain(r => r.FallbackType == LockDirectoryFallbackType.TempFixed
+                                                          && r.LockCapability == LockCapability.Unsupported);
+        }
+
+        [Test]
+        public void GetLockDirectory_ReturnsUnsupported_WhenNoTrustedDirectoryCanBeCreated()
+        {
+            var drives = PassThroughDrives(
+                                           DriveWithCapability(CandidateRoot, LockCapability.Supported),
+                                           DriveWithCapability(TempRoot, LockCapability.Supported));
+            var fs = FakeLockService.FullySupported();
+            fs.DirectoriesThatCannotBeCreated.Add(CandidatePath);
+            fs.DirectoriesThatCannotBeCreated.Add(new DirectoryInfo(TempPath).FullName);
+
+            var result = CreateFactory(drives, fs, TempPath)
+                .Create(new DirectoryInfo(CandidatePath));
+
+            result.LockSupport.Should().Be(LockCapability.Unsupported,
+                                           because: "reporting Unsupported makes the resolver log an alert and run without isolation, instead of failing every step");
         }
 
         // -------------------------------------------------------------------------
@@ -1402,6 +1485,40 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.Should().Be(rawPath,
                                because: $"a {exception.GetType().Name} from GetFullPath must not propagate; " +
                                         "the raw path must be returned as a safe fallback");
+        }
+        // -------------------------------------------------------------------------
+        // Real filesystem regression test for FD-1047 / FD-895
+        // -------------------------------------------------------------------------
+
+        [Test]
+        public void Create_ReturnsUsableFallbackDirectory_WhenTrustedFallbackDoesNotExistYet()
+        {
+            // Uses the real FileLockService and real lock files. The fake drives make the
+            // preferred location Unsupported and the temp root trusted (no detection), which is
+            // what happens on an SSH target whose home directory is on NFS.
+            var tempRoot = Path.Combine(Path.GetTempPath(), $"calamari-fd1047-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(tempRoot);
+            try
+            {
+                var fallbackPath = Path.Combine(tempRoot, "octopus.my-ssh-target");
+                var drives = PassThroughDrives(
+                                               DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                                               DriveWithCapability(tempRoot, LockCapability.Supported));
+                var factory = new LockDirectoryFactory(drives,
+                                                       FileLockService.Instance,
+                                                       new FakeTemporaryDirectoryFallbackProvider(fallbackPath));
+
+                var lockDirectory = factory.Create(new DirectoryInfo(CandidatePath));
+                var lockFile = lockDirectory.GetLockFile("ScriptIsolation.RunningScript.lock");
+
+                lockDirectory.DirectoryInfo.FullName.Should().Be(fallbackPath);
+                using var handle = FileLock.Acquire(new LockOptions(LockType.Exclusive, "RunningScript", lockFile, TimeSpan.Zero));
+                lockFile.Exists.Should().BeTrue();
+            }
+            finally
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
         }
     }
 }
