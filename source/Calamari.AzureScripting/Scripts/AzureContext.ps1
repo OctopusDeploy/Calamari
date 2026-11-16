@@ -174,18 +174,26 @@ Execute-WithRetry{
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
                         $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
                         $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
-                        $loginArgs += @("--federated-token=$(ConvertTo-QuotedString($OctopusOpenIdJwt))");
+                        $quotedToken = ConvertTo-QuotedString($OctopusOpenIdJwt)
+                        $loginArgs += @("--federated-token=$quotedToken");
 
-                        Write-Host "az login --service-principal $loginArgs"
+                        $maskedLoginArgs = "$loginArgs"
+                        $maskedLoginArgs = $maskedLoginArgs.Replace($quotedToken, "********")
+
+                        Write-Host "az login --service-principal $maskedLoginArgs"
                         az login --service-principal $loginArgs
                     }
                     else {
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
                         $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
-                        $loginArgs += @("--password=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword)))");
+                        $quotedPassword = ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))
+                        $loginArgs += @("--password=$quotedPassword");
                         $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
 
-                        Write-Host "az login --service-principal $loginArgs"
+                        $maskedLoginArgs = "$loginArgs"
+                        $maskedLoginArgs = $maskedLoginArgs.Replace($quotedPassword, "********")                        
+                        
+                        Write-Host "az login --service-principal $maskedLoginArgs"
                         az login --service-principal $loginArgs
                     }
 
