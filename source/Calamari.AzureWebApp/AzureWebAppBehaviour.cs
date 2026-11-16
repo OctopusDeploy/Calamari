@@ -17,13 +17,13 @@ namespace Calamari.AzureWebApp
     {
         readonly ILog log;
         readonly ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider;
-        readonly IWebDeploymentExecutor webDeploymentExecutor;
+        readonly WebDeploymentExecutorFactory webDeploymentExecutorFactory;
 
-        public AzureWebAppBehaviour(ILog log, ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider, IWebDeploymentExecutor webDeploymentExecutor)
+        public AzureWebAppBehaviour(ILog log, ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider, WebDeploymentExecutorFactory webDeploymentExecutorFactory)
         {
             this.log = log;
             this.resourceManagerPublishProfileProvider = resourceManagerPublishProfileProvider;
-            this.webDeploymentExecutor = webDeploymentExecutor;
+            this.webDeploymentExecutorFactory = webDeploymentExecutorFactory;
         }
 
         public bool IsEnabled(RunningDeployment context) => true;
@@ -68,6 +68,7 @@ namespace Calamari.AzureWebApp
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
 
+                var webDeploymentExecutor = webDeploymentExecutorFactory.Create(variables);
                 await webDeploymentExecutor.ExecuteDeployment(deployment, targetSite, variables, publishSettings);
             }
             finally

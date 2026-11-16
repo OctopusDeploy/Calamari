@@ -13,7 +13,9 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
@@ -24,10 +26,12 @@ using HttpClient = System.Net.Http.HttpClient;
 
 namespace Calamari.AzureWebApp.Tests
 {
-    [TestFixture]
+    [TestFixture(true)]
+    [TestFixture(false)]
     [Category(TestCategory.ExternalCloudIntegration)]
-    public class DeployAzureWebCommandFixture
+    public class DeployAzureWebCommandFixture(bool executeViaPowerShell)
     {
+        readonly bool executeViaPowerShell = executeViaPowerShell;
         int webAppCount = 0;
         string clientId;
         string clientSecret;
@@ -419,12 +423,19 @@ namespace Calamari.AzureWebApp.Tests
 
         void AddDefaults(CommandTestBuilderContext context)
         {
+            context.Variables.Add(SpecialVariables.Action.Azure.Environment, "AzureCloud");
+            context.Variables.Add(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
             context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
             context.Variables.Add(AzureAccountVariables.ClientId, clientId);
             context.Variables.Add(AzureAccountVariables.Password, clientSecret);
             context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webSiteResource.Data.Name);
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupResource.Data.Name);
+
+            if (executeViaPowerShell)
+            {
+                context.Variables.Add(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.AzureWebAppPowerShellScript);
+            }
         }
     }
 }

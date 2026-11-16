@@ -22,7 +22,9 @@ namespace Calamari.AzureWebApp
             base.ConfigureContainer(builder, options);
 
             builder.RegisterType<ResourceManagerPublishProfileProvider>().SingleInstance();
-            builder.RegisterType<NetCoreWebDeploymentExecutor>().As<IWebDeploymentExecutor>();
+            builder.RegisterType<WebDeploymentExecutorFactory>().AsSelf().SingleInstance();
+            builder.RegisterType<NetCoreWebDeploymentExecutor>().AsSelf().SingleInstance();
+            builder.RegisterType<PowerShellWebDeploymentExecutor>().AsSelf().SingleInstance();
         }
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
