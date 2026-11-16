@@ -11,8 +11,16 @@ namespace Calamari.Kubernetes.Integration
 {
     public class AzureCli : CommandLineTool
     {
-        public AzureCli(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars, IVariables variables)
-            : base(log, commandLineRunner, workingDirectory, environmentVars, variables)
+        public AzureCli(ILog log,
+                        ICommandLineRunner commandLineRunner,
+                        string workingDirectory,
+                        Dictionary<string, string> environmentVars,
+                        IVariables variables)
+            : base(log,
+                commandLineRunner,
+                workingDirectory,
+                environmentVars,
+                variables)
         {
         }
 
@@ -41,41 +49,45 @@ namespace Calamari.Kubernetes.Integration
             SetConfigDirectoryEnvironmentVariable(environmentVars, workingDirectory);
 
             ExecuteCommandAndLogOutput(new CommandLineInvocation(
-                                                                 ExecutableLocation,
-                                                                 "cloud",
-                                                                 "set",
-                                                                 "--name",
-                                                                 azEnvironment));
+                ExecutableLocation,
+                "cloud",
+                "set",
+                "--name",
+                azEnvironment));
 
             if (isOidc)
             {
                 log.Verbose("Azure CLI: Authenticating with OpenID Connect Access Token");
-                ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
-                                                                     "login",
-                                                                     "--service-principal",
-                                                                     "--federated-token",
-                                                                     $"\"{credential}\"",
-                                                                     $"--username=\"{clientId}\"",
-                                                                     $"--tenant=\"{tenantId}\""));
+                log.AddValueToRedact(credential, "<token>");
+                ExecuteCommandAndLogOutput(
+                    new CommandLineInvocation(ExecutableLocation,
+                        "login",
+                        "--service-principal",
+                        "--federated-token",
+                        $"\"{credential}\"",
+                        $"--username=\"{clientId}\"",
+                        $"--tenant=\"{tenantId}\""));
             }
             else
             {
                 // Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
                 log.Verbose("Azure CLI: Authenticating with Service Principal");
-                ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
-                                                                     "login",
-                                                                     "--service-principal",
-                                                                     $"--username=\"{clientId}\"",
-                                                                     $"--password=\"{credential}\"",
-                                                                     $"--tenant=\"{tenantId}\""));
+                log.AddValueToRedact(credential, "<password>");
+                ExecuteCommandAndLogOutput(
+                    new CommandLineInvocation(ExecutableLocation,
+                        "login",
+                        "--service-principal",
+                        $"--username=\"{clientId}\"",
+                        $"--password=\"{credential}\"",
+                        $"--tenant=\"{tenantId}\""));
             }
 
             log.Verbose($"Azure CLI: Setting active subscription to {subscriptionId}");
             ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
-                                                                 "account",
-                                                                 "set",
-                                                                 "--subscription",
-                                                                 subscriptionId));
+                "account",
+                "set",
+                "--subscription",
+                subscriptionId));
 
             log.Info("Successfully authenticated with the Azure CLI");
         }
