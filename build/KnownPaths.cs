@@ -13,5 +13,6 @@ public static class KnownPaths
     public static AbsolutePath PublishDirectory => RootDirectory / "publish";
     public static AbsolutePath OutputsDirectory => RootDirectory / "outputs";
     public static AbsolutePath DockerDirectory => RootDirectory / "docker";
+    public static AbsolutePath CertificatesDirectory => RootDirectory / "certificates";
 
 }

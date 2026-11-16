@@ -87,7 +87,7 @@ public partial class Build
     Target PackConsolidationLibrariesNugetPackages =>
         d =>
             d.DependsOn(CalamariConsolidationVerification)
-             .Executes(() =>
+             .Executes(async () =>
                        {
                            // Pack the Consolidation Libraries
                            const string consolidateCalamariPackagesProjectPrefix = "Calamari.ConsolidateCalamariPackages";
@@ -109,7 +109,7 @@ public partial class Build
                                File.Copy(KnownPaths.RootDirectory / "global.json", buildDirectory / "global.json");
 
                                //sign the built directory
-                               SignDirectory(buildDirectory);
+                               await SignDirectory(buildDirectory);
 
                                //pack the project
                                DotNetPack(s => s
@@ -128,9 +128,11 @@ public partial class Build
             d.DependsOn(PackConsolidationLibrariesNugetPackages)
              .Executes(() =>
                        {
-                           NuGetPack(s => s.SetTargetPath(KnownPaths.BuildDirectory / "Calamari.Consolidated.nuspec")
-                                           .SetBasePath(KnownPaths.BuildDirectory)
+                           DotNetPack(s => s
+                                           .SetProject(KnownPaths.BuildDirectory / "Octopus.Calamari.Consolidated.nuspec")
                                            .SetVersion(NugetVersion.Value)
-                                           .SetOutputDirectory(KnownPaths.ArtifactsDirectory));
+                                           .SetOutputDirectory(KnownPaths.ArtifactsDirectory)
+                                           .SetProperty("NuspecBasePath", KnownPaths.BuildDirectory)
+                           );
                        });
 }

@@ -1,13 +1,11 @@
-﻿namespace Calamari.Build;
+﻿using Nuke.Common.Utilities;
+
+namespace Calamari.Build;
 
 public partial class Build
 {
     Target PublishAzureWebAppNetCoreShim =>
-        _ => _.DependsOn(RestoreSolution)
-              .DependsOn(GetCalamariFlavourProjectsToPublish)
-              //we only build the net core shim when there is the AzureWebApp project is being built
-              .OnlyWhenDynamic(() => CalamariProjects.Any(p => p.Name == "Calamari.AzureWebApp"))
-              .Executes(() =>
+        _ => _.Executes(() =>
                         {
                             if (!OperatingSystem.IsWindows())
                             {
@@ -38,5 +36,8 @@ public partial class Build
                             archivePath.DeleteFile();
 
                             outputPath.CompressTo(archivePath);
+                            
+                            //publish as an artifact
+                            TeamCity.Instance?.PublishArtifacts(archivePath);
                         });
 }
