@@ -160,7 +160,6 @@ namespace Calamari.AzureResourceGroup.Tests
 
         [Test]
         [WindowsTest]
-        [RequiresPowerShell5OrAbove]
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
