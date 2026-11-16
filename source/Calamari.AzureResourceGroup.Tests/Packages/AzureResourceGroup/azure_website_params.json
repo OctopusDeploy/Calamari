@@ -5,9 +5,6 @@
 	    "siteName": {
 	      "value": "#{WebSite}"
 	    },
-        "sku": {
-          "value": "#{SKU}"
-        },
 	    "hostingPlanName": {
 	      "value": "octopus-sample"
 	    },
