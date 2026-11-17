@@ -262,6 +262,7 @@ namespace Calamari.Deployment
                 public static class CSharp
                 {
                     public const string BypassIsolation = "Octopus.Action.Script.CSharp.BypassIsolation";
+                    public const string DisableIsolatedLoadContext = "Octopus.Action.Script.CSharp.DisableIsolatedLoadContext";
                 }
             }
 
