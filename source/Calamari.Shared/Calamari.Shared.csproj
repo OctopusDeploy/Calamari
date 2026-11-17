@@ -43,6 +43,10 @@
     <PackageReference Include="Polly" Version="8.3.1" />
     <PackageReference Include="NuGet.Commands" Version="7.0.3" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="Markdown" Version="2.1.0" />
+    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="System.IO.Packaging" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Integration\Packages\Download\Scripts\*.*" />
