@@ -73,7 +73,6 @@ az group list";
             context.Variables.Add(AzureAccountVariables.Password, ClientSecret);
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, ResourceGroupName);
             context.Variables.Add("ResourceGroup", ResourceGroupName);
-            context.Variables.Add("SKU", "Standard");
             //as we have a single resource group, we need to have unique web app name per test
             context.Variables.Add("WebSite", $"Calamari-{Guid.NewGuid():N}");
             context.Variables.Add("Location", ResourceGroupResource.Data.Location);
