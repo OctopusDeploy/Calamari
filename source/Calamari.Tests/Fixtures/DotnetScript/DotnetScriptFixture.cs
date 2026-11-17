@@ -164,7 +164,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                 });
 
             output.AssertSuccess();
-            output.AssertOutput("disables the isolated assembly load context");
+            output.AssertOutput("the isolated assembly load context is the default from dotnet-script 2.0");
             output.AssertOutput("NuGet.Commands version: 6.14.3.1");
             output.AssertOutput("Parameters Parameter0Parameter1");
         }

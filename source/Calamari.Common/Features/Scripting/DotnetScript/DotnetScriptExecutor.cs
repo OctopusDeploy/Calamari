@@ -37,15 +37,8 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var disableIsolatedLoadContext = bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.DisableIsolatedLoadContext"), out var disable) && disable;
 
             var hasLegacyIsolatedLoadContextFlag = DotnetScriptBootstrapper.HasLegacyIsolatedLoadContextFlag(script.Parameters);
-
-            // Before dotnet-script 2.0 these two settings were independent, so a step could bypass the script lock and still ask for
-            // the isolated load context. BypassIsolation now turns both off, so warn rather than silently dropping the isolation request.
-            if (hasLegacyIsolatedLoadContextFlag && disableIsolatedLoadContext)
-                Log.Warn($"Ignoring '{DotnetScriptBootstrapper.LegacyIsolatedLoadContextArgument}' in the script parameters: "
-                         + "Octopus.Action.Script.CSharp.DisableIsolatedLoadContext is set to true, which from dotnet-script 2.0 on disables the "
-                         + "isolated assembly load context. If this script needs isolation assembly load context, remove Octopus.Action.Script.CSharp.DisableIsolatedLoadContext; "
-                         + "isolation is the default without it.");
-            else if (hasLegacyIsolatedLoadContextFlag)
+            
+            if (hasLegacyIsolatedLoadContextFlag)
                 Log.Verbose($"Ignoring '{DotnetScriptBootstrapper.LegacyIsolatedLoadContextArgument}' in the script parameters: "
                             + "the isolated assembly load context is the default from dotnet-script 2.0 on, so the flag is "
                             + "redundant. Set Octopus.Action.Script.CSharp.DisableIsolatedLoadContext to true to disable isolated load assembly context.");
