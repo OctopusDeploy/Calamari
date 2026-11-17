@@ -123,7 +123,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             var (output, _) = RunScript("IsolatedLoadContext.csx",
                 new Dictionary<string, string>()
                 {
-                    [SpecialVariables.Action.Script.CSharp.BypassIsolation] = disableIsolatedLoadContext.ToString(),
+                    [SpecialVariables.Action.Script.CSharp.DisableIsolatedLoadContext] = disableIsolatedLoadContext.ToString(),
                     [SpecialVariables.Action.Script.ScriptParameters] = "-- Parameter0 Parameter1",
                 });
             output.AssertSuccess();
@@ -154,17 +154,17 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         }
 
         [Test]
-        public void LegacyIsolatedLoadContextFlag_LogsVerboseMessageWhenBypassIsolationAlsoSet()
+        public void LegacyIsolatedLoadContextFlag_LogsVerboseMessageWhenDisableIsolatedLoadContextAlsoSet()
         {
             var (output, _) = RunScript("IsolatedLoadContext.csx",
                 new Dictionary<string, string>()
                 {
-                    [SpecialVariables.Action.Script.CSharp.BypassIsolation] = bool.TrueString,
+                    [SpecialVariables.Action.Script.CSharp.DisableIsolatedLoadContext] = bool.TrueString,
                     [SpecialVariables.Action.Script.ScriptParameters] = "--isolated-load-context -- Parameter0 Parameter1",
                 });
 
             output.AssertSuccess();
-            output.AssertOutput("also turns off the isolated assembly load context");
+            output.AssertOutput("disables the isolated assembly load context");
             output.AssertOutput("NuGet.Commands version: 6.14.3.1");
             output.AssertOutput("Parameters Parameter0Parameter1");
         }
