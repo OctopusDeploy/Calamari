@@ -13,7 +13,7 @@ partial class Build : NukeBuild
 {
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")] readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Required] readonly Solution Solution = SolutionModelTasks.ParseSolution(KnownPaths.SourceDirectory / "Calamari.sln");
+    [Solution] readonly Solution Solution = null!;
 
     [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
@@ -60,7 +60,7 @@ partial class Build : NukeBuild
         // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
         OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
                                                      {
-                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0"};
+                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = Frameworks.Net100};
 
                                                          // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
                                                          var version = attribute.GetValue(null!, this);
