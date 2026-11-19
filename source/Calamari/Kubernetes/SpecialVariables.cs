@@ -56,6 +56,7 @@ namespace Calamari.Kubernetes
             public const string CustomHelmExecutable = "Octopus.Action.Helm.CustomHelmExecutable";
             public const string Timeout = "Octopus.Action.Helm.Timeout";
             public const string ChartDirectory = "Octopus.Action.Helm.ChartDirectory";
+            public const string RecoverPendingRelease = "Octopus.Action.Helm.RecoverPendingRelease";
 
             public static class Packages
             {
