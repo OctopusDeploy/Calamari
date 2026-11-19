@@ -21,8 +21,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Calamari.CloudAccounts.Aws\Calamari.CloudAccounts.Aws.csproj" />
+        <ProjectReference Include="..\Calamari.CloudAccounts.Azure\Calamari.CloudAccounts.Azure.csproj" />
         <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
-        <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     </ItemGroup>
 
     <Import Project="$(MSBuildProjectDirectory)/../IncludeDotNetScript.targets"/>

@@ -7,6 +7,7 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;

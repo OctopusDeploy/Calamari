@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;

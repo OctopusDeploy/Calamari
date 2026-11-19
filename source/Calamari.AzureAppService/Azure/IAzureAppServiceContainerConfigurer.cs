@@ -4,6 +4,7 @@ using Azure.ResourceManager.AppService.Models;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 
 namespace Calamari.AzureAppService.Azure
 {

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.AzureResourceGroup.Bicep;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;

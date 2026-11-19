@@ -5,6 +5,7 @@ using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;

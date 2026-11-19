@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
@@ -26,7 +27,7 @@ class DeployAzureResourceGroupBehaviour(
         log.Verbose("Using Modern Azure SDK behaviour.");
 
         var variables = context.Variables;
-        var hasAccessToken = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+        var hasAccessToken = !variables.Get(AzureAccountVariables.OpenIDJwt).IsNullOrEmpty();
         IAzureAccount account = hasAccessToken ? new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
         var resourceGroupName = variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupName);

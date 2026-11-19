@@ -19,6 +19,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
+        readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
         readonly ILog log;
 
         public PackageDownloaderStrategy(
@@ -26,13 +27,15 @@ namespace Calamari.Integration.Packages.Download
             IScriptEngine engine,
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
-            IVariables variables)
+            IVariables variables,
+            IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory)
         {
             this.log = log;
             this.engine = engine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
+            this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -68,7 +71,7 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.AwsElasticContainerRegistry:
                 case FeedType.AzureContainerRegistry:
                 case FeedType.GoogleContainerRegistry:
-                    downloader = new DockerImagePackageDownloader(engine, fileSystem, variables, log, new FeedLoginDetailsProviderFactory());
+                    downloader = new DockerImagePackageDownloader(engine, fileSystem, variables, log, feedLoginDetailsProviderFactory);
                     break;
                 case FeedType.S3:
                     downloader = new S3PackageDownloader(variables, log, fileSystem);

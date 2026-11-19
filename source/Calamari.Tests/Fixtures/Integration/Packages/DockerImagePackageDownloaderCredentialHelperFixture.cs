@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;

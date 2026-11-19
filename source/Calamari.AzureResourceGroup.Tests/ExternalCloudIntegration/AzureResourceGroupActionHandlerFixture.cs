@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Variables;

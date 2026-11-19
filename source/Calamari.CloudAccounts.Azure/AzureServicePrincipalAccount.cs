@@ -1,7 +1,8 @@
+using System;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     public class AzureServicePrincipalAccount : IAzureAccount
     {
@@ -26,13 +27,13 @@ namespace Calamari.CloudAccounts
 
         public AzureServicePrincipalAccount(IVariables variables)
         {
-            SubscriptionNumber = variables.Get(AccountVariables.SubscriptionId);
-            ClientId = variables.Get(AccountVariables.ClientId);
-            TenantId = variables.Get(AccountVariables.TenantId);
-            Password = variables.Get(AccountVariables.Password);
-            AzureEnvironment = variables.Get(AccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+            SubscriptionNumber = variables.Get(AzureAccountVariables.SubscriptionId);
+            ClientId = variables.Get(AzureAccountVariables.ClientId);
+            TenantId = variables.Get(AzureAccountVariables.TenantId);
+            Password = variables.Get(AzureAccountVariables.Password);
+            AzureEnvironment = variables.Get(AzureAccountVariables.Environment);
+            ResourceManagementEndpointBaseUri = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+            ActiveDirectoryEndpointBaseUri = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
         }
 
         public AccountType AccountType => AccountType.AzureServicePrincipal;

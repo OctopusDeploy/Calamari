@@ -55,7 +55,8 @@ namespace Calamari.Commands.Support
                                                                           scriptEngine,
                                                                           fileSystem,
                                                                           commandLineRunner,
-                                                                          variables);
+                                                                          variables,
+                                                                          new FeedLoginDetailsProviderFactory());
 
             var pkg = packageDownloaderStrategy.DownloadPackage(
                                                                 options.PackageId,

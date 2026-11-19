@@ -1,8 +1,6 @@
 using System;
-using System.Linq;
 using System.Security.Authentication;
 using System.Text;
-using System.Threading.Tasks;
 using Amazon;
 using Amazon.ECR;
 using Amazon.ECR.Model;
@@ -10,9 +8,8 @@ using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Aws
 {
     public static class AwsAuthenticationProvider
     {
@@ -56,7 +53,7 @@ namespace Calamari.CloudAccounts
             var region = variables.Get(AuthenticationVariables.Aws.Region);
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
             AmazonECRClient client;
-            if (accessKey.IsNullOrEmpty() || secretKey.IsNullOrEmpty())
+            if (string.IsNullOrEmpty(accessKey) || string.IsNullOrEmpty(secretKey))
             {
                 client = new AmazonECRClient(regionEndpoint);
             }

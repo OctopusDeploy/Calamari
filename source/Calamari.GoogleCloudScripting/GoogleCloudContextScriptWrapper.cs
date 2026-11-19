@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using Calamari.CloudAccounts.GoogleCloud;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.GoogleCloudAccounts;
 
 namespace Calamari.GoogleCloudScripting
 {

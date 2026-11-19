@@ -1,14 +1,15 @@
 using System;
 using System.Threading.Tasks;
-using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
+using Calamari.Common.Features.Packages.Acquisition;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.Packages.Download
+namespace Calamari.Azure.Packages
 {
     public class AcrFeedLoginDetailsProvider: IFeedLoginDetailsProvider
     {
-        public async Task<(string Username, string Password, Uri FeedUri)> GetFeedLoginDetails(IVariables variables, string? username, string? password, Uri feedUri)
+        public async Task<(string Username, string Password, Uri FeedUri)> GetFeedLoginDetails(IVariables variables, string username, string password, Uri feedUri)
         { 
             var arcAuth = new AzureContainerRegistryAuthenticationProvider();
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get(AuthenticationVariables.Jwt));

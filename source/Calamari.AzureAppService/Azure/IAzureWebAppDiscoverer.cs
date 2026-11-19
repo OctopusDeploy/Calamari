@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 
 namespace Calamari.AzureAppService.Azure
 {

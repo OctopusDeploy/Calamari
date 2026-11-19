@@ -9,6 +9,7 @@ using Azure.ResourceManager.ResourceGraph.Models;
 using Calamari.Azure;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;

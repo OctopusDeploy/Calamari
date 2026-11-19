@@ -12,6 +12,7 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -76,7 +76,7 @@ namespace Calamari.AzureScripting
                     }
                     else
                     {
-                        variables.Set("OctopusOpenIdJwt", variables.Get(AccountVariables.Jwt));
+                        variables.Set("OctopusOpenIdJwt", variables.Get(AzureAccountVariables.OpenIDJwt));
                     }
 
                     return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);

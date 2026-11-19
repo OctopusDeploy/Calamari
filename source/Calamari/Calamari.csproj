@@ -30,6 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Contracts\Calamari.Contracts.csproj" />
+    <ProjectReference Include="..\Calamari.GoogleCloud\Calamari.GoogleCloud.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

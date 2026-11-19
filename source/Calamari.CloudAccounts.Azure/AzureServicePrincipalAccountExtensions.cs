@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
+using System;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Identity.Client;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     public static class AzureServicePrincipalAccountExtensions
     {

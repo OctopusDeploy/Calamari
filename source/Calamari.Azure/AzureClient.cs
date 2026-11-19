@@ -8,6 +8,7 @@ using Azure.Core.Pipeline;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 
 namespace Calamari.Azure
 {

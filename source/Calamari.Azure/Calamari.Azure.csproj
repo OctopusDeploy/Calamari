@@ -16,6 +16,6 @@
         
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
+      <ProjectReference Include="..\Calamari.CloudAccounts.Azure\Calamari.CloudAccounts.Azure.csproj" />
     </ItemGroup>
 </Project>

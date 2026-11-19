@@ -6,7 +6,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ContainerService;
-using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;

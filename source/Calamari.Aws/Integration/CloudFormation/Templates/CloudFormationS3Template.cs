@@ -11,6 +11,7 @@ using Amazon.S3.Util;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;

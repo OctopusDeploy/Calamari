@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;

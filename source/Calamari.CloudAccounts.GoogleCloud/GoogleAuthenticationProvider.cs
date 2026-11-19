@@ -1,14 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using NetWebRequest = System.Net.WebRequest;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.GoogleCloud
 {
     public class GoogleAuthenticationProvider
     {

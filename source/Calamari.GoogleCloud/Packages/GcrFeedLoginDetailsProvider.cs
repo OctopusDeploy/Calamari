@@ -1,10 +1,10 @@
 using System;
-using System.Threading.Tasks;
-using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.GoogleCloud;
+using Calamari.Common.Features.Packages.Acquisition;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.Packages.Download
+namespace Calamari.GoogleCloud.Packages
 {
     public class GcrFeedLoginDetailsProvider : IFeedLoginDetailsProvider
     {

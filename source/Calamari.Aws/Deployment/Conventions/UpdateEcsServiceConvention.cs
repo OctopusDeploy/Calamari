@@ -6,6 +6,7 @@ using Amazon.ECS;
 using Amazon.ECS.Model;
 using Calamari.Aws.Integration.Ecs;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;

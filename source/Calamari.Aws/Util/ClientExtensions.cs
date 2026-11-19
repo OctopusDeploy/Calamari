@@ -4,6 +4,7 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.SecurityToken;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Util;

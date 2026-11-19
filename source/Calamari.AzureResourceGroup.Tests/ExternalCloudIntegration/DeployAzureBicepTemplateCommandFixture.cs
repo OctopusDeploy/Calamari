@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Calamari.AzureResourceGroup.Bicep;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;

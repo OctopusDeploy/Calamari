@@ -7,6 +7,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
@@ -36,9 +37,9 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
         public async Task CreateResourceGroup()
         {
             var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
+                Environment.GetEnvironmentVariable(AzureAccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
+                Environment.GetEnvironmentVariable(AzureAccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
             ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
             ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);

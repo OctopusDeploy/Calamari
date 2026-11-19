@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.Aws.Deployment;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;

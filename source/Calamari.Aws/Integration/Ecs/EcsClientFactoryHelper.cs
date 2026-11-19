@@ -1,6 +1,7 @@
 using Amazon.ECS;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 
 namespace Calamari.Aws.Integration.Ecs;
 

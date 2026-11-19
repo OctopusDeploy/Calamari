@@ -13,6 +13,7 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Azure;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -51,8 +52,8 @@ namespace Calamari.AzureWebApp.Tests
         [OneTimeSetUp]
         public async Task Setup()
         {
-            var resourceManagementEndpointBaseUri = Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
-            var activeDirectoryEndpointBaseUri = Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
+            var resourceManagementEndpointBaseUri = Environment.GetEnvironmentVariable(AzureAccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
+            var activeDirectoryEndpointBaseUri = Environment.GetEnvironmentVariable(AzureAccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
             var resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
 

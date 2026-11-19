@@ -1,18 +1,18 @@
+using System;
 using System.Net;
-using System.Net.Http;
 using Microsoft.Identity.Client;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     public class AuthHttpClientFactory : IMsalHttpClientFactory
     {
-        static readonly HttpClient _httpClient;
+        static readonly HttpClient HttpClient;
 
         static AuthHttpClientFactory()
         {
             var proxyHttpClientHandler = ProxyClientHandler();
 
-            _httpClient = new HttpClient(proxyHttpClientHandler);
+            HttpClient = new HttpClient(proxyHttpClientHandler);
         }
         
         public static HttpClientHandler ProxyClientHandler()
@@ -26,7 +26,7 @@ namespace Calamari.CloudAccounts
 
         public HttpClient GetHttpClient()
         {
-            return _httpClient;
+            return HttpClient;
         }
     }
 }

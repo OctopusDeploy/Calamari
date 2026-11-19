@@ -1,13 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.GoogleCloudAccounts
+namespace Calamari.CloudAccounts.GoogleCloud
 {
     /// <summary>
     /// Gcloud oauth uses the jwt (as a file on disk) to create another creds config file.

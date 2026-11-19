@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NetWebRequest = System.Net.WebRequest;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.CloudAccounts.Azure
 {
     public class AzureContainerRegistryAuthenticationProvider
     {

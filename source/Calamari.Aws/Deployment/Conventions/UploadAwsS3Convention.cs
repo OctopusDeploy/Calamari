@@ -12,6 +12,7 @@ using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.CloudAccounts.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
