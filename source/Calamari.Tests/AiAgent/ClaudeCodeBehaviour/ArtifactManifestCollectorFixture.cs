@@ -282,6 +282,118 @@ public class ArtifactManifestCollectorFixture
         act.Should().Throw<CommandException>().WithMessage("*maximum total*");
     }
     
+    [TestCase("mcp-config.json")]
+    [TestCase("deployment-variables.json")]
+    [TestCase(".srt-settings.json")]
+    [TestCase(".claude/agent-settings.json")]
+    [TestCase("MCP-Config.json")]
+    public void StepOwnedFile_Throws(string relativePath)
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, relativePath);
+        WriteManifest(workingDir.DirectoryPath, $$"""{"path":"{{relativePath}}"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
+
+        act.Should().Throw<CommandException>().WithMessage("*file the step writes for Claude*");
+    }
+
+    [Test]
+    public void ClaudeConfigDirectory_Throws()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, ".claude/agent-settings.json");
+        WriteManifest(workingDir.DirectoryPath, """{"path":".claude"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
+
+        act.Should().Throw<CommandException>().WithMessage("*file the step writes for Claude*");
+    }
+
+    [Test]
+    [NonWindowsTest]
+    public void SymlinkToStepOwnedFile_Throws()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        var config = WriteWorkingFile(workingDir.DirectoryPath, "mcp-config.json");
+        File.CreateSymbolicLink(Path.Combine(workingDir.DirectoryPath, "notes.txt"), config);
+        WriteManifest(workingDir.DirectoryPath, """{"path":"notes.txt"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
+
+        act.Should().Throw<CommandException>().WithMessage("*file the step writes for Claude*");
+    }
+
+    [Test]
+    [NonWindowsTest]
+    public void DirectoryContainingSymlink_Throws()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        var config = WriteWorkingFile(workingDir.DirectoryPath, "mcp-config.json");
+        WriteWorkingFile(workingDir.DirectoryPath, "out/report.csv");
+        File.CreateSymbolicLink(Path.Combine(workingDir.DirectoryPath, "out", "config.json"), config);
+        WriteManifest(workingDir.DirectoryPath, """{"path":"out"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath);
+
+        act.Should().Throw<CommandException>().WithMessage("*contains a symbolic link*");
+    }
+
+    [Test]
+    public void FileContainingSecret_Throws()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "notes.txt", "key: API-SECRET-1234");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"notes.txt"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath, ["API-SECRET-1234"]);
+
+        act.Should().Throw<CommandException>().WithMessage("*contains a sensitive value*");
+    }
+
+    [Test]
+    public void DirectoryContainingSecret_Throws()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "out/report.csv");
+        WriteWorkingFile(workingDir.DirectoryPath, "out/nested/notes.txt", "API-SECRET-1234");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"out"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath, ["API-SECRET-1234"]);
+
+        act.Should().Throw<CommandException>().WithMessage("*contains a sensitive value*");
+    }
+
+    [Test]
+    public void SecretSplitAcrossReadChunks_Throws()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "big.txt", new string('x', 81920 - 4) + "API-SECRET-1234");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"big.txt"}""");
+
+        var act = () => Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath, ["API-SECRET-1234"]);
+
+        act.Should().Throw<CommandException>().WithMessage("*contains a sensitive value*");
+    }
+
+    [Test]
+    public void ShortSecretValues_AreIgnored()
+    {
+        using var workingDir = TemporaryDirectory.Create();
+        using var destinationRoot = TemporaryDirectory.Create();
+        WriteWorkingFile(workingDir.DirectoryPath, "notes.txt", "enabled: true");
+        WriteManifest(workingDir.DirectoryPath, """{"path":"notes.txt"}""");
+
+        Collect(workingDir.DirectoryPath, destinationRoot.DirectoryPath, ["true"]).Should().HaveCount(1);
+    }
+
     static void WriteManifest(string workingDir, params string[] lines)
     {
         var dir = Path.Combine(workingDir, ".octopus");
@@ -302,6 +414,9 @@ public class ArtifactManifestCollectorFixture
 
     static IReadOnlyList<StagedArtifact> Collect(string workingDir, string destinationRoot, IVariables variables)
         => new ArtifactManifestCollector(variables).Collect(workingDir, destinationRoot);
+
+    static IReadOnlyList<StagedArtifact> Collect(string workingDir, string destinationRoot, string[] secretValues)
+        => new ArtifactManifestCollector(new CalamariVariables(), secretValues).Collect(workingDir, destinationRoot);
 
     static CalamariVariables VariablesWithMaxArtifactMegaBytes(int megabytes)
     {

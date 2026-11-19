@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text.Json;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
@@ -11,9 +12,26 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public record StagedArtifact(string Path, string Name, long Length);
 
-public class ArtifactManifestCollector(IVariables variables)
+public class ArtifactManifestCollector(IVariables variables, IReadOnlyCollection<string>? secretValues = null)
 {
     const string ArtifactsDirName = "artifacts";
+
+    // Shorter values match too much ordinary content to be treated as secrets
+    const int MinSecretLength = 8;
+
+    // Files the step writes for Claude. These hold config and secrets, so they are never uploaded.
+    static readonly string[] StepOwnedPaths =
+    [
+        McpWriter.ConfigName,
+        InvokeClaudeCodeBehaviour.ClaudeConfigDirName,
+        InvokeClaudeCodeBehaviour.DeploymentVariablesFileName,
+        SandboxSettingsWriter.SandboxRuntimeSettingsFileName,
+    ];
+
+    readonly string[] secrets = (secretValues ?? [])
+                                .Where(value => value.Length >= MinSecretLength)
+                                .Distinct(StringComparer.Ordinal)
+                                .ToArray();
 
     public const long DefaultMaxArtifactSizeBytes = 5L * 1024 * 1024 * 1024; // 5Gb
 
@@ -80,7 +98,7 @@ public class ArtifactManifestCollector(IVariables variables)
         return entry;
     }
 
-    static StagedArtifact Stage(ManifestEntry entry, int lineNumber, string workingDir, string canonicalWorkingDir, string artifactsDir)
+    StagedArtifact Stage(ManifestEntry entry, int lineNumber, string workingDir, string canonicalWorkingDir, string artifactsDir)
     {
         var full = Path.GetFullPath(Path.IsPathRooted(entry.Path!) ? entry.Path! : Path.Combine(workingDir, entry.Path!));
 
@@ -93,16 +111,20 @@ public class ArtifactManifestCollector(IVariables variables)
             throw new CommandException($"Artifact manifest line {lineNumber}: cannot attach the working directory itself; use a file or subdirectory.");
         if (!canonical.StartsWith(canonicalWorkingDir + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             throw new CommandException($"Artifact manifest line {lineNumber}: '{entry.Path}' resolves outside the working directory.");
+        if (StepOwnedPaths.Select(path => Path.Combine(canonicalWorkingDir, path)).Any(stepOwned => Overlaps(canonical, stepOwned)))
+            throw new CommandException($"Artifact manifest line {lineNumber}: '{entry.Path}' is a file the step writes for Claude and cannot be attached.");
 
         var relative = Path.GetRelativePath(workingDir, full);
 
         return isDirectory
             ? StageDirectory(entry, lineNumber, full, relative, artifactsDir)
-            : StageFile(entry, full, relative, artifactsDir);
+            : StageFile(entry, lineNumber, full, relative, artifactsDir);
     }
 
-    static StagedArtifact StageFile(ManifestEntry entry, string full, string relative, string artifactsDir)
+    StagedArtifact StageFile(ManifestEntry entry, int lineNumber, string full, string relative, string artifactsDir)
     {
+        EnsureNoSecrets(full, entry, lineNumber);
+
         var destPath = Path.Combine(artifactsDir, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
         File.Copy(full, destPath, overwrite: true);
@@ -111,10 +133,20 @@ public class ArtifactManifestCollector(IVariables variables)
         return new StagedArtifact(destPath, name, new FileInfo(destPath).Length);
     }
 
-    static StagedArtifact StageDirectory(ManifestEntry entry, int lineNumber, string full, string relative, string artifactsDir)
+    StagedArtifact StageDirectory(ManifestEntry entry, int lineNumber, string full, string relative, string artifactsDir)
     {
         if (Directory.GetFileSystemEntries(full).Length == 0)
             throw new CommandException($"Artifact manifest line {lineNumber}: directory '{entry.Path}' is empty.");
+
+        // Zipping follows links, which would bypass the working directory and step-owned file checks
+        var contents = new DirectoryInfo(full).EnumerateFileSystemInfos("*", new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = 0 });
+        foreach (var item in contents)
+        {
+            if (item.LinkTarget is not null)
+                throw new CommandException($"Artifact manifest line {lineNumber}: directory '{entry.Path}' contains a symbolic link '{Path.GetRelativePath(full, item.FullName)}'.");
+            if (item is FileInfo file)
+                EnsureNoSecrets(file.FullName, entry, lineNumber);
+        }
 
         var zipPath = Path.Combine(artifactsDir, relative + ".zip");
         Directory.CreateDirectory(Path.GetDirectoryName(zipPath)!);
@@ -125,6 +157,37 @@ public class ArtifactManifestCollector(IVariables variables)
         var dirName = new DirectoryInfo(full).Name;
         var name = entry.Name ?? dirName + ".zip";
         return new StagedArtifact(zipPath, name, new FileInfo(zipPath).Length);
+    }
+
+    // Case-insensitive so a differently-cased path on a case-insensitive file system still matches
+    static bool Overlaps(string path, string stepOwned)
+        => string.Equals(path, stepOwned, StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith(stepOwned + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+           || stepOwned.StartsWith(path + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    void EnsureNoSecrets(string path, ManifestEntry entry, int lineNumber)
+    {
+        if (secrets.Length > 0 && ContainsAny(path, secrets))
+            throw new CommandException($"Artifact manifest line {lineNumber}: '{entry.Path}' contains a sensitive value and cannot be attached.");
+    }
+
+    // Reads in chunks and carries the tail of each chunk forward, so a secret split across chunks is still found
+    static bool ContainsAny(string path, string[] values)
+    {
+        var overlap = values.Max(value => value.Length) - 1;
+        var buffer = new char[81920];
+        var carry = "";
+        using var reader = new StreamReader(path);
+        int read;
+        while ((read = reader.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            var window = carry + new string(buffer, 0, read);
+            if (values.Any(value => window.Contains(value, StringComparison.Ordinal)))
+                return true;
+            carry = window.Length > overlap ? window[^overlap..] : window;
+        }
+
+        return false;
     }
 
     static string Canonical(string path)
