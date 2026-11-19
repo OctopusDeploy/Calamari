@@ -1,4 +1,5 @@
 using System;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -25,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public virtual void Initialize_HasSystemProxy_NoProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -35,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public virtual void Initialize_HasSystemProxy_UseSystemProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -45,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public virtual void Initialize_HasSystemProxy_UseSystemProxyWithExceptions()
         {
             var proxyException = "octopustestbypassurl.com";
@@ -57,7 +58,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public virtual void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -67,7 +68,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public virtual void Initialize_HasSystemProxy_CustomProxy()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -77,7 +78,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public virtual void Initialize_HasSystemProxy_CustomProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();

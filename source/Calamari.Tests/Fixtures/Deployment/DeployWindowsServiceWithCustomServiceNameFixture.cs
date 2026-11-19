@@ -1,4 +1,5 @@
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -6,7 +7,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class DeployWindowsServiceWithCustomServiceNameFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => @"[f`o]o$b'[a]r";

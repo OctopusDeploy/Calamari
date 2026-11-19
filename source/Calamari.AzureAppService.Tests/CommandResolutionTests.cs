@@ -10,7 +10,6 @@ namespace Calamari.AzureAppService.Tests;
 public class CommandResolutionTests
 {
     [Test]
-    [Category("PlatformAgnostic")]
     public void AllPipelineCommandsCanBeConstructed()
     {
         var program = TestablePipelineProgram.For<Calamari.AzureAppService.Program>();

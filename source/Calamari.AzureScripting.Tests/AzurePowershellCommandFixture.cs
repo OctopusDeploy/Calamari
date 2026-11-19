@@ -31,7 +31,7 @@ namespace Calamari.AzureScripting.Tests
         }
 
         [Test]
-        [WindowsTest]
+        [TestPlatforms(TestPlatforms.Windows)]
         public async Task ExecuteAnInlineWindowsPowerShellScript()
         {
             var psScript = @"

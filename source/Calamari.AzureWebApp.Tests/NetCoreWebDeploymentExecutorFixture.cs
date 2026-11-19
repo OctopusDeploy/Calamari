@@ -9,7 +9,6 @@ namespace Calamari.AzureWebApp.Tests;
 public class NetCoreWebDeploymentExecutorFixture
 {
     [Test]
-    [Category("PlatformAgnostic")]
     public void FailureMessageContainsTheErrorsTheShimReportedWithoutTheirLevel()
     {
         var errorOutput = "ERR|(6/10/2026 10:59:25 AM) An error occurred when the request was processed on the remote computer." + Environment.NewLine
@@ -24,7 +23,6 @@ public class NetCoreWebDeploymentExecutorFixture
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void FailureMessageDoesNotRepeatAnError()
     {
         var errorOutput = "ERR|An error occurred when the request was processed on the remote computer." + Environment.NewLine
@@ -35,7 +33,6 @@ public class NetCoreWebDeploymentExecutorFixture
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void FailureMessageKeepsStdErrThatWasNotWrittenByTheShimLogger()
     {
         var errorOutput = "Unhandled Exception: System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.Web.Deployment'" + Environment.NewLine;
@@ -47,7 +44,6 @@ public class NetCoreWebDeploymentExecutorFixture
     [TestCase(null)]
     [TestCase("")]
     [TestCase("\r\n")]
-    [Category("PlatformAgnostic")]
     public void FailureMessageIsNotEmptyWhenTheShimReportedNoErrors(string errorOutput)
     {
         Assert.That(NetCoreWebDeploymentExecutor.FailureMessage(1, errorOutput),
@@ -55,7 +51,6 @@ public class NetCoreWebDeploymentExecutorFixture
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void LogsEachLevelAtTheMatchingLevel()
     {
         var log = new InMemoryLog();
@@ -76,7 +71,6 @@ public class NetCoreWebDeploymentExecutorFixture
     }
 
     [Test]
-    [Category("PlatformAgnostic")]
     public void LinesWithoutAKnownLevelAreLoggedInsteadOfDropped()
     {
         var log = new InMemoryLog();

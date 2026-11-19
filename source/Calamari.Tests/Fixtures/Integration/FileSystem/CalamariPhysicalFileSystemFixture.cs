@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void WindowsUsesWindowsFileSystem()
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -46,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void NonWindowsUsesWindowsFileSystem()
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -358,7 +359,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void LongFilePathsShouldWork()
         {
             var paths = new Stack<string>();

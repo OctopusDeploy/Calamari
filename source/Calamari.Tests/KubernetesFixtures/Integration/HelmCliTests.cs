@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Integration;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -57,7 +58,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
         }
         
         [Test]
-        [NonWindowsTest]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void ChmodsCustomHelmExecutableWhenNotOnWindows()
         {
             const string expectedExecutable = "my-custom-exe";

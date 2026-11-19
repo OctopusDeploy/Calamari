@@ -16,7 +16,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD.Git.PullRequests;
 
 [TestFixture]
-[Category("PlatformAgnostic")]
 public class GitPullRequestClientResolverTests
 {
     ILog log;

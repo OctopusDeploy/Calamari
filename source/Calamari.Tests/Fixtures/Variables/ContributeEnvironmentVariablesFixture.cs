@@ -1,9 +1,9 @@
-﻿using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Commands;
+﻿using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -14,37 +14,28 @@ namespace Calamari.Tests.Fixtures.Variables
     public class ContributeEnvironmentVariablesFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldAddWindowsEnvironmentVariables()
         {
-            if (!CalamariEnvironment.IsRunningOnWindows)
-                Assert.Ignore("This test is designed to run on windows");
-
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My OS is #{env:OS}"), Does.StartWith("My OS is Windows"));
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNix)]
+        [TestPlatforms(TestPlatforms.Linux)]
         public void ShouldAddLinuxEnvironmentVariables()
         {
-            if (!CalamariEnvironment.IsRunningOnNix)
-                Assert.Ignore("This test is designed to run on *nix");
-
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home/"));
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyMac)]
+        [TestPlatforms(TestPlatforms.MacOs)]
         public void ShouldAddMacEnvironmentVariables()
         {
             // Mac running in TeamCity agent service does not contain $HOME variable
             // $PATH is being used since it should be common between service & development
             // http://askubuntu.com/a/394330
-            if (!CalamariEnvironment.IsRunningOnMac)
-                Assert.Ignore("This test is designed to run on Mac");
-
             var variables = AddEnvironmentVariables();
             Assert.That(variables.Evaluate("My paths are #{env:PATH}"), Does.Contain("/usr/local/bin"));
         }
