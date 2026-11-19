@@ -85,16 +85,24 @@ namespace Calamari.Integration.Packages.Download
                 return downloaded;
             }
 
+            var endpoint = variables.Get(AuthenticationVariables.Aws.S3Endpoint);
+            if (string.IsNullOrWhiteSpace(endpoint))
+            {
+                endpoint = null;
+            }
+
             var retry = 0;
             for (; retry < maxDownloadAttempts; ++retry)
             {
                 try
                 {
-                    var region = variables.Get(AuthenticationVariables.Aws.Region) ?? GetBucketsRegion(feedUsername, feedPassword, bucketName);
+                    var region = ResolveRegion(endpoint, feedUsername, feedPassword, bucketName);
 
-                    log.Verbose($"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} in region {region}. Attempt #{retry + 1}");
+                    log.Verbose(endpoint is null
+                        ? $"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} in region {region}. Attempt #{retry + 1}"
+                        : $"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} at {endpoint}. Attempt #{retry + 1}");
 
-                    using var s3Client = GetS3Client(feedUsername, feedPassword, region);
+                    using var s3Client = GetS3Client(feedUsername, feedPassword, CreateS3Config(region, endpoint));
                     string? foundFilePath = null;
                     for (int i = 0; i < knownFileExtensions.Length && foundFilePath == null; i++)
                     {
@@ -137,14 +145,40 @@ namespace Calamari.Integration.Packages.Download
             throw new CommandException($"Failed to download package {packageId} {version}. Attempted {retry} times.");
         }
 
-        static AmazonS3Client GetS3Client(string? feedUsername, string? feedPassword, string endpoint = DefaultRegion)
+        // Configured region for S3-compatible storage, no lookup
+        string ResolveRegion(string? endpoint, string? feedUsername, string? feedPassword, string bucketName)
         {
-            var config = new AmazonS3Config
+            var configuredRegion = variables.Get(AuthenticationVariables.Aws.Region);
+            if (endpoint is null)
             {
-                AllowAutoRedirect = true,
-                RegionEndpoint = RegionEndpoint.GetBySystemName(endpoint)
-            };
+                return configuredRegion ?? GetBucketsRegion(feedUsername, feedPassword, bucketName);
+            }
 
+            return string.IsNullOrWhiteSpace(configuredRegion) ? DefaultRegion : configuredRegion!;
+        }
+
+        internal static AmazonS3Config CreateS3Config(string region, string? endpoint)
+        {
+            if (endpoint is null)
+            {
+                return new AmazonS3Config
+                {
+                    AllowAutoRedirect = true,
+                    RegionEndpoint = RegionEndpoint.GetBySystemName(region)
+                };
+            }
+
+            // No RegionEndpoint; it clears ServiceURL
+            return new AmazonS3Config
+            {
+                ServiceURL = endpoint,
+                ForcePathStyle = true,
+                AuthenticationRegion = region
+            };
+        }
+
+        static AmazonS3Client GetS3Client(string? feedUsername, string? feedPassword, AmazonS3Config config)
+        {
             return string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client(config) : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword), config);
         }
 
@@ -165,7 +199,7 @@ namespace Calamari.Integration.Packages.Download
 
         static string GetBucketsRegion(string? feedUsername, string? feedPassword, string bucketName)
         {
-            using var s3Client = GetS3Client(feedUsername, feedPassword);
+            using var s3Client = GetS3Client(feedUsername, feedPassword, CreateS3Config(DefaultRegion, null));
             var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
 
             string regionString = region.Location.Value;
