@@ -24,7 +24,6 @@ using Calamari.Kubernetes.Commands.Discovery;
 using Calamari.Kubernetes.Helm;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
-using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
@@ -136,24 +135,12 @@ namespace Calamari
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithArgs>();
 
-            builder.RegisterAssemblyTypes(assembliesToRegister)
-                   .AssignableTo<ICommandWithInputs>()
-                   .WithMetadataFrom<CommandAttribute>()
-                   .As<ICommandWithInputs>();
-
             // Register Pipeline commands
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<PipelineCommand>()
                    .WithMetadataFrom<CommandAttribute>()
                    .Where(t => t.GetCustomAttribute<CommandAttribute>() is not null)
                    .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>()!.Name);
-            
-
-            builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
-                   .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
-                   .WithMetadataFrom<LaunchToolAttribute>()
-                   .As<ILaunchTool>();
-
 
             var moduleAssemblies = GetModuleAssemblies().ToArray();
             builder.RegisterAssemblyModules(moduleAssemblies);
