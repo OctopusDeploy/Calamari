@@ -10,6 +10,7 @@ namespace Calamari.Common.Plumbing.Variables
             public static readonly string RoleArn = "RoleArn";
             public static readonly string Region = "Region";
             public static readonly string SessionDuration = "SessionDuration";
+            public static readonly string S3Endpoint = "S3Endpoint";
         }
         
         public static class Azure
