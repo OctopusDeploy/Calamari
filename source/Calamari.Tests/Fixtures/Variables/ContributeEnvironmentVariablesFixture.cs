@@ -32,7 +32,15 @@ namespace Calamari.Tests.Fixtures.Variables
                 Assert.Ignore("This test is designed to run on *nix");
 
             var variables = AddEnvironmentVariables();
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home/"));
+
+            var expectedHome = "/home/";
+            //if we are in a container, env:HOME is /root
+            if (variables.GetFlag("env:CALAMARI_TEST_IS_IN_CONTAINER"))
+            {
+                expectedHome = "/root";
+            }
+            
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith($"My home starts at {expectedHome}"));
         }
 
         [Test]
