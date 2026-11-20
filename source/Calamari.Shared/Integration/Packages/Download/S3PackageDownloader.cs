@@ -98,9 +98,8 @@ namespace Calamari.Integration.Packages.Download
                 {
                     var region = ResolveRegion(endpoint, feedUsername, feedPassword, bucketName);
 
-                    log.Verbose(endpoint is null
-                        ? $"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} in region {region}. Attempt #{retry + 1}"
-                        : $"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} at {endpoint}. Attempt #{retry + 1}");
+                    var location = endpoint is null ? $"in region {region}" : $"at {endpoint}";
+                    log.Verbose($"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} {location}. Attempt #{retry + 1}");
 
                     using var s3Client = GetS3Client(feedUsername, feedPassword, CreateS3Config(region, endpoint));
                     string? foundFilePath = null;
@@ -145,7 +144,7 @@ namespace Calamari.Integration.Packages.Download
             throw new CommandException($"Failed to download package {packageId} {version}. Attempted {retry} times.");
         }
 
-        // Configured region for S3-compatible storage, no lookup
+        // Skips bucket region lookup for custom endpoints
         string ResolveRegion(string? endpoint, string? feedUsername, string? feedPassword, string bucketName)
         {
             var configuredRegion = variables.Get(AuthenticationVariables.Aws.Region);
