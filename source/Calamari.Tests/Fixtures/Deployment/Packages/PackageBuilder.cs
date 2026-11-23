@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
@@ -18,6 +19,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
     {
         static readonly Dictionary<(string Name, string Version), string> CachedSamplePackagePaths = [];
 
+        static readonly Lock LockObject = new();
+
         public static string BuildSamplePackage(string name, string version)
         {
             var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
@@ -26,31 +29,36 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
             Directory.CreateDirectory(output);
 
-            //if we haven't already built and cached this package, built it and c
-            if (!CachedSamplePackagePaths.TryGetValue((name, version), out var samplePackagePath))
+            string samplePackagePath;
+            //prevent multiple parallel tests from creating the same package multiple times
+            lock (LockObject)
             {
-                const string nugetCommandLine = "dotnet";
-                var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
+                //if we haven't already built and cached this package, built it and c
+                if (!CachedSamplePackagePaths.TryGetValue((name, version), out samplePackagePath))
+                {
+                    const string nugetCommandLine = "dotnet";
+                    var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
 
-                var path = Path.Combine(output, name + "." + version + ".nupkg");
+                    var path = Path.Combine(output, name + "." + version + ".nupkg");
 
-                var runner = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
+                    var runner = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
 
-                var result = runner.Execute(new CommandLine(nugetCommandLine)
-                                            .Action("pack")
-                                            .Argument(target)
-                                            .Argument("-output", output)
-                                            .PositionalArgument("/p:Version=" + version)
-                                            .Build());
+                    var result = runner.Execute(new CommandLine(nugetCommandLine)
+                                                .Action("pack")
+                                                .Argument(target)
+                                                .Argument("-output", output)
+                                                .PositionalArgument("/p:Version=" + version)
+                                                .Build());
 
-                result.VerifySuccess();
+                    result.VerifySuccess();
 
-                Assert.That(File.Exists(path), $"The generated nupkg was unable to be found (expected at {path}).");
+                    Assert.That(File.Exists(path), $"The generated nupkg was unable to be found (expected at {path}).");
 
-                //Store the built package path
-                CachedSamplePackagePaths.Add((name, version), path);
+                    //Store the built package path
+                    CachedSamplePackagePaths.Add((name, version), path);
 
-                samplePackagePath = path;
+                    samplePackagePath = path;
+                }
             }
 
             //create a directory for this temp package
@@ -61,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var tempFilePath = Path.Combine(tmpDir, fileName);
 
             File.Copy(samplePackagePath, tempFilePath);
-            
+
             return tempFilePath;
         }
 
