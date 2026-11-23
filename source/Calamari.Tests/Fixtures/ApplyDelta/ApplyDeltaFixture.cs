@@ -71,7 +71,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 Assert.That(exitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0, received {0}", exitCode));
                 Assert.That(File.Exists(signatureFile.FilePath));
 
-                using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.1", true)))
+                using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.1")))
                 using (var deltaFile = new TemporaryFile(basisFile.FilePath + "_to_" + NewFileName + ".octodelta"))
                 {
                     var deltaExitCode = Octodiff.Program.Main(new[] { "delta", signatureFile.FilePath, newFile.FilePath, deltaFile.FilePath });

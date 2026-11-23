@@ -99,7 +99,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
         private string CreatePackage(string version, bool oldCacheFormat = false)
         {
-            var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version, true);
+            var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version);
 
             var destinationPath = Path.Combine(PackagePath, oldCacheFormat
                 ? $"Acme.Web.{version}.nupkg-fd55edc5-9b36-414b-a2d0-4a2deeb6b2ec"

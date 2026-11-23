@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using Calamari.Common.Features.Processes;
@@ -13,41 +14,53 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages
 {
-    public class PackageBuilder
+    public static class PackageBuilder
     {
-        public static string BuildSamplePackage(string name, string version, bool modifyPackage = false)
+        static readonly Dictionary<(string Name, string Version), string> CachedSamplePackagePaths = [];
+
+        public static string BuildSamplePackage(string name, string version)
         {
             var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
-            Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
-            
-            var nugetCommandLine = "dotnet";
-            
-            var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
+            Assert.That(Directory.Exists(packageDirectory), $"Package {name} is not available (expected at {packageDirectory}).");
 
-            var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
-            Directory.CreateDirectory(output);
-            var path = Path.Combine(output, name + "." + version + ".nupkg");
-            if (File.Exists(path))
-                File.Delete(path);
+            //if we haven't already built and cached this package, built it and c
+            if (!CachedSamplePackagePaths.TryGetValue((name, version), out var samplePackagePath))
+            {
+                var nugetCommandLine = "dotnet";
+                var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
 
+                var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
+                Directory.CreateDirectory(output);
 
-            var runner = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
-            var restoreResult = runner.Execute(new CommandLine(nugetCommandLine)
-                .Action("restore")
-                .Argument(target)
-                .Build());
-            restoreResult.VerifySuccess();
+                var path = Path.Combine(output, name + "." + version + ".nupkg");
 
-            var result = runner.Execute(new CommandLine(nugetCommandLine)
-                .Action("pack")
-                .Argument(target)
-                .Argument("-output", output)
-                .PositionalArgument("/p:Version=" + version)
-                .Build());
-            result.VerifySuccess();
+                var runner = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
 
-            Assert.That(File.Exists(path), string.Format("The generated nupkg was unable to be found (expected at {0}).", path));
-            return path;
+                var result = runner.Execute(new CommandLine(nugetCommandLine)
+                                            .Action("pack")
+                                            .Argument(target)
+                                            .Argument("-output", output)
+                                            .PositionalArgument("/p:Version=" + version)
+                                            .Build());
+
+                result.VerifySuccess();
+
+                Assert.That(File.Exists(path), $"The generated nupkg was unable to be found (expected at {path}).");
+
+                //Store the built package path
+                CachedSamplePackagePaths.Add((name, version), path);
+
+                samplePackagePath = path;
+            }
+
+            //well just let the filesystem clean up the temp dirs
+            var tempDir = Path.GetTempPath();
+
+            var fileName = Path.GetFileName(samplePackagePath);
+            var tempFilePath = Path.Combine(tempDir, fileName);
+
+            File.Copy(samplePackagePath, tempFilePath);
+            return tempFilePath;
         }
 
         static string GetNixFileOrDefault(string filePath, string filePrefix, string fileSuffix)
@@ -76,16 +89,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
         {
             var indexFilePath = Path.Combine(packageDirectory, "index.html");
             var content =
-"<!DOCTYPE html>\n" +
-"<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" +
-"<head>\n" +
-"   <title>Acme.Web</title>\n" +
-"</head>\n" +
-"<body>\n" +
-"   <h1>Welcome to Acme!</h1>\n" +
-"   <h3>A Company that Makes Everything</h3>\n" +
-"</body>\n" +
-"</html>";
+                "<!DOCTYPE html>\n" + "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" + "<head>\n" + "   <title>Acme.Web</title>\n" + "</head>\n" + "<body>\n" + "   <h1>Welcome to Acme!</h1>\n" + "   <h3>A Company that Makes Everything</h3>\n" + "</body>\n" + "</html>";
 
             using (var indexFile = File.CreateText(indexFilePath))
             {
