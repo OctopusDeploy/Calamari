@@ -23,14 +23,14 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
             Assert.That(Directory.Exists(packageDirectory), $"Package {name} is not available (expected at {packageDirectory}).");
 
+            var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
+            Directory.CreateDirectory(output);
+
             //if we haven't already built and cached this package, built it and c
             if (!CachedSamplePackagePaths.TryGetValue((name, version), out var samplePackagePath))
             {
-                var nugetCommandLine = "dotnet";
+                const string nugetCommandLine = "dotnet";
                 var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
-
-                var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
-                Directory.CreateDirectory(output);
 
                 var path = Path.Combine(output, name + "." + version + ".nupkg");
 
@@ -53,13 +53,15 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
                 samplePackagePath = path;
             }
 
-            //well just let the filesystem clean up the temp dirs
-            var tempDir = Path.GetTempPath();
+            //create a directory for this temp package
+            var tmpDir = Path.Combine(output, Guid.NewGuid().ToString("n"));
+            Directory.CreateDirectory(tmpDir);
 
             var fileName = Path.GetFileName(samplePackagePath);
-            var tempFilePath = Path.Combine(tempDir, fileName);
+            var tempFilePath = Path.Combine(tmpDir, fileName);
 
             File.Copy(samplePackagePath, tempFilePath);
+            
             return tempFilePath;
         }
 
