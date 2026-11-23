@@ -22,27 +22,34 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void Performs()
         {
-            var journalRepo = SeedJournal();
-
             var stopWatch = new Stopwatch();
             stopWatch.Start();
+            var journalRepo = SeedJournal();
+            stopWatch.Stop();
+            TestContext.WriteLine("Seeding elapsed time: " + stopWatch.Elapsed);
+
+            stopWatch.Restart();
             var algo = new LeastFrequentlyUsedWithAgingSort();
             var result = algo
                 .Sort(journalRepo.GetAllJournalEntries())
                 .ToList();
             result.Should().NotBeEmpty();
             stopWatch.Stop();
+            TestContext.WriteLine("Elapsed time: " + stopWatch.Elapsed);
             stopWatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
         }
 
         static InMemoryJournalRepository SeedJournal()
         {
+            var lockManager = Substitute.For<INamedLockManager>();
+            lockManager.Acquire(Arg.Any<string>(), Arg.Any<string>()).Returns(Substitute.For<IDisposable>());
+            
             var journalRepo = new InMemoryJournalRepository();
             var journal = new PackageJournal(journalRepo,
                                              Substitute.For<ILog>(),
                                              new TestCalamariPhysicalFileSystem(),
                                              Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
-                                             new MutexBasedNamedLockManager());
+                                             lockManager);
             var serverTask = new ServerTaskId("ServerTasks-1");
             for (var i = 0; i < 50000; i++)
             {

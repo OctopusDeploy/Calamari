@@ -71,7 +71,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     var signatureExitCode = Octodiff.Program.Main(new[] { "signature", transferredBasisPath, signatureFile.FilePath });
                     Assert.That(signatureExitCode, Is.EqualTo(0));
 
-                    using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.1", true)))
+                    using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.1")))
                     using (var deltaFile = new TemporaryFile(transferredBasisPath + "_to_Acme.Web.1.0.1.nupkg.octodelta"))
                     {
                         var deltaExitCode = Octodiff.Program.Main(new[] { "delta", signatureFile.FilePath, newFile.FilePath, deltaFile.FilePath });
