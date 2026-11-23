@@ -418,7 +418,10 @@ namespace Calamari.AzureWebApp.Tests
                                                                                            contextData: new Dictionary<string, object>());
 
             var result = await response.Content.ReadAsStringAsync();
-            result.Should().Contain(actualText);
+            
+            result.ReplaceLineEndings()
+                  .Should()
+                  .Contain(actualText.ReplaceLineEndings());
         }
 
         void AddDefaults(CommandTestBuilderContext context)
