@@ -19,8 +19,6 @@ namespace Calamari.Testing.Helpers
 
             public const string OnlyNixOrMac = "nixMacOS";
         }
-        
-        public const string PlatformAgnostic = "PlatformAgnostic";
 
         /// <summary>
         /// Tests that authenticate against or call a real external cloud service (e.g. real Azure).
@@ -30,7 +28,5 @@ namespace Calamari.Testing.Helpers
         public const string ExternalCloudIntegration = "ExternalCloudIntegration";
 
         public const string RunOnceOnWindowsAndLinux = "RunOnceOnWindowsAndLinux";
-
-        public const string RequiresOpenSsl1_1OrOpenSsl3 = "RequiresOpenSsl1_1OrOpenSsl3";
     }
 }
