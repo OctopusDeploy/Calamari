@@ -1,6 +1,7 @@
 ﻿using System.Runtime.Versioning;
 using System.Security.Principal;
 using Calamari.Integration.Certificates;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -8,7 +9,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     [SupportedOSPlatform("windows")]
     public class PrivateKeyAccessRuleExtensionMethodsTests
     {

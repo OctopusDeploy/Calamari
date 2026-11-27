@@ -8,6 +8,7 @@ using Calamari.AiAgent.ClaudeCodeBehaviour;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
@@ -176,7 +177,7 @@ public class ArtifactManifestCollectorFixture
     }
 
     [Test]
-    [NonWindowsTest]
+    [TestPlatforms(TestPlatforms.Unix)]
     public void SymlinkEscapingWorkingDir_Throws()
     {
         using var workingDir = TemporaryDirectory.Create();

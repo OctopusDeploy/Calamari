@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -200,7 +201,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         [TestCase("bar.blah => *.Bar.Blah", "xyz.bar.blah", "bar.blah")]
         [TestCase("*.Bar.Blah => bar.blah", "bar.blah", "xyz.bar.blah")]
         [TestCase("foo.bar.config => Foo.Config", "foo.config", "foo.bar.config")]
@@ -214,15 +215,12 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNix)]
+        [TestPlatforms(TestPlatforms.Linux)]
         [TestCase("bar.blah => *.Bar.Blah", "xyz.bar.blah", "bar.blah")]
         [TestCase("*.Bar.Blah => bar.blah", "bar.blah", "xyz.bar.blah")]
         [TestCase("foo.bar.config => Foo.Config", "foo.config", "foo.bar.config")]
         public void CaseSensitiveOnNix(string pattern, string from, string to)
         {
-            if (!CalamariEnvironment.IsRunningOnNix)
-                Assert.Ignore("This test is designed to run on *nix");
-
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, pattern);
 
             CreateConvention(deployment.Variables).Install(deployment);
@@ -231,7 +229,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldOutputDiagnosticsLoggingIfEnabled()
         {
             var calamariFileSystem = Substitute.For<ICalamariFileSystem>();

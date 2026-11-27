@@ -13,7 +13,7 @@ namespace Calamari.AzureResourceGroup.Tests.ExternalCloudIntegration
     // resolution and the compile -> substitute -> deploy wiring is covered without Azure or the az cli in
     // DeployBicepTemplateBehaviourUnitTestFixture.
     [TestFixture]
-    [WindowsTest] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
+    [TestPlatforms(TestPlatforms.Windows)] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
     class DeployAzureBicepTemplateCommandFixture : AzureResourceGroupCloudTestBase
     {
         readonly string packagePath = TestEnvironment.GetTestPath("Packages", "Bicep");

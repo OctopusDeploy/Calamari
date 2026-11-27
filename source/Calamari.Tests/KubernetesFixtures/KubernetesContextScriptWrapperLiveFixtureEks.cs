@@ -291,7 +291,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        [WindowsTest] // We are having an issue with this test running on Linux. The test successfully executes on Windows.
+        [TestPlatforms(TestPlatforms.Windows)] // We are having an issue with this test running on Linux. The test successfully executes on Windows.
         public void AuthorisingWithAmazonAccount_WithExecFeatureToggleEnabled(bool runAsScript)
         {
             SetVariablesToAuthoriseWithAmazonAccount();

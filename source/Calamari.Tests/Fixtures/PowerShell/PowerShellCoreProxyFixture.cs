@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using Calamari.Tests.Helpers;
@@ -9,7 +10,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class PowerShellCoreProxyFixture : WindowsScriptProxyFixtureBase
     {
         [SetUp]

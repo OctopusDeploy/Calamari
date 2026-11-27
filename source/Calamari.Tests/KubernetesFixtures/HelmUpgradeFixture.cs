@@ -134,9 +134,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void NoValues_EmbeddedValuesUsed()
         {
             var result = DeployPackage();
@@ -147,9 +144,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test(Description = "Test the case where the package ID does not match the directory inside the helm archive.")]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void MismatchPackageIDAndHelmArchivePathWorks()
         {
             var packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
@@ -164,9 +158,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void ExplicitValues_NewValuesUsed()
         {
             //Helm Config
@@ -178,9 +169,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromPackage_NewValuesUsed()
         {
             //Additional Package
@@ -198,9 +186,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromChartPackage_NewValuesUsed()
         {
             //Additional Package
@@ -212,9 +197,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromChartPackage_GetSubstituted()
         {
             Variables.Set(PackageVariables.PackageVersion, "0.3.8");
@@ -226,9 +208,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromChartPackageWithoutSubDirectory_NewValuesUsed()
         {
             //Additional Package
@@ -240,9 +219,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromPackageAndExplicit_ExplicitTakesPrecedence()
         {
             //Helm Config (lets make sure Explicit values take precedence
@@ -264,9 +240,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void ValuesFromRawYaml_ValuesAdded()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.YamlValues, "\"SpecialMessage\": \"YAML\"");
@@ -309,9 +282,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void Namespace_Override_Used()
         {
             const string @namespace = "calamari-testing-foo";
@@ -324,9 +294,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void AdditionalArgumentsPassed()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
@@ -338,9 +305,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void DoesNotReportManifestsWhenDryRunIsSet()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
@@ -354,10 +318,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMac]
-        [Category(TestCategory.PlatformAgnostic)]
+        [TestPlatforms(TestPlatforms.Windows | TestPlatforms.Linux)]
         public void WhenTheChartDirectoryVariableIsSet_TheChartAtThatLocationIsUsed()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
@@ -366,9 +327,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void WhenTheChartDirectoryVariableIsSet_AndTheChartDoesNotExist_AnErrorIsReturned()
         {
             Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
@@ -378,9 +336,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [Category(TestCategory.PlatformAgnostic)]
         public void WhenChartIsInRootOfPackage_ShouldUseTheRootStagingDirectory()
         {
             var result = DeployPackage("mychart-with-no-root-folder-0.3.8.tgz");

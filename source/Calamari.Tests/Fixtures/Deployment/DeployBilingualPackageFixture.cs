@@ -1,5 +1,6 @@
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -17,7 +18,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldOnlyRunPowerShellScriptsOnWindows()
         {
             using (var nupkgFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.PackageBilingual", "1.0.0")))
@@ -40,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void ShouldOnlyRunBashScriptsOnMacOrNix()
         {
             using (var tarFile = new TemporaryFile(TarGzBuilder.BuildSamplePackage("Acme.PackageBilingual", "1.0.0", false)))

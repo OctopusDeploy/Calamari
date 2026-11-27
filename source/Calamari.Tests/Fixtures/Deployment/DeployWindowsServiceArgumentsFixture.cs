@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Assent;
@@ -11,7 +12,7 @@ using Calamari.Testing.Helpers;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class DeployWindowsServiceArgumentsFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => "DumpArgs";

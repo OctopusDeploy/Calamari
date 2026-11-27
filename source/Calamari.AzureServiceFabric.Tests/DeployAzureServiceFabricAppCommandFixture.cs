@@ -17,7 +17,7 @@ using NUnit.Framework;
 namespace Calamari.AzureServiceFabric.Tests
 {
     [TestFixture]
-    [WindowsTest]
+    [TestPlatforms(TestPlatforms.Windows)]
     [Category(TestCategory.ExternalCloudIntegration)]
     public class DeployAzureServiceFabricAppCommandFixture
     {
