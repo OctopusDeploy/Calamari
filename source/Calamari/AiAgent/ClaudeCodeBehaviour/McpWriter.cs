@@ -13,7 +13,7 @@ namespace Calamari.AiAgent.ClaudeCodeBehaviour;
 
 public class McpWriter(IVariables variables)
 {
-    const string ConfigName = "mcp-config.json";
+    public const string ConfigName = "mcp-config.json";
     const string OctopusServerName = "octopus";
 
     static readonly JsonSerializerOptions VariableJsonOptions = new()
