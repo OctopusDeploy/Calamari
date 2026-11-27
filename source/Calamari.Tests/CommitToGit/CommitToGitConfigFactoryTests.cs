@@ -55,6 +55,34 @@ public class CommitToGitConfigFactoryTests
     }
 
     [Test]
+    public void CreateRepositoryConfig_WhenCreatingPullRequestWithSshKeyCredential_Throws()
+    {
+        variables.GetFlag(SpecialVariables.Action.Git.PullRequest.Create).Returns(true);
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(new SshKeyGitCredentialDto("MyCred", "https://example.invalid/repo.git", "git", "private-key", [])));
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var act = () => factory.CreateRepositoryConfig(deployment, loader);
+
+        act.Should().Throw<CommandException>().And.Message.Should().Contain("SSH key authentication");
+    }
+
+    [Test]
+    public void CreateRepositoryConfig_WhenCreatingPullRequestWithoutCredentials_Throws()
+    {
+        variables.GetFlag(SpecialVariables.Action.Git.PullRequest.Create).Returns(true);
+        loader.Load<CommitToGitCustomPropertiesDto>()
+              .Returns(new CommitToGitCustomPropertiesDto(null));
+
+        var deployment = new RunningDeployment(null, variables);
+
+        var act = () => factory.CreateRepositoryConfig(deployment, loader);
+
+        act.Should().Throw<CommandException>().And.Message.Should().Contain("requires Git repository credentials");
+    }
+
+    [Test]
     public void CreateRepositoryConfig_WhenDestinationPathIsMissing_DefaultsToEmptyString()
     {
         //Octopus server removes variables containing empty strings, thus a missing property should default to an empty string.
